@@ -144,6 +144,8 @@ def expected_chat_history_fixture():
             ],
             "started_at": "2024-01-01T00:01:00Z",
             "completed_at": "2024-01-01T00:01:05Z",
+            "model_id": "test-model",
+            "provider_id": "test-provider",
         },
         {
             "messages": [
@@ -152,6 +154,8 @@ def expected_chat_history_fixture():
             ],
             "started_at": "2024-01-01T00:02:00Z",
             "completed_at": "2024-01-01T00:02:03Z",
+            "model_id": "test-model",
+            "provider_id": "test-provider",
         },
     ]
 
@@ -164,7 +168,7 @@ class TestSimplifySessionData:
         self, mock_session_data, expected_chat_history
     ):
         """Test simplify_session_data with session data."""
-        result = simplify_session_data(mock_session_data)
+        result = simplify_session_data(mock_session_data, "test-model", "test-provider")
 
         assert result == expected_chat_history
 
@@ -177,7 +181,7 @@ class TestSimplifySessionData:
             "turns": [],
         }
 
-        result = simplify_session_data(session_data)
+        result = simplify_session_data(session_data, "test-model", "test-provider")
 
         assert not result
 
@@ -210,7 +214,7 @@ class TestSimplifySessionData:
             ],
         }
 
-        result = simplify_session_data(session_data)
+        result = simplify_session_data(session_data, "test-model", "test-provider")
 
         expected = [
             {
@@ -220,6 +224,8 @@ class TestSimplifySessionData:
                 ],
                 "started_at": "2024-01-01T00:01:00Z",
                 "completed_at": "2024-01-01T00:01:05Z",
+                "model_id": "test-model",
+                "provider_id": "test-provider",
             }
         ]
 

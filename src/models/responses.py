@@ -318,7 +318,9 @@ class ConversationResponse(BaseModel):
                         {"content": "Hi there!", "type": "assistant"}
                     ],
                     "started_at": "2024-01-01T00:01:00Z",
-                    "completed_at": "2024-01-01T00:01:05Z"
+                    "completed_at": "2024-01-01T00:01:05Z",
+                    "model_id": "gemini-1.5-flash",
+                    "provider_id": "gemini"
                 }
             ]
         )
@@ -342,6 +344,8 @@ class ConversationResponse(BaseModel):
                             ],
                             "started_at": "2024-01-01T00:01:00Z",
                             "completed_at": "2024-01-01T00:01:05Z",
+                            "model_id": "gemini-1.5-flash",
+                            "provider_id": "gemini",
                         }
                     ],
                 }

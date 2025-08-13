@@ -1,6 +1,9 @@
 """Handler for REST API calls to manage conversation history."""
 
+import json
 import logging
+import os
+from pathlib import Path
 from typing import Any
 
 from llama_stack_client import APIConnectionError, NotFoundError
@@ -36,6 +39,8 @@ conversation_responses: dict[int | str, dict[str, Any]] = {
                 ],
                 "started_at": "2024-01-01T00:00:00Z",
                 "completed_at": "2024-01-01T00:00:05Z",
+                "model_id": "gemini-1.5-flash",
+                "provider_id": "gemini",
             }
         ],
     },
@@ -103,7 +108,7 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
 }
 
 
-def simplify_session_data(session_data: dict) -> list[dict[str, Any]]:
+def simplify_session_data(session_data: dict, model_id: str, provider_id: str) -> list[dict[str, Any]]:
     """Simplify session data to include only essential conversation information.
 
     Args:
@@ -139,6 +144,8 @@ def simplify_session_data(session_data: dict) -> list[dict[str, Any]]:
             "messages": cleaned_messages,
             "started_at": turn.get("started_at"),
             "completed_at": turn.get("completed_at"),
+            "model_id": model_id,
+            "provider_id": provider_id,
         }
         chat_history.append(simplified_turn)
 
@@ -231,6 +238,23 @@ async def get_conversation_endpoint_handler(
     try:
         client = AsyncLlamaStackClientHolder().get_client()
 
+        # Get agent information to extract model and provider details
+        agent_response = await client.agents.retrieve(agent_id=agent_id)
+        agent_data = agent_response.model_dump()
+        
+        # Extract model_id and provider_id from agent_config.model
+        agent_model = (
+            agent_data.get("agent_config", {}).get("model")
+            if isinstance(agent_data, dict)
+            else None
+        ) or ""
+        if "/" in agent_model:
+            provider_id, model_id = agent_model.split("/", 1)
+        else:
+            # Fallback if format is unexpected
+            model_id = agent_model
+            provider_id = "unknown"
+
         agent_sessions = (await client.agents.session.list(agent_id=agent_id)).data
         session_id = str(agent_sessions[0].get("session_id"))
 
@@ -242,7 +266,7 @@ async def get_conversation_endpoint_handler(
         logger.info("Successfully retrieved conversation %s", conversation_id)
 
         # Simplify the session data to include only essential conversation information
-        chat_history = simplify_session_data(session_data)
+        chat_history = simplify_session_data(session_data, model_id, provider_id)
 
         return ConversationResponse(
             conversation_id=conversation_id,
