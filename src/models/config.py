@@ -230,6 +230,12 @@ class UserDataCollection(ConfigurationBase):
         return self
 
 
+class QuestionValidationConfiguration(ConfigurationBase):
+    """Question validation configuration."""
+
+    question_validation_enabled: bool = False
+
+
 class JsonPathOperator(str, Enum):
     """Supported operators for JSONPath evaluation."""
 
@@ -464,6 +470,7 @@ class Configuration(ConfigurationBase):
     authorization: Optional[AuthorizationConfiguration] = None
     customization: Optional[Customization] = None
     inference: InferenceConfiguration = InferenceConfiguration()
+    question_validation: QuestionValidationConfiguration = QuestionValidationConfiguration()
 
     def dump(self, filename: str = "configuration.json") -> None:
         """Dump actual configuration into JSON file."""

@@ -30,7 +30,8 @@ from metrics.utils import update_llm_token_count_from_turn
 from models.config import Action
 from models.requests import QueryRequest
 from models.database.conversations import UserConversation
-from utils.endpoints import check_configuration_loaded, get_agent, get_system_prompt
+from utils.agent import get_agent
+from utils.endpoints import check_configuration_loaded, get_system_prompt
 from utils.mcp_headers import mcp_headers_dependency, handle_mcp_headers_with_toolgroups
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary

@@ -19,6 +19,7 @@ from models.config import (
     AuthenticationConfiguration,
     InferenceConfiguration,
     DatabaseConfiguration,
+    QuestionValidationConfiguration,
 )
 
 
@@ -133,6 +134,13 @@ class AppConfig:
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.database
+
+    @property
+    def question_validation(self) -> QuestionValidationConfiguration:
+        """Return question validation configuration."""
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.question_validation
 
 
 configuration: AppConfig = AppConfig()

@@ -5,8 +5,8 @@ import json
 import logging
 from typing import Annotated, Any, cast
 
-from llama_stack_client import APIConnectionError
-from llama_stack_client import AsyncLlamaStackClient  # type: ignore
+
+from llama_stack_client import APIConnectionError, AsyncLlamaStackClient  # type: ignore
 from llama_stack_client.lib.agents.event_logger import interleaved_content_as_str
 from llama_stack_client.types import UserMessage, Shield  # type: ignore
 from llama_stack_client.types.agents.turn import Turn
@@ -31,9 +31,11 @@ from models.config import Action
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest, Attachment
 from models.responses import QueryResponse, UnauthorizedResponse, ForbiddenResponse
+from utils.agent import get_agent, get_temp_agent
 from utils.endpoints import (
     check_configuration_loaded,
-    get_agent,
+    get_invalid_query_response,
+    get_validation_system_prompt,
     get_system_prompt,
     validate_conversation_ownership,
     validate_model_provider_override,
@@ -215,7 +217,7 @@ async def query_endpoint_handler(
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
-        summary, conversation_id = await retrieve_response(
+        summary, conversation_id, query_is_valid= await retrieve_response(
             client,
             llama_stack_model_id,
             query_request,
@@ -391,6 +393,28 @@ def is_input_shield(shield: Shield) -> bool:
     return _is_inout_shield(shield) or not is_output_shield(shield)
 
 
+async def validate_question(question: str, client: AsyncLlamaStackClient, model_id: str) -> bool:
+    """Validate a question and provides a one-word response.
+
+    Args:
+        question: The question to be validated.
+        client: The AsyncLlamaStackClient to use for the request.
+        model_id: The ID of the model to use.
+
+    Returns:
+        bool: True if the question was deemed valid, False otherwise
+    """
+    validation_system_prompt = get_validation_system_prompt()
+    agent, session_id = await get_temp_agent(client, model_id, validation_system_prompt)
+    response = await agent.create_turn(
+        messages=[UserMessage(role="user", content=question)],
+        session_id=session_id,
+        stream=False,
+        toolgroups=None,
+    )
+    response = cast(Turn, response)
+    return constants.SUBJECT_REJECTED not in interleaved_content_as_str(response.output_message.content)
+
 async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
     client: AsyncLlamaStackClient,
     model_id: str,
@@ -399,7 +423,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     mcp_headers: dict[str, dict[str, str]] | None = None,
     *,
     provider_id: str = "",
-) -> tuple[TurnSummary, str]:
+) -> tuple[TurnSummary, str, bool]:
     """
     Retrieve response from LLMs and agents.
 
@@ -496,6 +520,12 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         if not toolgroups:
             toolgroups = None
 
+    if configuration.question_validation.question_validation_enabled and (not await validate_question(query_request.query, client, model_id)):
+        return TurnSummary(
+            llm_response=get_invalid_query_response(),
+            tool_calls=[],
+        ), conversation_id, False
+
     response = await agent.create_turn(
         messages=[UserMessage(role="user", content=query_request.query)],
         session_id=session_id,
@@ -535,7 +565,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
             "Response lacks output_message.content (conversation_id=%s)",
             conversation_id,
         )
-    return summary, conversation_id
+    return summary, conversation_id, True
 
 
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:

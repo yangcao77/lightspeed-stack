@@ -28,6 +28,21 @@ ATTACHMENT_CONTENT_TYPES = frozenset(
 # configuration file nor in the query request
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant"
 
+
+# Query validation
+SUBJECT_REJECTED = "REJECTED"
+SUBJECT_ALLOWED = "ALLOWED"
+DEFAULT_VALIDATION_SYSTEM_PROMPT = (
+    "You are a helpful assistant that validates questions. You will be given a "
+    "question and you will need to validate if it is valid or not. You will "
+    f"return '{SUBJECT_REJECTED}' if the question is not valid and "
+    f"'{SUBJECT_ALLOWED}' if it is valid."
+)
+DEFAULT_INVALID_QUERY_RESPONSE = (
+    "Invalid query, please try again."
+)
+
+
 # Authentication constants
 DEFAULT_VIRTUAL_PATH = "/ls-access"
 DEFAULT_USER_NAME = "lightspeed-user"

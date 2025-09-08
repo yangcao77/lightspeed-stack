@@ -1,10 +1,7 @@
 """Utility functions for endpoint handlers."""
 
-from contextlib import suppress
 import logging
 from fastapi import HTTPException, status
-from llama_stack_client._client import AsyncLlamaStackClient
-from llama_stack_client.lib.agents.agent import AsyncAgent
 
 import constants
 from models.requests import QueryRequest
@@ -12,8 +9,6 @@ from models.database.conversations import UserConversation
 from models.config import Action
 from app.database import get_session
 from configuration import AppConfig
-from utils.suid import get_suid
-from utils.types import GraniteToolParser
 
 
 logger = logging.getLogger("utils.endpoints")
@@ -67,6 +62,60 @@ def check_configuration_loaded(config: AppConfig) -> None:
             detail={"response": "Configuration is not loaded"},
         )
 
+QUESTION_VALIDATOR_PROMPT_TEMPLATE = f"""
+Instructions:
+- You are a question classifying tool
+- You are an expert in Backstage, Red Hat Developer Hub (RHDH), Kubernetes, Openshift, CI/CD and GitOps Pipelines
+- Your job is to determine if a user's question is related to Backstage or Red Hat Developer Hub (RHDH) technologies, \
+    including integrations, plugins, catalog exploration, service creation, or workflow automation.
+- If a question appears to be related to Backstage, RHDH, Kubernetes, Openshift, or any of their features, answer with the word {constants.SUBJECT_ALLOWED}
+- If a question is not related to Backstage, RHDH, Kubernetes, Openshift, or their features, answer with the word {constants.SUBJECT_REJECTED}
+- Do not explain your answer, just provide the one-word response
+
+
+Example Question:
+Why is the sky blue?
+Example Response:
+{constants.SUBJECT_REJECTED}
+
+Example Question:
+Can you help configure my cluster to automatically scale?
+Example Response:
+{constants.SUBJECT_ALLOWED}
+
+Example Question:
+How do I create import an existing software template in Backstage?
+Example Response:
+{constants.SUBJECT_ALLOWED}
+
+Example Question:
+How do I accomplish $task in RHDH?
+Example Response:
+{constants.SUBJECT_ALLOWED}
+
+Example Question:
+How do I explore a component in RHDH catalog?
+Example Response:
+{constants.SUBJECT_ALLOWED}
+
+Example Question:
+How can I integrate GitOps into my pipeline?
+Example Response:
+{constants.SUBJECT_ALLOWED}
+
+Question:
+{{query}}
+Response:
+"""
+
+def get_validation_system_prompt() -> str:
+    """Get the validation system prompt."""
+    #return constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
+    return QUESTION_VALIDATOR_PROMPT_TEMPLATE
+
+def get_invalid_query_response() -> str:
+    """Get the invalid query response."""
+    return constants.DEFAULT_INVALID_QUERY_RESPONSE
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
     """Get the system prompt: the provided one, configured one, or default one."""
@@ -125,54 +174,3 @@ def validate_model_provider_override(
         )
 
 
-# # pylint: disable=R0913,R0917
-async def get_agent(
-    client: AsyncLlamaStackClient,
-    model_id: str,
-    system_prompt: str,
-    available_input_shields: list[str],
-    available_output_shields: list[str],
-    conversation_id: str | None,
-    no_tools: bool = False,
-) -> tuple[AsyncAgent, str, str]:
-    """Get existing agent or create a new one with session persistence."""
-    existing_agent_id = None
-    if conversation_id:
-        with suppress(ValueError):
-            agent_response = await client.agents.retrieve(agent_id=conversation_id)
-            existing_agent_id = agent_response.agent_id
-
-    logger.debug("Creating new agent")
-    agent = AsyncAgent(
-        client,  # type: ignore[arg-type]
-        model=model_id,
-        instructions=system_prompt,
-        input_shields=available_input_shields if available_input_shields else [],
-        output_shields=available_output_shields if available_output_shields else [],
-        tool_parser=None if no_tools else GraniteToolParser.get_parser(model_id),
-        enable_session_persistence=True,
-    )
-    await agent.initialize()
-
-    if existing_agent_id and conversation_id:
-        orphan_agent_id = agent.agent_id
-        agent._agent_id = conversation_id  # type: ignore[assignment]  # pylint: disable=protected-access
-        await client.agents.delete(agent_id=orphan_agent_id)
-        sessions_response = await client.agents.session.list(agent_id=conversation_id)
-        logger.info("session response: %s", sessions_response)
-        try:
-            session_id = str(sessions_response.data[0]["session_id"])
-        except IndexError as e:
-            logger.error("No sessions found for conversation %s", conversation_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={
-                    "response": "Conversation not found",
-                    "cause": f"Conversation {conversation_id} could not be retrieved.",
-                },
-            ) from e
-    else:
-        conversation_id = agent.agent_id
-        session_id = await agent.create_session(get_suid())
-
-    return agent, conversation_id, session_id
