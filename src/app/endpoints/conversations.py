@@ -371,7 +371,7 @@ async def delete_conversation_endpoint_handler(
             },
         )
 
-    user_id, _, _ = auth
+    user_id, _, _, _ = auth
 
     user_conversation = validate_conversation_ownership(
         user_id=user_id,
