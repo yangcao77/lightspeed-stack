@@ -31,7 +31,7 @@ from models.config import Action
 from models.requests import QueryRequest
 from models.database.conversations import UserConversation
 from utils.agent import get_agent
-from utils.endpoints import check_configuration_loaded, get_system_prompt
+from utils.endpoints import check_configuration_loaded, get_system_prompt, get_invalid_query_response
 from utils.mcp_headers import mcp_headers_dependency, handle_mcp_headers_with_toolgroups
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary
@@ -39,6 +39,7 @@ from utils.endpoints import validate_model_provider_override
 
 from app.endpoints.query import (
     get_rag_toolgroups,
+    validate_question,
     is_input_shield,
     is_output_shield,
     is_transcripts_enabled,
@@ -588,6 +589,35 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
+        
+        # Check question validation before getting response
+        query_is_valid = True
+        if configuration.question_validation.question_validation_enabled:
+            query_is_valid,temp_agent_conversation_id = await validate_question(query_request.query, client, llama_stack_model_id)
+            if not query_is_valid:
+                response = get_invalid_query_response()
+                if not is_transcripts_enabled():
+                    logger.debug("Transcript collection is disabled in the configuration")
+                else:
+                    summary = TurnSummary(
+                        llm_response=response,
+                        tool_calls=[],
+                    )
+                    store_transcript(
+                        user_id=user_id,
+                        conversation_id = query_request.conversation_id or temp_agent_conversation_id,
+                        model_id=model_id,
+                        provider_id=provider_id,
+                        query_is_valid=query_is_valid,
+                        query=query_request.query,
+                        query_request=query_request,
+                        summary=summary,
+                        rag_chunks=[],  # TODO(lucasagomes): implement rag_chunks
+                        truncated=False,  # TODO(lucasagomes): implement truncation as part
+                        # of quota work
+                        attachments=query_request.attachments or [],
+                    )
+                return StreamingResponse(response)
         response, conversation_id = await retrieve_response(
             client,
             llama_stack_model_id,
@@ -599,6 +629,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
         async def response_generator(
             turn_response: AsyncIterator[AgentTurnResponseStreamChunk],
+            query_is_valid: bool,
         ) -> AsyncIterator[str]:
             """
             Generate SSE formatted streaming response.
@@ -618,27 +649,34 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
             # Send start event
             yield stream_start_event(conversation_id)
-
-            async for chunk in turn_response:
-                p = chunk.event.payload
-                if p.event_type == "turn_complete":
-                    summary.llm_response = interleaved_content_as_str(
-                        p.turn.output_message.content
-                    )
-                    system_prompt = get_system_prompt(query_request, configuration)
-                    try:
-                        update_llm_token_count_from_turn(
-                            p.turn, model_id, provider_id, system_prompt
+            
+            if not query_is_valid:
+                # Generate SSE events for invalid query
+                yield format_stream_data({
+                    "event": "token",
+                    "data": {"id": 0, "token": get_invalid_query_response()}
+                })
+            else:
+                async for chunk in turn_response:
+                    p = chunk.event.payload
+                    if p.event_type == "turn_complete":
+                        summary.llm_response = interleaved_content_as_str(
+                            p.turn.output_message.content
                         )
-                    except Exception:  # pylint: disable=broad-except
-                        logger.exception("Failed to update token usage metrics")
-                elif p.event_type == "step_complete":
-                    if p.step_details.step_type == "tool_execution":
-                        summary.append_tool_calls_from_llama(p.step_details)
+                        system_prompt = get_system_prompt(query_request, configuration)
+                        try:
+                            update_llm_token_count_from_turn(
+                                p.turn, model_id, provider_id, system_prompt
+                            )
+                        except Exception:  # pylint: disable=broad-except
+                            logger.exception("Failed to update token usage metrics")
+                    elif p.event_type == "step_complete":
+                        if p.step_details.step_type == "tool_execution":
+                            summary.append_tool_calls_from_llama(p.step_details)
 
-                for event in stream_build_event(chunk, chunk_id, metadata_map):
-                    chunk_id += 1
-                    yield event
+                    for event in stream_build_event(chunk, chunk_id, metadata_map):
+                        chunk_id += 1
+                        yield event
 
             yield stream_end_event(metadata_map)
 
@@ -650,7 +688,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                     conversation_id=conversation_id,
                     model_id=model_id,
                     provider_id=provider_id,
-                    query_is_valid=True,  # TODO(lucasagomes): implement as part of query validation
+                    query_is_valid=query_is_valid,
                     query=query_request.query,
                     query_request=query_request,
                     summary=summary,
@@ -670,7 +708,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         # Update metrics for the LLM call
         metrics.llm_calls_total.labels(provider_id, model_id).inc()
 
-        return StreamingResponse(response_generator(response))
+        return StreamingResponse(response_generator(response, query_is_valid))
     # connection to Llama Stack server
     except APIConnectionError as e:
         # Update metrics for the LLM call failure
@@ -751,6 +789,8 @@ async def retrieve_response(
     )
 
     logger.debug("Conversation ID: %s, session ID: %s", conversation_id, session_id)
+
+
     # bypass tools and MCP servers if no_tools is True
     if query_request.no_tools:
         mcp_headers = {}
