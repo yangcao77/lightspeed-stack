@@ -88,6 +88,7 @@ def test_dump_configuration(tmp_path) -> None:
         assert "customization" in content
         assert "inference" in content
         assert "database" in content
+        assert "question_validation" in content
 
         # check the whole deserialized JSON file content
         assert content == {
@@ -163,6 +164,9 @@ def test_dump_configuration(tmp_path) -> None:
                 },
             },
             "authorization": None,
+            "question_validation": {
+                "question_validation_enabled": False
+            },
         }
 
 

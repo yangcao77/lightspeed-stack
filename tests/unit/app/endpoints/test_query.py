@@ -152,6 +152,8 @@ async def _test_query_endpoint_handler(
     mock_config.user_data_collection_configuration.transcripts_enabled = (
         store_transcript_to_file
     )
+    # Mock question validation configuration to be disabled
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
 
     summary = TurnSummary(
@@ -170,7 +172,7 @@ async def _test_query_endpoint_handler(
 
     mocker.patch(
         "app.endpoints.query.retrieve_response",
-        return_value=(summary, conversation_id),
+        return_value=(summary, conversation_id, True),
     )
     mocker.patch(
         "app.endpoints.query.select_model_and_provider_id",
@@ -447,6 +449,7 @@ async def test_retrieve_response_no_returned_message(prepare_agent_mocks, mocker
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -458,7 +461,7 @@ async def test_retrieve_response_no_returned_message(prepare_agent_mocks, mocker
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    response, _ = await retrieve_response(
+    response, _, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -479,6 +482,7 @@ async def test_retrieve_response_message_without_content(prepare_agent_mocks, mo
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -490,7 +494,7 @@ async def test_retrieve_response_message_without_content(prepare_agent_mocks, mo
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    response, _ = await retrieve_response(
+    response, _, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -512,6 +516,7 @@ async def test_retrieve_response_vector_db_available(prepare_agent_mocks, mocker
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -523,7 +528,7 @@ async def test_retrieve_response_vector_db_available(prepare_agent_mocks, mocker
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -551,6 +556,7 @@ async def test_retrieve_response_no_available_shields(prepare_agent_mocks, mocke
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -562,7 +568,7 @@ async def test_retrieve_response_no_available_shields(prepare_agent_mocks, mocke
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -601,6 +607,7 @@ async def test_retrieve_response_one_available_shield(prepare_agent_mocks, mocke
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -612,7 +619,7 @@ async def test_retrieve_response_one_available_shield(prepare_agent_mocks, mocke
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -654,6 +661,7 @@ async def test_retrieve_response_two_available_shields(prepare_agent_mocks, mock
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -665,7 +673,7 @@ async def test_retrieve_response_two_available_shields(prepare_agent_mocks, mock
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -709,6 +717,7 @@ async def test_retrieve_response_four_available_shields(prepare_agent_mocks, moc
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mock_get_agent = mocker.patch(
         "app.endpoints.query.get_agent",
@@ -720,7 +729,7 @@ async def test_retrieve_response_four_available_shields(prepare_agent_mocks, moc
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -758,6 +767,7 @@ async def test_retrieve_response_with_one_attachment(prepare_agent_mocks, mocker
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
 
     attachments = [
@@ -777,7 +787,7 @@ async def test_retrieve_response_with_one_attachment(prepare_agent_mocks, mocker
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -808,6 +818,7 @@ async def test_retrieve_response_with_two_attachments(prepare_agent_mocks, mocke
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
 
     attachments = [
@@ -832,7 +843,7 @@ async def test_retrieve_response_with_two_attachments(prepare_agent_mocks, mocke
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -877,6 +888,7 @@ async def test_retrieve_response_with_mcp_servers(prepare_agent_mocks, mocker):
     ]
     mock_config = mocker.Mock()
     mock_config.mcp_servers = mcp_servers
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mock_get_agent = mocker.patch(
         "app.endpoints.query.get_agent",
@@ -888,7 +900,7 @@ async def test_retrieve_response_with_mcp_servers(prepare_agent_mocks, mocker):
     model_id = "fake_model_id"
     access_token = "test_token_123"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -947,6 +959,7 @@ async def test_retrieve_response_with_mcp_servers_empty_token(
     ]
     mock_config = mocker.Mock()
     mock_config.mcp_servers = mcp_servers
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mock_get_agent = mocker.patch(
         "app.endpoints.query.get_agent",
@@ -958,7 +971,7 @@ async def test_retrieve_response_with_mcp_servers_empty_token(
     model_id = "fake_model_id"
     access_token = ""  # Empty token
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -1009,6 +1022,7 @@ async def test_retrieve_response_with_mcp_servers_and_mcp_headers(
     ]
     mock_config = mocker.Mock()
     mock_config.mcp_servers = mcp_servers
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mock_get_agent = mocker.patch(
         "app.endpoints.query.get_agent",
@@ -1030,7 +1044,7 @@ async def test_retrieve_response_with_mcp_servers_and_mcp_headers(
         },
     }
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client,
         model_id,
         query_request,
@@ -1106,6 +1120,7 @@ async def test_retrieve_response_shield_violation(prepare_agent_mocks, mocker):
     # Mock configuration with empty MCP servers
     mock_config = mocker.Mock()
     mock_config.mcp_servers = []
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -1115,7 +1130,7 @@ async def test_retrieve_response_shield_violation(prepare_agent_mocks, mocker):
 
     query_request = QueryRequest(query="What is OpenStack?")
 
-    _, conversation_id = await retrieve_response(
+    _, conversation_id, _ = await retrieve_response(
         mock_client, "fake_model_id", query_request, "test_token"
     )
 
@@ -1177,6 +1192,7 @@ async def test_auth_tuple_unpacking_in_query_endpoint_handler(mocker, dummy_requ
     # Mock dependencies
     mock_config = mocker.Mock()
     mock_config.llama_stack_configuration = mocker.Mock()
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
 
     mock_client = mocker.AsyncMock()
@@ -1200,7 +1216,7 @@ async def test_auth_tuple_unpacking_in_query_endpoint_handler(mocker, dummy_requ
     )
     mock_retrieve_response = mocker.patch(
         "app.endpoints.query.retrieve_response",
-        return_value=(summary, "test_conversation_id"),
+        return_value=(summary, "test_conversation_id", True),
     )
 
     mocker.patch(
@@ -1251,7 +1267,7 @@ async def test_query_endpoint_handler_no_tools_true(mocker, dummy_request):
 
     mocker.patch(
         "app.endpoints.query.retrieve_response",
-        return_value=(summary, conversation_id),
+        return_value=(summary, conversation_id, True),
     )
     mocker.patch(
         "app.endpoints.query.select_model_and_provider_id",
@@ -1302,7 +1318,7 @@ async def test_query_endpoint_handler_no_tools_false(mocker, dummy_request):
 
     mocker.patch(
         "app.endpoints.query.retrieve_response",
-        return_value=(summary, conversation_id),
+        return_value=(summary, conversation_id, True),
     )
     mocker.patch(
         "app.endpoints.query.select_model_and_provider_id",
@@ -1343,6 +1359,7 @@ async def test_retrieve_response_no_tools_bypasses_mcp_and_rag(
     ]
     mock_config = mocker.Mock()
     mock_config.mcp_servers = mcp_servers
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -1354,7 +1371,7 @@ async def test_retrieve_response_no_tools_bypasses_mcp_and_rag(
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 
@@ -1394,6 +1411,7 @@ async def test_retrieve_response_no_tools_false_preserves_functionality(
     ]
     mock_config = mocker.Mock()
     mock_config.mcp_servers = mcp_servers
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.query.configuration", mock_config)
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -1405,7 +1423,7 @@ async def test_retrieve_response_no_tools_false_preserves_functionality(
     model_id = "fake_model_id"
     access_token = "test_token"
 
-    summary, conversation_id = await retrieve_response(
+    summary, conversation_id, _ = await retrieve_response(
         mock_client, model_id, query_request, access_token
     )
 

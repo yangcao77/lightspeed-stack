@@ -1283,6 +1283,7 @@ async def test_auth_tuple_unpacking_in_streaming_query_endpoint_handler(mocker):
     # Mock dependencies
     mock_config = mocker.Mock()
     mock_config.llama_stack_configuration = mocker.Mock()
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.streaming_query.configuration", mock_config)
 
     mock_client = mocker.AsyncMock()
@@ -1337,6 +1338,7 @@ async def test_streaming_query_endpoint_handler_no_tools_true(mocker):
 
     mock_config = mocker.Mock()
     mock_config.user_data_collection_configuration.transcripts_disabled = True
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.streaming_query.configuration", mock_config)
 
     # Mock the streaming response
@@ -1384,6 +1386,7 @@ async def test_streaming_query_endpoint_handler_no_tools_false(mocker):
 
     mock_config = mocker.Mock()
     mock_config.user_data_collection_configuration.transcripts_disabled = True
+    mock_config.question_validation.question_validation_enabled = False
     mocker.patch("app.endpoints.streaming_query.configuration", mock_config)
 
     # Mock the streaming response
