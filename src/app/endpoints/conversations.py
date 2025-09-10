@@ -160,7 +160,7 @@ async def get_conversations_list_endpoint_handler(
     """Handle request to retrieve all conversations for the authenticated user."""
     check_configuration_loaded(configuration)
 
-    user_id, _, _ = auth
+    user_id = auth[0]
 
     logger.info("Retrieving conversations for user %s", user_id)
 
@@ -249,7 +249,7 @@ async def get_conversation_endpoint_handler(
             },
         )
 
-    user_id, _, _ = auth
+    user_id = auth[0]
 
     user_conversation = validate_conversation_ownership(
         user_id=user_id,
@@ -371,7 +371,7 @@ async def delete_conversation_endpoint_handler(
             },
         )
 
-    user_id, _, _ = auth
+    user_id = auth[0]
 
     user_conversation = validate_conversation_ownership(
         user_id=user_id,

@@ -22,6 +22,11 @@ class TestQueryRequest:
         assert qr.system_prompt is None
         assert qr.attachments is None
 
+    def test_constructor_wrong_conversation_id(self) -> None:
+        """Test the QueryRequest constructor with wrong conversation_id."""
+        with pytest.raises(ValueError, match="Improper conversation ID 'xyzzy'"):
+            _ = QueryRequest(query="Tell me about Kubernetes", conversation_id="xyzzy")
+
     def test_with_attachments(self) -> None:
         """Test the QueryRequest with attachments."""
         attachments = [

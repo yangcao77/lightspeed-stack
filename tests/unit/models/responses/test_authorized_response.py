@@ -23,6 +23,9 @@ class TestAuthorizedResponse:
 
     def test_constructor_fields_required(self) -> None:
         """Test the AuthorizedResponse constructor."""
+        with pytest.raises(ValidationError):
+            # missing all parameters
+            _ = AuthorizedResponse()  # pyright: ignore
 
         with pytest.raises(ValidationError):
             # missing user_id parameter

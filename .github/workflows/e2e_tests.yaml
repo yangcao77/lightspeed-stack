@@ -171,7 +171,7 @@ jobs:
                   distributed_backend: null
                   dpo_output_dir: '.'
                 provider_id: huggingface
-                provider_type: inline::huggingface
+                provider_type: inline::huggingface-gpu
               safety:
               - config:
                   excluded_categories: []
@@ -241,6 +241,15 @@ jobs:
           
           docker compose version
           docker compose up -d
+          
+          # Check for errors and show logs if any services failed
+          if docker compose ps | grep -E 'Exit|exited|stopped'; then
+            echo "Some services failed to start - showing logs:"
+            docker compose logs
+            exit 1
+          else
+            echo "All services started successfully"
+          fi
 
       - name: Wait for services
         run: |

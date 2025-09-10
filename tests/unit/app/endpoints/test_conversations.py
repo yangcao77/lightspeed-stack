@@ -21,7 +21,7 @@ from models.responses import (
 from configuration import AppConfig
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 
-MOCK_AUTH = ("mock_user_id", "mock_username", "mock_token")
+MOCK_AUTH = ("mock_user_id", "mock_username", False, "mock_token")
 VALID_CONVERSATION_ID = "123e4567-e89b-12d3-a456-426614174000"
 INVALID_CONVERSATION_ID = "invalid-id"
 
