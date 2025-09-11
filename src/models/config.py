@@ -145,8 +145,8 @@ class ServiceConfiguration(ConfigurationBase):
     workers: PositiveInt = 1
     color_log: bool = True
     access_log: bool = True
-    tls_config: TLSConfiguration = TLSConfiguration()
-    cors: CORSConfiguration = CORSConfiguration()
+    tls_config: TLSConfiguration = Field(default_factory=TLSConfiguration)
+    cors: CORSConfiguration = Field(default_factory=CORSConfiguration)
 
     @model_validator(mode="after")
     def check_service_configuration(self) -> Self:
@@ -377,7 +377,7 @@ class JwkConfiguration(ConfigurationBase):
     """JWK configuration."""
 
     url: AnyHttpUrl
-    jwt_configuration: JwtConfiguration = JwtConfiguration()
+    jwt_configuration: JwtConfiguration = Field(default_factory=JwtConfiguration)
 
 
 class AuthenticationConfiguration(ConfigurationBase):
@@ -464,13 +464,15 @@ class Configuration(ConfigurationBase):
     service: ServiceConfiguration
     llama_stack: LlamaStackConfiguration
     user_data_collection: UserDataCollection
-    database: DatabaseConfiguration = DatabaseConfiguration()
-    mcp_servers: list[ModelContextProtocolServer] = []
-    authentication: AuthenticationConfiguration = AuthenticationConfiguration()
+    database: DatabaseConfiguration = Field(default_factory=DatabaseConfiguration)
+    mcp_servers: list[ModelContextProtocolServer] = Field(default_factory=list)
+    authentication: AuthenticationConfiguration = Field(
+        default_factory=AuthenticationConfiguration
+    )
     authorization: Optional[AuthorizationConfiguration] = None
     customization: Optional[Customization] = None
-    inference: InferenceConfiguration = InferenceConfiguration()
-    question_validation: QuestionValidationConfiguration = QuestionValidationConfiguration()
+    inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
+    question_validation: QuestionValidationConfiguration = Field(default_factory=QuestionValidationConfiguration)
 
     def dump(self, filename: str = "configuration.json") -> None:
         """Dump actual configuration into JSON file."""

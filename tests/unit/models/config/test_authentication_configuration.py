@@ -142,6 +142,7 @@ def test_authentication_configuration_module_unsupported() -> None:
 
 def test_authentication_configuration_in_config() -> None:
     """Test the authentication configuration in main config."""
+    # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
         service=ServiceConfiguration(),

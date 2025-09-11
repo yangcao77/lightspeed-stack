@@ -98,9 +98,6 @@ class AppConfig:
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
 
-        if self._configuration.authentication is None:
-            raise LogicError("logic error: authentication configuration is not loaded")
-
         return self._configuration.authentication
 
     @property

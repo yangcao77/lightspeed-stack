@@ -22,6 +22,7 @@ def test_tls_configuration() -> None:
 
 def test_tls_configuration_in_service_configuration() -> None:
     """Test the TLS configuration in service configuration."""
+    # pylint: disable=no-member
     cfg = ServiceConfiguration(
         tls_config=TLSConfiguration(
             tls_certificate_path=Path("tests/configuration/server.crt"),

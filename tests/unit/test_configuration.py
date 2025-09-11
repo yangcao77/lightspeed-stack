@@ -5,6 +5,22 @@ from configuration import AppConfig, LogicError
 from models.config import ModelContextProtocolServer
 
 
+# pylint: disable=broad-exception-caught,protected-access
+@pytest.fixture(autouse=True)
+def _reset_app_config_between_tests():
+    # ensure clean state before each test
+    try:
+        AppConfig()._configuration = None  # type: ignore[attr-defined]
+    except Exception:
+        pass
+    yield
+    # ensure clean state after each test
+    try:
+        AppConfig()._configuration = None  # type: ignore[attr-defined]
+    except Exception:
+        pass
+
+
 def test_default_configuration() -> None:
     """Test that configuration attributes are not accessible for uninitialized app."""
     cfg = AppConfig()
@@ -13,31 +29,45 @@ def test_default_configuration() -> None:
     # configuration is not loaded
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.configuration  # pylint: disable=pointless-statement
+        _ = cfg.configuration  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.service_configuration  # pylint: disable=pointless-statement
+        _ = cfg.service_configuration  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.llama_stack_configuration  # pylint: disable=pointless-statement
+        _ = cfg.llama_stack_configuration  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.user_data_collection_configuration  # pylint: disable=pointless-statement
+        _ = (
+            cfg.user_data_collection_configuration
+        )  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.mcp_servers  # pylint: disable=pointless-statement
+        _ = cfg.mcp_servers  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.authentication_configuration  # pylint: disable=pointless-statement
+        _ = cfg.authentication_configuration  # pylint: disable=pointless-statement
 
     with pytest.raises(Exception, match="logic error: configuration is not loaded"):
         # try to read property
-        cfg.customization  # pylint: disable=pointless-statement
+        _ = cfg.customization  # pylint: disable=pointless-statement
+
+    with pytest.raises(Exception, match="logic error: configuration is not loaded"):
+        # try to read property
+        _ = cfg.authorization_configuration  # pylint: disable=pointless-statement
+
+    with pytest.raises(Exception, match="logic error: configuration is not loaded"):
+        # try to read property
+        _ = cfg.inference  # pylint: disable=pointless-statement
+
+    with pytest.raises(Exception, match="logic error: configuration is not loaded"):
+        # try to read property
+        _ = cfg.database_configuration  # pylint: disable=pointless-statement
 
 
 def test_configuration_is_singleton() -> None:
@@ -69,6 +99,9 @@ def test_init_from_dict() -> None:
         },
         "mcp_servers": [],
         "customization": None,
+        "authentication": {
+            "module": "noop",
+        },
     }
     cfg = AppConfig()
     cfg.init_from_dict(config_dict)
@@ -97,6 +130,19 @@ def test_init_from_dict() -> None:
 
     # check for user data collection subsection
     assert cfg.user_data_collection_configuration.feedback_enabled is False
+
+    # check authentication_configuration
+    assert cfg.authentication_configuration is not None
+    assert cfg.authentication_configuration.module == "noop"
+
+    # check authorization configuration - default value
+    assert cfg.authorization_configuration is not None
+
+    # check database configuration
+    assert cfg.database_configuration is not None
+
+    # check inference configuration
+    assert cfg.inference is not None
 
 
 def test_init_from_dict_with_mcp_servers() -> None:
@@ -142,6 +188,35 @@ def test_init_from_dict_with_mcp_servers() -> None:
     assert cfg.mcp_servers[1].name == "server2"
     assert cfg.mcp_servers[1].provider_id == "custom-provider"
     assert cfg.mcp_servers[1].url == "https://api.example.com"
+
+
+def test_init_from_dict_with_authorization_configuration() -> None:
+    """Test initialization with authorization configuration configuration."""
+    config_dict = {
+        "name": "foo",
+        "service": {
+            "host": "localhost",
+            "port": 8080,
+            "auth_enabled": False,
+            "workers": 1,
+            "color_log": True,
+            "access_log": True,
+        },
+        "llama_stack": {
+            "api_key": "xyzzy",
+            "url": "http://x.y.com:1234",
+            "use_as_library_client": False,
+        },
+        "user_data_collection": {
+            "feedback_enabled": False,
+        },
+        "authorization": {},
+        "customization": None,
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    assert cfg.authorization_configuration is not None
 
 
 def test_load_proper_configuration(tmpdir) -> None:
