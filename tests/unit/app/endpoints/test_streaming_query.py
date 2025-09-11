@@ -1587,3 +1587,184 @@ async def test_streaming_query_endpoint_rejects_model_provider_override_without_
     )
     assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
     assert exc_info.value.detail["response"] == expected_msg
+
+
+@pytest.mark.asyncio
+async def test_streaming_query_endpoint_with_question_validation_invalid_query(
+    setup_configuration, mocker
+):
+    """Test streaming query endpoint with question validation enabled and invalid query."""
+    # Mock metrics
+    mock_metrics(mocker)
+    
+    # Mock database operations
+    mock_database_operations(mocker)
+    
+    # Setup configuration with question validation enabled
+    setup_configuration.question_validation.question_validation_enabled = True
+    mocker.patch("app.endpoints.streaming_query.configuration", setup_configuration)
+    
+    # Mock the client
+    mock_client = mocker.AsyncMock()
+    mock_client.models.list.return_value = [
+        mocker.Mock(identifier="model1", model_type="llm", provider_id="provider1")
+    ]
+    mocker.patch("client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client)
+    
+    # Mock the validation agent response (invalid query)
+    mock_validation_agent = mocker.AsyncMock()
+    mock_validation_agent.agent_id = "validation_agent_id"
+    mock_validation_agent.create_session.return_value = "validation_session_id"
+    
+    # Mock the validation response that contains SUBJECT_REJECTED
+    mock_validation_turn = mocker.Mock()
+    mock_validation_turn.output_message.content = [{"type": "text", "text": "REJECTED"}]
+    mock_validation_agent.create_turn.return_value = mock_validation_turn
+    
+    # Mock the validation functions
+    mocker.patch("app.endpoints.streaming_query.validate_question", return_value=(False, "validation_agent_id"))
+    mocker.patch("app.endpoints.streaming_query.get_invalid_query_response", return_value="Invalid query response")
+    mocker.patch("app.endpoints.streaming_query.interleaved_content_as_str", return_value="REJECTED")
+    
+    # Mock other dependencies
+    mocker.patch("app.endpoints.streaming_query.validate_model_provider_override")
+    mocker.patch("app.endpoints.streaming_query.check_configuration_loaded")
+    mocker.patch("app.endpoints.streaming_query.is_transcripts_enabled", return_value=False)
+    mocker.patch(
+        "app.endpoints.streaming_query.select_model_and_provider_id",
+        return_value=("fake_model_id", "fake_model_id", "fake_provider_id"),
+    )
+    
+    query_request = QueryRequest(query="Invalid question about unrelated topic")
+    
+    request = Request(
+        scope={
+            "type": "http",
+        }
+    )
+    request.state.authorized_actions = set(Action)
+    
+    response = await streaming_query_endpoint_handler(
+        request=request, 
+        query_request=query_request, 
+        auth=MOCK_AUTH
+    )
+    
+    # Verify the response is a StreamingResponse
+    assert isinstance(response, StreamingResponse)
+    
+    # Collect the streaming response content
+    streaming_content = []
+    async for chunk in response.body_iterator:
+        streaming_content.append(chunk)
+    
+    # Convert to string for assertions
+    full_content = "".join(streaming_content)
+    
+    # Verify the response contains the invalid query response
+    assert "Invalid query response" in full_content
+
+
+@pytest.mark.asyncio
+async def test_streaming_query_endpoint_with_question_validation_valid_query(
+    setup_configuration, mocker
+):
+    """Test streaming query endpoint with question validation enabled and valid query."""
+    # Mock metrics
+    mock_metrics(mocker)
+    
+    # Mock database operations
+    mock_database_operations(mocker)
+    
+    # Setup configuration with question validation enabled
+    setup_configuration.question_validation.question_validation_enabled = True
+    mocker.patch("app.endpoints.streaming_query.configuration", setup_configuration)
+    
+    # Mock the client
+    mock_client = mocker.AsyncMock()
+    mock_client.models.list.return_value = [
+        mocker.Mock(identifier="model1", model_type="llm", provider_id="provider1")
+    ]
+    mocker.patch("client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client)
+    
+    # Mock the validation functions to return valid query
+    mocker.patch("app.endpoints.streaming_query.validate_question", return_value=(True, "validation_agent_id"))
+    mocker.patch("app.endpoints.streaming_query.interleaved_content_as_str", return_value="Valid question about Backstage")
+    
+    # Mock the retrieve_response function to return valid streaming response
+    mock_streaming_response = mocker.AsyncMock()
+    mock_streaming_response.__aiter__.return_value = [
+        AgentTurnResponseStreamChunk(
+            event=TurnResponseEvent(
+                payload=AgentTurnResponseStepProgressPayload(
+                    event_type="step_progress",
+                    step_type="inference",
+                    delta=TextDelta(text="Valid LLM response about Backstage and Kubernetes", type="text"),
+                    step_id="s1",
+                )
+            )
+        ),
+        AgentTurnResponseStreamChunk(
+            event=TurnResponseEvent(
+                payload=AgentTurnResponseTurnCompletePayload(
+                    event_type="turn_complete",
+                    turn=Turn(
+                        turn_id="t1",
+                        input_messages=[],
+                        output_message=CompletionMessage(
+                            role="assistant",
+                            content=[TextContentItem(text="Valid LLM response about Backstage and Kubernetes", type="text")],
+                            stop_reason="end_of_turn",
+                        ),
+                        session_id="test_session_id",
+                        started_at=datetime.now(),
+                        steps=[],
+                        completed_at=datetime.now(),
+                        output_attachments=[],
+                    ),
+                )
+            )
+        ),
+    ]
+    
+    mocker.patch(
+        "app.endpoints.streaming_query.retrieve_response",
+        return_value=(mock_streaming_response, "test_conversation_id"),
+    )
+    mocker.patch(
+        "app.endpoints.streaming_query.select_model_and_provider_id",
+        return_value=("fake_model_id", "fake_model_id", "fake_provider_id"),
+    )
+    mocker.patch("app.endpoints.streaming_query.is_transcripts_enabled", return_value=False)
+    
+    query_request = QueryRequest(query="Valid question about Backstage and Kubernetes")
+    
+    request = Request(
+        scope={
+            "type": "http",
+        }
+    )
+    request.state.authorized_actions = set(Action)
+    
+    response = await streaming_query_endpoint_handler(
+        request=request, 
+        query_request=query_request, 
+        auth=MOCK_AUTH
+    )
+    
+    # Verify the response is a StreamingResponse
+    assert isinstance(response, StreamingResponse)
+    
+    # Collect the streaming response content
+    streaming_content = []
+    async for chunk in response.body_iterator:
+        streaming_content.append(chunk)
+    
+    # Convert to string for assertions
+    full_content = "".join(streaming_content)
+    
+    # Verify the response contains the normal LLM response
+    assert "Valid LLM response about Backstage and Kubernetes" in full_content
+    assert '"event": "start"' in full_content
+    assert '"event": "token"' in full_content
+    assert '"event": "end"' in full_content
