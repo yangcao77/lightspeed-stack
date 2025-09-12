@@ -27,13 +27,13 @@ class "CORSConfiguration" as src.models.config.CORSConfiguration {
   check_cors_configuration() -> Self
 }
 class "Configuration" as src.models.config.Configuration {
-  authentication
+  authentication : Optional[AuthenticationConfiguration]
   authorization : Optional[AuthorizationConfiguration]
   customization : Optional[Customization]
-  database
-  inference
+  database : Optional[DatabaseConfiguration]
+  inference : Optional[InferenceConfiguration]
   llama_stack
-  mcp_servers : list[ModelContextProtocolServer]
+  mcp_servers : Optional[list[ModelContextProtocolServer]]
   name : str
   service
   user_data_collection
@@ -64,7 +64,7 @@ class "JsonPathOperator" as src.models.config.JsonPathOperator {
   name
 }
 class "JwkConfiguration" as src.models.config.JwkConfiguration {
-  jwt_configuration
+  jwt_configuration : Optional[JwtConfiguration]
   url : AnyHttpUrl
 }
 class "JwtConfiguration" as src.models.config.JwtConfiguration {
@@ -84,7 +84,7 @@ class "JwtRoleRule" as src.models.config.JwtRoleRule {
   check_roles() -> Self
 }
 class "LlamaStackConfiguration" as src.models.config.LlamaStackConfiguration {
-  api_key : Optional[str]
+  api_key : Optional[SecretStr]
   library_client_config_path : Optional[str]
   url : Optional[str]
   use_as_library_client : Optional[bool]
@@ -101,7 +101,7 @@ class "PostgreSQLDatabaseConfiguration" as src.models.config.PostgreSQLDatabaseC
   gss_encmode : str
   host : str
   namespace : Optional[str]
-  password : str
+  password : SecretStr
   port : Annotated
   ssl_mode : str
   user : str
@@ -114,10 +114,10 @@ class "ServiceConfiguration" as src.models.config.ServiceConfiguration {
   access_log : bool
   auth_enabled : bool
   color_log : bool
-  cors
+  cors : Optional[CORSConfiguration]
   host : str
   port : Annotated
-  tls_config
+  tls_config : Optional[TLSConfiguration]
   workers : Annotated
   check_service_configuration() -> Self
 }
@@ -152,15 +152,9 @@ src.models.config.SQLiteDatabaseConfiguration --|> src.models.config.Configurati
 src.models.config.ServiceConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.TLSConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.UserDataCollection --|> src.models.config.ConfigurationBase
-src.models.config.AuthenticationConfiguration --* src.models.config.Configuration : authentication
-src.models.config.CORSConfiguration --* src.models.config.ServiceConfiguration : cors
-src.models.config.DatabaseConfiguration --* src.models.config.Configuration : database
-src.models.config.InferenceConfiguration --* src.models.config.Configuration : inference
 src.models.config.JsonPathOperator --* src.models.config.JwtRoleRule : operator
-src.models.config.JwtConfiguration --* src.models.config.JwkConfiguration : jwt_configuration
 src.models.config.LlamaStackConfiguration --* src.models.config.Configuration : llama_stack
 src.models.config.SQLiteDatabaseConfiguration --* src.models.config.DatabaseConfiguration : sqlite
 src.models.config.ServiceConfiguration --* src.models.config.Configuration : service
-src.models.config.TLSConfiguration --* src.models.config.ServiceConfiguration : tls_config
 src.models.config.UserDataCollection --* src.models.config.Configuration : user_data_collection
 @enduml

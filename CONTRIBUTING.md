@@ -11,11 +11,14 @@
     * [A deliverable is to be considered “done” when](#a-deliverable-is-to-be-considered-done-when)
 * [Automation](#automation)
     * [Pre-commit hook settings](#pre-commit-hook-settings)
-    * [Code coverage measurement](#code-coverage-measurement)
+* [Code coverage measurement](#code-coverage-measurement)
+* [Linters](#linters)
     * [Type hints checks](#type-hints-checks)
-    * [Linters](#linters)
+    * [Ruff](#ruff)
+    * [Pylint](#pylint)
     * [Security checks](#security-checks)
 * [Code style](#code-style)
+    * [Formatting rules](#formatting-rules)
     * [Docstrings style](#docstrings-style)
 
 <!-- vim-markdown-toc -->
@@ -107,11 +110,18 @@ because the copied file is an executable script (so from GIT point of view it is
 to enable it automatically).
 
 
-### Code coverage measurement
+## Code coverage measurement
 
 During testing, code coverage is measured. If the coverage is below defined threshold (see `pyproject.toml` settings for actual value stored in section `[tool.coverage.report]`), tests will fail. We measured and checked code coverage in order to be able to develop software with high quality.
 
 Code coverage reports are generated in JSON and also in format compatible with [_JUnit_ test automation framework](https://junit.org/junit5/). It is also possible to start `make coverage-report` to generate code coverage reports in the form of interactive HTML pages. These pages are stored in the `htmlcov` subdirectory. Just open the index page from this subdirectory in your web browser.
+
+
+
+## Linters
+
+_Black_, _Ruff_, Pyright, _Pylint_, __Pydocstyle__, __Mypy__, and __Bandit__ tools are used as linters. There are a bunch of linter rules enabled for this repository. All of them are specified in `pyproject.toml`, such us in sections `[tool.ruff]` and `[tool.pylint."MESSAGES CONTROL"]`. Some specific rules can be disabled using `ignore` parameter (empty now).
+
 
 ### Type hints checks
 
@@ -126,9 +136,7 @@ Subsequent runs are much faster thanks to the cache that Mypy uses. This check
 is part of a CI job that verifies sources.
 
 
-### Linters
-
-_Black_, _Ruff_, Pyright, and _Pylint_ tools are used as linters. There are a bunch of linter rules enabled for this repository. All of them are specified in `pyproject.toml`, such us in sections `[tool.ruff]` and `[tool.pylint."MESSAGES CONTROL"]`. Some specific rules can be disabled using `ignore` parameter (empty now).
+### Ruff
 
 List of all _Ruff_ rules recognized by Ruff can be retrieved by:
 
@@ -144,6 +152,8 @@ Ruff rules can be disabled in source code (for given line or block) by using spe
 ```python
 # noqa: E501
 ```
+
+### Pylint
 
 List of all _Pylint_ rules can be retrieved by:
 
@@ -172,6 +182,10 @@ make security-check
 
 
 ## Code style
+
+### Formatting rules
+
+Code formatting rules are checked by __Black__. More info can be found on [https://black.readthedocs.io/en/stable/](https://black.readthedocs.io/en/stable/).
 
 ### Docstrings style
 We are using [Google's docstring style](https://google.github.io/styleguide/pyguide.html).

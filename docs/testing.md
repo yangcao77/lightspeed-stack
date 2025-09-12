@@ -69,6 +69,8 @@ Currently code coverage threshold for integration tests is set to 60%. This valu
 
 As specified in Definition of Done, new changes need to be covered by tests.
 
+[NOTE] Please do not mix pytest and unittest modules in new tests. It is preferred to use pytest in every tests, which will help the team to maintain consistency.
+
 
 
 ### Unit tests structure
