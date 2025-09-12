@@ -81,8 +81,6 @@ def query_request_with_system_prompt_fixture():
     return QueryRequest(query="query", system_prompt="System prompt defined in query")
 
 
-
-
 def test_get_default_system_prompt(
     config_without_system_prompt, query_request_without_system_prompt
 ):
@@ -146,8 +144,6 @@ def test_get_system_prompt_with_disable_query_system_prompt_and_non_system_promp
         config_with_custom_system_prompt_and_disable_query_system_prompt,
     )
     assert system_prompt == CONFIGURED_SYSTEM_PROMPT
-
-
 
 
 def test_validate_model_provider_override_allowed_with_action():

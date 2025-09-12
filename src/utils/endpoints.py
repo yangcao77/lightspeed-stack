@@ -62,6 +62,7 @@ def check_configuration_loaded(config: AppConfig) -> None:
             detail={"response": "Configuration is not loaded"},
         )
 
+
 QUESTION_VALIDATOR_PROMPT_TEMPLATE = f"""
 Instructions:
 - You are a question classifying tool
@@ -108,14 +109,17 @@ Question:
 Response:
 """
 
+
 def get_validation_system_prompt() -> str:
     """Get the validation system prompt."""
-    #return constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
+    # return constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
     return QUESTION_VALIDATOR_PROMPT_TEMPLATE
+
 
 def get_invalid_query_response() -> str:
     """Get the invalid query response."""
     return constants.DEFAULT_INVALID_QUERY_RESPONSE
+
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
     """Get the system prompt: the provided one, configured one, or default one."""
@@ -172,5 +176,3 @@ def validate_model_provider_override(
                 )
             },
         )
-
-

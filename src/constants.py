@@ -38,9 +38,7 @@ DEFAULT_VALIDATION_SYSTEM_PROMPT = (
     f"return '{SUBJECT_REJECTED}' if the question is not valid and "
     f"'{SUBJECT_ALLOWED}' if it is valid."
 )
-DEFAULT_INVALID_QUERY_RESPONSE = (
-    "Invalid query, please try again."
-)
+DEFAULT_INVALID_QUERY_RESPONSE = "Invalid query, please try again."
 
 
 # Authentication constants

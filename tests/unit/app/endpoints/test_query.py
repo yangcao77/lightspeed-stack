@@ -1613,43 +1613,45 @@ async def test_query_endpoint_with_question_validation_invalid_query(
     """Test query endpoint with question validation enabled and invalid query."""
     # Mock metrics
     mock_metrics(mocker)
-    
+
     # Mock database operations
     mock_database_operations(mocker)
-    
+
     # Setup configuration with question validation enabled
     setup_configuration.question_validation.question_validation_enabled = True
     mocker.patch("app.endpoints.query.configuration", setup_configuration)
-    
+
     # Mock the validation agent response (invalid query)
     mock_validation_agent = mocker.AsyncMock()
     mock_validation_agent.agent_id = "validation_agent_id"
     mock_validation_agent.create_session.return_value = "validation_session_id"
-    
+
     # Mock the validation response that contains SUBJECT_REJECTED
     mock_validation_turn = mocker.Mock()
     mock_validation_turn.output_message.content = [{"type": "text", "text": "REJECTED"}]
     mock_validation_agent.create_turn.return_value = mock_validation_turn
-    
+
     # Mock the main agent (should not be called for invalid queries)
     mock_agent = mocker.AsyncMock()
     mock_agent.agent_id = "conversation_id"
     mock_agent.create_session.return_value = "session_id"
-    
+
     # Mock the client
     mock_client = mocker.AsyncMock()
     mock_client.models.list.return_value = [
         mocker.Mock(identifier="model1", model_type="llm", provider_id="provider1")
     ]
-    mocker.patch("client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client)
-    
+    mocker.patch(
+        "client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client
+    )
+
     # Mock the retrieve_response function to return invalid query response
     summary = TurnSummary(
         llm_response="Invalid query response",
         tool_calls=[],
     )
     conversation_id = "fake_conversation_id"
-    
+
     mocker.patch(
         "app.endpoints.query.retrieve_response",
         return_value=(summary, conversation_id, False),  # query_is_valid=False
@@ -1659,15 +1661,13 @@ async def test_query_endpoint_with_question_validation_invalid_query(
         return_value=("fake_model_id", "fake_model_id", "fake_provider_id"),
     )
     mocker.patch("app.endpoints.query.is_transcripts_enabled", return_value=False)
-    
+
     query_request = QueryRequest(query="Invalid question about unrelated topic")
-    
+
     response = await query_endpoint_handler(
-        request=dummy_request, 
-        query_request=query_request, 
-        auth=MOCK_AUTH
+        request=dummy_request, query_request=query_request, auth=MOCK_AUTH
     )
-    
+
     # Verify the response contains the invalid query response
     assert response.conversation_id == conversation_id
     assert response.response == "Invalid query response"
@@ -1680,21 +1680,23 @@ async def test_query_endpoint_with_question_validation_valid_query(
     """Test query endpoint with question validation enabled and valid query."""
     # Mock metrics
     mock_metrics(mocker)
-    
+
     # Mock database operations
     mock_database_operations(mocker)
-    
+
     # Setup configuration with question validation enabled
     setup_configuration.question_validation.question_validation_enabled = True
     mocker.patch("app.endpoints.query.configuration", setup_configuration)
-    
+
     # Mock the client
     mock_client = mocker.AsyncMock()
     mock_client.models.list.return_value = [
         mocker.Mock(identifier="model1", model_type="llm", provider_id="provider1")
     ]
-    mocker.patch("client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client)
-    
+    mocker.patch(
+        "client.AsyncLlamaStackClientHolder.get_client", return_value=mock_client
+    )
+
     # Mock the retrieve_response function to return valid query response
     summary = TurnSummary(
         llm_response="Valid LLM response about Backstage and Kubernetes",
@@ -1708,7 +1710,7 @@ async def test_query_endpoint_with_question_validation_valid_query(
         ],
     )
     conversation_id = "fake_conversation_id"
-    
+
     mocker.patch(
         "app.endpoints.query.retrieve_response",
         return_value=(summary, conversation_id, True),  # query_is_valid=True
@@ -1718,15 +1720,13 @@ async def test_query_endpoint_with_question_validation_valid_query(
         return_value=("fake_model_id", "fake_model_id", "fake_provider_id"),
     )
     mocker.patch("app.endpoints.query.is_transcripts_enabled", return_value=False)
-    
+
     query_request = QueryRequest(query="Valid question about Backstage and Kubernetes")
-    
+
     response = await query_endpoint_handler(
-        request=dummy_request, 
-        query_request=query_request, 
-        auth=MOCK_AUTH
+        request=dummy_request, query_request=query_request, auth=MOCK_AUTH
     )
-    
+
     # Verify the response contains the normal LLM response
     assert response.conversation_id == conversation_id
     assert response.response == "Valid LLM response about Backstage and Kubernetes"

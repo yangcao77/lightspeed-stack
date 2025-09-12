@@ -31,7 +31,11 @@ from models.config import Action
 from models.requests import QueryRequest
 from models.database.conversations import UserConversation
 from utils.agent import get_agent
-from utils.endpoints import check_configuration_loaded, get_system_prompt, get_invalid_query_response
+from utils.endpoints import (
+    check_configuration_loaded,
+    get_system_prompt,
+    get_invalid_query_response,
+)
 from utils.mcp_headers import mcp_headers_dependency, handle_mcp_headers_with_toolgroups
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary
@@ -589,15 +593,19 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
-        
+
         # Check question validation before getting response
         query_is_valid = True
         if configuration.question_validation.question_validation_enabled:
-            query_is_valid,temp_agent_conversation_id = await validate_question(query_request.query, client, llama_stack_model_id)
+            query_is_valid, temp_agent_conversation_id = await validate_question(
+                query_request.query, client, llama_stack_model_id
+            )
             if not query_is_valid:
                 response = get_invalid_query_response()
                 if not is_transcripts_enabled():
-                    logger.debug("Transcript collection is disabled in the configuration")
+                    logger.debug(
+                        "Transcript collection is disabled in the configuration"
+                    )
                 else:
                     summary = TurnSummary(
                         llm_response=response,
@@ -605,7 +613,8 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                     )
                     store_transcript(
                         user_id=user_id,
-                        conversation_id = query_request.conversation_id or temp_agent_conversation_id,
+                        conversation_id=query_request.conversation_id
+                        or temp_agent_conversation_id,
                         model_id=model_id,
                         provider_id=provider_id,
                         query_is_valid=query_is_valid,
@@ -649,13 +658,15 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
             # Send start event
             yield stream_start_event(conversation_id)
-            
+
             if not query_is_valid:
                 # Generate SSE events for invalid query
-                yield format_stream_data({
-                    "event": "token",
-                    "data": {"id": 0, "token": get_invalid_query_response()}
-                })
+                yield format_stream_data(
+                    {
+                        "event": "token",
+                        "data": {"id": 0, "token": get_invalid_query_response()},
+                    }
+                )
             else:
                 async for chunk in turn_response:
                     p = chunk.event.payload
@@ -789,7 +800,6 @@ async def retrieve_response(
     )
 
     logger.debug("Conversation ID: %s, session ID: %s", conversation_id, session_id)
-
 
     # bypass tools and MCP servers if no_tools is True
     if query_request.no_tools:

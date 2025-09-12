@@ -3,7 +3,6 @@
 import pytest
 
 from configuration import AppConfig
-from tests.unit import config_dict
 
 from utils.agent import get_agent, get_temp_agent
 
@@ -81,9 +80,7 @@ async def test_get_agent_with_conversation_id_and_no_agent_in_llama_stack(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -136,9 +133,7 @@ async def test_get_agent_no_conversation_id(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -190,9 +185,7 @@ async def test_get_agent_empty_shields(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -244,9 +237,7 @@ async def test_get_agent_multiple_mcp_servers(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -300,9 +291,7 @@ async def test_get_agent_session_persistence_enabled(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -349,9 +338,7 @@ async def test_get_agent_no_tools_no_parser(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -404,9 +391,7 @@ async def test_get_agent_no_tools_false_preserves_parser(
     mock_agent.create_session.return_value = "new_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="new_session_id")
@@ -462,9 +447,7 @@ async def test_get_temp_agent_basic_functionality(prepare_agent_mocks, mocker):
     mock_agent.create_session.return_value = "temp_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="temp_session_id")
@@ -518,11 +501,11 @@ async def test_get_temp_agent_returns_valid_ids(prepare_agent_mocks, mocker):
     assert result_agent is not None
     assert result_session_id is not None
     assert result_conversation_id is not None
-    
+
     # Assert they are strings
     assert isinstance(result_session_id, str)
     assert isinstance(result_conversation_id, str)
-    
+
     # Assert conversation_id matches agent_id
     assert result_conversation_id == result_agent.agent_id
 
@@ -534,9 +517,7 @@ async def test_get_temp_agent_no_persistence(prepare_agent_mocks, mocker):
     mock_agent.create_session.return_value = "temp_session_id"
 
     # Mock Agent class
-    mock_agent_class = mocker.patch(
-        "utils.agent.AsyncAgent", return_value=mock_agent
-    )
+    mock_agent_class = mocker.patch("utils.agent.AsyncAgent", return_value=mock_agent)
 
     # Mock get_suid
     mocker.patch("utils.agent.get_suid", return_value="temp_session_id")

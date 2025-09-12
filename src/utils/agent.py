@@ -73,15 +73,15 @@ async def get_temp_agent(
     system_prompt: str,
 ) -> tuple[AsyncAgent, str, str]:
     """Create a temporary agent with new agent_id and session_id.
-    
+
     This function creates a new agent without persistence, shields, or tools.
     Useful for temporary operations or one-off queries, such as validating a question or generating a summary.
-    
+
     Args:
         client: The AsyncLlamaStackClient to use for the request.
         model_id: The ID of the model to use.
         system_prompt: The system prompt/instructions for the agent.
-        
+
     Returns:
         tuple[AsyncAgent, str]: A tuple containing the agent and session_id.
     """
@@ -93,9 +93,9 @@ async def get_temp_agent(
         enable_session_persistence=False,  # Temporary agent doesn't need persistence
     )
     await agent.initialize()
-    
+
     # Generate new IDs for the temporary agent
     conversation_id = agent.agent_id
     session_id = await agent.create_session(get_suid())
-    
+
     return agent, session_id, conversation_id

@@ -217,7 +217,7 @@ async def query_endpoint_handler(
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
-        summary, conversation_id, query_is_valid= await retrieve_response(
+        summary, conversation_id, query_is_valid = await retrieve_response(
             client,
             llama_stack_model_id,
             query_request,
@@ -393,7 +393,9 @@ def is_input_shield(shield: Shield) -> bool:
     return _is_inout_shield(shield) or not is_output_shield(shield)
 
 
-async def validate_question(question: str, client: AsyncLlamaStackClient, model_id: str) ->  tuple[bool, str]:
+async def validate_question(
+    question: str, client: AsyncLlamaStackClient, model_id: str
+) -> tuple[bool, str]:
     """Validate a question and provides a one-word response.
 
     Args:
@@ -405,7 +407,9 @@ async def validate_question(question: str, client: AsyncLlamaStackClient, model_
         bool: True if the question was deemed valid, False otherwise
     """
     validation_system_prompt = get_validation_system_prompt()
-    agent, session_id, conversation_id = await get_temp_agent(client, model_id, validation_system_prompt)
+    agent, session_id, conversation_id = await get_temp_agent(
+        client, model_id, validation_system_prompt
+    )
     response = await agent.create_turn(
         messages=[UserMessage(role="user", content=question)],
         session_id=session_id,
@@ -413,7 +417,12 @@ async def validate_question(question: str, client: AsyncLlamaStackClient, model_
         toolgroups=None,
     )
     response = cast(Turn, response)
-    return constants.SUBJECT_REJECTED not in interleaved_content_as_str(response.output_message.content), conversation_id
+    return (
+        constants.SUBJECT_REJECTED
+        not in interleaved_content_as_str(response.output_message.content),
+        conversation_id,
+    )
+
 
 async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
     client: AsyncLlamaStackClient,
@@ -489,13 +498,19 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
 
     # Validate the question if question validation is enabled
     if configuration.question_validation.question_validation_enabled:
-        question_is_valid, _ = await validate_question(query_request.query, client, model_id)
-        
+        question_is_valid, _ = await validate_question(
+            query_request.query, client, model_id
+        )
+
         if not question_is_valid:
-            return TurnSummary(
-            llm_response=get_invalid_query_response(),
-            tool_calls=[],
-        ), conversation_id, False
+            return (
+                TurnSummary(
+                    llm_response=get_invalid_query_response(),
+                    tool_calls=[],
+                ),
+                conversation_id,
+                False,
+            )
 
     # bypass tools and MCP servers if no_tools is True
     if query_request.no_tools:

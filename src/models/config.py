@@ -472,7 +472,9 @@ class Configuration(ConfigurationBase):
     authorization: Optional[AuthorizationConfiguration] = None
     customization: Optional[Customization] = None
     inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
-    question_validation: QuestionValidationConfiguration = Field(default_factory=QuestionValidationConfiguration)
+    question_validation: QuestionValidationConfiguration = Field(
+        default_factory=QuestionValidationConfiguration
+    )
 
     def dump(self, filename: str = "configuration.json") -> None:
         """Dump actual configuration into JSON file."""

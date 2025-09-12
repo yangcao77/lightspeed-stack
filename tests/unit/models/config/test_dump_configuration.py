@@ -164,9 +164,7 @@ def test_dump_configuration(tmp_path) -> None:
                 },
             },
             "authorization": None,
-            "question_validation": {
-                "question_validation_enabled": False
-            },
+            "question_validation": {"question_validation_enabled": False},
         }
 
 
