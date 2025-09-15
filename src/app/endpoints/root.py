@@ -6,8 +6,8 @@ from typing import Annotated
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse
 
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from models.config import Action
 

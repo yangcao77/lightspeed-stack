@@ -11,7 +11,7 @@ from kubernetes.client.rest import ApiException
 from kubernetes.config import ConfigException
 
 from configuration import configuration
-from auth.interface import AuthInterface
+from authentication.interface import AuthInterface
 from constants import DEFAULT_VIRTUAL_PATH
 
 logger = logging.getLogger(__name__)

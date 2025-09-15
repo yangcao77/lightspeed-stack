@@ -8,7 +8,7 @@ from typing import Any
 
 from jsonpath_ng import parse
 
-from auth.interface import AuthTuple
+from authentication.interface import AuthTuple
 from models.config import JwtRoleRule, AccessRule, JsonPathOperator, Action
 import constants
 

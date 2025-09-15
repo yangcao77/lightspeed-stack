@@ -7,8 +7,8 @@ from fastapi import APIRouter, HTTPException, Request, status
 from fastapi import Depends
 from llama_stack_client import APIConnectionError
 
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from configuration import configuration
 from client import AsyncLlamaStackClientHolder

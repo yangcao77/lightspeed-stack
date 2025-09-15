@@ -3,7 +3,7 @@
 Intended for local/dev use only — do not use in production.
 
 Behavior:
-- Reads a user token from request headers via `auth.utils.extract_user_token`.
+- Reads a user token from request headers via `authentication.utils.extract_user_token`.
 - Reads `user_id` from query params (falls back to `DEFAULT_USER_UID`) and
   pairs it with `DEFAULT_USER_NAME`.
 - Returns a tuple: (user_id, DEFAULT_USER_NAME, user_token).
@@ -18,8 +18,8 @@ from constants import (
     DEFAULT_USER_UID,
     DEFAULT_VIRTUAL_PATH,
 )
-from auth.interface import AuthInterface
-from auth.utils import extract_user_token
+from authentication.interface import AuthInterface
+from authentication.utils import extract_user_token
 
 logger = logging.getLogger(__name__)
 

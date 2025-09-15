@@ -18,8 +18,8 @@ import aiohttp
 from constants import (
     DEFAULT_VIRTUAL_PATH,
 )
-from auth.interface import NO_AUTH_TUPLE, AuthInterface, AuthTuple
-from auth.utils import extract_user_token
+from authentication.interface import NO_AUTH_TUPLE, AuthInterface, AuthTuple
+from authentication.utils import extract_user_token
 from models.config import JwkConfiguration
 
 logger = logging.getLogger(__name__)

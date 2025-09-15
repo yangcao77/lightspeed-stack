@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Request, status, Depends
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from app.database import get_session
-from auth import get_auth_dependency
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from models.config import Action
 from models.database.conversations import UserConversation

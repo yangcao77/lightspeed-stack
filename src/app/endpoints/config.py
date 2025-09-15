@@ -5,8 +5,8 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Request, Depends
 
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from configuration import configuration
 from models.config import Action, Configuration

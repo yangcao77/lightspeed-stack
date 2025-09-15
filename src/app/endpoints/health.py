@@ -12,8 +12,8 @@ from llama_stack.providers.datatypes import HealthStatus
 
 from fastapi import APIRouter, status, Response, Depends
 from client import AsyncLlamaStackClientHolder
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from models.config import Action
 from models.responses import (

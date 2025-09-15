@@ -397,8 +397,8 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | The user is logged-in and authorized to access OLS | [AuthorizedResponse](#authorizedresponse) |
-| 400 | Missing or invalid credentials provided by client for noop and noop-with-token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Missing or invalid credentials provided by client for k8s | [UnauthorizedResponse](#unauthorizedresponse) |
+| 400 | Missing or invalid credentials provided by client for the noop and noop-with-token authentication modules | [UnauthorizedResponse](#unauthorizedresponse) |
+| 401 | Missing or invalid credentials provided by client for the k8s authentication module | [UnauthorizedResponse](#unauthorizedresponse) |
 | 403 | User is not authorized | [ForbiddenResponse](#forbiddenresponse) |
 ## GET `/metrics`
 
@@ -510,13 +510,14 @@ Model representing a response to an authorization request.
 Attributes:
     user_id: The ID of the logged in user.
     username: The name of the logged in user.
+    skip_userid_check: Whether to skip the user ID check.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
 | user_id | string | User ID, for example UUID |
 | username | string | User name |
-| skip_userid_check | bool | Whether to skip user_id check |
+| skip_userid_check | boolean | Whether to skip the user ID check |
 
 
 ## CORSConfiguration
@@ -608,12 +609,12 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| conversation_id | string |  |
-| created_at |  |  |
-| last_message_at |  |  |
-| message_count |  |  |
-| last_used_model |  |  |
-| last_used_provider |  |  |
+| conversation_id | string | Conversation ID (UUID) |
+| created_at |  | When the conversation was created |
+| last_message_at |  | When the last message was sent |
+| message_count |  | Number of user messages in the conversation |
+| last_used_model |  | Identification of the last model used for the conversation |
+| last_used_provider |  | Identification of the last provider used for the conversation |
 
 
 ## ConversationResponse
@@ -753,7 +754,7 @@ Examples:
     feedback_request = FeedbackRequest(
         conversation_id="12345678-abcd-0000-0123-456789abcdef",
         user_question="what are you doing?",
-        user_feedback="Great service!",
+        user_feedback="This response is not helpful",
         llm_response="I don't know",
         sentiment=1
     )
@@ -893,7 +894,7 @@ Example:
     info_response = InfoResponse(
         name="Lightspeed Stack",
         service_version="1.0.0",
-        llama_stack_version="0.2.18",
+        llama_stack_version="0.2.19",
     )
     ```
 
@@ -1123,9 +1124,9 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| ready | boolean |  |
-| reason | string |  |
-| providers | array |  |
+| ready | boolean | Flag indicating if service is ready |
+| reason | string | The reason for the readiness |
+| providers | array | List of unhealthy providers in case of readiness failure. |
 
 
 ## SQLiteDatabaseConfiguration

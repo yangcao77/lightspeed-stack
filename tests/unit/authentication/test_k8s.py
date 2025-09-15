@@ -1,4 +1,4 @@
-"""Unit tests for auth/k8s module."""
+"""Unit tests for authentication/k8s module."""
 
 # pylint: disable=too-many-arguments,too-many-positional-arguments,too-few-public-methods,protected-access
 
@@ -9,7 +9,7 @@ from fastapi import HTTPException, Request
 from kubernetes.client import AuthenticationV1Api, AuthorizationV1Api
 from kubernetes.client.rest import ApiException
 
-from auth.k8s import (
+from authentication.k8s import (
     K8sClientSingleton,
     K8SAuthDependency,
     ClusterIDUnavailableError,
@@ -75,8 +75,8 @@ async def test_auth_dependency_valid_token(mocker):
     dependency = K8SAuthDependency()
 
     # Mock the Kubernetes API calls
-    mock_authn_api = mocker.patch("auth.k8s.K8sClientSingleton.get_authn_api")
-    mock_authz_api = mocker.patch("auth.k8s.K8sClientSingleton.get_authz_api")
+    mock_authn_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authn_api")
+    mock_authz_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authz_api")
 
     # Mock a successful token review response
     mock_authn_api.return_value.create_token_review.return_value = MockK8sResponse(
@@ -108,8 +108,8 @@ async def test_auth_dependency_invalid_token(mocker):
     dependency = K8SAuthDependency()
 
     # Mock the Kubernetes API calls
-    mock_authn_api = mocker.patch("auth.k8s.K8sClientSingleton.get_authn_api")
-    mock_authz_api = mocker.patch("auth.k8s.K8sClientSingleton.get_authz_api")
+    mock_authn_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authn_api")
+    mock_authz_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authz_api")
 
     # Setup mock responses for invalid token
     mock_authn_api.return_value.create_token_review.return_value = MockK8sResponse(
@@ -138,7 +138,7 @@ async def test_auth_dependency_invalid_token(mocker):
 async def test_cluster_id_is_used_for_kube_admin(mocker):
     """Test the cluster id is used as user_id when user is kube:admin."""
     dependency = K8SAuthDependency()
-    mock_authz_api = mocker.patch("auth.k8s.K8sClientSingleton.get_authz_api")
+    mock_authz_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authz_api")
     mock_authz_api.return_value.create_subject_access_review.return_value = (
         MockK8sResponse(allowed=True)
     )
@@ -152,7 +152,7 @@ async def test_cluster_id_is_used_for_kube_admin(mocker):
     )
 
     mocker.patch(
-        "auth.k8s.get_user_info",
+        "authentication.k8s.get_user_info",
         return_value=MockK8sResponseStatus(
             authenticated=True,
             allowed=True,
@@ -162,7 +162,7 @@ async def test_cluster_id_is_used_for_kube_admin(mocker):
         ),
     )
     mocker.patch(
-        "auth.k8s.K8sClientSingleton.get_cluster_id",
+        "authentication.k8s.K8sClientSingleton.get_cluster_id",
         return_value="some-cluster-id",
     )
 
@@ -192,7 +192,7 @@ def test_auth_dependency_config(mocker):
 def test_get_cluster_id(mocker):
     """Test get_cluster_id function."""
     mock_get_custom_objects_api = mocker.patch(
-        "auth.k8s.K8sClientSingleton.get_custom_objects_api"
+        "authentication.k8s.K8sClientSingleton.get_custom_objects_api"
     )
 
     cluster_id = {"spec": {"clusterID": "some-cluster-id"}}
@@ -230,9 +230,11 @@ def test_get_cluster_id(mocker):
 
 def test_get_cluster_id_in_cluster(mocker):
     """Test get_cluster_id function when running inside of cluster."""
-    mocker.patch("auth.k8s.RUNNING_IN_CLUSTER", True)
-    mocker.patch("auth.k8s.K8sClientSingleton.__new__")
-    mock_get_cluster_id = mocker.patch("auth.k8s.K8sClientSingleton._get_cluster_id")
+    mocker.patch("authentication.k8s.RUNNING_IN_CLUSTER", True)
+    mocker.patch("authentication.k8s.K8sClientSingleton.__new__")
+    mock_get_cluster_id = mocker.patch(
+        "authentication.k8s.K8sClientSingleton._get_cluster_id"
+    )
 
     mock_get_cluster_id.return_value = "some-cluster-id"
     assert K8sClientSingleton.get_cluster_id() == "some-cluster-id"
@@ -240,8 +242,8 @@ def test_get_cluster_id_in_cluster(mocker):
 
 def test_get_cluster_id_outside_of_cluster(mocker):
     """Test get_cluster_id function when running outside of cluster."""
-    mocker.patch("auth.k8s.RUNNING_IN_CLUSTER", False)
-    mocker.patch("auth.k8s.K8sClientSingleton.__new__")
+    mocker.patch("authentication.k8s.RUNNING_IN_CLUSTER", False)
+    mocker.patch("authentication.k8s.K8sClientSingleton.__new__")
 
     # ensure cluster_id is None to trigger the condition
     K8sClientSingleton._cluster_id = None

@@ -18,8 +18,8 @@ from llama_stack_client.types.model_list_response import ModelListResponse
 
 from fastapi import APIRouter, HTTPException, Request, status, Depends
 
-from auth import get_auth_dependency
-from auth.interface import AuthTuple
+from authentication import get_auth_dependency
+from authentication.interface import AuthTuple
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from app.database import get_session

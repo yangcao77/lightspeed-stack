@@ -165,6 +165,7 @@ def check_prediction_result(context: Context) -> None:
     """
     assert context.response is not None, "Request needs to be performed first"
     assert context.text is not None, "Response does not contain any payload"
+
     expected_body = json.loads(context.text)
     result = context.response.json()
 

@@ -2,8 +2,8 @@
 
 import logging
 
-from auth.interface import AuthInterface
-from auth import noop, noop_with_token, k8s, jwk_token
+from authentication.interface import AuthInterface
+from authentication import noop, noop_with_token, k8s, jwk_token
 from configuration import configuration
 import constants
 

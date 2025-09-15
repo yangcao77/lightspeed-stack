@@ -267,7 +267,7 @@
                         },
                         "llama_stack": {
                             "url": "http://localhost:8321",
-                            "api_key": "xyzzy",
+                            "api_key": "*****",
                             "use_as_library_client": false
                         },
                         "user_data_collection": {
@@ -935,9 +935,12 @@
                     },
                     "skip_userid_check": {
                         "type": "boolean",
-                        "title": "Skip User Id Check",
+                        "title": "Skip Userid Check",
                         "description": "Whether to skip the user ID check",
-                        "examples": [true, false]
+                        "examples": [
+                            true,
+                            false
+                        ]
                     }
                 },
                 "type": "object",
@@ -947,12 +950,12 @@
                     "skip_userid_check"
                 ],
                 "title": "AuthorizedResponse",
-                "description": "Model representing a response to an authorization request.\n\nAttributes:\n    user_id: The ID of the logged in user.\n    username: The name of the logged in user.",
+                "description": "Model representing a response to an authorization request.\n\nAttributes:\n    user_id: The ID of the logged in user.\n    username: The name of the logged in user.\n    skip_userid_check: Whether to skip the user ID check.",
                 "examples": [
                     {
+                        "skip_userid_check": false,
                         "user_id": "123e4567-e89b-12d3-a456-426614174000",
-                        "username": "user1",
-                        "skip_userid_check": false
+                        "username": "user1"
                     }
                 ]
             },
@@ -1015,27 +1018,17 @@
                         "$ref": "#/components/schemas/UserDataCollection"
                     },
                     "database": {
-                        "$ref": "#/components/schemas/DatabaseConfiguration",
-                        "default": {
-                            "sqlite": {
-                                "db_path": "/tmp/lightspeed-stack.db"
-                            }
-                        }
+                        "$ref": "#/components/schemas/DatabaseConfiguration"
                     },
                     "mcp_servers": {
                         "items": {
                             "$ref": "#/components/schemas/ModelContextProtocolServer"
                         },
                         "type": "array",
-                        "title": "Mcp Servers",
-                        "default": []
+                        "title": "Mcp Servers"
                     },
                     "authentication": {
-                        "$ref": "#/components/schemas/AuthenticationConfiguration",
-                        "default": {
-                            "module": "noop",
-                            "skip_tls_verification": false
-                        }
+                        "$ref": "#/components/schemas/AuthenticationConfiguration"
                     },
                     "authorization": {
                         "anyOf": [
@@ -1058,8 +1051,7 @@
                         ]
                     },
                     "inference": {
-                        "$ref": "#/components/schemas/InferenceConfiguration",
-                        "default": {}
+                        "$ref": "#/components/schemas/InferenceConfiguration"
                     }
                 },
                 "additionalProperties": false,
@@ -1108,7 +1100,11 @@
                 "properties": {
                     "conversation_id": {
                         "type": "string",
-                        "title": "Conversation Id"
+                        "title": "Conversation Id",
+                        "description": "Conversation ID (UUID)",
+                        "examples": [
+                            "c5260aec-4d82-4370-9fdf-05cf908b3f16"
+                        ]
                     },
                     "created_at": {
                         "anyOf": [
@@ -1119,7 +1115,11 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Created At"
+                        "title": "Created At",
+                        "description": "When the conversation was created",
+                        "examples": [
+                            "2024-01-01T01:00:00Z"
+                        ]
                     },
                     "last_message_at": {
                         "anyOf": [
@@ -1130,7 +1130,11 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Last Message At"
+                        "title": "Last Message At",
+                        "description": "When the last message was sent",
+                        "examples": [
+                            "2024-01-01T01:00:00Z"
+                        ]
                     },
                     "message_count": {
                         "anyOf": [
@@ -1141,7 +1145,11 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Message Count"
+                        "title": "Message Count",
+                        "description": "Number of user messages in the conversation",
+                        "examples": [
+                            42
+                        ]
                     },
                     "last_used_model": {
                         "anyOf": [
@@ -1152,7 +1160,12 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Last Used Model"
+                        "title": "Last Used Model",
+                        "description": "Identification of the last model used for the conversation",
+                        "examples": [
+                            "gpt-4-turbo",
+                            "gpt-3.5-turbo-0125"
+                        ]
                     },
                     "last_used_provider": {
                         "anyOf": [
@@ -1163,7 +1176,12 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Last Used Provider"
+                        "title": "Last Used Provider",
+                        "description": "Identification of the last provider used for the conversation",
+                        "examples": [
+                            "openai",
+                            "gemini"
+                        ]
                     }
                 },
                 "type": "object",
@@ -1255,8 +1273,41 @@
                     }
                 ]
             },
+            "CustomProfile": {
+                "properties": {
+                    "path": {
+                        "type": "string",
+                        "title": "Path"
+                    },
+                    "prompts": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Prompts",
+                        "default": {}
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "path"
+                ],
+                "title": "CustomProfile",
+                "description": "Custom profile customization for prompts and validation."
+            },
             "Customization": {
                 "properties": {
+                    "profile_path": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Profile Path"
+                    },
                     "disable_query_system_prompt": {
                         "type": "boolean",
                         "title": "Disable Query System Prompt",
@@ -1284,6 +1335,16 @@
                             }
                         ],
                         "title": "System Prompt"
+                    },
+                    "custom_profile": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/CustomProfile"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     }
                 },
                 "additionalProperties": false,
@@ -1655,7 +1716,7 @@
                     "llama_stack_version"
                 ],
                 "title": "InfoResponse",
-                "description": "Model representing a response to an info request.\n\nAttributes:\n    name: Service name.\n    service_version: Service version.\n    llama_stack_version: Llama Stack version.\n\nExample:\n    ```python\n    info_response = InfoResponse(\n        name=\"Lightspeed Stack\",\n        service_version=\"1.0.0\",\n        llama_stack_version=\"0.2.18\",\n    )\n    ```",
+                "description": "Model representing a response to an info request.\n\nAttributes:\n    name: Service name.\n    service_version: Service version.\n    llama_stack_version: Llama Stack version.\n\nExample:\n    ```python\n    info_response = InfoResponse(\n        name=\"Lightspeed Stack\",\n        service_version=\"1.0.0\",\n        llama_stack_version=\"0.2.19\",\n    )\n    ```",
                 "examples": [
                     {
                         "llama_stack_version": "1.0.0",
@@ -1684,12 +1745,7 @@
                         "title": "Url"
                     },
                     "jwt_configuration": {
-                        "$ref": "#/components/schemas/JwtConfiguration",
-                        "default": {
-                            "user_id_claim": "user_id",
-                            "username_claim": "username",
-                            "role_rules": []
-                        }
+                        "$ref": "#/components/schemas/JwtConfiguration"
                     }
                 },
                 "additionalProperties": false,
@@ -1796,7 +1852,9 @@
                     "api_key": {
                         "anyOf": [
                             {
-                                "type": "string"
+                                "type": "string",
+                                "format": "password",
+                                "writeOnly": true
                             },
                             {
                                 "type": "null"
@@ -1919,7 +1977,9 @@
                     },
                     "password": {
                         "type": "string",
-                        "title": "Password"
+                        "format": "password",
+                        "title": "Password",
+                        "writeOnly": true
                     },
                     "namespace": {
                         "anyOf": [
@@ -2223,18 +2283,29 @@
                 "properties": {
                     "ready": {
                         "type": "boolean",
-                        "title": "Ready"
+                        "title": "Ready",
+                        "description": "Flag indicating if service is ready",
+                        "examples": [
+                            true,
+                            false
+                        ]
                     },
                     "reason": {
                         "type": "string",
-                        "title": "Reason"
+                        "title": "Reason",
+                        "description": "The reason for the readiness",
+                        "examples": [
+                            "Service is ready"
+                        ]
                     },
                     "providers": {
                         "items": {
                             "$ref": "#/components/schemas/ProviderHealthStatus"
                         },
                         "type": "array",
-                        "title": "Providers"
+                        "title": "Providers",
+                        "description": "List of unhealthy providers in case of readiness failure.",
+                        "examples": []
                     }
                 },
                 "type": "object",
@@ -2303,23 +2374,10 @@
                         "default": true
                     },
                     "tls_config": {
-                        "$ref": "#/components/schemas/TLSConfiguration",
-                        "default": {}
+                        "$ref": "#/components/schemas/TLSConfiguration"
                     },
                     "cors": {
-                        "$ref": "#/components/schemas/CORSConfiguration",
-                        "default": {
-                            "allow_origins": [
-                                "*"
-                            ],
-                            "allow_credentials": false,
-                            "allow_methods": [
-                                "*"
-                            ],
-                            "allow_headers": [
-                                "*"
-                            ]
-                        }
+                        "$ref": "#/components/schemas/CORSConfiguration"
                     }
                 },
                 "additionalProperties": false,

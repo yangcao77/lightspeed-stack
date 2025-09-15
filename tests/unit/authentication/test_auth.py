@@ -1,7 +1,7 @@
-"""Unit tests for functions defined in auth/__init__.py"""
+"""Unit tests for functions defined in authentication/__init__.py"""
 
-from auth import get_auth_dependency
-from auth import noop, noop_with_token, k8s
+from authentication import get_auth_dependency
+from authentication import noop, noop_with_token, k8s
 from constants import AUTH_MOD_NOOP, AUTH_MOD_NOOP_WITH_TOKEN, AUTH_MOD_K8S
 from configuration import configuration
 

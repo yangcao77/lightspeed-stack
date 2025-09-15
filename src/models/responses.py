@@ -173,9 +173,23 @@ class ReadinessResponse(BaseModel):
         ```
     """
 
-    ready: bool
-    reason: str
-    providers: list[ProviderHealthStatus]
+    ready: bool = Field(
+        ...,
+        description="Flag indicating if service is ready",
+        examples=[True, False],
+    )
+
+    reason: str = Field(
+        ...,
+        description="The reason for the readiness",
+        examples=["Service is ready"],
+    )
+
+    providers: list[ProviderHealthStatus] = Field(
+        ...,
+        description="List of unhealthy providers in case of readiness failure.",
+        examples=[],
+    )
 
     # provides examples for /docs endpoint
     model_config = {
@@ -482,12 +496,41 @@ class ConversationDetails(BaseModel):
         ```
     """
 
-    conversation_id: str
-    created_at: Optional[str] = None
-    last_message_at: Optional[str] = None
-    message_count: Optional[int] = None
-    last_used_model: Optional[str] = None
-    last_used_provider: Optional[str] = None
+    conversation_id: str = Field(
+        ...,
+        description="Conversation ID (UUID)",
+        examples=["c5260aec-4d82-4370-9fdf-05cf908b3f16"],
+    )
+
+    created_at: Optional[str] = Field(
+        None,
+        description="When the conversation was created",
+        examples=["2024-01-01T01:00:00Z"],
+    )
+
+    last_message_at: Optional[str] = Field(
+        None,
+        description="When the last message was sent",
+        examples=["2024-01-01T01:00:00Z"],
+    )
+
+    message_count: Optional[int] = Field(
+        None,
+        description="Number of user messages in the conversation",
+        examples=[42],
+    )
+
+    last_used_model: Optional[str] = Field(
+        None,
+        description="Identification of the last model used for the conversation",
+        examples=["gpt-4-turbo", "gpt-3.5-turbo-0125"],
+    )
+
+    last_used_provider: Optional[str] = Field(
+        None,
+        description="Identification of the last provider used for the conversation",
+        examples=["openai", "gemini"],
+    )
 
 
 class ConversationsListResponse(BaseModel):

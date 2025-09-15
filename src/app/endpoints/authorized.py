@@ -5,8 +5,8 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends
 
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from models.responses import AuthorizedResponse, UnauthorizedResponse, ForbiddenResponse
 
 logger = logging.getLogger(__name__)
@@ -20,12 +20,12 @@ authorized_responses: dict[int | str, dict[str, Any]] = {
         "model": AuthorizedResponse,
     },
     400: {
-        "description": "Missing or invalid credentials provided by client for the noop and"
+        "description": "Missing or invalid credentials provided by client for the noop and "
         "noop-with-token authentication modules",
         "model": UnauthorizedResponse,
     },
     401: {
-        "description": "Missing or invalid credentials provided by client for the"
+        "description": "Missing or invalid credentials provided by client for the "
         "k8s authentication module",
         "model": UnauthorizedResponse,
     },

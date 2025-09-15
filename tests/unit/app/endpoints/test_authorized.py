@@ -5,7 +5,7 @@ from fastapi import HTTPException
 from starlette.datastructures import Headers
 
 from app.endpoints.authorized import authorized_endpoint_handler
-from auth.utils import extract_user_token
+from authentication.utils import extract_user_token
 
 MOCK_AUTH = ("test-id", "test-user", True, "token")
 

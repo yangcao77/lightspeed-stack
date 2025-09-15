@@ -10,7 +10,7 @@ from constants import (
     NO_USER_TOKEN,
     DEFAULT_VIRTUAL_PATH,
 )
-from auth.interface import AuthInterface
+from authentication.interface import AuthInterface
 
 logger = logging.getLogger(__name__)
 

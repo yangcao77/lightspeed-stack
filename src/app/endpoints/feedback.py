@@ -8,8 +8,8 @@ import json
 from datetime import datetime, UTC
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 
-from auth import get_auth_dependency
-from auth.interface import AuthTuple
+from authentication import get_auth_dependency
+from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import configuration
 from models.config import Action

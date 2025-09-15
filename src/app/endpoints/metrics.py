@@ -8,8 +8,8 @@ from prometheus_client import (
     CONTENT_TYPE_LATEST,
 )
 
-from auth.interface import AuthTuple
-from auth import get_auth_dependency
+from authentication.interface import AuthTuple
+from authentication import get_auth_dependency
 from authorization.middleware import authorize
 from models.config import Action
 from metrics.utils import setup_model_metrics
