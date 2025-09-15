@@ -209,7 +209,6 @@ def test_get_profile_prompt_with_enabled_query_system_prompt(
     assert system_prompt == query_request_with_system_prompt.system_prompt
 
 
-
 def test_validate_model_provider_override_allowed_with_action():
     """Ensure no exception when caller has MODEL_OVERRIDE and request includes model/provider."""
     query_request = QueryRequest(query="q", model="m", provider="p")
@@ -230,3 +229,127 @@ def test_validate_model_provider_override_no_override_without_action():
     """No exception when request does not include model/provider regardless of permission."""
     query_request = QueryRequest(query="q")
     endpoints.validate_model_provider_override(query_request, set())
+
+
+# Tests for get_validation_system_prompt
+
+
+def test_get_default_validation_system_prompt(config_without_system_prompt):
+    """Test that default validation system prompt is returned when no custom profile is provided."""
+    validation_prompt = endpoints.get_validation_system_prompt(
+        config_without_system_prompt
+    )
+    assert validation_prompt == constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
+
+
+def test_get_validation_system_prompt_with_custom_profile():
+    """Test that validation system prompt from custom profile is returned when available."""
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    validation_prompt = endpoints.get_validation_system_prompt(cfg)
+
+    # Get the expected prompt from the test profile
+    custom_profile = CustomProfile(path="tests/profiles/test/profile.py")
+    expected_prompt = custom_profile.get_prompts().get("validation")
+
+    assert validation_prompt == expected_prompt
+
+
+def test_get_validation_system_prompt_with_custom_profile_no_validation_prompt():
+    """Test that default validation system prompt is returned when custom profile has no validation prompt."""
+    # Create a test profile that doesn't have validation prompt
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    # Manually set the prompts to not include validation
+    cfg.customization.custom_profile.prompts = {"default": "test prompt"}
+
+    validation_prompt = endpoints.get_validation_system_prompt(cfg)
+    assert validation_prompt == constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
+
+
+def test_get_validation_system_prompt_with_custom_profile_empty_validation_prompt():
+    """Test that default validation system prompt is returned when custom profile has empty validation prompt."""
+    # Create a test profile that has empty validation prompt
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    # Manually set the prompts to have empty validation prompt
+    cfg.customization.custom_profile.prompts = {"validation": ""}
+
+    validation_prompt = endpoints.get_validation_system_prompt(cfg)
+    assert validation_prompt == constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
+
+
+# Tests for get_invalid_query_response
+
+
+def test_get_default_invalid_query_response(config_without_system_prompt):
+    """Test that default invalid query response is returned when no custom profile is provided."""
+    invalid_response = endpoints.get_invalid_query_response(
+        config_without_system_prompt
+    )
+    assert invalid_response == constants.DEFAULT_INVALID_QUERY_RESPONSE
+
+
+def test_get_invalid_query_response_with_custom_profile():
+    """Test that invalid query response from custom profile is returned when available."""
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    invalid_response = endpoints.get_invalid_query_response(cfg)
+
+    # Get the expected response from the test profile
+    custom_profile = CustomProfile(path="tests/profiles/test/profile.py")
+    expected_response = custom_profile.get_query_responses().get("invalid_resp")
+
+    assert invalid_response == expected_response
+
+
+def test_get_invalid_query_response_with_custom_profile_no_invalid_resp():
+    """Test that default invalid query response is returned when custom profile has no invalid_resp."""
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    # Manually set the query_responses to not include invalid_resp
+    cfg.customization.custom_profile.query_responses = {}
+
+    invalid_response = endpoints.get_invalid_query_response(cfg)
+    assert invalid_response == constants.DEFAULT_INVALID_QUERY_RESPONSE
+
+
+def test_get_invalid_query_response_with_custom_profile_empty_invalid_resp():
+    """Test that default invalid query response is returned when custom profile has empty invalid_resp."""
+    test_config = config_dict.copy()
+    test_config["customization"] = {
+        "profile_path": "tests/profiles/test/profile.py",
+    }
+    cfg = AppConfig()
+    cfg.init_from_dict(test_config)
+
+    # Manually set the query_responses to have empty invalid_resp
+    cfg.customization.custom_profile.query_responses = {"invalid_resp": ""}
+
+    invalid_response = endpoints.get_invalid_query_response(cfg)
+    assert invalid_response == constants.DEFAULT_INVALID_QUERY_RESPONSE

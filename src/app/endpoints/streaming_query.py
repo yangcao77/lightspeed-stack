@@ -601,7 +601,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                 query_request.query, client, llama_stack_model_id
             )
             if not query_is_valid:
-                response = get_invalid_query_response()
+                response = get_invalid_query_response(configuration)
                 if not is_transcripts_enabled():
                     logger.debug(
                         "Transcript collection is disabled in the configuration"
@@ -659,35 +659,26 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
             # Send start event
             yield stream_start_event(conversation_id)
 
-            if not query_is_valid:
-                # Generate SSE events for invalid query
-                yield format_stream_data(
-                    {
-                        "event": "token",
-                        "data": {"id": 0, "token": get_invalid_query_response()},
-                    }
-                )
-            else:
-                async for chunk in turn_response:
-                    p = chunk.event.payload
-                    if p.event_type == "turn_complete":
-                        summary.llm_response = interleaved_content_as_str(
-                            p.turn.output_message.content
+            async for chunk in turn_response:
+                p = chunk.event.payload
+                if p.event_type == "turn_complete":
+                    summary.llm_response = interleaved_content_as_str(
+                        p.turn.output_message.content
+                    )
+                    system_prompt = get_system_prompt(query_request, configuration)
+                    try:
+                        update_llm_token_count_from_turn(
+                            p.turn, model_id, provider_id, system_prompt
                         )
-                        system_prompt = get_system_prompt(query_request, configuration)
-                        try:
-                            update_llm_token_count_from_turn(
-                                p.turn, model_id, provider_id, system_prompt
-                            )
-                        except Exception:  # pylint: disable=broad-except
-                            logger.exception("Failed to update token usage metrics")
-                    elif p.event_type == "step_complete":
-                        if p.step_details.step_type == "tool_execution":
-                            summary.append_tool_calls_from_llama(p.step_details)
+                    except Exception:  # pylint: disable=broad-except
+                        logger.exception("Failed to update token usage metrics")
+                elif p.event_type == "step_complete":
+                    if p.step_details.step_type == "tool_execution":
+                        summary.append_tool_calls_from_llama(p.step_details)
 
-                    for event in stream_build_event(chunk, chunk_id, metadata_map):
-                        chunk_id += 1
-                        yield event
+                for event in stream_build_event(chunk, chunk_id, metadata_map):
+                    chunk_id += 1
+                    yield event
 
             yield stream_end_event(metadata_map)
 

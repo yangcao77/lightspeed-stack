@@ -427,6 +427,7 @@ class CustomProfile:
 
     path: str
     prompts: dict[str, str] = Field(default={}, init=False)
+    query_responses: dict[str, str] = Field(default={}, init=False)
 
     def __post_init__(self) -> None:
         """Validate and load profile."""
@@ -438,10 +439,17 @@ class CustomProfile:
         profile_module = checks.import_python_module("profile", self.path)
         if profile_module is not None and checks.is_valid_profile(profile_module):
             self.prompts = profile_module.PROFILE_CONFIG.get("system_prompts", {})
+            self.query_responses = profile_module.PROFILE_CONFIG.get(
+                "query_responses", {}
+            )
 
     def get_prompts(self) -> dict[str, str]:
         """Retrieve prompt attribute."""
         return self.prompts
+
+    def get_query_responses(self) -> dict[str, str]:
+        """Retrieve query responses attribute."""
+        return self.query_responses
 
 
 class Customization(ConfigurationBase):

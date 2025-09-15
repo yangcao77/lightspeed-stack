@@ -406,7 +406,7 @@ async def validate_question(
     Returns:
         bool: True if the question was deemed valid, False otherwise
     """
-    validation_system_prompt = get_validation_system_prompt()
+    validation_system_prompt = get_validation_system_prompt(configuration)
     agent, session_id, conversation_id = await get_temp_agent(
         client, model_id, validation_system_prompt
     )
@@ -505,7 +505,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         if not question_is_valid:
             return (
                 TurnSummary(
-                    llm_response=get_invalid_query_response(),
+                    llm_response=get_invalid_query_response(configuration),
                     tool_calls=[],
                 ),
                 conversation_id,

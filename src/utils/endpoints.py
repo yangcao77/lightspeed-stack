@@ -63,61 +63,31 @@ def check_configuration_loaded(config: AppConfig) -> None:
         )
 
 
-QUESTION_VALIDATOR_PROMPT_TEMPLATE = f"""
-Instructions:
-- You are a question classifying tool
-- You are an expert in Backstage, Red Hat Developer Hub (RHDH), Kubernetes, Openshift, CI/CD and GitOps Pipelines
-- Your job is to determine if a user's question is related to Backstage or Red Hat Developer Hub (RHDH) technologies, \
-    including integrations, plugins, catalog exploration, service creation, or workflow automation.
-- If a question appears to be related to Backstage, RHDH, Kubernetes, Openshift, or any of their features, answer with the word {constants.SUBJECT_ALLOWED}
-- If a question is not related to Backstage, RHDH, Kubernetes, Openshift, or their features, answer with the word {constants.SUBJECT_REJECTED}
-- Do not explain your answer, just provide the one-word response
-
-
-Example Question:
-Why is the sky blue?
-Example Response:
-{constants.SUBJECT_REJECTED}
-
-Example Question:
-Can you help configure my cluster to automatically scale?
-Example Response:
-{constants.SUBJECT_ALLOWED}
-
-Example Question:
-How do I create import an existing software template in Backstage?
-Example Response:
-{constants.SUBJECT_ALLOWED}
-
-Example Question:
-How do I accomplish $task in RHDH?
-Example Response:
-{constants.SUBJECT_ALLOWED}
-
-Example Question:
-How do I explore a component in RHDH catalog?
-Example Response:
-{constants.SUBJECT_ALLOWED}
-
-Example Question:
-How can I integrate GitOps into my pipeline?
-Example Response:
-{constants.SUBJECT_ALLOWED}
-
-Question:
-{{query}}
-Response:
-"""
-
-
-def get_validation_system_prompt() -> str:
+def get_validation_system_prompt(config: AppConfig) -> str:
     """Get the validation system prompt."""
-    # return constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
-    return QUESTION_VALIDATOR_PROMPT_TEMPLATE
+    # profile takes precedence for setting prompt
+    if (
+        config.customization is not None
+        and config.customization.custom_profile is not None
+    ):
+        prompt = config.customization.custom_profile.get_prompts().get("validation")
+        if prompt:
+            return prompt
+
+    return constants.DEFAULT_VALIDATION_SYSTEM_PROMPT
 
 
-def get_invalid_query_response() -> str:
+def get_invalid_query_response(config: AppConfig) -> str:
     """Get the invalid query response."""
+    if (
+        config.customization is not None
+        and config.customization.custom_profile is not None
+    ):
+        prompt = config.customization.custom_profile.get_query_responses().get(
+            "invalid_resp"
+        )
+        if prompt:
+            return prompt
     return constants.DEFAULT_INVALID_QUERY_RESPONSE
 
 
