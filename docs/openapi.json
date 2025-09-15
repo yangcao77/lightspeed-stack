@@ -1052,6 +1052,9 @@
                     },
                     "inference": {
                         "$ref": "#/components/schemas/InferenceConfiguration"
+                    },
+                    "question_validation": {
+                        "$ref": "#/components/schemas/QuestionValidationConfiguration"
                     }
                 },
                 "additionalProperties": false,
@@ -1285,6 +1288,14 @@
                         },
                         "type": "object",
                         "title": "Prompts",
+                        "default": {}
+                    },
+                    "query_responses": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Query Responses",
                         "default": {}
                     }
                 },
@@ -2278,6 +2289,19 @@
                         "response": "Operator Lifecycle Manager (OLM) helps users install..."
                     }
                 ]
+            },
+            "QuestionValidationConfiguration": {
+                "properties": {
+                    "question_validation_enabled": {
+                        "type": "boolean",
+                        "title": "Question Validation Enabled",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "QuestionValidationConfiguration",
+                "description": "Question validation configuration."
             },
             "ReadinessResponse": {
                 "properties": {
