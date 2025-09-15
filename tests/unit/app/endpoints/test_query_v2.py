@@ -59,6 +59,44 @@ def test_get_mcp_tools_with_and_without_token() -> None:
     assert tools_with_token[1]["headers"] == {"Authorization": "Bearer abc"}
 
 
+def test_get_mcp_tools_with_mcp_headers():
+    """Test get_mcp_tools merges token auth and per-server headers correctly."""
+    servers = [
+        ModelContextProtocolServer(name="fs", url="http://localhost:3000"),
+        ModelContextProtocolServer(name="git", url="https://git.example.com/mcp"),
+    ]
+
+    # Test with mcp_headers only (no token)
+    mcp_headers = {
+        "http://localhost:3000": {"X-Custom-Header": "value1"},
+        "https://git.example.com/mcp": {"X-API-Key": "secret123"},
+    }
+    tools = get_mcp_tools(servers, token=None, mcp_headers=mcp_headers)
+    assert len(tools) == 2
+    assert tools[0]["headers"] == {"X-Custom-Header": "value1"}
+    assert tools[1]["headers"] == {"X-API-Key": "secret123"}
+
+    # Test with both token and mcp_headers (should merge)
+    tools_merged = get_mcp_tools(servers, token="abc", mcp_headers=mcp_headers)
+    assert len(tools_merged) == 2
+    assert tools_merged[0]["headers"] == {
+        "Authorization": "Bearer abc",
+        "X-Custom-Header": "value1",
+    }
+    assert tools_merged[1]["headers"] == {
+        "Authorization": "Bearer abc",
+        "X-API-Key": "secret123",
+    }
+
+    # Test mcp_headers can override Authorization
+    override_headers = {
+        "http://localhost:3000": {"Authorization": "Custom auth"},
+    }
+    tools_override = get_mcp_tools(servers, token="abc", mcp_headers=override_headers)
+    assert tools_override[0]["headers"] == {"Authorization": "Custom auth"}
+    assert tools_override[1]["headers"] == {"Authorization": "Bearer abc"}
+
+
 @pytest.mark.asyncio
 async def test_retrieve_response_no_tools_bypasses_tools(mocker: MockerFixture) -> None:
     """Test that no_tools=True bypasses tool configuration and passes None to responses API."""

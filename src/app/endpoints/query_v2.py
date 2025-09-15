@@ -18,7 +18,7 @@ from constants import DEFAULT_RAG_TOOL
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
-from configuration import configuration
+from configuration import AppConfig, configuration
 import metrics
 from models.config import Action
 from models.requests import QueryRequest
@@ -350,31 +350,9 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         validate_attachments_metadata(query_request.attachments)
 
     # Prepare tools for responses API
-    toolgroups: list[dict[str, Any]] | None = None
-    if not query_request.no_tools:
-        toolgroups = []
-        # Get vector stores for RAG tools
-        vector_store_ids = [
-            vector_store.id for vector_store in (await client.vector_stores.list()).data
-        ]
-
-        # Add RAG tools if vector stores are available
-        rag_tools = get_rag_tools(vector_store_ids)
-        if rag_tools:
-            toolgroups.extend(rag_tools)
-
-        # Add MCP server tools
-        mcp_tools = get_mcp_tools(configuration.mcp_servers, token, mcp_headers)
-        if mcp_tools:
-            toolgroups.extend(mcp_tools)
-            logger.debug(
-                "Configured %d MCP tools: %s",
-                len(mcp_tools),
-                [tool.get("server_label", "unknown") for tool in mcp_tools],
-            )
-        # Convert empty list to None for consistency with existing behavior
-        if not toolgroups:
-            toolgroups = None
+    toolgroups = await prepare_tools_for_responses_api(
+        client, query_request, token, configuration, mcp_headers
+    )
 
     # Prepare input for Responses API
     # Convert attachments to text and concatenate with query
@@ -620,11 +598,71 @@ def get_mcp_tools(
             "require_approval": "never",
         }
 
-        # Add authentication if headers or token provided (Response API format)
-        headers = (mcp_headers or {}).get(mcp_server.url)
-        if headers:
+        # Build headers: start with token auth, then merge in per-server headers
+        if token or mcp_headers:
+            headers = {}
+            # Add token-based auth if available
+            if token:
+                headers["Authorization"] = f"Bearer {token}"
+            # Merge in per-server headers (can override Authorization if needed)
+            server_headers = (mcp_headers or {}).get(mcp_server.url)
+            if server_headers:
+                headers.update(server_headers)
             tool_def["headers"] = headers
-        elif token:
-            tool_def["headers"] = {"Authorization": f"Bearer {token}"}
+
         tools.append(tool_def)
     return tools
+
+
+async def prepare_tools_for_responses_api(
+    client: AsyncLlamaStackClient,
+    query_request: QueryRequest,
+    token: str,
+    config: AppConfig,
+    mcp_headers: dict[str, dict[str, str]] | None = None,
+) -> list[dict[str, Any]] | None:
+    """
+    Prepare tools for Responses API including RAG and MCP tools.
+
+    This function retrieves vector stores and combines them with MCP
+    server tools to create a unified toolgroups list for the Responses API.
+
+    Args:
+        client: The Llama Stack client instance
+        query_request: The user's query request
+        token: Authentication token for MCP tools
+        config: Configuration object containing MCP server settings
+        mcp_headers: Per-request headers for MCP servers
+
+    Returns:
+        list[dict[str, Any]] | None: List of tool configurations for the
+        Responses API, or None if no_tools is True or no tools are available
+    """
+    if query_request.no_tools:
+        return None
+
+    toolgroups = []
+    # Get vector stores for RAG tools
+    vector_store_ids = [
+        vector_store.id for vector_store in (await client.vector_stores.list()).data
+    ]
+
+    # Add RAG tools if vector stores are available
+    rag_tools = get_rag_tools(vector_store_ids)
+    if rag_tools:
+        toolgroups.extend(rag_tools)
+
+    # Add MCP server tools
+    mcp_tools = get_mcp_tools(config.mcp_servers, token, mcp_headers)
+    if mcp_tools:
+        toolgroups.extend(mcp_tools)
+        logger.debug(
+            "Configured %d MCP tools: %s",
+            len(mcp_tools),
+            [tool.get("server_label", "unknown") for tool in mcp_tools],
+        )
+    # Convert empty list to None for consistency with existing behavior
+    if not toolgroups:
+        return None
+
+    return toolgroups
