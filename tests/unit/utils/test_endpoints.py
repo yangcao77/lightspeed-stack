@@ -782,7 +782,9 @@ def test_validate_model_provider_override_no_override_without_action():
 
 
 def test_get_topic_summary_system_prompt_default(setup_configuration):
-    """Test that default topic summary system prompt is returned when no custom profile is configured."""
+    """Test that default topic summary system prompt is returned when no custom
+    profile is configured.
+    """
     topic_summary_prompt = endpoints.get_topic_summary_system_prompt(
         setup_configuration
     )
@@ -807,7 +809,9 @@ def test_get_topic_summary_system_prompt_with_custom_profile():
 
 
 def test_get_topic_summary_system_prompt_with_custom_profile_no_topic_summary(mocker):
-    """Test that default topic summary prompt is returned when custom profile has no topic_summary prompt."""
+    """Test that default topic summary prompt is returned when custom profile has
+    no topic_summary prompt.
+    """
     test_config = config_dict.copy()
     test_config["customization"] = {
         "profile_path": "tests/profiles/test/profile.py",

@@ -160,6 +160,7 @@ async def get_topic_summary(
     question: str, client: AsyncLlamaStackClient, model_id: str
 ) -> str:
     """Get a topic summary for a question.
+
     Args:
         question: The question to be validated.
         client: The AsyncLlamaStackClient to use for the request.
@@ -168,7 +169,7 @@ async def get_topic_summary(
         str: The topic summary for the question.
     """
     topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
-    agent, session_id, conversation_id = await get_temp_agent(
+    agent, session_id, _ = await get_temp_agent(
         client, model_id, topic_summary_system_prompt
     )
     response = await agent.create_turn(
