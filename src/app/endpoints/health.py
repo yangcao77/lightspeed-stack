@@ -22,7 +22,7 @@ from models.responses import (
     ProviderHealthStatus,
 )
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["health"])
 
 auth_dependency = get_auth_dependency()
@@ -93,6 +93,8 @@ async def readiness_probe_get_method(
     # Used only for authorization
     _ = auth
 
+    logger.info("Response to /v1/readiness endpoint")
+
     provider_statuses = await get_providers_health_statuses()
 
     # Check if any provider is unhealthy (not counting not_implemented as unhealthy)
@@ -134,5 +136,7 @@ async def liveness_probe_get_method(
     """
     # Used only for authorization
     _ = auth
+
+    logger.info("Response to /v1/liveness endpoint")
 
     return LivenessResponse(alive=True)

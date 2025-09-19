@@ -29,6 +29,7 @@ import metrics
 from metrics.utils import update_llm_token_count_from_turn
 from models.config import Action
 from models.requests import QueryRequest
+from models.responses import UnauthorizedResponse, ForbiddenResponse
 from models.database.conversations import UserConversation
 from utils.endpoints import check_configuration_loaded, get_agent, get_system_prompt
 from utils.mcp_headers import mcp_headers_dependency, handle_mcp_headers_with_toolgroups
@@ -52,6 +53,46 @@ from app.endpoints.query import (
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query"])
 auth_dependency = get_auth_dependency()
+
+streaming_query_responses: dict[int | str, dict[str, Any]] = {
+    200: {
+        "description": "Streaming response with Server-Sent Events",
+        "content": {
+            "text/event-stream": {
+                "schema": {
+                    "type": "string",
+                    "example": (
+                        'data: {"event": "start", '
+                        '"data": {"conversation_id": "123e4567-e89b-12d3-a456-426614174000"}}\n\n'
+                        'data: {"event": "token", "data": {"id": 0, "role": "inference", '
+                        '"token": "Hello"}}\n\n'
+                        'data: {"event": "end", "data": {"referenced_documents": [], '
+                        '"truncated": null, "input_tokens": 0, "output_tokens": 0}, '
+                        '"available_quotas": {}}\n\n'
+                    ),
+                }
+            }
+        },
+    },
+    400: {
+        "description": "Missing or invalid credentials provided by client",
+        "model": UnauthorizedResponse,
+    },
+    401: {
+        "description": "Unauthorized: Invalid or missing Bearer token for k8s auth",
+        "model": UnauthorizedResponse,
+    },
+    403: {
+        "description": "User is not authorized",
+        "model": ForbiddenResponse,
+    },
+    500: {
+        "detail": {
+            "response": "Unable to connect to Llama Stack",
+            "cause": "Connection error.",
+        }
+    },
+}
 
 
 METADATA_PATTERN = re.compile(r"\nMetadata: (\{.+})\n")
@@ -520,7 +561,7 @@ def _handle_heartbeat_event(chunk_id: int) -> Iterator[str]:
     )
 
 
-@router.post("/streaming_query")
+@router.post("/streaming_query", responses=streaming_query_responses)
 @authorize(Action.STREAMING_QUERY)
 async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     request: Request,

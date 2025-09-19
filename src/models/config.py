@@ -76,6 +76,12 @@ class SQLiteDatabaseConfiguration(ConfigurationBase):
     db_path: str
 
 
+class InMemoryCacheConfig(ConfigurationBase):
+    """In-memory cache configuration."""
+
+    max_entries: PositiveInt
+
+
 class PostgreSQLDatabaseConfiguration(ConfigurationBase):
     """PostgreSQL database configuration."""
 
@@ -480,6 +486,47 @@ class InferenceConfiguration(ConfigurationBase):
         return self
 
 
+class ConversationCache(ConfigurationBase):
+    """Conversation cache configuration."""
+
+    type: Literal["memory", "sqlite", "postgres"] | None = None
+    memory: Optional[InMemoryCacheConfig] = None
+    sqlite: Optional[SQLiteDatabaseConfiguration] = None
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
+
+    @model_validator(mode="after")
+    def check_cache_configuration(self) -> Self:
+        """Check conversation cache configuration."""
+        # if any backend config is provided, type must be explicitly selected
+        if self.type is None:
+            if any([self.memory, self.sqlite, self.postgres]):
+                raise ValueError(
+                    "Conversation cache type must be set when backend configuration is provided"
+                )
+            # no type selected + no configuration is expected and fully supported
+            return self
+        match self.type:
+            case constants.CACHE_TYPE_MEMORY:
+                if self.memory is None:
+                    raise ValueError("Memory cache is selected, but not configured")
+                # no other DBs configuration allowed
+                if any([self.sqlite, self.postgres]):
+                    raise ValueError("Only memory cache config must be provided")
+            case constants.CACHE_TYPE_SQLITE:
+                if self.sqlite is None:
+                    raise ValueError("SQLite cache is selected, but not configured")
+                # no other DBs configuration allowed
+                if any([self.memory, self.postgres]):
+                    raise ValueError("Only SQLite cache config must be provided")
+            case constants.CACHE_TYPE_POSTGRES:
+                if self.postgres is None:
+                    raise ValueError("PostgreSQL cache is selected, but not configured")
+                # no other DBs configuration allowed
+                if any([self.memory, self.sqlite]):
+                    raise ValueError("Only PostgreSQL cache config must be provided")
+        return self
+
+
 class Configuration(ConfigurationBase):
     """Global service configuration."""
 
@@ -495,6 +542,7 @@ class Configuration(ConfigurationBase):
     authorization: Optional[AuthorizationConfiguration] = None
     customization: Optional[Customization] = None
     inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
+    conversation_cache: ConversationCache = Field(default_factory=ConversationCache)
 
     def dump(self, filename: str = "configuration.json") -> None:
         """Dump actual configuration into JSON file."""

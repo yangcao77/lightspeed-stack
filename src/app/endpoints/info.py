@@ -16,7 +16,7 @@ from models.config import Action
 from models.responses import InfoResponse
 from version import __version__
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["info"])
 
 auth_dependency = get_auth_dependency()
@@ -47,7 +47,7 @@ async def info_endpoint_handler(
     Handle request to the /info endpoint.
 
     Process GET requests to the /info endpoint, returning the
-    service name and version.
+    service name, version and Llama-stack version.
 
     Returns:
         InfoResponse: An object containing the service's name and version.
@@ -58,12 +58,17 @@ async def info_endpoint_handler(
     # Nothing interesting in the request
     _ = request
 
+    logger.info("Response to /v1/info endpoint")
+
     try:
         # try to get Llama Stack client
         client = AsyncLlamaStackClientHolder().get_client()
         # retrieve version
         llama_stack_version_object = await client.inspect.version()
         llama_stack_version = llama_stack_version_object.version
+        logger.debug("Service name: %s", configuration.configuration.name)
+        logger.debug("Service version: %s", __version__)
+        logger.debug("LLama Stack version: %s", llama_stack_version)
         return InfoResponse(
             name=configuration.configuration.name,
             service_version=__version__,

@@ -19,6 +19,7 @@ from models.config import (
     AuthenticationConfiguration,
     InferenceConfiguration,
     DatabaseConfiguration,
+    ConversationCache,
 )
 
 
@@ -123,6 +124,13 @@ class AppConfig:
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.inference
+
+    @property
+    def conversation_cache(self) -> ConversationCache:
+        """Return conversation cache configuration."""
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.conversation_cache
 
     @property
     def database_configuration(self) -> DatabaseConfiguration:

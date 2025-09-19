@@ -46,7 +46,7 @@ models_responses: dict[int | str, dict[str, Any]] = {
             },
         ]
     },
-    503: {"description": "Connection to Llama Stack is broken"},
+    500: {"description": "Connection to Llama Stack is broken"},
 }
 
 

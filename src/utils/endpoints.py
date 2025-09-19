@@ -1,7 +1,6 @@
 """Utility functions for endpoint handlers."""
 
 from contextlib import suppress
-import logging
 from fastapi import HTTPException, status
 from llama_stack_client._client import AsyncLlamaStackClient
 from llama_stack_client.lib.agents.agent import AsyncAgent
@@ -16,7 +15,9 @@ from utils.suid import get_suid
 from utils.types import GraniteToolParser
 
 
-logger = logging.getLogger("utils.endpoints")
+from log import get_logger
+
+logger = get_logger(__name__)
 
 
 def delete_conversation(conversation_id: str) -> None:
@@ -178,6 +179,8 @@ async def get_agent(
     await agent.initialize()
 
     if existing_agent_id and conversation_id:
+        logger.debug("Existing conversation ID: %s", conversation_id)
+        logger.debug("Existing agent ID: %s", existing_agent_id)
         orphan_agent_id = agent.agent_id
         agent._agent_id = conversation_id  # type: ignore[assignment]  # pylint: disable=protected-access
         await client.agents.delete(agent_id=orphan_agent_id)
@@ -196,7 +199,9 @@ async def get_agent(
             ) from e
     else:
         conversation_id = agent.agent_id
+        logger.debug("New conversation ID: %s", conversation_id)
         session_id = await agent.create_session(get_suid())
+        logger.debug("New session ID: %s", session_id)
 
     return agent, conversation_id, session_id
 

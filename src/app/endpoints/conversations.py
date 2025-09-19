@@ -19,6 +19,7 @@ from models.responses import (
     ConversationDeleteResponse,
     ConversationsListResponse,
     ConversationDetails,
+    UnauthorizedResponse,
 )
 from utils.endpoints import (
     check_configuration_loaded,
@@ -45,6 +46,14 @@ conversation_responses: dict[int | str, dict[str, Any]] = {
             }
         ],
     },
+    400: {
+        "description": "Missing or invalid credentials provided by client",
+        "model": UnauthorizedResponse,
+    },
+    401: {
+        "description": "Unauthorized: Invalid or missing Bearer token",
+        "model": UnauthorizedResponse,
+    },
     404: {
         "detail": {
             "response": "Conversation not found",
@@ -64,6 +73,14 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
         "success": True,
         "message": "Conversation deleted successfully",
+    },
+    400: {
+        "description": "Missing or invalid credentials provided by client",
+        "model": UnauthorizedResponse,
+    },
+    401: {
+        "description": "Unauthorized: Invalid or missing Bearer token",
+        "model": UnauthorizedResponse,
     },
     404: {
         "detail": {
@@ -99,6 +116,14 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
                 "message_count": 2,
             },
         ]
+    },
+    400: {
+        "description": "Missing or invalid credentials provided by client",
+        "model": UnauthorizedResponse,
+    },
+    401: {
+        "description": "Unauthorized: Invalid or missing Bearer token",
+        "model": UnauthorizedResponse,
     },
     503: {
         "detail": {

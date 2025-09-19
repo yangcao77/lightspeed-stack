@@ -114,11 +114,15 @@ def initialize_database() -> None:
 
     match db_config.db_type:
         case "sqlite":
+            logger.info("Initialize SQLite database")
             sqlite_config = db_config.config
+            logger.debug("Configuration: %s", sqlite_config)
             assert isinstance(sqlite_config, SQLiteDatabaseConfiguration)
             engine = _create_sqlite_engine(sqlite_config, **create_engine_kwargs)
         case "postgres":
+            logger.info("Initialize PostgreSQL database")
             postgres_config = db_config.config
+            logger.debug("Configuration: %s", postgres_config)
             assert isinstance(postgres_config, PostgreSQLDatabaseConfiguration)
             engine = _create_postgres_engine(postgres_config, **create_engine_kwargs)
 

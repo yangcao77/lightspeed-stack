@@ -1,4 +1,4 @@
-"""Metrics module for Lightspeed Stack."""
+"""Metrics module for Lightspeed Core Stack."""
 
 from prometheus_client import (
     Counter,

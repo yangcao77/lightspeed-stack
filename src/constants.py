@@ -2,7 +2,7 @@
 
 # Minimal and maximal supported Llama Stack version
 MINIMAL_SUPPORTED_LLAMA_STACK_VERSION = "0.2.17"
-MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION = "0.2.19"
+MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION = "0.2.20"
 
 UNABLE_TO_PROCESS_RESPONSE = "Unable to process this request"
 
@@ -62,3 +62,8 @@ DEFAULT_JWT_USER_NAME_CLAIM = "username"
 POSTGRES_DEFAULT_SSL_MODE = "prefer"
 # See: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-GSSENCMODE
 POSTGRES_DEFAULT_GSS_ENCMODE = "prefer"
+
+# cache constants
+CACHE_TYPE_MEMORY = "memory"
+CACHE_TYPE_SQLITE = "sqlite"
+CACHE_TYPE_POSTGRES = "postgres"

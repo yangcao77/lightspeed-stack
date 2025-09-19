@@ -1,6 +1,7 @@
 version: '2'
 image_name: llamastack-minimal-stack
 container_image: null
+external_providers_dir: /tmp
 
 apis: []
 providers: {}

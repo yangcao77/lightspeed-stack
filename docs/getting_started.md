@@ -24,7 +24,7 @@ It is possible to run Lightspeed Core Stack service with Llama Stack "embedded" 
 1. Add and install all required dependencies
     ```bash
     uv add \
-    "llama-stack==0.2.19" \
+    "llama-stack==0.2.20" \
     "fastapi>=0.115.12" \
     "opentelemetry-sdk>=1.34.0" \
     "opentelemetry-exporter-otlp>=1.34.0" \
@@ -339,3 +339,48 @@ curl localhost:8080/v1/models | jq .
   ]
 }
 ```
+
+### Configuring MCP Servers
+
+Lightspeed developers can quickly enable external tool calling using MCP servers in LCS. MCP (Model Context Protocol) is a standard for exposing external tools in a structured way so AI agents can call them reliably. An MCP server hosts one or more tools and exposes them over a network endpoint. In LCS, the AI agent can leverage these servers to execute tools: LCS routes tool calls to the appropriate MCP server and uses the tool output to generate more accurate responses.
+
+Each MCP server provides a list of tools along with structured metadata, including name, description, and inputSchema. Using the standard `tools/list` method, LCS automatically fetches this metadata so the AI agent can evaluate user prompts and dynamically select the appropriate tool for a given request. For more details, see the [MCP documentation](https://modelcontextprotocol.io/docs/learn/architecture#how-this-works-in-ai-applications).
+
+The following step-by-step guide shows how to set up and integrate MCP servers into LCS:
+
+#### Step 1: Run your MCP servers
+MCP servers host one or more tools and expose them over a network endpoint. They can be run locally for development or hosted externally for production.
+
+#### Step 2: Configure LCS to know about your MCP servers
+MCP servers must be defined in the `mcp_servers` section of your `lightspeed-stack.yaml`.
+Example (all MCP servers running locally):
+
+```yaml
+mcp_servers:
+  - name: "filesystem-tools"
+    provider_id: "model-context-protocol"
+    url: "http://localhost:3000"
+  - name: "git-tools"
+    provider_id: "model-context-protocol"
+    url: "http://localhost:3001"
+  - name: "database-tools"
+    provider_id: "model-context-protocol"
+    url: "http://localhost:3002"
+```
+
+**Important**: Only MCP servers defined in the `lightspeed-stack.yaml` configuration are available to the AI agents. Tools configured in the llama-stack `run.yaml` are not accessible to LCS agents.
+
+#### Step 3: Pass authentication or metadata via MCP headers (optional)
+
+Some MCP servers require authentication tokens, API keys, or other metadata. These can be passed **per request** using the `MCP-HEADERS` HTTP header. LCS will forward these headers when invoking the tool, allowing the MCP server to authenticate requests or receive additional context.
+Example:
+
+```bash
+curl -X POST "http://localhost:8080/v1/query" \
+  -H "Content-Type: application/json" \
+  -H "MCP-HEADERS: {\"filesystem-tools\": {\"Authorization\": \"Bearer token123\"}}" \
+  -d '{"query": "List files in /tmp"}'
+```
+
+#### Step 4: Verify connectivity
+After starting the MCP servers and updating `lightspeed-stack.yaml`, test by sending a prompt to the AI agent. LCS evaluates the prompt against available tools’ metadata, selects the appropriate tool, calls the corresponding MCP server, and uses the result to generate more accurate agent response.

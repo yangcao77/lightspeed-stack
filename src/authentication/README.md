@@ -1,4 +1,4 @@
-# List of source files stored in `src/auth` directory
+# List of source files stored in `src/authentication` directory
 
 ## [__init__.py](__init__.py)
 This package contains authentication code and modules.

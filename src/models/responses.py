@@ -92,7 +92,7 @@ class InfoResponse(BaseModel):
         info_response = InfoResponse(
             name="Lightspeed Stack",
             service_version="1.0.0",
-            llama_stack_version="0.2.19",
+            llama_stack_version="0.2.20",
         )
         ```
     """
@@ -217,7 +217,11 @@ class LivenessResponse(BaseModel):
         ```
     """
 
-    alive: bool
+    alive: bool = Field(
+        ...,
+        description="Flag indicating that the app is alive",
+        examples=[True, False],
+    )
 
     # provides examples for /docs endpoint
     model_config = {

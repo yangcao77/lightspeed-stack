@@ -18,16 +18,16 @@ Client->>"API Server": POST /v1/streaming_query (QueryRequest)
 Client->>"API Server": POST /v1/feedback (FeedbackRequest)
 "API Server"-->>Client: FeedbackResponse
 
-Client->>"API Server": GET /v1/conversation/{id}
+Client->>"API Server": GET /v1/conversations/{conversation_id}
 "API Server"-->>Client: ConversationResponse
 
-Client->>"API Server": DELETE /v1/conversation/{id}
+Client->>"API Server": DELETE /v1/conversations/{conversation_id}
 "API Server"-->>Client: ConversationDeleteResponse
 
-Client->>"API Server": GET /v1/ready
+Client->>"API Server": GET /readiness
 "API Server"-->>Client: ReadinessResponse
 
-Client->>"API Server": GET /v1/live
+Client->>"API Server": GET /liveness
 "API Server"-->>Client: LivenessResponse
 
 @enduml

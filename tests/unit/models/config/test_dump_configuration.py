@@ -163,6 +163,12 @@ def test_dump_configuration(tmp_path) -> None:
                 },
             },
             "authorization": None,
+            "conversation_cache": {
+                "memory": None,
+                "postgres": None,
+                "sqlite": None,
+                "type": None,
+            },
         }
 
 

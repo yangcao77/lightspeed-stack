@@ -34,7 +34,7 @@ Handle request to the / endpoint.
 Handle request to the /info endpoint.
 
 Process GET requests to the /info endpoint, returning the
-service name and version.
+service name, version and Llama-stack version.
 
 Returns:
     InfoResponse: An object containing the service's name and version.
@@ -74,7 +74,7 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [ModelsResponse](#modelsresponse) |
-| 503 | Connection to Llama Stack is broken |  |
+| 500 | Connection to Llama Stack is broken |  |
 ## POST `/v1/query`
 
 > **Query Endpoint Handler**
@@ -108,7 +108,7 @@ Returns:
 | 200 | Successful Response | [QueryResponse](#queryresponse) |
 | 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
 | 403 | User is not authorized | [ForbiddenResponse](#forbiddenresponse) |
-| 503 | Service Unavailable |  |
+| 500 | Internal Server Error |  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## POST `/v1/streaming_query`
 
@@ -143,7 +143,11 @@ Raises:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | ... |
+| 200 | Streaming response with Server-Sent Events | ...string |
+| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
+| 401 | Unauthorized: Invalid or missing Bearer token for k8s auth | [UnauthorizedResponse](#unauthorizedresponse) |
+| 403 | User is not authorized | [ForbiddenResponse](#forbiddenresponse) |
+| 500 | Internal Server Error |  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## GET `/v1/config`
 
@@ -269,6 +273,8 @@ Handle request to retrieve all conversations for the authenticated user.
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [ConversationsListResponse](#conversationslistresponse) |
+| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
+| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
 | 503 | Service Unavailable |  |
 ## GET `/v1/conversations/{conversation_id}`
 
@@ -304,6 +310,8 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [ConversationResponse](#conversationresponse) |
+| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
+| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
 | 404 | Not Found |  |
 | 503 | Service Unavailable |  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
@@ -335,6 +343,8 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [ConversationDeleteResponse](#conversationdeleteresponse) |
+| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
+| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
 | 404 | Not Found |  |
 | 503 | Service Unavailable |  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
@@ -687,6 +697,18 @@ Example:
 | conversations | array |  |
 
 
+## CustomProfile
+
+
+Custom profile customization for prompts and validation.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| path | string |  |
+| prompts | object |  |
+
+
 ## Customization
 
 
@@ -695,9 +717,11 @@ Service customization.
 
 | Field | Type | Description |
 |-------|------|-------------|
+| profile_path |  |  |
 | disable_query_system_prompt | boolean |  |
 | system_prompt_path |  |  |
 | system_prompt |  |  |
+| custom_profile |  |  |
 
 
 ## DatabaseConfiguration
@@ -748,25 +772,15 @@ Attributes:
     user_feedback: The optional user feedback.
     categories: The optional list of feedback categories (multi-select for negative feedback).
 
-Examples:
+Example:
     ```python
-    # Basic feedback
     feedback_request = FeedbackRequest(
         conversation_id="12345678-abcd-0000-0123-456789abcdef",
         user_question="what are you doing?",
         user_feedback="This response is not helpful",
         llm_response="I don't know",
-        sentiment=1
-    )
-    
-    # Feedback with categories
-    feedback_request = FeedbackRequest(
-        conversation_id="12345678-abcd-0000-0123-456789abcdef",
-        user_question="How do I deploy a web app?",
-        llm_response="You need to use Docker and Kubernetes for everything.",
-        user_feedback="This response is too general and doesn't provide specific steps.",
         sentiment=-1,
-        categories=["incomplete", "not_relevant"]
+        categories=[FeedbackCategory.INCORRECT, FeedbackCategory.INCOMPLETE]
     )
     ```
 
@@ -894,7 +908,7 @@ Example:
     info_response = InfoResponse(
         name="Lightspeed Stack",
         service_version="1.0.0",
-        llama_stack_version="0.2.19",
+        llama_stack_version="0.2.20",
     )
     ```
 
@@ -970,7 +984,7 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| alive | boolean |  |
+| alive | boolean | Flag indicating that the app is alive |
 
 
 ## LlamaStackConfiguration

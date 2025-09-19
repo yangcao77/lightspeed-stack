@@ -54,7 +54,7 @@ def create_argument_parser() -> ArgumentParser:
 
 def main() -> None:
     """Entry point to the web service."""
-    logger.info("Lightspeed stack startup")
+    logger.info("Lightspeed Core Stack startup")
     parser = create_argument_parser()
     args = parser.parse_args()
 
@@ -86,7 +86,7 @@ def main() -> None:
 
     # if every previous steps don't fail, start the service on specified port
     start_uvicorn(configuration.service_configuration)
-    logger.info("Lightspeed stack finished")
+    logger.info("Lightspeed Core Stack finished")
 
 
 if __name__ == "__main__":

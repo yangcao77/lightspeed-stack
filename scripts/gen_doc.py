@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Generate documentation for all modules from Lightspeed Stack core service."""
+"""Generate documentation for all modules from Lightspeed Core Stack service."""
 
 import os
 

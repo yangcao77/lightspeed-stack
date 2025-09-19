@@ -61,7 +61,7 @@ query_response: dict[int | str, dict[str, Any]] = {
         "description": "User is not authorized",
         "model": ForbiddenResponse,
     },
-    503: {
+    500: {
         "detail": {
             "response": "Unable to connect to Llama Stack",
             "cause": "Connection error.",
@@ -223,6 +223,9 @@ async def query_endpoint_handler(
 
     user_conversation: UserConversation | None = None
     if query_request.conversation_id:
+        logger.debug(
+            "Conversation ID specified in query: %s", query_request.conversation_id
+        )
         user_conversation = validate_conversation_ownership(
             user_id=user_id,
             conversation_id=query_request.conversation_id,
@@ -244,6 +247,8 @@ async def query_endpoint_handler(
                     "cause": "You do not have permission to access this conversation",
                 },
             )
+    else:
+        logger.debug("Query does not contain conversation ID")
 
     try:
         # try to get Llama Stack client

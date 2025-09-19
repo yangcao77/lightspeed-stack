@@ -390,7 +390,7 @@ cp examples/run.yaml /tmp/llama-stack-server
     The output should be in this form:
     ```json
     {
-      "version": "0.2.19"
+      "version": "0.2.20"
     }
     ```
 
