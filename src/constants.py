@@ -28,6 +28,10 @@ ATTACHMENT_CONTENT_TYPES = frozenset(
 # configuration file nor in the query request
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant"
 
+# Default topic summary system prompt used only when no other topic summary system prompt is specified in
+# configuration file nor in the query request
+DEFAULT_TOPIC_SUMMARY_SYSTEM_PROMPT = "You are a topic summarizer"
+
 # Authentication constants
 DEFAULT_VIRTUAL_PATH = "/ls-access"
 DEFAULT_USER_NAME = "lightspeed-user"
