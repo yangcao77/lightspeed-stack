@@ -191,7 +191,7 @@ async def get_topic_summary(
 
 @router.post("/query", responses=query_response)
 @authorize(Action.QUERY)
-async def query_endpoint_handler(
+async def query_endpoint_handler(  # pylint: disable=R0914
     request: Request,
     query_request: QueryRequest,
     auth: Annotated[AuthTuple, Depends(auth_dependency)],
