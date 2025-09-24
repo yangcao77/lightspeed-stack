@@ -4,6 +4,9 @@ import constants
 from models.config import ConversationCacheConfiguration
 from cache.cache import Cache
 from cache.noop_cache import NoopCache
+from cache.in_memory_cache import InMemoryCache
+from cache.postgres_cache import PostgresCache
+from cache.sqlite_cache import SQLiteCache
 from log import get_logger
 
 logger = get_logger("cache.cache_factory")
@@ -25,14 +28,22 @@ class CacheFactory:
             case constants.CACHE_TYPE_NOOP:
                 return NoopCache()
             case constants.CACHE_TYPE_MEMORY:
-                return NoopCache()
+                if config.memory is not None:
+                    return InMemoryCache(config.memory)
+                raise ValueError("Expecting configuration for in-memory cache")
             case constants.CACHE_TYPE_SQLITE:
-                return NoopCache()
+                if config.sqlite is not None:
+                    return SQLiteCache(config.sqlite)
+                raise ValueError("Expecting configuration for SQLite cache")
             case constants.CACHE_TYPE_POSTGRES:
-                return NoopCache()
+                if config.postgres is not None:
+                    return PostgresCache(config.postgres)
+                raise ValueError("Expecting configuration for PostgreSQL cache")
+            case None:
+                raise ValueError("Cache type must be set")
             case _:
                 raise ValueError(
                     f"Invalid cache type: {config.type}. "
-                    f"Use '{constants.CACHE_TYPE_POSTGRES}' '{constants.CACHE_TYPE_SQLITE}' or "
-                    f"'{constants.CACHE_TYPE_MEMORY}' options."
+                    f"Use '{constants.CACHE_TYPE_POSTGRES}' '{constants.CACHE_TYPE_SQLITE}' "
+                    f"'{constants.CACHE_TYPE_MEMORY} or {constants.CACHE_TYPE_NOOP}' options."
                 )

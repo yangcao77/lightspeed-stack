@@ -16,7 +16,7 @@ class Cache(ABC):
     read or modify other users conversations.
     """
 
-    # separator between parts of compond key
+    # separator between parts of compound key
     COMPOUND_KEY_SEPARATOR = ":"
 
     @staticmethod

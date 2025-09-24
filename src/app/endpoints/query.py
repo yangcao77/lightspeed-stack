@@ -1,36 +1,46 @@
 """Handler for REST API call to provide answer to query."""
 
-from datetime import datetime, UTC
+import ast
 import json
 import logging
-from typing import Annotated, Any, cast, Optional
+import re
+from datetime import UTC, datetime
+from typing import Annotated, Any, Optional, cast
 
-from llama_stack_client import APIConnectionError
-from llama_stack_client import AsyncLlamaStackClient  # type: ignore
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from llama_stack_client import (
+    APIConnectionError,
+    AsyncLlamaStackClient,  # type: ignore
+)
 from llama_stack_client.lib.agents.event_logger import interleaved_content_as_str
-from llama_stack_client.types import UserMessage, Shield  # type: ignore
+from llama_stack_client.types import Shield, UserMessage  # type: ignore
 from llama_stack_client.types.agents.turn import Turn
 from llama_stack_client.types.agents.turn_create_params import (
-    ToolgroupAgentToolGroupWithArgs,
     Toolgroup,
+    ToolgroupAgentToolGroupWithArgs,
 )
 from llama_stack_client.types.model_list_response import ModelListResponse
+from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
+from llama_stack_client.types.tool_execution_step import ToolExecutionStep
 
-from fastapi import APIRouter, HTTPException, Request, status, Depends
-
+import constants
+import metrics
+from app.database import get_session
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
+from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
-from app.database import get_session
-import metrics
 from metrics.utils import update_llm_token_count_from_turn
-import constants
-from authorization.middleware import authorize
 from models.config import Action
 from models.database.conversations import UserConversation
-from models.requests import QueryRequest, Attachment
-from models.responses import QueryResponse, UnauthorizedResponse, ForbiddenResponse
+from models.requests import Attachment, QueryRequest
+from models.responses import (
+    ForbiddenResponse,
+    QueryResponse,
+    ReferencedDocument,
+    UnauthorizedResponse,
+)
 from utils.endpoints import (
     check_configuration_loaded,
     get_agent,
@@ -40,7 +50,7 @@ from utils.endpoints import (
     validate_conversation_ownership,
     validate_model_provider_override,
 )
-from utils.mcp_headers import mcp_headers_dependency, handle_mcp_headers_with_toolgroups
+from utils.mcp_headers import handle_mcp_headers_with_toolgroups, mcp_headers_dependency
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary
 
@@ -52,6 +62,13 @@ query_response: dict[int | str, dict[str, Any]] = {
     200: {
         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
         "response": "LLM answer",
+        "referenced_documents": [
+            {
+                "doc_url": "https://docs.openshift.com/"
+                "container-platform/4.15/operators/olm/index.html",
+                "doc_title": "Operator Lifecycle Manager (OLM)",
+            }
+        ],
     },
     400: {
         "description": "Missing or invalid credentials provided by client",
@@ -260,7 +277,7 @@ async def query_endpoint_handler(  # pylint: disable=R0914
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
-        summary, conversation_id = await retrieve_response(
+        summary, conversation_id, referenced_documents = await retrieve_response(
             client,
             llama_stack_model_id,
             query_request,
@@ -310,6 +327,7 @@ async def query_endpoint_handler(  # pylint: disable=R0914
         return QueryResponse(
             conversation_id=conversation_id,
             response=summary.llm_response,
+            referenced_documents=referenced_documents,
         )
 
     # connection to Llama Stack server
@@ -342,7 +360,7 @@ def select_model_and_provider_id(
 
     Returns:
         A tuple containing the combined model ID (in the format
-        "provider/model") and the provider ID.
+        "provider/model"), and its separated parts: the model label and the provider ID.
 
     Raises:
         HTTPException: If no suitable LLM model is found or the selected model is not available.
@@ -374,7 +392,8 @@ def select_model_and_provider_id(
             model_id = model.identifier
             provider_id = model.provider_id
             logger.info("Selected model: %s", model)
-            return model_id, model_id, provider_id
+            model_label = model_id.split("/", 1)[1] if "/" in model_id else model_id
+            return model_id, model_label, provider_id
         except (StopIteration, AttributeError) as e:
             message = "No LLM model found in available models"
             logger.error(message)
@@ -448,6 +467,70 @@ def is_input_shield(shield: Shield) -> bool:
     return _is_inout_shield(shield) or not is_output_shield(shield)
 
 
+def parse_metadata_from_text_item(
+    text_item: TextContentItem,
+) -> Optional[ReferencedDocument]:
+    """
+    Parse a single TextContentItem to extract referenced documents.
+
+    Args:
+        text_item (TextContentItem): The TextContentItem containing metadata.
+
+    Returns:
+        ReferencedDocument: A ReferencedDocument object containing 'doc_url' and 'doc_title'
+        representing the referenced documents found in the metadata.
+    """
+    docs: list[ReferencedDocument] = []
+    if not isinstance(text_item, TextContentItem):
+        return docs
+
+    metadata_blocks = re.findall(
+        r"Metadata:\s*({.*?})(?:\n|$)", text_item.text, re.DOTALL
+    )
+    for block in metadata_blocks:
+        try:
+            data = ast.literal_eval(block)
+            url = data.get("docs_url")
+            title = data.get("title")
+            if url and title:
+                return ReferencedDocument(doc_url=url, doc_title=title)
+            logger.debug("Invalid metadata block (missing url or title): %s", block)
+        except (ValueError, SyntaxError) as e:
+            logger.debug("Failed to parse metadata block: %s | Error: %s", block, e)
+    return None
+
+
+def parse_referenced_documents(response: Turn) -> list[ReferencedDocument]:
+    """
+    Parse referenced documents from Turn.
+
+    Iterate through the steps of a response and collect all referenced
+    documents from rag tool responses.
+
+    Args:
+        response(Turn): The response object from the agent turn.
+
+    Returns:
+        list[ReferencedDocument]: A list of ReferencedDocument, each with 'doc_url' and 'doc_title'
+        representing all referenced documents found in the response.
+    """
+    docs = []
+    for step in response.steps:
+        if not isinstance(step, ToolExecutionStep):
+            continue
+        for tool_response in step.tool_responses:
+            # TODO(are-ces): use constant instead
+            if tool_response.tool_name != "knowledge_search":
+                continue
+            for text_item in tool_response.content:
+                if not isinstance(text_item, TextContentItem):
+                    continue
+                doc = parse_metadata_from_text_item(text_item)
+                if doc:
+                    docs.append(doc)
+    return docs
+
+
 async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
     client: AsyncLlamaStackClient,
     model_id: str,
@@ -456,7 +539,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     mcp_headers: dict[str, dict[str, str]] | None = None,
     *,
     provider_id: str = "",
-) -> tuple[TurnSummary, str]:
+) -> tuple[TurnSummary, str, list[ReferencedDocument]]:
     """
     Retrieve response from LLMs and agents.
 
@@ -480,8 +563,9 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         mcp_headers (dict[str, dict[str, str]], optional): Headers for multi-component processing.
 
     Returns:
-        tuple[TurnSummary, str]: A tuple containing a summary of the LLM or agent's response content
-        and the conversation ID.
+        tuple[TurnSummary, str, list[ReferencedDocument]]: A tuple containing
+        a summary of the LLM or agent's response
+        content, the conversation ID and the list of parsed referenced documents.
     """
     available_input_shields = [
         shield.identifier
@@ -574,6 +658,8 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         tool_calls=[],
     )
 
+    referenced_documents = parse_referenced_documents(response)
+
     # Update token count metrics for the LLM call
     model_label = model_id.split("/", 1)[1] if "/" in model_id else model_id
     update_llm_token_count_from_turn(response, model_label, provider_id, system_prompt)
@@ -592,7 +678,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
             "Response lacks output_message.content (conversation_id=%s)",
             conversation_id,
         )
-    return summary, conversation_id
+    return (summary, conversation_id, referenced_documents)
 
 
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:

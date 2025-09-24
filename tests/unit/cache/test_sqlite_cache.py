@@ -1,0 +1,257 @@
+"""Unit tests for SQLite cache implementation."""
+
+from pathlib import Path
+
+import sqlite3
+
+import pytest
+
+from models.config import SQLiteDatabaseConfiguration
+from models.cache_entry import CacheEntry
+from utils import suid
+
+from cache.cache_error import CacheError
+from cache.sqlite_cache import SQLiteCache
+
+USER_ID_1 = suid.get_suid()
+USER_ID_2 = suid.get_suid()
+CONVERSATION_ID_1 = suid.get_suid()
+CONVERSATION_ID_2 = suid.get_suid()
+cache_entry_1 = CacheEntry(
+    query="user message1", response="AI message1", provider="foo", model="bar"
+)
+cache_entry_2 = CacheEntry(
+    query="user message2", response="AI message2", provider="foo", model="bar"
+)
+
+
+# pylint: disable=too-few-public-methods
+class CursorMock:
+    """Mock class for simulating DB cursor exceptions."""
+
+    def __init__(self):
+        """Construct the mock cursor class."""
+
+    def execute(self, command):
+        """Execute any SQL command."""
+        raise sqlite3.Error("can not SELECT")
+
+
+# pylint: disable=too-few-public-methods
+class ConnectionMock:
+    """Mock class for connection."""
+
+    def __init__(self):
+        """Construct the connection mock class."""
+
+    def cursor(self):
+        """Getter for mock cursor."""
+        return CursorMock()
+
+
+def create_cache(path):
+    """Create the cache instance."""
+    db_path = str(path / "test.sqlite")
+    cc = SQLiteDatabaseConfiguration(db_path=db_path)
+    return SQLiteCache(cc)
+
+
+def test_cache_initialization(tmpdir):
+    """Test the get operation when DB is not connected."""
+    cache = create_cache(tmpdir)
+    assert cache is not None
+    assert cache.connection is not None
+
+
+def test_cache_initialization_wrong_connection():
+    """Test the get operation when DB can not be connected."""
+    with pytest.raises(Exception, match="unable to open database file"):
+        _ = create_cache(Path("/foo/bar/baz"))
+
+
+def test_connected_when_connected(tmpdir):
+    """Test the connected() method."""
+    # cache should be connected by default
+    cache = create_cache(tmpdir)
+    assert cache.connected() is True
+
+
+def test_connected_when_disconnected(tmpdir):
+    """Test the connected() method."""
+    # simulate disconnected cache
+    cache = create_cache(tmpdir)
+    cache.connection = None
+    assert cache.connected() is False
+
+
+def test_connected_when_connection_error(tmpdir):
+    """Test the connected() method."""
+    # simulate connection error
+    cache = create_cache(tmpdir)
+    cache.connection = ConnectionMock()
+    assert cache.connection is not None
+    assert cache.connected() is False
+
+
+def test_initialize_cache_when_connected(tmpdir):
+    """Test the initialize_cache()."""
+    cache = create_cache(tmpdir)
+    # should not fail
+    cache.initialize_cache()
+
+
+def test_initialize_cache_when_disconnected(tmpdir):
+    """Test the initialize_cache()."""
+    cache = create_cache(tmpdir)
+    cache.connection = None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.initialize_cache()
+
+
+def test_get_operation_when_disconnected(tmpdir):
+    """Test the get() method."""
+    cache = create_cache(tmpdir)
+    cache.connection = None
+    # no operation for @connection decorator
+    cache.connect = lambda: None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.get(USER_ID_1, CONVERSATION_ID_1, False)
+
+
+def test_get_operation_when_connected(tmpdir):
+    """Test the get() method."""
+    cache = create_cache(tmpdir)
+
+    # should not fail
+    lst = cache.get(USER_ID_1, CONVERSATION_ID_1, False)
+    assert not lst
+
+
+def test_insert_or_append_when_disconnected(tmpdir):
+    """Test the insert_or_append() method."""
+    cache = create_cache(tmpdir)
+    cache.connection = None
+    # no operation for @connection decorator
+    cache.connect = lambda: None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+
+
+def test_insert_or_append_operation_when_connected(tmpdir):
+    """Test the insert_or_append() method."""
+    cache = create_cache(tmpdir)
+
+    # should not fail
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+
+
+def test_delete_operation_when_disconnected(tmpdir):
+    """Test the delete() method."""
+    cache = create_cache(tmpdir)
+    cache.connection = None
+    # no operation for @connection decorator
+    cache.connect = lambda: None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.delete(USER_ID_1, CONVERSATION_ID_1, False)
+
+
+def test_delete_operation_when_connected(tmpdir):
+    """Test the delete() method."""
+    cache = create_cache(tmpdir)
+
+    # should not fail
+    deleted = cache.delete(USER_ID_1, CONVERSATION_ID_1, False)
+
+    # nothing should be deleted
+    assert deleted is False
+
+
+def test_list_operation_when_disconnected(tmpdir):
+    """Test the list() method."""
+    cache = create_cache(tmpdir)
+    cache.connection = None
+    # no operation for @connection decorator
+    cache.connect = lambda: None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.list(USER_ID_1, False)
+
+
+def test_list_operation_when_connected(tmpdir):
+    """Test the list() method."""
+    cache = create_cache(tmpdir)
+
+    # should not fail
+    lst = cache.list(USER_ID_1, False)
+    assert not lst
+
+
+def test_ready_method(tmpdir):
+    """Test the ready() method."""
+    cache = create_cache(tmpdir)
+
+    # should not fail
+    ready = cache.ready()
+    assert ready is True
+
+
+def test_get_operation_after_insert_or_append(tmpdir):
+    """Test the get() method called after insert_or_append() one."""
+    cache = create_cache(tmpdir)
+
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_2, False)
+
+    lst = cache.get(USER_ID_1, CONVERSATION_ID_1, False)
+    assert lst[0] == cache_entry_1
+    assert lst[1] == cache_entry_2
+
+
+def test_get_operation_after_delete(tmpdir):
+    """Test the get() method called after delete() one."""
+    cache = create_cache(tmpdir)
+
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_2, False)
+
+    deleted = cache.delete(USER_ID_1, CONVERSATION_ID_1, False)
+    assert deleted is True
+
+    lst = cache.get(USER_ID_1, CONVERSATION_ID_1, False)
+    assert not lst
+
+
+def test_multiple_ids(tmpdir):
+    """Test the get() method called after delete() one."""
+    cache = create_cache(tmpdir)
+
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_2, False)
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_2, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_2, cache_entry_2, False)
+    cache.insert_or_append(USER_ID_2, CONVERSATION_ID_1, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_2, CONVERSATION_ID_1, cache_entry_2, False)
+    cache.insert_or_append(USER_ID_2, CONVERSATION_ID_2, cache_entry_1, False)
+    cache.insert_or_append(USER_ID_2, CONVERSATION_ID_2, cache_entry_2, False)
+
+    deleted = cache.delete(USER_ID_1, CONVERSATION_ID_1, False)
+    assert deleted is True
+
+    lst = cache.get(USER_ID_1, CONVERSATION_ID_1, False)
+    assert not lst
+
+    lst = cache.get(USER_ID_1, CONVERSATION_ID_2, False)
+    assert lst[0] == cache_entry_1
+    assert lst[1] == cache_entry_2
+
+    lst = cache.get(USER_ID_2, CONVERSATION_ID_1, False)
+    assert lst[0] == cache_entry_1
+    assert lst[1] == cache_entry_2
+
+    lst = cache.get(USER_ID_2, CONVERSATION_ID_2, False)
+    assert lst[0] == cache_entry_1
+    assert lst[1] == cache_entry_2

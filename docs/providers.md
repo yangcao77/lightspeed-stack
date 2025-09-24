@@ -1,23 +1,3 @@
-<style>
-table {
-    width: 100%;
-}
-table th:nth-of-type(1) {
-    width: 20%;
-}
-table th:nth-of-type(2) {
-    width: 15%;
-}
-table th:nth-of-type(3) {
-    width: 50%;
-}
-table th:nth-of-type(4) {
-    width: 15%;
-    text-align: center;
-}
-
-</style>
-
 # Lightspeed Core Providers
 
 Lightspeed Core Stack (LCS) builds on top of llama-stack and its provider system.  
@@ -207,8 +187,8 @@ The tables below summarize each provider category, containing the following atri
    ```toml
    llslibdev = [
      "openai>=1.0.0",
-     "pymilvus>=2.4.10"
-     ...
+     "pymilvus>=2.4.10",
+     
      # add your dependencies here
    ]
    ```

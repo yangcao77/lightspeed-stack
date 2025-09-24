@@ -185,3 +185,6 @@ dev/
 
 # Llama related - when running the stack as lib client
 .llama
+
+# Database files
+*.sqlite
