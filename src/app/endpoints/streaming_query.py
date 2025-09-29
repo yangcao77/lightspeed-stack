@@ -20,9 +20,7 @@ from llama_stack_client.types.agents.agent_turn_response_stream_chunk import (
 from llama_stack_client.types.shared import ToolCall
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 
-
 from app.database import get_session
-import metrics
 from app.endpoints.query import (
     get_rag_toolgroups,
     is_input_shield,
@@ -41,6 +39,7 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL
+import metrics
 from metrics.utils import update_llm_token_count_from_turn
 from models.config import Action
 from models.database.conversations import UserConversation
@@ -570,7 +569,7 @@ def _handle_heartbeat_event(chunk_id: int) -> Iterator[str]:
 
 @router.post("/streaming_query", responses=streaming_query_responses)
 @authorize(Action.STREAMING_QUERY)
-async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
+async def streaming_query_endpoint_handler(  # pylint: disable=R0915,R0914
     request: Request,
     query_request: QueryRequest,
     auth: Annotated[AuthTuple, Depends(auth_dependency)],

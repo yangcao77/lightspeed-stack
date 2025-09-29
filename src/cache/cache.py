@@ -98,7 +98,8 @@ class Cache(ABC):
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
-            A list of ConversationData objects containing conversation_id, topic_summary, and last_message_timestamp
+            A list of ConversationData objects containing conversation_id, topic_summary, and
+            last_message_timestamp
         """
 
     @abstractmethod
