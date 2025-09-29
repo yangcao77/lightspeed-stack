@@ -240,7 +240,7 @@ async def query_endpoint_handler(  # pylint: disable=R0914
     # log Llama Stack configuration
     logger.info("Llama stack config: %s", configuration.llama_stack_configuration)
 
-    user_id, _, _, token = auth
+    user_id, _, _skip_userid_check, token = auth
 
     user_conversation: UserConversation | None = None
     if query_request.conversation_id:
@@ -339,6 +339,7 @@ async def query_endpoint_handler(  # pylint: disable=R0914
             model_id,
             query_request.query,
             summary.llm_response,
+            _skip_userid_check
         )
 
         # Convert tool calls to response format

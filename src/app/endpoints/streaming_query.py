@@ -720,6 +720,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                 model_id,
                 query_request.query,
                 summary.llm_response,
+                _skip_userid_check
             )
 
         # Get the initial topic summary for the conversation

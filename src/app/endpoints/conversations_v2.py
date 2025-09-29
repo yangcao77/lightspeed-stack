@@ -102,6 +102,8 @@ async def get_conversations_list_endpoint_handler(
 
     logger.info("Retrieving conversations for user %s", user_id)
 
+    skip_userid_check = auth[2]
+
     if configuration.conversation_cache is None:
         logger.warning("Converastion cache is not configured")
         raise HTTPException(
@@ -112,7 +114,7 @@ async def get_conversations_list_endpoint_handler(
             },
         )
 
-    conversations = configuration.conversation_cache.list(user_id, False)
+    conversations = configuration.conversation_cache.list(user_id, skip_userid_check)
     logger.info("Conversations for user %s: %s", user_id, len(conversations))
 
     return ConversationsListResponseV2(conversations=conversations)
@@ -132,6 +134,8 @@ async def get_conversation_endpoint_handler(
     user_id = auth[0]
     logger.info("Retrieving conversation %s for user %s", conversation_id, user_id)
 
+    skip_userid_check = auth[2]
+
     if configuration.conversation_cache is None:
         logger.warning("Converastion cache is not configured")
         raise HTTPException(
@@ -144,7 +148,7 @@ async def get_conversation_endpoint_handler(
 
     check_conversation_existence(user_id, conversation_id)
 
-    conversation = configuration.conversation_cache.get(user_id, conversation_id, False)
+    conversation = configuration.conversation_cache.get(user_id, conversation_id, skip_userid_check)
     chat_history = [transform_chat_message(entry) for entry in conversation]
 
     return ConversationResponse(
@@ -168,6 +172,8 @@ async def delete_conversation_endpoint_handler(
     user_id = auth[0]
     logger.info("Deleting conversation %s for user %s", conversation_id, user_id)
 
+    skip_userid_check = auth[2]
+
     if configuration.conversation_cache is None:
         logger.warning("Converastion cache is not configured")
         raise HTTPException(
@@ -181,7 +187,7 @@ async def delete_conversation_endpoint_handler(
     check_conversation_existence(user_id, conversation_id)
 
     logger.info("Deleting conversation %s for user %s", conversation_id, user_id)
-    deleted = configuration.conversation_cache.delete(user_id, conversation_id, False)
+    deleted = configuration.conversation_cache.delete(user_id, conversation_id, skip_userid_check)
 
     if deleted:
         return ConversationDeleteResponse(
