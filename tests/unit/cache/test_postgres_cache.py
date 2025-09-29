@@ -7,7 +7,7 @@ import psycopg2
 from cache.cache_error import CacheError
 from cache.postgres_cache import PostgresCache
 from models.config import PostgreSQLDatabaseConfiguration
-from models.cache_entry import CacheEntry
+from models.cache_entry import CacheEntry, ConversationData
 from utils import suid
 
 
@@ -301,3 +301,67 @@ def test_list_operation_when_connected(postgres_cache_config_fixture, mocker):
     # should not fail
     lst = cache.list(USER_ID_1, False)
     assert not lst
+    assert isinstance(lst, list)
+
+
+def test_topic_summary_operations(postgres_cache_config_fixture, mocker):
+    """Test topic summary set operations and retrieval via list."""
+    # prevent real connection to PG instance
+    mock_connect = mocker.patch("psycopg2.connect")
+    cache = PostgresCache(postgres_cache_config_fixture)
+
+    mock_connection = mock_connect.return_value
+    mock_cursor = mock_connection.cursor.return_value.__enter__.return_value
+
+    # Mock fetchall to return conversation data
+    mock_cursor.fetchall.return_value = [
+        (
+            CONVERSATION_ID_1,
+            "This conversation is about machine learning and AI",
+            1234567890.0,
+        )
+    ]
+
+    # Set a topic summary
+    test_summary = "This conversation is about machine learning and AI"
+    cache.set_topic_summary(USER_ID_1, CONVERSATION_ID_1, test_summary, False)
+
+    # Retrieve the topic summary via list
+    conversations = cache.list(USER_ID_1, False)
+    assert len(conversations) == 1
+    assert conversations[0].topic_summary == test_summary
+    assert isinstance(conversations[0], ConversationData)
+
+
+def test_topic_summary_after_conversation_delete(postgres_cache_config_fixture, mocker):
+    """Test that topic summary is deleted when conversation is deleted."""
+    # prevent real connection to PG instance
+    mock_connect = mocker.patch("psycopg2.connect")
+    cache = PostgresCache(postgres_cache_config_fixture)
+
+    mock_connection = mock_connect.return_value
+    mock_cursor = mock_connection.cursor.return_value.__enter__.return_value
+
+    # Mock the delete operation to return 1 (deleted)
+    mock_cursor.rowcount = 1
+
+    # Add some cache entries and a topic summary
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, cache_entry_1, False)
+    cache.set_topic_summary(USER_ID_1, CONVERSATION_ID_1, "Test summary", False)
+
+    # Delete the conversation
+    deleted = cache.delete(USER_ID_1, CONVERSATION_ID_1, False)
+    assert deleted is True
+
+
+def test_topic_summary_when_disconnected(postgres_cache_config_fixture, mocker):
+    """Test topic summary operations when cache is disconnected."""
+    # prevent real connection to PG instance
+    mocker.patch("psycopg2.connect")
+    cache = PostgresCache(postgres_cache_config_fixture)
+
+    cache.connection = None
+    cache.connect = lambda: None
+
+    with pytest.raises(CacheError, match="cache is disconnected"):
+        cache.set_topic_summary(USER_ID_1, CONVERSATION_ID_1, "Test", False)

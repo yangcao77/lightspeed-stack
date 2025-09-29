@@ -20,13 +20,10 @@ from llama_stack_client.types.agents.agent_turn_response_stream_chunk import (
 from llama_stack_client.types.shared import ToolCall
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 
-from fastapi import APIRouter, HTTPException, Request, Depends, status
-from fastapi.responses import StreamingResponse
 
 from app.database import get_session
 import metrics
 from app.endpoints.query import (
-    evaluate_model_hints,
     get_rag_toolgroups,
     is_input_shield,
     is_output_shield,
@@ -59,7 +56,6 @@ from utils.endpoints import (
 from utils.mcp_headers import handle_mcp_headers_with_toolgroups, mcp_headers_dependency
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary
-from utils.endpoints import validate_model_provider_override
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query"])
@@ -712,6 +708,19 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                     attachments=query_request.attachments or [],
                 )
 
+            # Get the initial topic summary for the conversation
+            topic_summary = None
+            with get_session() as session:
+                existing_conversation = (
+                    session.query(UserConversation)
+                    .filter_by(id=conversation_id)
+                    .first()
+                )
+                if not existing_conversation:
+                    topic_summary = await get_topic_summary(
+                        query_request.query, client, model_id
+                    )
+
             store_conversation_into_cache(
                 configuration,
                 user_id,
@@ -720,28 +729,17 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
                 model_id,
                 query_request.query,
                 summary.llm_response,
-                _skip_userid_check
+                _skip_userid_check,
+                topic_summary,
             )
 
-        # Get the initial topic summary for the conversation
-        topic_summary = None
-        with get_session() as session:
-            existing_conversation = (
-                session.query(UserConversation).filter_by(id=conversation_id).first()
+            persist_user_conversation_details(
+                user_id=user_id,
+                conversation_id=conversation_id,
+                model=model_id,
+                provider_id=provider_id,
+                topic_summary=topic_summary,
             )
-            if not existing_conversation:
-                topic_summary = await get_topic_summary(
-                    query_request.query, client, model_id
-                )
-
-
-        persist_user_conversation_details(
-            user_id=user_id,
-            conversation_id=conversation_id,
-            model=model_id,
-            provider_id=provider_id,
-            topic_summary=topic_summary,
-        )
 
         # Update metrics for the LLM call
         metrics.llm_calls_total.labels(provider_id, model_id).inc()

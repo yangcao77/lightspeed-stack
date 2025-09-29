@@ -189,7 +189,8 @@ def store_conversation_into_cache(
     model_id: str,
     query: str,
     response: str,
-    _skip_userid_check: bool
+    _skip_userid_check: bool,
+    topic_summary: str | None,
 ) -> None:
     """Store one part of conversation into conversation history cache."""
     if config.conversation_cache_configuration.type is not None:
@@ -203,7 +204,13 @@ def store_conversation_into_cache(
             provider=provider_id,
             model=model_id,
         )
-        cache.insert_or_append(user_id, conversation_id, cache_entry, _skip_userid_check)
+        cache.insert_or_append(
+            user_id, conversation_id, cache_entry, _skip_userid_check
+        )
+        if topic_summary:
+            cache.set_topic_summary(
+                user_id, conversation_id, topic_summary, _skip_userid_check
+            )
 
 
 # # pylint: disable=R0913,R0917

@@ -744,7 +744,9 @@
                         },
                         "conversations": [
                             {
-                                "conversation_id": "123e4567-e89b-12d3-a456-426614174000"
+                                "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+                                "topic_summary": "This is a topic summary",
+                                "last_message_timestamp": "2024-01-01T00:00:00Z"
                             }
                         ]
                     }
@@ -1419,6 +1421,37 @@
                 "title": "ConversationCacheConfiguration",
                 "description": "Conversation cache configuration."
             },
+            "ConversationData": {
+                "properties": {
+                    "conversation_id": {
+                        "type": "string",
+                        "title": "Conversation Id"
+                    },
+                    "topic_summary": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Topic Summary"
+                    },
+                    "last_message_timestamp": {
+                        "type": "number",
+                        "title": "Last Message Timestamp"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "conversation_id",
+                    "topic_summary",
+                    "last_message_timestamp"
+                ],
+                "title": "ConversationData",
+                "description": "Model representing conversation data returned by cache list operations.\n\nAttributes:\n    conversation_id: The conversation ID\n    topic_summary: The topic summary for the conversation (can be None)\n    last_message_timestamp: The timestamp of the last message in the conversation"
+            },
             "ConversationDeleteResponse": {
                 "properties": {
                     "conversation_id": {
@@ -1648,7 +1681,7 @@
                 "properties": {
                     "conversations": {
                         "items": {
-                            "type": "string"
+                            "$ref": "#/components/schemas/ConversationData"
                         },
                         "type": "array",
                         "title": "Conversations"
@@ -1659,7 +1692,7 @@
                     "conversations"
                 ],
                 "title": "ConversationsListResponseV2",
-                "description": "Model representing a response for listing conversations of a user.\n\nAttributes:\n    conversations: List of conversation IDs associated with the user."
+                "description": "Model representing a response for listing conversations of a user.\n\nAttributes:\n    conversations: List of conversation data associated with the user."
             },
             "CustomProfile": {
                 "properties": {

@@ -4,6 +4,8 @@ from typing import Any, Optional
 
 from pydantic import AnyUrl, BaseModel, Field
 
+from models.cache_entry import ConversationData
+
 
 class ModelsResponse(BaseModel):
     """Model representing a response to models request."""
@@ -683,10 +685,10 @@ class ConversationsListResponseV2(BaseModel):
     """Model representing a response for listing conversations of a user.
 
     Attributes:
-        conversations: List of conversation IDs associated with the user.
+        conversations: List of conversation data associated with the user.
     """
 
-    conversations: list[str]
+    conversations: list[ConversationData]
 
 
 class ErrorResponse(BaseModel):

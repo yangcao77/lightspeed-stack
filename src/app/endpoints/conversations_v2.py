@@ -83,6 +83,8 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
         "conversations": [
             {
                 "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+                "topic_summary": "This is a topic summary",
+                "last_message_timestamp": "2024-01-01T00:00:00Z",
             }
         ]
     }
@@ -148,7 +150,9 @@ async def get_conversation_endpoint_handler(
 
     check_conversation_existence(user_id, conversation_id)
 
-    conversation = configuration.conversation_cache.get(user_id, conversation_id, skip_userid_check)
+    conversation = configuration.conversation_cache.get(
+        user_id, conversation_id, skip_userid_check
+    )
     chat_history = [transform_chat_message(entry) for entry in conversation]
 
     return ConversationResponse(
@@ -187,7 +191,9 @@ async def delete_conversation_endpoint_handler(
     check_conversation_existence(user_id, conversation_id)
 
     logger.info("Deleting conversation %s for user %s", conversation_id, user_id)
-    deleted = configuration.conversation_cache.delete(user_id, conversation_id, skip_userid_check)
+    deleted = configuration.conversation_cache.delete(
+        user_id, conversation_id, skip_userid_check
+    )
 
     if deleted:
         return ConversationDeleteResponse(
@@ -221,7 +227,8 @@ def check_conversation_existence(user_id: str, conversation_id: str) -> None:
     if configuration.conversation_cache is None:
         return
     conversations = configuration.conversation_cache.list(user_id, False)
-    if conversation_id not in conversations:
+    conversation_ids = [conv.conversation_id for conv in conversations]
+    if conversation_id not in conversation_ids:
         logger.error("No conversation found for conversation ID %s", conversation_id)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

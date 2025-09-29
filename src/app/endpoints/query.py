@@ -339,7 +339,8 @@ async def query_endpoint_handler(  # pylint: disable=R0914
             model_id,
             query_request.query,
             summary.llm_response,
-            _skip_userid_check
+            _skip_userid_check,
+            topic_summary,
         )
 
         # Convert tool calls to response format

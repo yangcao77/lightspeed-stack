@@ -4,7 +4,7 @@ import psycopg2
 
 from cache.cache import Cache
 from cache.cache_error import CacheError
-from models.cache_entry import CacheEntry
+from models.cache_entry import CacheEntry, ConversationData
 from models.config import PostgreSQLDatabaseConfiguration
 from log import get_logger
 from utils.connection_decorator import connection
@@ -46,6 +46,16 @@ class PostgresCache(Cache):
         );
         """
 
+    CREATE_CONVERSATIONS_TABLE = """
+        CREATE TABLE IF NOT EXISTS conversations (
+            user_id                text NOT NULL,
+            conversation_id        text NOT NULL,
+            topic_summary          text,
+            last_message_timestamp timestamp NOT NULL,
+            PRIMARY KEY(user_id, conversation_id)
+        );
+        """
+
     CREATE_INDEX = """
         CREATE INDEX IF NOT EXISTS timestamps
             ON cache (created_at)
@@ -73,12 +83,30 @@ class PostgresCache(Cache):
         """
 
     LIST_CONVERSATIONS_STATEMENT = """
-        SELECT conversation_id, max(created_at) AS created_at
-          FROM cache
+        SELECT conversation_id, topic_summary, EXTRACT(EPOCH FROM last_message_timestamp) as last_message_timestamp
+          FROM conversations
          WHERE user_id=%s
-         GROUP BY conversation_id
-         ORDER BY created_at DESC
+         ORDER BY last_message_timestamp DESC
     """
+
+    INSERT_OR_UPDATE_TOPIC_SUMMARY_STATEMENT = """
+        INSERT INTO conversations(user_id, conversation_id, topic_summary, last_message_timestamp)
+        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, conversation_id)
+        DO UPDATE SET topic_summary = EXCLUDED.topic_summary, last_message_timestamp = EXCLUDED.last_message_timestamp
+        """
+
+    DELETE_CONVERSATION_STATEMENT = """
+        DELETE FROM conversations
+         WHERE user_id=%s AND conversation_id=%s
+        """
+
+    UPSERT_CONVERSATION_STATEMENT = """
+        INSERT INTO conversations(user_id, conversation_id, topic_summary, last_message_timestamp)
+        VALUES (%s, %s, %s, CURRENT_TIMESTAMP)
+        ON CONFLICT (user_id, conversation_id)
+        DO UPDATE SET last_message_timestamp = EXCLUDED.last_message_timestamp
+        """
 
     def __init__(self, config: PostgreSQLDatabaseConfiguration) -> None:
         """Create a new instance of PostgreSQL cache."""
@@ -142,6 +170,9 @@ class PostgresCache(Cache):
 
         logger.info("Initializing table for cache")
         cursor.execute(PostgresCache.CREATE_CACHE_TABLE)
+
+        logger.info("Initializing table for conversations")
+        cursor.execute(PostgresCache.CREATE_CONVERSATIONS_TABLE)
 
         logger.info("Initializing index for cache")
         cursor.execute(PostgresCache.CREATE_INDEX)
@@ -220,6 +251,12 @@ class PostgresCache(Cache):
                         cache_entry.model,
                     ),
                 )
+
+                # Update or insert conversation record with last_message_timestamp
+                cursor.execute(
+                    PostgresCache.UPSERT_CONVERSATION_STATEMENT,
+                    (user_id, conversation_id, None),
+                )
                 # commit is implicit at this point
         except psycopg2.DatabaseError as e:
             logger.error("PostgresCache.insert_or_append: %s", e)
@@ -251,13 +288,22 @@ class PostgresCache(Cache):
                     (user_id, conversation_id),
                 )
                 deleted = cursor.rowcount
+
+                # Also delete conversation record for this conversation
+                cursor.execute(
+                    PostgresCache.DELETE_CONVERSATION_STATEMENT,
+                    (user_id, conversation_id),
+                )
+
                 return deleted > 0
         except psycopg2.DatabaseError as e:
             logger.error("PostgresCache.delete: %s", e)
             raise CacheError("PostgresCache.delete", e) from e
 
     @connection
-    def list(self, user_id: str, skip_user_id_check: bool = False) -> list[str]:
+    def list(
+        self, user_id: str, skip_user_id_check: bool = False
+    ) -> list[ConversationData]:
         """List all conversations for a given user_id.
 
         Args:
@@ -265,7 +311,7 @@ class PostgresCache(Cache):
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
-            A list of conversation ids from the cache
+            A list of ConversationData objects containing conversation_id, topic_summary, and last_message_timestamp
 
         """
         if self.connection is None:
@@ -276,7 +322,46 @@ class PostgresCache(Cache):
             cursor.execute(self.LIST_CONVERSATIONS_STATEMENT, (user_id,))
             conversations = cursor.fetchall()
 
-        return [conversation[0] for conversation in conversations]
+        result = []
+        for conversation in conversations:
+            conversation_data = ConversationData(
+                conversation_id=conversation[0],
+                topic_summary=conversation[1],
+                last_message_timestamp=float(conversation[2]),
+            )
+            result.append(conversation_data)
+
+        return result
+
+    @connection
+    def set_topic_summary(
+        self,
+        user_id: str,
+        conversation_id: str,
+        topic_summary: str,
+        skip_user_id_check: bool = False,
+    ) -> None:
+        """Set the topic summary for the given conversation.
+
+        Args:
+            user_id: User identification.
+            conversation_id: Conversation ID unique for given user.
+            topic_summary: The topic summary to store.
+            skip_user_id_check: Skip user_id suid check.
+        """
+        if self.connection is None:
+            logger.error("Cache is disconnected")
+            raise CacheError("set_topic_summary: cache is disconnected")
+
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    self.INSERT_OR_UPDATE_TOPIC_SUMMARY_STATEMENT,
+                    (user_id, conversation_id, topic_summary),
+                )
+        except psycopg2.DatabaseError as e:
+            logger.error("PostgresCache.set_topic_summary: %s", e)
+            raise CacheError("PostgresCache.set_topic_summary", e) from e
 
     def ready(self) -> bool:
         """Check if the cache is ready.
