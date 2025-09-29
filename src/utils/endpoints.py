@@ -6,6 +6,7 @@ from llama_stack_client._client import AsyncLlamaStackClient
 from llama_stack_client.lib.agents.agent import AsyncAgent
 
 import constants
+from models.cache_entry import CacheEntry
 from models.requests import QueryRequest
 from models.database.conversations import UserConversation
 from models.config import Action
@@ -61,7 +62,13 @@ def validate_conversation_ownership(
 
 
 def check_configuration_loaded(config: AppConfig) -> None:
-    """Check that configuration is loaded and raise exception when it is not."""
+    """
+    Ensure the application configuration object is present.
+
+    Raises:
+        HTTPException: HTTP 500 Internal Server Error with detail `{"response":
+        "Configuration is not loaded"}` when `config` is None.
+    """
     if config is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -70,7 +77,31 @@ def check_configuration_loaded(config: AppConfig) -> None:
 
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
-    """Get the system prompt: the provided one, configured one, or default one."""
+    """
+    Resolve which system prompt to use for a query.
+
+    Precedence:
+    1. If the request includes `system_prompt`, that value is returned (highest
+       precedence).
+    2. Else if the application configuration provides a customization
+       `system_prompt`, that value is returned.
+    3. Otherwise the module default `constants.DEFAULT_SYSTEM_PROMPT` is
+       returned (lowest precedence).
+
+    If configuration disables per-request system prompts
+    (config.customization.disable_query_system_prompt) and the incoming
+    `query_request` contains a `system_prompt`, an HTTP 422 Unprocessable
+    Entity is raised instructing the client to remove the field.
+
+    Parameters:
+        query_request (QueryRequest): The incoming query payload; may contain a
+        per-request `system_prompt`.
+        config (AppConfig): Application configuration which may include
+        customization flags and a default `system_prompt`.
+
+    Returns:
+        str: The resolved system prompt to apply to the request.
+    """
     system_prompt_disabled = (
         config.customization is not None
         and config.customization.disable_query_system_prompt
@@ -150,6 +181,31 @@ def validate_model_provider_override(
 
 
 # # pylint: disable=R0913,R0917
+def store_conversation_into_cache(
+    config: AppConfig,
+    user_id: str,
+    conversation_id: str,
+    provider_id: str,
+    model_id: str,
+    query: str,
+    response: str,
+) -> None:
+    """Store one part of conversation into conversation history cache."""
+    if config.conversation_cache_configuration.type is not None:
+        cache = config.conversation_cache
+        if cache is None:
+            logger.warning("Conversation cache configured but not initialized")
+            return
+        cache_entry = CacheEntry(
+            query=query,
+            response=response,
+            provider=provider_id,
+            model=model_id,
+        )
+        cache.insert_or_append(user_id, conversation_id, cache_entry, False)
+
+
+# # pylint: disable=R0913,R0917
 async def get_agent(
     client: AsyncLlamaStackClient,
     model_id: str,
@@ -159,7 +215,46 @@ async def get_agent(
     conversation_id: str | None,
     no_tools: bool = False,
 ) -> tuple[AsyncAgent, str, str]:
-    """Get existing agent or create a new one with session persistence."""
+    """
+    Create or reuse an AsyncAgent with session persistence.
+
+    Return the agent, conversation and session IDs.
+
+    If a conversation_id is provided, the function attempts to retrieve the
+    existing agent and, on success, rebinds a newly created agent instance to
+    that conversation (deleting the temporary/orphan agent) and returns the
+    first existing session_id for the conversation. If no conversation_id is
+    provided or the existing agent cannot be retrieved, a new agent and session
+    are created.
+
+    Parameters:
+        model_id (str): Identifier of the model to instantiate the agent with.
+        system_prompt (str): Instructions/system prompt to initialize the agent with.
+
+        available_input_shields (list[str]): Input shields to apply to the
+        agent; empty list used if None/empty.
+
+        available_output_shields (list[str]): Output shields to apply to the
+        agent; empty list used if None/empty.
+
+        conversation_id (str | None): If provided, attempt to reuse the agent
+        for this conversation; otherwise a new conversation_id is created.
+
+        no_tools (bool): When True, disables tool parsing for the agent (uses no tool parser).
+
+    Returns:
+        tuple[AsyncAgent, str, str]: A tuple of (agent, conversation_id, session_id).
+
+    Raises:
+        HTTPException: Raises HTTP 404 Not Found if an attempt to reuse a
+        conversation succeeds in retrieving the agent but no sessions are found
+        for that conversation.
+
+    Side effects:
+        - May delete an orphan agent when rebinding a newly created agent to an
+          existing conversation_id.
+        - Initializes the agent and may create a new session.
+    """
     existing_agent_id = None
     if conversation_id:
         with suppress(ValueError):

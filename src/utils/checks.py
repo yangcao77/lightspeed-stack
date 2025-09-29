@@ -13,7 +13,21 @@ class InvalidConfigurationError(Exception):
 
 
 def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
-    """Retrieve value of an attribute from a file."""
+    """
+    Return the contents of a file whose path is stored in the given mapping.
+
+    Looks up file_name_key in data; if a non-None value is found it is treated
+    as a filesystem path, the content of the file is read. In case the key is
+    missing or maps to None, returns None.
+
+    Parameters:
+        data (dict): Mapping containing the file path under file_name_key.
+        file_name_key (str): Key in `data` whose value is the path to the file.
+
+    Returns:
+        Optional[str]: File contents with trailing whitespace stripped, or None
+        if the key is not present or is None.
+    """
     file_path = data.get(file_name_key)
     if file_path is not None:
         with open(file_path, encoding="utf-8") as f:
@@ -22,7 +36,21 @@ def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
 
 
 def file_check(path: FilePath, desc: str) -> None:
-    """Check that path is a readable regular file."""
+    """
+    Ensure the given path is an existing regular file and is readable.
+
+    If the path is not a regular file or is not readable, raises
+    InvalidConfigurationError.
+
+    Parameters:
+        path (FilePath): Filesystem path to validate.
+        desc (str): Short description of the value being checked; used in error
+        messages.
+
+    Raises:
+        InvalidConfigurationError: If `path` does not point to a file or is not
+        readable.
+    """
     if not os.path.isfile(path):
         raise InvalidConfigurationError(f"{desc} '{path}' is not a file")
     if not os.access(path, os.R_OK):

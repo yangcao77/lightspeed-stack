@@ -22,6 +22,7 @@ from llama_stack_client.types.agents.turn_create_params import (
 from llama_stack_client.types.model_list_response import ModelListResponse
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 from llama_stack_client.types.tool_execution_step import ToolExecutionStep
+from pydantic import AnyUrl
 
 import constants
 import metrics
@@ -39,6 +40,7 @@ from models.responses import (
     ForbiddenResponse,
     QueryResponse,
     ReferencedDocument,
+    ToolCall,
     UnauthorizedResponse,
 )
 from utils.endpoints import (
@@ -47,6 +49,7 @@ from utils.endpoints import (
     get_topic_summary_system_prompt,
     get_temp_agent,
     get_system_prompt,
+    store_conversation_into_cache,
     validate_conversation_ownership,
     validate_model_provider_override,
 )
@@ -298,6 +301,9 @@ async def query_endpoint_handler(  # pylint: disable=R0914
                 topic_summary = await get_topic_summary(
                     query_request.query, client, model_id
                 )
+        # Convert RAG chunks to dictionary format once for reuse
+        logger.info("Processing RAG chunks...")
+        rag_chunks_dict = [chunk.model_dump() for chunk in summary.rag_chunks]
 
         if not is_transcripts_enabled():
             logger.debug("Transcript collection is disabled in the configuration")
@@ -311,11 +317,12 @@ async def query_endpoint_handler(  # pylint: disable=R0914
                 query=query_request.query,
                 query_request=query_request,
                 summary=summary,
-                rag_chunks=[],  # TODO(lucasagomes): implement rag_chunks
+                rag_chunks=rag_chunks_dict,
                 truncated=False,  # TODO(lucasagomes): implement truncation as part of quota work
                 attachments=query_request.attachments or [],
             )
 
+        logger.info("Persisting conversation details...")
         persist_user_conversation_details(
             user_id=user_id,
             conversation_id=conversation_id,
@@ -324,11 +331,60 @@ async def query_endpoint_handler(  # pylint: disable=R0914
             topic_summary=topic_summary,
         )
 
-        return QueryResponse(
+        store_conversation_into_cache(
+            configuration,
+            user_id,
+            conversation_id,
+            provider_id,
+            model_id,
+            query_request.query,
+            summary.llm_response,
+        )
+
+        # Convert tool calls to response format
+        logger.info("Processing tool calls...")
+        tool_calls = [
+            ToolCall(
+                tool_name=tc.name,
+                arguments=(
+                    tc.args if isinstance(tc.args, dict) else {"query": str(tc.args)}
+                ),
+                result=(
+                    {"response": tc.response}
+                    if tc.response and tc.name != constants.DEFAULT_RAG_TOOL
+                    else None
+                ),
+            )
+            for tc in summary.tool_calls
+        ]
+
+        logger.info("Extracting referenced documents...")
+        referenced_docs = []
+        doc_sources = set()
+        for chunk in summary.rag_chunks:
+            if chunk.source and chunk.source not in doc_sources:
+                doc_sources.add(chunk.source)
+                referenced_docs.append(
+                    ReferencedDocument(
+                        doc_url=(
+                            AnyUrl(chunk.source)
+                            if chunk.source.startswith("http")
+                            else None
+                        ),
+                        doc_title=chunk.source,
+                    )
+                )
+
+        logger.info("Building final response...")
+        response = QueryResponse(
             conversation_id=conversation_id,
             response=summary.llm_response,
+            rag_chunks=summary.rag_chunks if summary.rag_chunks else [],
+            tool_calls=tool_calls if tool_calls else None,
             referenced_documents=referenced_documents,
         )
+        logger.info("Query processing completed successfully!")
+        return response
 
     # connection to Llama Stack server
     except APIConnectionError as e:
@@ -519,8 +575,7 @@ def parse_referenced_documents(response: Turn) -> list[ReferencedDocument]:
         if not isinstance(step, ToolExecutionStep):
             continue
         for tool_response in step.tool_responses:
-            # TODO(are-ces): use constant instead
-            if tool_response.tool_name != "knowledge_search":
+            if tool_response.tool_name != constants.DEFAULT_RAG_TOOL:
                 continue
             for text_item in tool_response.content:
                 if not isinstance(text_item, TextContentItem):

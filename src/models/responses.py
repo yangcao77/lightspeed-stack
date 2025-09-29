@@ -34,6 +34,22 @@ class ModelsResponse(BaseModel):
     )
 
 
+class RAGChunk(BaseModel):
+    """Model representing a RAG chunk used in the response."""
+
+    content: str = Field(description="The content of the chunk")
+    source: Optional[str] = Field(None, description="Source document or URL")
+    score: Optional[float] = Field(None, description="Relevance score")
+
+
+class ToolCall(BaseModel):
+    """Model representing a tool call made during response generation."""
+
+    tool_name: str = Field(description="Name of the tool called")
+    arguments: dict[str, Any] = Field(description="Arguments passed to the tool")
+    result: Optional[dict[str, Any]] = Field(None, description="Result from the tool")
+
+
 class ReferencedDocument(BaseModel):
     """Model representing a document referenced in generating a response.
 
@@ -42,27 +58,27 @@ class ReferencedDocument(BaseModel):
         doc_title: Title of the referenced doc.
     """
 
-    doc_url: AnyUrl = Field(description="URL of the referenced document")
+    doc_url: Optional[AnyUrl] = Field(
+        None, description="URL of the referenced document"
+    )
 
     doc_title: str = Field(description="Title of the referenced document")
 
 
-# TODO(lucasagomes): a lot of fields to add to QueryResponse. For now
-# we are keeping it simple. The missing fields are:
-# - truncated: Set to True if conversation history was truncated to be within context window.
-# - input_tokens: Number of tokens sent to LLM
-# - output_tokens: Number of tokens received from LLM
-# - available_quotas: Quota available as measured by all configured quota limiters
-# - tool_calls: List of tool requests.
-# - tool_results: List of tool results.
-# See LLMResponse in ols-service for more details.
 class QueryResponse(BaseModel):
     """Model representing LLM response to a query.
 
     Attributes:
         conversation_id: The optional conversation ID (UUID).
         response: The response.
+        rag_chunks: List of RAG chunks used to generate the response.
         referenced_documents: The URLs and titles for the documents used to generate the response.
+        tool_calls: List of tool calls made during response generation.
+        TODO: truncated: Whether conversation history was truncated.
+        TODO: input_tokens: Number of tokens sent to LLM.
+        TODO: output_tokens: Number of tokens received from LLM.
+        TODO: available_quotas: Quota available as measured by all configured quota limiters
+        TODO: tool_results: List of tool results.
     """
 
     conversation_id: Optional[str] = Field(
@@ -76,6 +92,13 @@ class QueryResponse(BaseModel):
         examples=[
             "Kubernetes is an open-source container orchestration system for automating ..."
         ],
+    )
+
+    rag_chunks: list[RAGChunk] = []
+
+    tool_calls: Optional[list[ToolCall]] = Field(
+        None,
+        description="List of tool calls made during response generation",
     )
 
     referenced_documents: list[ReferencedDocument] = Field(
@@ -99,6 +122,20 @@ class QueryResponse(BaseModel):
                 {
                     "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
                     "response": "Operator Lifecycle Manager (OLM) helps users install...",
+                    "rag_chunks": [
+                        {
+                            "content": "OLM is a component of the Operator Framework toolkit...",
+                            "source": "kubernetes-docs/operators.md",
+                            "score": 0.95,
+                        }
+                    ],
+                    "tool_calls": [
+                        {
+                            "tool_name": "knowledge_search",
+                            "arguments": {"query": "operator lifecycle manager"},
+                            "result": {"chunks_found": 5},
+                        }
+                    ],
                     "referenced_documents": [
                         {
                             "doc_url": "https://docs.openshift.com/"
@@ -640,6 +677,16 @@ class ConversationsListResponse(BaseModel):
             ]
         }
     }
+
+
+class ConversationsListResponseV2(BaseModel):
+    """Model representing a response for listing conversations of a user.
+
+    Attributes:
+        conversations: List of conversation IDs associated with the user.
+    """
+
+    conversations: list[str]
 
 
 class ErrorResponse(BaseModel):
