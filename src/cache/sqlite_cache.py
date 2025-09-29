@@ -104,8 +104,10 @@ class SQLiteCache(Cache):
         """
 
     UPSERT_CONVERSATION_STATEMENT = """
-        INSERT OR REPLACE INTO conversations(user_id, conversation_id, topic_summary, last_message_timestamp)
+        INSERT INTO conversations(user_id, conversation_id, topic_summary, last_message_timestamp)
         VALUES (?, ?, ?, ?)
+        ON CONFLICT (user_id, conversation_id)
+        DO UPDATE SET last_message_timestamp = excluded.last_message_timestamp
         """
 
     def __init__(self, config: SQLiteDatabaseConfiguration) -> None:

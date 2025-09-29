@@ -207,7 +207,7 @@ def store_conversation_into_cache(
         cache.insert_or_append(
             user_id, conversation_id, cache_entry, _skip_userid_check
         )
-        if topic_summary:
+        if topic_summary and len(topic_summary) > 0:
             cache.set_topic_summary(
                 user_id, conversation_id, topic_summary, _skip_userid_check
             )
