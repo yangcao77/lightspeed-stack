@@ -57,6 +57,36 @@ def file_check(path: FilePath, desc: str) -> None:
         raise InvalidConfigurationError(f"{desc} '{path}' is not readable")
 
 
+def directory_check(
+    path: FilePath, must_exists: bool, must_be_writable: bool, desc: str
+) -> None:
+    """
+    Ensure the given path is an existing directory.
+
+    If the path is not a directory, raises InvalidConfigurationError.
+
+    Parameters:
+        path (FilePath): Filesystem path to validate.
+        must_exists (bool): Should the directory exists?
+        must_be_writable (bool): Should the check test if directory is writable?
+        desc (str): Short description of the value being checked; used in error
+        messages.
+
+    Raises:
+        InvalidConfigurationError: If `path` does not point to a directory or
+        is not writable when required.
+    """
+    if not os.path.exists(path):
+        if must_exists:
+            raise InvalidConfigurationError(f"{desc} '{path}' does not exist")
+        return
+    if not os.path.isdir(path):
+        raise InvalidConfigurationError(f"{desc} '{path}' is not a directory")
+    if must_be_writable:
+        if not os.access(path, os.W_OK):
+            raise InvalidConfigurationError(f"{desc} '{path}' is not writable")
+
+
 def import_python_module(profile_name: str, profile_path: str) -> ModuleType | None:
     """Import a Python module from a file path."""
     if not profile_path.endswith(".py"):
