@@ -28,7 +28,7 @@
                     "root"
                 ],
                 "summary": "Root Endpoint Handler",
-                "description": "Handle GET requests to the root (\"/\") endpoint and returns the static HTML index page.\n\nReturns:\n    HTMLResponse: The HTML content of the index page, including a heading,\n    embedded image with the service icon, and links to the API documentation\n    via Swagger UI and ReDoc.",
+                "description": "Handle request to the / endpoint.",
                 "operationId": "root_endpoint_handler__get",
                 "responses": {
                     "200": {
