@@ -1534,6 +1534,20 @@ class QuotaHandlersConfiguration(ConfigurationBase):
     )
 
 
+class AzureEntraIdConfiguration(ConfigurationBase):
+    """Microsoft Entra ID authentication attributes for Azure."""
+
+    tenant_id: SecretStr
+    client_id: SecretStr
+    client_secret: SecretStr
+    scope: str = Field(
+        "https://cognitiveservices.azure.com/.default",
+        title="Token scope",
+        description="Azure Cognitive Services scope for token requests. "
+        "Override only if using a different Azure service.",
+    )
+
+
 class Configuration(ConfigurationBase):
     """Global service configuration."""
 
@@ -1643,6 +1657,7 @@ class Configuration(ConfigurationBase):
         title="Quota handlers",
         description="Quota handlers configuration",
     )
+    azure_entra_id: Optional[AzureEntraIdConfiguration] = None
 
     @model_validator(mode="after")
     def validate_mcp_auth_headers(self) -> Self:

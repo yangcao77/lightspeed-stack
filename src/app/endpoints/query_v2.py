@@ -403,7 +403,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
 
     response = await client.responses.create(**create_kwargs)
     response = cast(OpenAIResponseObject, response)
-    logger.info("Response: %s", response)
     logger.debug(
         "Received response with ID: %s, conversation ID: %s, output items: %d",
         response.id,

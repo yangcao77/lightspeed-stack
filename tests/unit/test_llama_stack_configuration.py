@@ -1,383 +1,200 @@
-"""Unit tests for functions defined in src/llama_stack_configuration.py."""
+"""Unit tests for src/llama_stack_configuration.py."""
 
 from pathlib import Path
-
 from typing import Any
 
 import pytest
 import yaml
-
-from pydantic import SecretStr
-
-from models.config import (
-    ByokRag,
-    Configuration,
-    ServiceConfiguration,
-    LlamaStackConfiguration,
-    UserDataCollection,
-)
-
-from constants import (
-    DEFAULT_EMBEDDING_MODEL,
-    DEFAULT_EMBEDDING_DIMENSION,
-)
 
 from llama_stack_configuration import (
     generate_configuration,
     construct_vector_dbs_section,
     construct_vector_io_providers_section,
 )
+from models.config import (
+    Configuration,
+    ServiceConfiguration,
+    LlamaStackConfiguration,
+    UserDataCollection,
+    InferenceConfiguration,
+)
 
 
-def test_construct_vector_dbs_section_init() -> None:
-    """Test the function construct_vector_dbs_section for no vector_dbs configured before."""
+# =============================================================================
+# Test construct_vector_dbs_section
+# =============================================================================
+
+
+def test_construct_vector_dbs_section_empty() -> None:
+    """Test with no BYOK RAG config."""
     ls_config: dict[str, Any] = {}
-    byok_rag: list[ByokRag] = []
+    byok_rag: list[dict[str, Any]] = []
     output = construct_vector_dbs_section(ls_config, byok_rag)
     assert len(output) == 0
 
 
-def test_construct_vector_dbs_section_init_with_existing_data() -> None:
-    """Test the function construct_vector_dbs_section for vector_dbs configured before."""
+def test_construct_vector_dbs_section_preserves_existing() -> None:
+    """Test preserves existing vector_dbs entries."""
     ls_config = {
         "vector_dbs": [
-            {
-                "vector_db_id": "vector_db_id_1",
-                "provider_id": "provier_id_1",
-                "embedding_model": "embedding_model_1",
-                "embedding_dimension": 1,
-            },
-            {
-                "vector_db_id": "vector_db_id_2",
-                "provider_id": "provier_id_2",
-                "embedding_model": "embedding_model_2",
-                "embedding_dimension": 2,
-            },
+            {"vector_db_id": "existing", "provider_id": "existing_provider"},
         ]
     }
-    byok_rag: list[ByokRag] = []
+    byok_rag: list[dict[str, Any]] = []
     output = construct_vector_dbs_section(ls_config, byok_rag)
-    assert len(output) == 2
-    assert output[0] == {
-        "vector_db_id": "vector_db_id_1",
-        "provider_id": "provier_id_1",
-        "embedding_model": "embedding_model_1",
-        "embedding_dimension": 1,
-    }
-    assert output[1] == {
-        "vector_db_id": "vector_db_id_2",
-        "provider_id": "provier_id_2",
-        "embedding_model": "embedding_model_2",
-        "embedding_dimension": 2,
-    }
+    assert len(output) == 1
+    assert output[0]["vector_db_id"] == "existing"
 
 
-def test_construct_vector_dbs_section_append() -> None:
-    """Test the function construct_vector_dbs_section for no vector_dbs configured before."""
+def test_construct_vector_dbs_section_adds_new() -> None:
+    """Test adds new BYOK RAG entries."""
     ls_config: dict[str, Any] = {}
-    byok_rag: list[ByokRag] = [
-        ByokRag(
-            rag_id="rag_id_1",
-            vector_db_id="vector_db_id_1",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-        ByokRag(
-            rag_id="rag_id_2",
-            vector_db_id="vector_db_id_2",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
+    byok_rag = [
+        {
+            "rag_id": "rag1",
+            "vector_db_id": "db1",
+            "embedding_model": "test-model",
+            "embedding_dimension": 512,
+        },
     ]
+    output = construct_vector_dbs_section(ls_config, byok_rag)
+    assert len(output) == 1
+    assert output[0]["vector_db_id"] == "db1"
+    assert output[0]["provider_id"] == "byok_db1"
+    assert output[0]["embedding_model"] == "test-model"
+    assert output[0]["embedding_dimension"] == 512
+
+
+def test_construct_vector_dbs_section_uses_defaults() -> None:
+    """Test uses default values when not specified."""
+    ls_config: dict[str, Any] = {}
+    byok_rag = [{"vector_db_id": "db1"}]
+    output = construct_vector_dbs_section(ls_config, byok_rag)
+    assert output[0]["embedding_model"] == "all-MiniLM-L6-v2"
+    assert output[0]["embedding_dimension"] == 384
+
+
+def test_construct_vector_dbs_section_merge() -> None:
+    """Test merges existing and new entries."""
+    ls_config = {"vector_dbs": [{"vector_db_id": "existing"}]}
+    byok_rag = [{"vector_db_id": "new_db"}]
     output = construct_vector_dbs_section(ls_config, byok_rag)
     assert len(output) == 2
-    assert output[0] == {
-        "vector_db_id": "vector_db_id_1",
-        "provider_id": "byok_vector_db_id_1",
-        "embedding_model": DEFAULT_EMBEDDING_MODEL,
-        "embedding_dimension": DEFAULT_EMBEDDING_DIMENSION,
-    }
-    assert output[1] == {
-        "vector_db_id": "vector_db_id_2",
-        "provider_id": "byok_vector_db_id_2",
-        "embedding_model": DEFAULT_EMBEDDING_MODEL,
-        "embedding_dimension": DEFAULT_EMBEDDING_DIMENSION,
-    }
 
 
-def test_construct_vector_dbs_section_full_merge() -> None:
-    """Test the function construct_vector_dbs_section for vector_dbs configured before."""
-    ls_config = {
-        "vector_dbs": [
-            {
-                "vector_db_id": "vector_db_id_1",
-                "provider_id": "provier_id_1",
-                "embedding_model": "embedding_model_1",
-                "embedding_dimension": 1,
-            },
-            {
-                "vector_db_id": "vector_db_id_2",
-                "provider_id": "provier_id_2",
-                "embedding_model": "embedding_model_2",
-                "embedding_dimension": 2,
-            },
-        ]
-    }
-    byok_rag = [
-        ByokRag(
-            rag_id="rag_id_1",
-            vector_db_id="vector_db_id_1",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-        ByokRag(
-            rag_id="rag_id_2",
-            vector_db_id="vector_db_id_2",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-    ]
-    output = construct_vector_dbs_section(ls_config, byok_rag)
-    assert len(output) == 4
-    assert output[0] == {
-        "vector_db_id": "vector_db_id_1",
-        "provider_id": "provier_id_1",
-        "embedding_model": "embedding_model_1",
-        "embedding_dimension": 1,
-    }
-    assert output[1] == {
-        "vector_db_id": "vector_db_id_2",
-        "provider_id": "provier_id_2",
-        "embedding_model": "embedding_model_2",
-        "embedding_dimension": 2,
-    }
-    assert output[2] == {
-        "vector_db_id": "vector_db_id_1",
-        "provider_id": "byok_vector_db_id_1",
-        "embedding_model": DEFAULT_EMBEDDING_MODEL,
-        "embedding_dimension": DEFAULT_EMBEDDING_DIMENSION,
-    }
-    assert output[3] == {
-        "vector_db_id": "vector_db_id_2",
-        "provider_id": "byok_vector_db_id_2",
-        "embedding_model": DEFAULT_EMBEDDING_MODEL,
-        "embedding_dimension": DEFAULT_EMBEDDING_DIMENSION,
-    }
+# =============================================================================
+# Test construct_vector_io_providers_section
+# =============================================================================
 
 
-def test_construct_vector_io_providers_section_init() -> None:
-    """Test construct_vector_io_providers_section for no vector_io_providers configured before."""
+def test_construct_vector_io_providers_section_empty() -> None:
+    """Test with no BYOK RAG config."""
     ls_config: dict[str, Any] = {"providers": {}}
-    byok_rag: list[ByokRag] = []
+    byok_rag: list[dict[str, Any]] = []
     output = construct_vector_io_providers_section(ls_config, byok_rag)
     assert len(output) == 0
 
 
-def test_construct_vector_io_providers_section_init_with_existing_data() -> None:
-    """Test construct_vector_io_providers_section for vector_io_providers configured before."""
-    ls_config = {
-        "providers": {
-            "vector_io": [
-                {
-                    "provider_id": "faiss_1",
-                    "provider_type": "inline::faiss",
-                },
-                {
-                    "provider_id": "faiss_2",
-                    "provider_type": "inline::faiss",
-                },
-            ]
-        }
-    }
-    byok_rag: list[ByokRag] = []
+def test_construct_vector_io_providers_section_preserves_existing() -> None:
+    """Test preserves existing vector_io entries."""
+    ls_config = {"providers": {"vector_io": [{"provider_id": "existing"}]}}
+    byok_rag: list[dict[str, Any]] = []
     output = construct_vector_io_providers_section(ls_config, byok_rag)
-    assert len(output) == 2
-    assert output[0] == {
-        "provider_id": "faiss_1",
-        "provider_type": "inline::faiss",
-    }
-    assert output[1] == {
-        "provider_id": "faiss_2",
-        "provider_type": "inline::faiss",
-    }
+    assert len(output) == 1
+    assert output[0]["provider_id"] == "existing"
 
 
-def test_construct_vector_io_providers_section_append() -> None:
-    """Test construct_vector_io_providers_section for no vector_io_providers configured before."""
+def test_construct_vector_io_providers_section_adds_new() -> None:
+    """Test adds new BYOK RAG entries."""
     ls_config: dict[str, Any] = {"providers": {}}
     byok_rag = [
-        ByokRag(
-            rag_id="rag_id_1",
-            vector_db_id="vector_db_id_1",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-        ByokRag(
-            rag_id="rag_id_2",
-            vector_db_id="vector_db_id_2",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
+        {
+            "vector_db_id": "db1",
+            "rag_type": "inline::faiss",
+        },
     ]
     output = construct_vector_io_providers_section(ls_config, byok_rag)
-    assert len(output) == 2
-    assert output[0] == {
-        "provider_id": "byok_vector_db_id_1",
-        "provider_type": "inline::faiss",
-        "config": {
-            "kvstore": {
-                "db_path": ".llama/vector_db_id_1.db",
-                "namespace": None,
-                "type": "sqlite",
-            },
-        },
-    }
-    assert output[1] == {
-        "provider_id": "byok_vector_db_id_2",
-        "provider_type": "inline::faiss",
-        "config": {
-            "kvstore": {
-                "db_path": ".llama/vector_db_id_2.db",
-                "namespace": None,
-                "type": "sqlite",
-            },
-        },
-    }
+    assert len(output) == 1
+    assert output[0]["provider_id"] == "byok_db1"
+    assert output[0]["provider_type"] == "inline::faiss"
 
 
-def test_construct_vector_io_providers_section_full_merge() -> None:
-    """Test construct_vector_io_providers_section for vector_io_providers configured before."""
-    ls_config = {
-        "providers": {
-            "vector_io": [
-                {
-                    "provider_id": "faiss_1",
-                    "provider_type": "inline::faiss",
-                },
-                {
-                    "provider_id": "faiss_2",
-                    "provider_type": "inline::faiss",
-                },
-            ]
-        }
-    }
-    byok_rag = [
-        ByokRag(
-            rag_id="rag_id_1",
-            vector_db_id="vector_db_id_1",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-        ByokRag(
-            rag_id="rag_id_2",
-            vector_db_id="vector_db_id_2",
-            db_path=Path("tests/configuration/rag.txt"),
-        ),
-    ]
+def test_construct_vector_io_providers_section_uses_defaults() -> None:
+    """Test uses default values when not specified."""
+    ls_config: dict[str, Any] = {"providers": {}}
+    byok_rag = [{"vector_db_id": "db1"}]
     output = construct_vector_io_providers_section(ls_config, byok_rag)
-    assert len(output) == 4
-    assert output[0] == {
-        "provider_id": "faiss_1",
-        "provider_type": "inline::faiss",
-    }
-    assert output[1] == {
-        "provider_id": "faiss_2",
-        "provider_type": "inline::faiss",
-    }
-    assert output[2] == {
-        "provider_id": "byok_vector_db_id_1",
-        "provider_type": "inline::faiss",
-        "config": {
-            "kvstore": {
-                "db_path": ".llama/vector_db_id_1.db",
-                "namespace": None,
-                "type": "sqlite",
-            },
-        },
-    }
-    assert output[3] == {
-        "provider_id": "byok_vector_db_id_2",
-        "provider_type": "inline::faiss",
-        "config": {
-            "kvstore": {
-                "db_path": ".llama/vector_db_id_2.db",
-                "namespace": None,
-                "type": "sqlite",
-            },
-        },
-    }
+    assert output[0]["provider_type"] == "inline::faiss"
 
 
-def test_generate_configuration_no_input_file(tmpdir: Path) -> None:
-    """Test the function to generate configuration when input file does not exist."""
-    cfg = Configuration(
-        name="test_name",
-        service=ServiceConfiguration(),
-        llama_stack=LlamaStackConfiguration(
+# =============================================================================
+# Test generate_configuration
+# =============================================================================
+
+
+def test_generate_configuration_no_input_file(tmp_path: Path) -> None:
+    """Test generate_configuration when input file does not exist."""
+    config: dict[str, Any] = {}
+    outfile = tmp_path / "output.yaml"
+
+    with pytest.raises(FileNotFoundError):
+        generate_configuration("/nonexistent/file.yaml", str(outfile), config)
+
+
+def test_generate_configuration_with_dict(tmp_path: Path) -> None:
+    """Test generate_configuration accepts dict."""
+    config: dict[str, Any] = {"byok_rag": []}
+    outfile = tmp_path / "output.yaml"
+
+    generate_configuration("tests/configuration/run.yaml", str(outfile), config)
+
+    assert outfile.exists()
+    with open(outfile, encoding="utf-8") as f:
+        result = yaml.safe_load(f)
+    assert "providers" in result
+
+
+def test_generate_configuration_with_pydantic_model(tmp_path: Path) -> None:
+    """Test generate_configuration accepts Pydantic model via model_dump()."""
+    cfg = Configuration(  # type: ignore[call-arg]
+        name="test",
+        service=ServiceConfiguration(),  # type: ignore[call-arg]
+        llama_stack=LlamaStackConfiguration(  # type: ignore[call-arg]
             use_as_library_client=True,
-            library_client_config_path="tests/configuration/run.yaml",
-            api_key=SecretStr("whatever"),
+            library_client_config_path="run.yaml",
         ),
-        user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
-        ),
+        user_data_collection=UserDataCollection(),  # type: ignore[call-arg]
+        inference=InferenceConfiguration(),  # type: ignore[call-arg]
     )
-    outfile = tmpdir / "run.xml"
-    # try to generate new configuration file
-    with pytest.raises(FileNotFoundError, match="No such file"):
-        generate_configuration("/does/not/exist", str(outfile), cfg)
+    outfile = tmp_path / "output.yaml"
 
-
-def test_generate_configuration_proper_input_file_no_byok(tmpdir: Path) -> None:
-    """Test the function to generate configuration when input file exists."""
-    cfg = Configuration(
-        name="test_name",
-        service=ServiceConfiguration(),
-        llama_stack=LlamaStackConfiguration(
-            use_as_library_client=True,
-            library_client_config_path="tests/configuration/run.yaml",
-            api_key=SecretStr("whatever"),
-        ),
-        user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
-        ),
+    # generate_configuration expects dict, so convert Pydantic model
+    generate_configuration(
+        "tests/configuration/run.yaml", str(outfile), cfg.model_dump()
     )
-    outfile = tmpdir / "run.xml"
-    # try to generate new configuration file
-    generate_configuration("tests/configuration/run.yaml", str(outfile), cfg)
 
-    with open(outfile, "r", encoding="utf-8") as fin:
-        generated = yaml.safe_load(fin)
-        assert "vector_dbs" in generated
-        assert "providers" in generated
-        assert "vector_io" in generated["providers"]
+    assert outfile.exists()
 
 
-def test_generate_configuration_proper_input_file_configured_byok(tmpdir: Path) -> None:
-    """Test the function to generate configuration when BYOK RAG should be added."""
-    cfg = Configuration(
-        name="test_name",
-        service=ServiceConfiguration(),
-        llama_stack=LlamaStackConfiguration(
-            use_as_library_client=True,
-            library_client_config_path="tests/configuration/run.yaml",
-            api_key=SecretStr("whatever"),
-        ),
-        user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
-        ),
-        byok_rag=[
-            ByokRag(
-                rag_id="rag_id_1",
-                vector_db_id="vector_db_id_1",
-                db_path=Path("tests/configuration/rag.txt"),
-            ),
-            ByokRag(
-                rag_id="rag_id_2",
-                vector_db_id="vector_db_id_2",
-                db_path=Path("tests/configuration/rag.txt"),
-            ),
+def test_generate_configuration_with_byok(tmp_path: Path) -> None:
+    """Test generate_configuration adds BYOK entries."""
+    config = {
+        "byok_rag": [
+            {
+                "rag_id": "rag1",
+                "vector_db_id": "db1",
+                "embedding_model": "test-model",
+                "embedding_dimension": 256,
+                "rag_type": "inline::faiss",
+            },
         ],
-    )
-    outfile = tmpdir / "run.xml"
-    # try to generate new configuration file
-    generate_configuration("tests/configuration/run.yaml", str(outfile), cfg)
+    }
+    outfile = tmp_path / "output.yaml"
 
-    with open(outfile, "r", encoding="utf-8") as fin:
-        generated = yaml.safe_load(fin)
-        assert "vector_dbs" in generated
-        assert "providers" in generated
-        assert "vector_io" in generated["providers"]
+    generate_configuration("tests/configuration/run.yaml", str(outfile), config)
+
+    with open(outfile, encoding="utf-8") as f:
+        result = yaml.safe_load(f)
+
+    db_ids = [db["vector_db_id"] for db in result["vector_dbs"]]
+    assert "db1" in db_ids

@@ -65,6 +65,115 @@ Red Hat providers:
 | RHAIIS (vllm) | 3.2.3 (on RHEL 9.20250429.0.4) | remote | `openai` | ✅ |
 | RHEL AI (vllm) | 1.5.2 | remote | `openai` | ✅ |
 
+### Azure Provider - Entra ID Authentication Guide
+
+Lightspeed Core supports secure authentication using Microsoft Entra ID (formerly Azure Active Directory) for the Azure Inference Provider. This allows you to connect to Azure OpenAI without using API keys, by authenticating through your organization's Azure identity.
+
+#### Lightspeed Core Configuration Requirements
+
+To enable Entra ID authentication, the `azure_entra_id` block must be included in your LCS configuration. The `tenant_id`, `client_id`, and `client_secret` attributes are required:
+
+| Attribute | Required | Description |
+|-----------|----------|-------------|
+| `tenant_id` | Yes | Azure AD tenant ID |
+| `client_id` | Yes | Application (client) ID |
+| `client_secret` | Yes | Client secret value |
+| `scope` | No | Token scope (default: `https://cognitiveservices.azure.com/.default`) |
+
+Example of LCS config section:
+
+```yaml
+azure_entra_id:
+  tenant_id: ${env.AZURE_TENANT_ID}
+  client_id: ${env.AZURE_CLIENT_ID}
+  client_secret: ${env.AZURE_CLIENT_SECRET}
+  # scope: "https://cognitiveservices.azure.com/.default"  # optional, this is the default
+```
+
+#### Llama Stack Configuration Requirements
+
+Because Lightspeed builds on top of Llama Stack, certain configuration fields are required to satisfy the base Llama Stack schema. The config block for the Azure inference provider **must** include `api_key`, `api_base`, and `api_version` — Llama Stack will fail to start if any of these are missing.
+
+**Important:** The `api_key` field must be set to `${env.AZURE_API_KEY}` exactly as shown below. This is not optional — Lightspeed uses this specific environment variable name as a placeholder for injection of the Entra ID access token. Using a different variable name will break the authentication flow.
+
+```yaml
+inference:
+  - provider_id: azure
+    provider_type: remote::azure
+    config:
+      api_key: ${env.AZURE_API_KEY}    # Must be exactly this - placeholder for Entra ID token
+      api_base: ${env.AZURE_API_BASE}
+      api_version: 2025-01-01-preview
+```
+
+**How it works:** At startup, Lightspeed acquires an Entra ID access token and stores it in the `AZURE_API_KEY` environment variable. When Llama Stack initializes, it reads the config, substitutes `${env.AZURE_API_KEY}` with the token value, and uses it to authenticate with Azure OpenAI. Llama Stack also calls `models.list()` during initialization to validate provider connectivity, which is why the token must be available before client initialization.
+
+#### Access Token Lifecycle and Management
+
+**Library mode startup:**
+1. Lightspeed reads your Entra ID configuration
+2. Acquires an initial access token from Microsoft Entra ID
+3. Stores the token in the `AZURE_API_KEY` environment variable
+4. **Then** initializes the Llama Stack library client
+
+This ordering is critical because Llama Stack calls `models.list()` during initialization to validate provider connectivity. If the token is not set before client initialization, Azure requests will fail with authentication errors.
+
+**Service mode startup:**
+
+When running Llama Stack as a separate service, Lightspeed runs a pre-startup script that:
+1. Reads the Entra ID configuration
+2. Acquires an initial access token
+3. Writes the token to the `AZURE_API_KEY` environment variable
+4. **Then** Llama Stack service starts
+
+This initial token is used solely for the `models.list()` validation call during Llama Stack startup. After startup, Lightspeed manages token refresh independently and passes fresh tokens via request headers.
+
+**During inference requests:**
+1. Before each request, Lightspeed checks if the token has expired
+2. If expired, a new token is automatically acquired and the environment variable is updated
+3. For library mode: the Llama Stack client is reloaded to pick up the new token
+4. For service mode: the token is passed via `X-LlamaStack-Provider-Data` request headers
+
+**Token security:**
+- Access tokens are wrapped in `SecretStr` to prevent accidental logging
+- Tokens are stored only in the `AZURE_API_KEY` environment variable (single source of truth)
+- Each Uvicorn worker maintains its own token lifecycle independently
+
+**Token validity:**
+- Access tokens are typically valid for 1 hour
+- Lightspeed refreshes tokens proactively before expiration (with a safety margin)
+- Token refresh happens automatically in the background without manual intervention
+
+#### Local Deployment Examples
+
+**Prerequisites:** Export the required Azure Entra ID environment variables in your terminal(s):
+
+```bash
+export TENANT_ID="your-tenant-id"
+export CLIENT_ID="your-client-id"
+export CLIENT_SECRET="your-client-secret"
+```
+
+**Library mode** (Llama Stack embedded in Lightspeed):
+
+```bash
+# From project root
+make run CONFIG=examples/lightspeed-stack-azure-entraid-lib.yaml
+```
+
+**Service mode** (Llama Stack as separate service):
+
+```bash
+# Terminal 1: Start Llama Stack service with Azure Entra ID config
+make run-llama-stack CONFIG=examples/lightspeed-stack-azure-entraid-service.yaml LLAMA_STACK_CONFIG=examples/azure-run.yaml
+
+# Terminal 2: Start Lightspeed (after Llama Stack is ready)
+make run CONFIG=examples/lightspeed-stack-azure-entraid-service.yaml
+```
+
+**Note:** The `make run-llama-stack` command accepts two variables:
+- `CONFIG` - Lightspeed configuration file (default: `lightspeed-stack.yaml`)
+- `LLAMA_STACK_CONFIG` - Llama Stack configuration file to enrich and run (default: `run.yaml`)
 
 ---
 

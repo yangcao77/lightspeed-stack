@@ -62,6 +62,9 @@ dependencies = [
     "PyYAML>=6.0.0",
     # Used for rag faiss support
     "einops>=0.8.1",
+    # Used for Azure Entra ID token management
+    "azure-core",
+    "azure-identity",
 ]
 
 

@@ -1,18 +1,25 @@
-"""Llama Stack configuration handling."""
+"""Llama Stack configuration enrichment.
 
+This module can be used in two ways:
+1. As a script: `python llama_stack_configuration.py -c config.yaml`
+2. As a module: `from llama_stack_configuration import generate_configuration`
+"""
+
+import logging
+import os
+from argparse import ArgumentParser
 from typing import Any
 
+from azure.core.exceptions import ClientAuthenticationError
+from azure.identity import ClientSecretCredential, CredentialUnavailableError
+
 import yaml
+from llama_stack.core.stack import replace_env_vars
 
-from log import get_logger
-
-from models.config import Configuration, ByokRag
-
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
 
 
-# pylint: disable=too-many-ancestors
-class YamlDumper(yaml.Dumper):
+class YamlDumper(yaml.Dumper):  # pylint: disable=too-many-ancestors
     """Custom YAML dumper with proper indentation levels."""
 
     def increase_indent(self, flow: bool = False, indentless: bool = False) -> None:
@@ -31,53 +38,82 @@ class YamlDumper(yaml.Dumper):
         return super().increase_indent(flow, False)
 
 
-def generate_configuration(
-    input_file: str, output_file: str, config: Configuration
+# =============================================================================
+# Enrichment: Azure Entra ID
+# =============================================================================
+
+
+def setup_azure_entra_id_token(
+    azure_config: dict[str, Any] | None, env_file: str
 ) -> None:
-    """Generate new Llama Stack configuration.
+    """Generate Azure Entra ID access token and write to .env file.
 
-    Update a Llama Stack YAML configuration file by inserting BYOK RAG vector
-    DB and provider entries when present.
-
-    Reads the YAML configuration from `input_file`, and if `config.byok_rag`
-    contains items, updates or creates the `vector_dbs` and
-    `providers.vector_io` sections (preserving any existing entries) based on
-    that BYOK RAG data, then writes the resulting configuration to
-    `output_file`. If `config.byok_rag` is empty, the input configuration is
-    written unchanged to `output_file`.
-
-    Parameters:
-        input_file (str): Path to the existing Llama Stack YAML configuration to read.
-        output_file (str): Path where the updated YAML configuration will be written.
-        config (Configuration): Configuration object whose `byok_rag` list
-        supplies BYOK RAG entries to be added.
+    Skips generation if AZURE_API_KEY is already set (e.g., orchestrator-injected).
     """
-    logger.info("Reading Llama Stack configuration from file %s", input_file)
+    # Skip if already injected by orchestrator (secure production setup)
+    if os.environ.get("AZURE_API_KEY"):
+        logger.info("Azure Entra ID: AZURE_API_KEY already set, skipping generation")
+        return
 
-    with open(input_file, "r", encoding="utf-8") as file:
-        ls_config = yaml.safe_load(file)
+    if azure_config is None:
+        logger.info("Azure Entra ID: Not configured, skipping")
+        return
 
-    if len(config.byok_rag) == 0:
-        logger.info("BYOK RAG is not configured: finishing")
-    else:
-        logger.info("Processing Llama Stack configuration")
-        # create or update configuration section vector_dbs
-        ls_config["vector_dbs"] = construct_vector_dbs_section(
-            ls_config, config.byok_rag
+    tenant_id = azure_config.get("tenant_id")
+    client_id = azure_config.get("client_id")
+    client_secret = azure_config.get("client_secret")
+
+    if not all([tenant_id, client_id, client_secret]):
+        logger.warning(
+            "Azure Entra ID: Missing required fields (tenant_id, client_id, client_secret)"
         )
-        # create or update configuration section providers/vector_io
-        ls_config["providers"]["vector_io"] = construct_vector_io_providers_section(
-            ls_config, config.byok_rag
+        return
+
+    scope = "https://cognitiveservices.azure.com/.default"
+    try:
+        credential = ClientSecretCredential(
+            tenant_id=str(tenant_id),
+            client_id=str(client_id),
+            client_secret=str(client_secret),
         )
 
-    logger.info("Writing Llama Stack configuration into file %s", output_file)
+        token = credential.get_token(scope)
 
-    with open(output_file, "w", encoding="utf-8") as file:
-        yaml.dump(ls_config, file, Dumper=YamlDumper, default_flow_style=False)
+        # Write to .env file
+        lines = []
+        if os.path.exists(env_file):
+            with open(env_file, "r", encoding="utf-8") as f:
+                lines = f.readlines()
+
+        # Update or add AZURE_API_KEY
+        key_found = False
+        for i, line in enumerate(lines):
+            if line.startswith("AZURE_API_KEY="):
+                lines[i] = f"AZURE_API_KEY={token.token}\n"
+                key_found = True
+                break
+
+        if not key_found:
+            lines.append(f"AZURE_API_KEY={token.token}\n")
+
+        with open(env_file, "w", encoding="utf-8") as f:
+            f.writelines(lines)
+
+        logger.info(
+            "Azure Entra ID: Access token set in env and written to %s", env_file
+        )
+
+    except (ClientAuthenticationError, CredentialUnavailableError) as e:
+        logger.error("Azure Entra ID: Failed to generate token: %s", e)
+
+
+# =============================================================================
+# Enrichment: BYOK RAG
+# =============================================================================
 
 
 def construct_vector_dbs_section(
-    ls_config: dict[str, Any], byok_rag: list[ByokRag]
+    ls_config: dict[str, Any], byok_rag: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
     """Construct vector_dbs section in Llama Stack configuration file.
 
@@ -107,10 +143,10 @@ def construct_vector_dbs_section(
     for brag in byok_rag:
         output.append(
             {
-                "vector_db_id": brag.vector_db_id,
-                "provider_id": "byok_" + brag.vector_db_id,
-                "embedding_model": brag.embedding_model,
-                "embedding_dimension": brag.embedding_dimension,
+                "vector_db_id": brag.get("vector_db_id"),
+                "provider_id": "byok_" + brag.get("vector_db_id", ""),
+                "embedding_model": brag.get("embedding_model", "all-MiniLM-L6-v2"),
+                "embedding_dimension": brag.get("embedding_dimension", 384),
             }
         )
     logger.info(
@@ -122,7 +158,7 @@ def construct_vector_dbs_section(
 
 
 def construct_vector_io_providers_section(
-    ls_config: dict[str, Any], byok_rag: list[ByokRag]
+    ls_config: dict[str, Any], byok_rag: list[dict[str, Any]]
 ) -> list[dict[str, Any]]:
     """Construct providers/vector_io section in Llama Stack configuration file.
 
@@ -148,18 +184,18 @@ def construct_vector_io_providers_section(
     output = []
 
     # fill-in existing vector_io entries
-    if "vector_io" in ls_config["providers"]:
+    if "providers" in ls_config and "vector_io" in ls_config["providers"]:
         output = ls_config["providers"]["vector_io"]
 
     # append new vector_io entries
     for brag in byok_rag:
         output.append(
             {
-                "provider_id": "byok_" + brag.vector_db_id,
-                "provider_type": brag.rag_type,
+                "provider_id": "byok_" + brag.get("vector_db_id", ""),
+                "provider_type": brag.get("rag_type", "inline::faiss"),
                 "config": {
                     "kvstore": {
-                        "db_path": ".llama/" + brag.vector_db_id + ".db",
+                        "db_path": ".llama/" + brag.get("vector_db_id", "") + ".db",
                         "namespace": None,
                         "type": "sqlite",
                     }
@@ -172,3 +208,111 @@ def construct_vector_io_providers_section(
         len(output),
     )
     return output
+
+
+def enrich_byok_rag(ls_config: dict[str, Any], byok_rag: list[dict[str, Any]]) -> None:
+    """Enrich Llama Stack config with BYOK RAG settings.
+
+    Args:
+        ls_config: Llama Stack configuration dict (modified in place)
+        byok_rag: List of BYOK RAG configurations
+    """
+    if len(byok_rag) == 0:
+        logger.info("BYOK RAG is not configured: skipping")
+        return
+
+    logger.info("Enriching Llama Stack config with BYOK RAG")
+    ls_config["vector_dbs"] = construct_vector_dbs_section(ls_config, byok_rag)
+
+    if "providers" not in ls_config:
+        ls_config["providers"] = {}
+    ls_config["providers"]["vector_io"] = construct_vector_io_providers_section(
+        ls_config, byok_rag
+    )
+
+
+# =============================================================================
+# Main Generation Function (service/container mode only)
+# =============================================================================
+
+
+def generate_configuration(
+    input_file: str,
+    output_file: str,
+    config: dict[str, Any],
+    env_file: str = ".env",
+) -> None:
+    """Generate enriched Llama Stack configuration for service/container mode.
+
+    Args:
+        input_file: Path to input Llama Stack config
+        output_file: Path to write enriched config
+        config: Lightspeed config dict (from YAML)
+        env_file: Path to .env file
+    """
+    logger.info("Reading Llama Stack configuration from file %s", input_file)
+
+    with open(input_file, "r", encoding="utf-8") as file:
+        ls_config = yaml.safe_load(file)
+
+    # Enrichment: Azure Entra ID token
+    setup_azure_entra_id_token(config.get("azure_entra_id"), env_file)
+
+    # Enrichment: BYOK RAG
+    enrich_byok_rag(ls_config, config.get("byok_rag", []))
+
+    logger.info("Writing Llama Stack configuration into file %s", output_file)
+
+    with open(output_file, "w", encoding="utf-8") as file:
+        yaml.dump(ls_config, file, Dumper=YamlDumper, default_flow_style=False)
+
+
+# =============================================================================
+# CLI Entry Point
+# =============================================================================
+
+
+def main() -> None:
+    """CLI entry point."""
+    parser = ArgumentParser(
+        description="Enrich Llama Stack config with Lightspeed values",
+    )
+    parser.add_argument(
+        "-c",
+        "--config",
+        default="lightspeed-stack.yaml",
+        help="Lightspeed config file (default: lightspeed-stack.yaml)",
+    )
+    parser.add_argument(
+        "-i",
+        "--input",
+        default="run.yaml",
+        help="Input Llama Stack config (default: run.yaml)",
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default="run_.yaml",
+        help="Output enriched config (default: run_.yaml)",
+    )
+    parser.add_argument(
+        "-e",
+        "--env-file",
+        default=".env",
+        help="Path to .env file for AZURE_API_KEY (default: .env)",
+    )
+    args = parser.parse_args()
+
+    try:
+        with open(args.config, "r", encoding="utf-8") as f:
+            config = yaml.safe_load(f)
+            config = replace_env_vars(config)
+    except FileNotFoundError:
+        logger.error("Config not found: %s", args.config)
+        return
+
+    generate_configuration(args.input, args.output, config, args.env_file)
+
+
+if __name__ == "__main__":
+    main()

@@ -17,3 +17,8 @@ user_data_collection:
   transcripts_storage: "/tmp/data/transcripts"
 authentication:
   module: "noop"
+
+azure_entra_id:
+  tenant_id: ${env.TENANT_ID}
+  client_id: ${env.CLIENT_ID}
+  client_secret: ${env.CLIENT_SECRET}

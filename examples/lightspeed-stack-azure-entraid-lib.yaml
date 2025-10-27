@@ -7,18 +7,22 @@ service:
   color_log: true
   access_log: true
 llama_stack:
+  # Uses a remote llama-stack service
+  # The instance would have already been started with a llama-stack-run.yaml file
+  # use_as_library_client: false
+  # Alternative for "as library use"
   use_as_library_client: true
-  library_client_config_path: run.yaml
+  library_client_config_path: examples/azure-run.yaml
+  # url: http://localhost:8321
+  # api_key: xyzzy
 user_data_collection:
   feedback_enabled: true
   feedback_storage: "/tmp/data/feedback"
   transcripts_enabled: true
   transcripts_storage: "/tmp/data/transcripts"
 
-# NO conversation_cache configured - for testing error handling
-
 authentication:
-  module: "noop-with-token"
+  module: "noop"
 
 azure_entra_id:
   tenant_id: ${env.TENANT_ID}

@@ -18,3 +18,7 @@ user_data_collection:
 authentication:
   module: "noop-with-token"
 
+azure_entra_id:
+  tenant_id: ${env.TENANT_ID}
+  client_id: ${env.CLIENT_ID}
+  client_secret: ${env.CLIENT_SECRET}

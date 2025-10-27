@@ -11,6 +11,7 @@ import yaml
 from models.config import (
     A2AStateConfiguration,
     AuthorizationConfiguration,
+    AzureEntraIdConfiguration,
     Configuration,
     Customization,
     LlamaStackConfiguration,
@@ -70,7 +71,6 @@ class AppConfig:
         with open(filename, encoding="utf-8") as fin:
             config_dict = yaml.safe_load(fin)
             config_dict = replace_env_vars(config_dict)
-            logger.info("Loaded configuration: %s", config_dict)
             self.init_from_dict(config_dict)
 
     def init_from_dict(self, config_dict: dict[Any, Any]) -> None:
@@ -340,6 +340,13 @@ class AppConfig:
                 self._configuration.quota_handlers
             )
         return self._token_usage_history
+
+    @property
+    def azure_entra_id(self) -> Optional[AzureEntraIdConfiguration]:
+        """Return Azure Entra ID configuration, or None if not provided."""
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.azure_entra_id
 
 
 configuration: AppConfig = AppConfig()

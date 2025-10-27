@@ -49,6 +49,7 @@ from app.endpoints.query import parse_referenced_documents
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
+from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL, MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
@@ -883,13 +884,37 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
 
     try:
         # try to get Llama Stack client
-        client = AsyncLlamaStackClientHolder().get_client()
+        client_holder = AsyncLlamaStackClientHolder()
+        client = client_holder.get_client()
         llama_stack_model_id, model_id, provider_id = select_model_and_provider_id(
             await client.models.list(),
             *evaluate_model_hints(
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
+
+        if provider_id == "azure":
+            if (
+                AzureEntraIDManager().is_entra_id_configured
+                and AzureEntraIDManager().is_token_expired
+            ):
+                await AzureEntraIDManager().refresh_token()
+
+                if client_holder.is_library_client:
+                    client = await client_holder.reload_library_client()
+                else:
+                    azure_config = next(
+                        p.config
+                        for p in await client.providers.list()
+                        if p.provider_type == "remote::azure"
+                    )
+                    client = client_holder.update_provider_data(
+                        {
+                            "azure_api_key": AzureEntraIDManager().access_token.get_secret_value(),
+                            "azure_api_base": str(azure_config.get("api_base")),
+                        }
+                    )
+
         response, conversation_id = await retrieve_response_func(
             client,
             llama_stack_model_id,

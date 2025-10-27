@@ -15,13 +15,16 @@ services:
       - ${GCP_KEYS_PATH:-./tmp/.gcp-keys-dummy}:/opt/app-root/.gcp-keys:ro
       - ./tests/e2e/rag:/opt/app-root/src/.llama/storage/rag:Z
     environment:
+      # LLM Provider API Keys
       - BRAVE_SEARCH_API_KEY=${BRAVE_SEARCH_API_KEY:-}
       - TAVILY_SEARCH_API_KEY=${TAVILY_SEARCH_API_KEY:-}
       # OpenAI
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - E2E_OPENAI_MODEL=${E2E_OPENAI_MODEL:-gpt-4o-mini}
-      # Azure
-      - AZURE_API_KEY=${AZURE_API_KEY:-}
+      # Azure Entra ID credentials (AZURE_API_KEY is obtained dynamically in Python)
+      - TENANT_ID=${TENANT_ID:-}
+      - CLIENT_ID=${CLIENT_ID:-}
+      - CLIENT_SECRET=${CLIENT_SECRET:-}
       # RHAIIS
       - RHAIIS_URL=${RHAIIS_URL:-}
       - RHAIIS_API_KEY=${RHAIIS_API_KEY:-}

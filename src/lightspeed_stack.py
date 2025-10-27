@@ -12,7 +12,6 @@ from rich.logging import RichHandler
 
 from log import get_logger
 from configuration import configuration
-from llama_stack_configuration import generate_configuration
 from runners.uvicorn import start_uvicorn
 from runners.quota_scheduler import start_quota_scheduler
 
@@ -63,28 +62,6 @@ def create_argument_parser() -> ArgumentParser:
         help="path to configuration file (default: lightspeed-stack.yaml)",
         default="lightspeed-stack.yaml",
     )
-    parser.add_argument(
-        "-g",
-        "--generate-llama-stack-configuration",
-        dest="generate_llama_stack_configuration",
-        help="generate Llama Stack configuration based on LCORE configuration",
-        action="store_true",
-        default=False,
-    )
-    parser.add_argument(
-        "-i",
-        "--input-config-file",
-        dest="input_config_file",
-        help="Llama Stack input configuration file",
-        default="run.yaml",
-    )
-    parser.add_argument(
-        "-o",
-        "--output-config-file",
-        dest="output_config_file",
-        help="Llama Stack output configuration file",
-        default="run_.yaml",
-    )
 
     return parser
 
@@ -128,26 +105,8 @@ def main() -> None:
             raise SystemExit(1) from e
         return
 
-    # -g or --generate-llama-stack-configuration CLI flags are used to (re)generate
-    # configuration for Llama Stack
-    if args.generate_llama_stack_configuration:
-        try:
-            generate_configuration(
-                args.input_config_file,
-                args.output_config_file,
-                configuration.configuration,
-            )
-            logger.info(
-                "Llama Stack configuration generated and stored into %s",
-                args.output_config_file,
-            )
-        except Exception as e:
-            logger.error("Failed to generate Llama Stack configuration: %s", e)
-            raise SystemExit(1) from e
-        return
-
     # Store config path in env so each uvicorn worker can load it
-    # (step is needed because process context isn’t shared).
+    # (step is needed because process context isn't shared).
     os.environ["LIGHTSPEED_STACK_CONFIG_PATH"] = args.config_file
 
     # start the runners
