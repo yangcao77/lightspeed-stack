@@ -52,12 +52,10 @@ from app.endpoints.streaming_query import (
 
 from authorization.resolvers import NoopRolesResolver
 from constants import MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
-from models.cache_entry import CacheEntry
 from models.config import ModelContextProtocolServer, Action
 from models.requests import QueryRequest, Attachment
-from models.responses import RAGChunk
 from utils.token_counter import TokenCounter
-from utils.types import ToolCallSummary, TurnSummary
+from utils.types import TurnSummary
 
 from tests.unit.conftest import AgentFixtures
 
@@ -75,14 +73,11 @@ def mock_database_operations(mocker: MockerFixture) -> None:
         "app.endpoints.streaming_query.validate_conversation_ownership",
         return_value=True,
     )
-    mocker.patch("app.endpoints.streaming_query.persist_user_conversation_details")
-
-    # Mock the database session and query
-    mock_session = mocker.Mock()
-    mock_session.query.return_value.filter_by.return_value.first.return_value = None
-    mock_session.__enter__ = mocker.Mock(return_value=mock_session)
-    mock_session.__exit__ = mocker.Mock(return_value=None)
-    mocker.patch("app.endpoints.streaming_query.get_session", return_value=mock_session)
+    # Mock the cleanup function that handles all post-streaming database/cache work
+    mocker.patch(
+        "app.endpoints.streaming_query.cleanup_after_streaming",
+        mocker.AsyncMock(return_value=None),
+    )
 
 
 def mock_metrics(mocker: MockerFixture) -> None:
@@ -217,9 +212,7 @@ async def test_streaming_query_endpoint_on_connection_error(
 
 
 # pylint: disable=too-many-locals
-async def _test_streaming_query_endpoint_handler(
-    mocker: MockerFixture, store_transcript: bool = False
-) -> None:
+async def _test_streaming_query_endpoint_handler(mocker: MockerFixture) -> None:
     """Test the streaming query endpoint handler."""
     mock_client = mocker.AsyncMock()
     mock_async_lsc = mocker.patch("client.AsyncLlamaStackClientHolder.get_client")
@@ -313,9 +306,6 @@ async def _test_streaming_query_endpoint_handler(
         ]
     )
 
-    mock_store_in_cache = mocker.patch(
-        "app.endpoints.streaming_query.store_conversation_into_cache"
-    )
     query = "What is OpenStack?"
     mocker.patch(
         "app.endpoints.streaming_query.retrieve_response",
@@ -324,17 +314,6 @@ async def _test_streaming_query_endpoint_handler(
     mocker.patch(
         "app.endpoints.streaming_query.select_model_and_provider_id",
         return_value=("fake_model_id", "fake_model_id", "fake_provider_id"),
-    )
-    mocker.patch(
-        "app.endpoints.streaming_query.is_transcripts_enabled",
-        return_value=store_transcript,
-    )
-    mock_transcript = mocker.patch("app.endpoints.streaming_query.store_transcript")
-
-    # Mock get_topic_summary function
-    mocker.patch(
-        "app.endpoints.streaming_query.get_topic_summary",
-        return_value="Test topic summary",
     )
 
     mock_database_operations(mocker)
@@ -377,79 +356,21 @@ async def _test_streaming_query_endpoint_handler(
     assert len(referenced_documents) == 2
     assert referenced_documents[1]["doc_title"] == "Doc2"
 
-    # Assert that mock was called and get the arguments
-    mock_store_in_cache.assert_called_once()
-    call_args = mock_store_in_cache.call_args[0]
-    # Extract CacheEntry object from the call arguments,
-    # it's the 4th argument from the func signature
-    cached_entry = call_args[3]
-
-    # Assert that the CacheEntry was constructed correctly
-    assert isinstance(cached_entry, CacheEntry)
-    assert cached_entry.response == "LLM answer"
-    assert cached_entry.referenced_documents is not None
-    assert len(cached_entry.referenced_documents) == 2
-    assert cached_entry.referenced_documents[0].doc_title == "Doc1"
-    assert (
-        str(cached_entry.referenced_documents[1].doc_url) == "https://example.com/doc2"
-    )
-
-    # Assert the store_transcript function is called if transcripts are enabled
-    if store_transcript:
-        mock_transcript.assert_called_once_with(
-            user_id="017adfa4-7cc6-46e4-b663-3653e1ae69df",
-            conversation_id="00000000-0000-0000-0000-000000000000",
-            model_id="fake_model_id",
-            provider_id="fake_provider_id",
-            query_is_valid=True,
-            query=query,
-            query_request=query_request,
-            summary=TurnSummary(
-                llm_response="LLM answer",
-                tool_calls=[
-                    ToolCallSummary(
-                        id="t1",
-                        name="knowledge_search",
-                        args={},
-                        response=" ".join(SAMPLE_KNOWLEDGE_SEARCH_RESULTS),
-                    )
-                ],
-                rag_chunks=[
-                    RAGChunk(
-                        content=" ".join(SAMPLE_KNOWLEDGE_SEARCH_RESULTS),
-                        source="knowledge_search",
-                        score=None,
-                    )
-                ],
-            ),
-            attachments=[],
-            rag_chunks=[
-                {
-                    "content": " ".join(SAMPLE_KNOWLEDGE_SEARCH_RESULTS),
-                    "source": "knowledge_search",
-                    "score": None,
-                }
-            ],
-            truncated=False,
-        )
-    else:
-        mock_transcript.assert_not_called()
-
 
 @pytest.mark.asyncio
 async def test_streaming_query_endpoint_handler(mocker: MockerFixture) -> None:
-    """Test the streaming query endpoint handler with transcript storage disabled."""
+    """Test the streaming query endpoint handler."""
     mock_metrics(mocker)
-    await _test_streaming_query_endpoint_handler(mocker, store_transcript=False)
+    await _test_streaming_query_endpoint_handler(mocker)
 
 
 @pytest.mark.asyncio
 async def test_streaming_query_endpoint_handler_store_transcript(
     mocker: MockerFixture,
 ) -> None:
-    """Test the streaming query endpoint handler with transcript storage enabled."""
+    """Test the streaming query endpoint handler (backwards compatibility)."""
     mock_metrics(mocker)
-    await _test_streaming_query_endpoint_handler(mocker, store_transcript=True)
+    await _test_streaming_query_endpoint_handler(mocker)
 
 
 async def test_retrieve_response_vector_db_available(

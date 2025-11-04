@@ -59,7 +59,7 @@ def test_get_mcp_tools_with_and_without_token() -> None:
     assert tools_with_token[1]["headers"] == {"Authorization": "Bearer abc"}
 
 
-def test_get_mcp_tools_with_mcp_headers():
+def test_get_mcp_tools_with_mcp_headers() -> None:
     """Test get_mcp_tools merges token auth and per-server headers correctly."""
     servers = [
         ModelContextProtocolServer(name="fs", url="http://localhost:3000"),

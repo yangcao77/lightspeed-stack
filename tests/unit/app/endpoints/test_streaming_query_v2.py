@@ -2,7 +2,9 @@
 """Unit tests for the /streaming_query (v2) endpoint using Responses API."""
 
 from types import SimpleNamespace
+from typing import Any, AsyncIterator
 import pytest
+from pytest_mock import MockerFixture
 from fastapi import HTTPException, status, Request
 from fastapi.responses import StreamingResponse
 
@@ -27,7 +29,9 @@ def dummy_request() -> Request:
 
 
 @pytest.mark.asyncio
-async def test_retrieve_response_builds_rag_and_mcp_tools(mocker):
+async def test_retrieve_response_builds_rag_and_mcp_tools(
+    mocker: MockerFixture,
+) -> None:
     """Test that retrieve_response correctly builds RAG and MCP tools."""
     mock_client = mocker.Mock()
     mock_vector_stores = mocker.Mock()
@@ -57,7 +61,7 @@ async def test_retrieve_response_builds_rag_and_mcp_tools(mocker):
 
 
 @pytest.mark.asyncio
-async def test_retrieve_response_no_tools_passes_none(mocker):
+async def test_retrieve_response_no_tools_passes_none(mocker: MockerFixture) -> None:
     """Test that retrieve_response passes None for tools when no_tools=True."""
     mock_client = mocker.Mock()
     mock_vector_stores = mocker.Mock()
@@ -82,8 +86,8 @@ async def test_retrieve_response_no_tools_passes_none(mocker):
 
 @pytest.mark.asyncio
 async def test_streaming_query_endpoint_handler_v2_success_yields_events(
-    mocker, dummy_request
-):
+    mocker: MockerFixture, dummy_request: Request
+) -> None:
     """Test that streaming_query_endpoint_handler_v2 yields correct SSE events."""
     # Skip real config checks - patch in streaming_query where the base handler is
     mocker.patch("app.endpoints.streaming_query.check_configuration_loaded")
@@ -117,42 +121,14 @@ async def test_streaming_query_endpoint_handler_v2_success_yields_events(
         lambda _m, _s, _t, _media: "END\n",
     )
 
-    # Conversation persistence and transcripts disabled
-    persist_spy = mocker.patch(
-        "app.endpoints.streaming_query_v2.persist_user_conversation_details",
-        return_value=None,
-    )
-    mocker.patch(
-        "app.endpoints.streaming_query_v2.is_transcripts_enabled", return_value=False
-    )
-
-    # Mock database and topic summary
-    mock_session = mocker.Mock()
-    mock_session.query.return_value.filter_by.return_value.first.return_value = (
-        mocker.Mock()
-    )
-    mock_context_manager = mocker.Mock()
-    mock_context_manager.__enter__ = mocker.Mock(return_value=mock_session)
-    mock_context_manager.__exit__ = mocker.Mock(return_value=None)
-    mocker.patch(
-        "app.endpoints.streaming_query_v2.get_session",
-        return_value=mock_context_manager,
-    )
-    mocker.patch(
-        "app.endpoints.streaming_query_v2.get_topic_summary",
-        mocker.AsyncMock(return_value=""),
-    )
-    mocker.patch(
-        "app.endpoints.streaming_query_v2.store_conversation_into_cache",
-        return_value=None,
-    )
-    mocker.patch(
-        "app.endpoints.streaming_query_v2.create_referenced_documents_with_metadata",
-        return_value=[],
+    # Mock the cleanup function that handles all post-streaming database/cache work
+    cleanup_spy = mocker.patch(
+        "app.endpoints.streaming_query_v2.cleanup_after_streaming",
+        mocker.AsyncMock(return_value=None),
     )
 
     # Build a fake async stream of chunks
-    async def fake_stream():
+    async def fake_stream() -> AsyncIterator[SimpleNamespace]:
         yield SimpleNamespace(
             type="response.created", response=SimpleNamespace(id="conv-xyz")
         )
@@ -211,27 +187,25 @@ async def test_streaming_query_endpoint_handler_v2_success_yields_events(
     assert "EV:turn_complete:Hello world\n" in events
     assert events[-1] == "END\n"
 
-    # Verify conversation persistence was invoked with the created id
-    # Called once at the end (after topic summary logic)
-    assert persist_spy.call_count == 1
-    persist_spy.assert_called_with(
-        user_id="user123",
-        conversation_id="conv-xyz",
-        model="m",
-        provider_id="p",
-        topic_summary=None,
-    )
+    # Verify cleanup function was invoked after streaming
+    assert cleanup_spy.call_count == 1
+    # Verify cleanup was called with correct user_id and conversation_id
+    call_args = cleanup_spy.call_args
+    assert call_args.kwargs["user_id"] == "user123"
+    assert call_args.kwargs["conversation_id"] == "conv-xyz"
+    assert call_args.kwargs["model_id"] == "m"
+    assert call_args.kwargs["provider_id"] == "p"
 
 
 @pytest.mark.asyncio
 async def test_streaming_query_endpoint_handler_v2_api_connection_error(
-    mocker, dummy_request
-):
+    mocker: MockerFixture, dummy_request: Request
+) -> None:
     """Test that streaming_query_endpoint_handler_v2 handles API connection errors."""
     mocker.patch("app.endpoints.streaming_query.check_configuration_loaded")
 
-    def _raise(*_a, **_k):
-        raise APIConnectionError(request=None)
+    def _raise(*_a: Any, **_k: Any) -> None:
+        raise APIConnectionError(request=None)  # type: ignore[arg-type]
 
     mocker.patch("client.AsyncLlamaStackClientHolder.get_client", side_effect=_raise)
 

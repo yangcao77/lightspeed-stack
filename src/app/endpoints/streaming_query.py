@@ -24,7 +24,6 @@ from llama_stack_client.types.shared import ToolCall
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 from llama_stack_client.types.agents.turn_create_params import Document
 
-from app.database import get_session
 from app.endpoints.query import (
     get_rag_toolgroups,
     is_input_shield,
@@ -45,18 +44,17 @@ from configuration import configuration
 from constants import DEFAULT_RAG_TOOL, MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
 import metrics
 from metrics.utils import update_llm_token_count_from_turn
-from models.cache_entry import CacheEntry
 from models.config import Action
+from models.context import ResponseGeneratorContext
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest
 from models.responses import ForbiddenResponse, UnauthorizedResponse
 from utils.endpoints import (
     check_configuration_loaded,
-    create_referenced_documents_with_metadata,
+    cleanup_after_streaming,
     create_rag_chunks_dict,
     get_agent,
     get_system_prompt,
-    store_conversation_into_cache,
     validate_model_provider_override,
 )
 from utils.mcp_headers import handle_mcp_headers_with_toolgroups, mcp_headers_dependency
@@ -696,17 +694,8 @@ def _handle_heartbeat_event(
     )
 
 
-def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-many-locals
-    conversation_id: str,
-    user_id: str,
-    model_id: str,
-    provider_id: str,
-    query_request: QueryRequest,
-    metadata_map: dict[str, dict[str, Any]],
-    client: AsyncLlamaStackClient,
-    llama_stack_model_id: str,
-    started_at: str,
-    _skip_userid_check: bool,
+def create_agent_response_generator(  # pylint: disable=too-many-locals
+    context: ResponseGeneratorContext,
 ) -> Any:
     """
     Create a response generator function for Agent API streaming.
@@ -715,16 +704,7 @@ def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-m
     responses from the Agent API and yields Server-Sent Events (SSE).
 
     Args:
-        conversation_id: The conversation identifier
-        user_id: The user identifier
-        model_id: The model identifier
-        provider_id: The provider identifier
-        query_request: The query request object
-        metadata_map: Dictionary for storing metadata from tool responses
-        client: The Llama Stack client
-        llama_stack_model_id: The full llama stack model ID
-        started_at: Timestamp when the request started
-        _skip_userid_check: Whether to skip user ID validation
+        context: Context object containing all necessary parameters for response generation
 
     Returns:
         An async generator function that yields SSE-formatted strings
@@ -748,10 +728,10 @@ def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-m
         summary = TurnSummary(llm_response="No response from the model", tool_calls=[])
 
         # Determine media type for response formatting
-        media_type = query_request.media_type or MEDIA_TYPE_JSON
+        media_type = context.query_request.media_type or MEDIA_TYPE_JSON
 
         # Send start event at the beginning of the stream
-        yield stream_start_event(conversation_id)
+        yield stream_start_event(context.conversation_id)
 
         latest_turn: Any | None = None
 
@@ -764,10 +744,10 @@ def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-m
                     p.turn.output_message.content
                 )
                 latest_turn = p.turn
-                system_prompt = get_system_prompt(query_request, configuration)
+                system_prompt = get_system_prompt(context.query_request, configuration)
                 try:
                     update_llm_token_count_from_turn(
-                        p.turn, model_id, provider_id, system_prompt
+                        p.turn, context.model_id, context.provider_id, system_prompt
                     )
                 except Exception:  # pylint: disable=broad-except
                     logger.exception("Failed to update token usage metrics")
@@ -776,7 +756,11 @@ def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-m
                     summary.append_tool_calls_from_llama(p.step_details)
 
             for event in stream_build_event(
-                chunk, chunk_id, metadata_map, media_type, conversation_id
+                chunk,
+                chunk_id,
+                context.metadata_map,
+                media_type,
+                context.conversation_id,
             ):
                 chunk_id += 1
                 yield event
@@ -788,76 +772,33 @@ def create_agent_response_generator(  # pylint: disable=too-many-arguments,too-m
             else TokenCounter()
         )
 
-        yield stream_end_event(metadata_map, summary, token_usage, media_type)
+        yield stream_end_event(context.metadata_map, summary, token_usage, media_type)
 
-        if not is_transcripts_enabled():
-            logger.debug("Transcript collection is disabled in the configuration")
-        else:
-            store_transcript(
-                user_id=user_id,
-                conversation_id=conversation_id,
-                model_id=model_id,
-                provider_id=provider_id,
-                query_is_valid=True,  # TODO(lucasagomes): implement as part of query validation
-                query=query_request.query,
-                query_request=query_request,
-                summary=summary,
-                rag_chunks=create_rag_chunks_dict(summary),
-                truncated=False,  # TODO(lucasagomes): implement truncation as part
-                # of quota work
-                attachments=query_request.attachments or [],
-            )
-
-        # Get the initial topic summary for the conversation
-        topic_summary = None
-        with get_session() as session:
-            existing_conversation = (
-                session.query(UserConversation).filter_by(id=conversation_id).first()
-            )
-            if not existing_conversation:
-                topic_summary = await get_topic_summary(
-                    query_request.query, client, llama_stack_model_id
-                )
-
-        completed_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        referenced_documents = create_referenced_documents_with_metadata(
-            summary, metadata_map
-        )
-
-        cache_entry = CacheEntry(
-            query=query_request.query,
-            response=summary.llm_response,
-            provider=provider_id,
-            model=model_id,
-            started_at=started_at,
-            completed_at=completed_at,
-            referenced_documents=(
-                referenced_documents if referenced_documents else None
-            ),
-        )
-
-        store_conversation_into_cache(
-            configuration,
-            user_id,
-            conversation_id,
-            cache_entry,
-            _skip_userid_check,
-            topic_summary,
-        )
-
-        persist_user_conversation_details(
-            user_id=user_id,
-            conversation_id=conversation_id,
-            model=model_id,
-            provider_id=provider_id,
-            topic_summary=topic_summary,
+        # Perform cleanup tasks (database and cache operations)
+        await cleanup_after_streaming(
+            user_id=context.user_id,
+            conversation_id=context.conversation_id,
+            model_id=context.model_id,
+            provider_id=context.provider_id,
+            llama_stack_model_id=context.llama_stack_model_id,
+            query_request=context.query_request,
+            summary=summary,
+            metadata_map=context.metadata_map,
+            started_at=context.started_at,
+            client=context.client,
+            config=configuration,
+            skip_userid_check=context.skip_userid_check,
+            get_topic_summary_func=get_topic_summary,
+            is_transcripts_enabled_func=is_transcripts_enabled,
+            store_transcript_func=store_transcript,
+            persist_user_conversation_details_func=persist_user_conversation_details,
+            rag_chunks=create_rag_chunks_dict(summary),
         )
 
     return response_generator
 
 
-async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-locals,too-many-statements,too-many-arguments
+async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-locals,too-many-statements,too-many-arguments,too-many-positional-arguments
     request: Request,
     query_request: QueryRequest,
     auth: AuthTuple,
@@ -866,7 +807,7 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
     create_response_generator_func: Callable[..., Any],
 ) -> StreamingResponse:
     """
-    Base handler for streaming query endpoints.
+    Handle streaming query endpoints with common logic.
 
     This base handler contains all the common logic for streaming query endpoints
     and accepts functions for API-specific behavior (Agent API vs Responses API).
@@ -937,19 +878,22 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
         )
         metadata_map: dict[str, dict[str, Any]] = {}
 
-        # Create the response generator using the provided factory function
-        response_generator = create_response_generator_func(
+        # Create context object for response generator
+        context = ResponseGeneratorContext(
             conversation_id=conversation_id,
             user_id=user_id,
+            skip_userid_check=_skip_userid_check,
             model_id=model_id,
             provider_id=provider_id,
-            query_request=query_request,
-            metadata_map=metadata_map,
-            client=client,
             llama_stack_model_id=llama_stack_model_id,
+            query_request=query_request,
             started_at=started_at,
-            _skip_userid_check=_skip_userid_check,
+            client=client,
+            metadata_map=metadata_map,
         )
+
+        # Create the response generator using the provided factory function
+        response_generator = create_response_generator_func(context)
 
         # Update metrics for the LLM call
         metrics.llm_calls_total.labels(provider_id, model_id).inc()

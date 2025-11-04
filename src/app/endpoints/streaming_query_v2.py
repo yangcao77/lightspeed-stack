@@ -1,7 +1,6 @@
 """Streaming query handler using Responses API (v2)."""
 
 import logging
-from datetime import UTC, datetime
 from typing import Annotated, Any, AsyncIterator, cast
 
 from llama_stack_client import AsyncLlamaStackClient  # type: ignore
@@ -12,8 +11,6 @@ from llama_stack.apis.agents.openai_responses import (
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
-
-from app.database import get_session
 from app.endpoints.query import (
     is_transcripts_enabled,
     persist_user_conversation_details,
@@ -35,15 +32,13 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import configuration
 from constants import MEDIA_TYPE_JSON
-from models.cache_entry import CacheEntry
 from models.config import Action
-from models.database.conversations import UserConversation
+from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
 from models.responses import ForbiddenResponse, UnauthorizedResponse
 from utils.endpoints import (
-    create_referenced_documents_with_metadata,
+    cleanup_after_streaming,
     get_system_prompt,
-    store_conversation_into_cache,
 )
 from utils.mcp_headers import mcp_headers_dependency
 from utils.token_counter import TokenCounter
@@ -100,17 +95,8 @@ streaming_query_v2_responses: dict[int | str, dict[str, Any]] = {
 }
 
 
-def create_responses_response_generator(  # pylint: disable=too-many-arguments,too-many-locals
-    conversation_id: str,
-    user_id: str,
-    model_id: str,
-    provider_id: str,
-    query_request: QueryRequest,
-    metadata_map: dict[str, dict[str, Any]],
-    client: AsyncLlamaStackClient,
-    llama_stack_model_id: str,
-    started_at: str,
-    _skip_userid_check: bool,
+def create_responses_response_generator(  # pylint: disable=too-many-locals,too-many-statements
+    context: ResponseGeneratorContext,
 ) -> Any:
     """
     Create a response generator function for Responses API streaming.
@@ -119,22 +105,13 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
     responses from the Responses API and yields Server-Sent Events (SSE).
 
     Args:
-        conversation_id: The conversation identifier (may be empty initially)
-        user_id: The user identifier
-        model_id: The model identifier
-        provider_id: The provider identifier
-        query_request: The query request object
-        metadata_map: Dictionary for storing metadata from tool responses
-        client: The Llama Stack client
-        llama_stack_model_id: The full llama stack model ID
-        started_at: Timestamp when the request started
-        _skip_userid_check: Whether to skip user ID validation
+        context: Context object containing all necessary parameters for response generation
 
     Returns:
         An async generator function that yields SSE-formatted strings
     """
 
-    async def response_generator(
+    async def response_generator(  # pylint: disable=too-many-branches,too-many-statements
         turn_response: AsyncIterator[OpenAIResponseObjectStream],
     ) -> AsyncIterator[str]:
         """
@@ -149,10 +126,10 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
         complete response for transcript storage if enabled.
         """
         chunk_id = 0
-        summary = TurnSummary(llm_response="No response from the model", tool_calls=[])
+        summary = TurnSummary(llm_response="", tool_calls=[])
 
         # Determine media type for response formatting
-        media_type = query_request.media_type or MEDIA_TYPE_JSON
+        media_type = context.query_request.media_type or MEDIA_TYPE_JSON
 
         # Accumulators for Responses API
         text_parts: list[str] = []
@@ -160,7 +137,7 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
         emitted_turn_complete = False
 
         # Handle conversation id and start event in-band on response.created
-        conv_id = conversation_id
+        conv_id = context.conversation_id
 
         # Track the latest response object from response.completed event
         latest_response_object: Any | None = None
@@ -176,6 +153,7 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
                 try:
                     conv_id = getattr(chunk, "response").id
                 except Exception:  # pylint: disable=broad-except
+                    logger.warning("Missing response id!")
                     conv_id = ""
                 yield stream_start_event(conv_id)
                 continue
@@ -267,6 +245,9 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
                 latest_response_object = getattr(chunk, "response", None)
                 if not emitted_turn_complete:
                     final_message = summary.llm_response or "".join(text_parts)
+                    if not final_message:
+                        final_message = "No response from the model"
+                    summary.llm_response = final_message
                     yield format_stream_data(
                         {
                             "event": "turn_complete",
@@ -290,76 +271,33 @@ def create_responses_response_generator(  # pylint: disable=too-many-arguments,t
         # Extract token usage from the response object
         token_usage = (
             extract_token_usage_from_responses_api(
-                latest_response_object, model_id, provider_id
+                latest_response_object, context.model_id, context.provider_id
             )
             if latest_response_object is not None
             else TokenCounter()
         )
 
-        yield stream_end_event(metadata_map, summary, token_usage, media_type)
+        yield stream_end_event(context.metadata_map, summary, token_usage, media_type)
 
-        if not is_transcripts_enabled():
-            logger.debug("Transcript collection is disabled in the configuration")
-        else:
-            store_transcript(
-                user_id=user_id,
-                conversation_id=conv_id,
-                model_id=model_id,
-                provider_id=provider_id,
-                query_is_valid=True,  # TODO(lucasagomes): implement as part of query validation
-                query=query_request.query,
-                query_request=query_request,
-                summary=summary,
-                rag_chunks=[],  # TODO(lucasagomes): implement rag_chunks
-                truncated=False,  # TODO(lucasagomes): implement truncation as part
-                # of quota work
-                attachments=query_request.attachments or [],
-            )
-
-        # Get the initial topic summary for the conversation
-        topic_summary = None
-        with get_session() as session:
-            existing_conversation = (
-                session.query(UserConversation).filter_by(id=conv_id).first()
-            )
-            if not existing_conversation:
-                topic_summary = await get_topic_summary(
-                    query_request.query, client, llama_stack_model_id
-                )
-
-        completed_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-        referenced_documents = create_referenced_documents_with_metadata(
-            summary, metadata_map
-        )
-
-        cache_entry = CacheEntry(
-            query=query_request.query,
-            response=summary.llm_response,
-            provider=provider_id,
-            model=model_id,
-            started_at=started_at,
-            completed_at=completed_at,
-            referenced_documents=(
-                referenced_documents if referenced_documents else None
-            ),
-        )
-
-        store_conversation_into_cache(
-            configuration,
-            user_id,
-            conv_id,
-            cache_entry,
-            _skip_userid_check,
-            topic_summary,
-        )
-
-        persist_user_conversation_details(
-            user_id=user_id,
+        # Perform cleanup tasks (database and cache operations)
+        await cleanup_after_streaming(
+            user_id=context.user_id,
             conversation_id=conv_id,
-            model=model_id,
-            provider_id=provider_id,
-            topic_summary=topic_summary,
+            model_id=context.model_id,
+            provider_id=context.provider_id,
+            llama_stack_model_id=context.llama_stack_model_id,
+            query_request=context.query_request,
+            summary=summary,
+            metadata_map=context.metadata_map,
+            started_at=context.started_at,
+            client=context.client,
+            config=configuration,
+            skip_userid_check=context.skip_userid_check,
+            get_topic_summary_func=get_topic_summary,
+            is_transcripts_enabled_func=is_transcripts_enabled,
+            store_transcript_func=store_transcript,
+            persist_user_conversation_details_func=persist_user_conversation_details,
+            rag_chunks=[],  # Responses API uses empty list for rag_chunks
         )
 
     return response_generator
@@ -453,16 +391,18 @@ async def retrieve_response(
                 f"{attachment.content}"
             )
 
-    response = await client.responses.create(
-        input=input_text,
-        model=model_id,
-        instructions=system_prompt,
-        previous_response_id=query_request.conversation_id,
-        tools=(cast(Any, toolgroups)),
-        stream=True,
-        store=True,
-    )
+    create_params: dict[str, Any] = {
+        "input": input_text,
+        "model": model_id,
+        "instructions": system_prompt,
+        "stream": True,
+        "store": True,
+        "tools": toolgroups,
+    }
+    if query_request.conversation_id:
+        create_params["previous_response_id"] = query_request.conversation_id
 
+    response = await client.responses.create(**create_params)
     response_stream = cast(AsyncIterator[OpenAIResponseObjectStream], response)
 
     # For streaming responses, the ID arrives in the first 'response.created' chunk
