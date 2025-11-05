@@ -32,6 +32,7 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import configuration
 from constants import MEDIA_TYPE_JSON
+import metrics
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
@@ -243,6 +244,18 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
             elif event_type == "response.completed":
                 # Capture the response object for token usage extraction
                 latest_response_object = getattr(chunk, "response", None)
+
+                # Check for shield violations in the completed response
+                if latest_response_object:
+                    for output_item in getattr(latest_response_object, "output", []):
+                        item_type = getattr(output_item, "type", None)
+                        if item_type == "message":
+                            refusal = getattr(output_item, "refusal", None)
+                            if refusal:
+                                # Metric for LLM validation errors (shield violations)
+                                metrics.llm_calls_validation_errors_total.inc()
+                                logger.warning("Shield violation detected: %s", refusal)
+
                 if not emitted_turn_complete:
                     final_message = summary.llm_response or "".join(text_parts)
                     if not final_message:
@@ -348,11 +361,11 @@ async def retrieve_response(
     Asynchronously retrieves a streaming response and conversation
     ID from the Llama Stack agent for a given user query.
 
-    This function configures input/output shields, system prompt,
-    and tool usage based on the request and environment. It
-    prepares the agent with appropriate headers and toolgroups,
-    validates attachments if present, and initiates a streaming
-    turn with the user's query and any provided documents.
+    This function configures shields, system prompt, and tool usage
+    based on the request and environment. It prepares the agent with
+    appropriate headers and toolgroups, validates attachments if
+    present, and initiates a streaming turn with the user's query
+    and any provided documents.
 
     Parameters:
         model_id (str): Identifier of the model to use for the query.
@@ -365,7 +378,12 @@ async def retrieve_response(
         tuple: A tuple containing the streaming response object
         and the conversation ID.
     """
-    logger.info("Shields are not yet supported in Responses API.")
+    # List available shields for Responses API
+    available_shields = [shield.identifier for shield in await client.shields.list()]
+    if not available_shields:
+        logger.info("No available shields. Disabling safety")
+    else:
+        logger.info("Available shields: %s", available_shields)
 
     # use system prompt from request or default one
     system_prompt = get_system_prompt(query_request, configuration)
@@ -401,6 +419,10 @@ async def retrieve_response(
     }
     if query_request.conversation_id:
         create_params["previous_response_id"] = query_request.conversation_id
+
+    # Add shields to extra_body if available
+    if available_shields:
+        create_params["extra_body"] = {"guardrails": available_shields}
 
     response = await client.responses.create(**create_params)
     response_stream = cast(AsyncIterator[OpenAIResponseObjectStream], response)
