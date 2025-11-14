@@ -1,6 +1,7 @@
 """Utility functions for endpoint handlers."""
 
 from contextlib import suppress
+from datetime import UTC, datetime
 from typing import Any
 from fastapi import HTTPException, status
 from llama_stack_client._client import AsyncLlamaStackClient
@@ -591,3 +592,120 @@ def create_referenced_documents_from_chunks(
         ReferencedDocument(doc_url=doc_url, doc_title=doc_title)
         for doc_url, doc_title in document_entries
     ]
+
+
+# pylint: disable=R0913,R0917,too-many-locals
+async def cleanup_after_streaming(
+    user_id: str,
+    conversation_id: str,
+    model_id: str,
+    provider_id: str,
+    llama_stack_model_id: str,
+    query_request: QueryRequest,
+    summary: TurnSummary,
+    metadata_map: dict[str, Any],
+    started_at: str,
+    client: AsyncLlamaStackClient,
+    config: AppConfig,
+    skip_userid_check: bool,
+    get_topic_summary_func: Any,
+    is_transcripts_enabled_func: Any,
+    store_transcript_func: Any,
+    persist_user_conversation_details_func: Any,
+    rag_chunks: list[dict[str, Any]] | None = None,
+) -> None:
+    """
+    Perform cleanup tasks after streaming is complete.
+
+    This function handles all database and cache operations after the streaming
+    response has been sent to the client. It is shared between Agent API and
+    Responses API streaming implementations.
+
+    Args:
+        user_id: ID of the user making the request
+        conversation_id: ID of the conversation
+        model_id: ID of the model used
+        provider_id: ID of the provider used
+        llama_stack_model_id: Full Llama Stack model ID (provider/model format)
+        query_request: The original query request
+        summary: Summary of the turn including LLM response and tool calls
+        metadata_map: Metadata about referenced documents
+        started_at: Timestamp when the request started
+        client: AsyncLlamaStackClient instance
+        config: Application configuration
+        skip_userid_check: Whether to skip user ID checks
+        get_topic_summary_func: Function to get topic summary (API-specific)
+        is_transcripts_enabled_func: Function to check if transcripts are enabled
+        store_transcript_func: Function to store transcript
+        persist_user_conversation_details_func: Function to persist conversation details
+        rag_chunks: Optional RAG chunks dict (for Agent API, None for Responses API)
+    """
+    # Store transcript if enabled
+    if not is_transcripts_enabled_func():
+        logger.debug("Transcript collection is disabled in the configuration")
+    else:
+        # Prepare attachments
+        attachments = query_request.attachments or []
+
+        # Determine rag_chunks: use provided value or empty list
+        transcript_rag_chunks = rag_chunks if rag_chunks is not None else []
+
+        store_transcript_func(
+            user_id=user_id,
+            conversation_id=conversation_id,
+            model_id=model_id,
+            provider_id=provider_id,
+            query_is_valid=True,
+            query=query_request.query,
+            query_request=query_request,
+            summary=summary,
+            rag_chunks=transcript_rag_chunks,
+            truncated=False,
+            attachments=attachments,
+        )
+
+    # Get the initial topic summary for the conversation
+    topic_summary = None
+    with get_session() as session:
+        existing_conversation = (
+            session.query(UserConversation).filter_by(id=conversation_id).first()
+        )
+        if not existing_conversation:
+            topic_summary = await get_topic_summary_func(
+                query_request.query,
+                client,
+                llama_stack_model_id,
+            )
+
+    completed_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    referenced_documents = create_referenced_documents_with_metadata(
+        summary, metadata_map
+    )
+
+    cache_entry = CacheEntry(
+        query=query_request.query,
+        response=summary.llm_response,
+        provider=provider_id,
+        model=model_id,
+        started_at=started_at,
+        completed_at=completed_at,
+        referenced_documents=referenced_documents if referenced_documents else None,
+    )
+
+    store_conversation_into_cache(
+        config,
+        user_id,
+        conversation_id,
+        cache_entry,
+        skip_userid_check,
+        topic_summary,
+    )
+
+    persist_user_conversation_details_func(
+        user_id=user_id,
+        conversation_id=conversation_id,
+        model=model_id,
+        provider_id=provider_id,
+        topic_summary=topic_summary,
+    )
