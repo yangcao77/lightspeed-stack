@@ -34,6 +34,7 @@ from utils.endpoints import (
     get_topic_summary_system_prompt,
 )
 from utils.mcp_headers import mcp_headers_dependency
+from utils.shields import detect_shield_violations, get_available_shields
 from utils.token_counter import TokenCounter
 from utils.types import TurnSummary, ToolCallSummary
 
@@ -343,11 +344,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         and token usage information.
     """
     # List available shields for Responses API
-    available_shields = [shield.identifier for shield in await client.shields.list()]
-    if not available_shields:
-        logger.info("No available shields. Disabling safety")
-    else:
-        logger.info("Available shields: %s", available_shields)
+    available_shields = await get_available_shields(client)
 
     # use system prompt from request or default one
     system_prompt = get_system_prompt(query_request, configuration)
@@ -414,14 +411,8 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         if tool_summary:
             tool_calls.append(tool_summary)
 
-        # Check for shield violations
-        item_type = getattr(output_item, "type", None)
-        if item_type == "message":
-            refusal = getattr(output_item, "refusal", None)
-            if refusal:
-                # Metric for LLM validation errors (shield violations)
-                metrics.llm_calls_validation_errors_total.inc()
-                logger.warning("Shield violation detected: %s", refusal)
+    # Check for shield violations across all output items
+    detect_shield_violations(response.output)
 
     logger.info(
         "Response processing complete - Tool calls: %d, Response length: %d chars",

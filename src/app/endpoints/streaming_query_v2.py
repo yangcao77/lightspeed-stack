@@ -32,7 +32,6 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import configuration
 from constants import MEDIA_TYPE_JSON
-import metrics
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
@@ -42,6 +41,7 @@ from utils.endpoints import (
     get_system_prompt,
 )
 from utils.mcp_headers import mcp_headers_dependency
+from utils.shields import detect_shield_violations, get_available_shields
 from utils.token_counter import TokenCounter
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary, ToolCallSummary
@@ -247,14 +247,9 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
 
                 # Check for shield violations in the completed response
                 if latest_response_object:
-                    for output_item in getattr(latest_response_object, "output", []):
-                        item_type = getattr(output_item, "type", None)
-                        if item_type == "message":
-                            refusal = getattr(output_item, "refusal", None)
-                            if refusal:
-                                # Metric for LLM validation errors (shield violations)
-                                metrics.llm_calls_validation_errors_total.inc()
-                                logger.warning("Shield violation detected: %s", refusal)
+                    detect_shield_violations(
+                        getattr(latest_response_object, "output", [])
+                    )
 
                 if not emitted_turn_complete:
                     final_message = summary.llm_response or "".join(text_parts)
@@ -379,11 +374,7 @@ async def retrieve_response(
         and the conversation ID.
     """
     # List available shields for Responses API
-    available_shields = [shield.identifier for shield in await client.shields.list()]
-    if not available_shields:
-        logger.info("No available shields. Disabling safety")
-    else:
-        logger.info("Available shields: %s", available_shields)
+    available_shields = await get_available_shields(client)
 
     # use system prompt from request or default one
     system_prompt = get_system_prompt(query_request, configuration)
