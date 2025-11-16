@@ -55,7 +55,7 @@ def access_conversation_endpoint_get_specific(
     "I use REST API conversation endpoint with conversation_id from above using HTTP DELETE method"
 )
 def access_conversation_endpoint_delete(context: Context) -> None:
-    """Send GET HTTP request to tested service for conversation/{conversation_id}."""
+    """Send DELETE HTTP request to tested service for conversation/{conversation_id}."""
     assert (
         context.response_data["conversation_id"] is not None
     ), "conversation id not stored"
@@ -79,7 +79,7 @@ def access_conversation_endpoint_delete(context: Context) -> None:
 def access_conversation_endpoint_delete_specific(
     context: Context, conversation_id: str
 ) -> None:
-    """Send GET HTTP request to tested service for conversation/{conversation_id}."""
+    """Send DELETE HTTP request to tested service for conversation/{conversation_id}."""
     endpoint = "conversations"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}/{conversation_id}".replace("//", "/")
