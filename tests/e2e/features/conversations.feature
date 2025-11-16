@@ -169,6 +169,6 @@ Feature: conversations endpoint API tests
     And The status code of the response is 200
     And I store conversation details
     And The llama-stack connection is disrupted
-     When I use REST API conversation endpoint with conversation_id from above using HTTP GET method
+     When I use REST API conversation endpoint with conversation_id from above using HTTP DELETE method
      Then The status code of the response is 503
      And The body of the response contains Unable to connect to Llama Stack
