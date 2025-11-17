@@ -81,6 +81,7 @@ The service includes comprehensive user data collection capabilities for various
     * [Sequence diagrams](#sequence-diagrams)
         * [Query endpoint REST API handler](#query-endpoint-rest-api-handler)
     * [Streaming query endpoint REST API handler](#streaming-query-endpoint-rest-api-handler)
+    * [Versioning](#versioning)
 
 <!-- vim-markdown-toc -->
 
@@ -905,3 +906,12 @@ For complete integration setup, deployment options, and configuration details, s
 ## Streaming query endpoint REST API handler
 
 ![Streaming query endpoint](docs/streaming_query_endpoint.svg)
+
+## Versioning
+
+We follow [Semantic Versioning](http://semver.org/spec/v1.0.0.html).
+The version X.Y.Z indicates:
+
+* X is the major version (backward-incompatible),
+* Y is the minor version (backward-compatible), and
+* Z is the patch version (backward-compatible bug fix).
