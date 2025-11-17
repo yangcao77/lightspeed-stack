@@ -29,7 +29,7 @@ from cache.postgres_cache import PostgresCache
 
 @pytest.fixture(scope="module", name="noop_cache_config_fixture")
 def noop_cache_config() -> ConversationHistoryConfiguration:
-    """Fixture containing initialized instance of ConversationCacheConfiguration."""
+    """Fixture containing initialized instance of ConversationHistoryConfiguration."""
     return ConversationHistoryConfiguration(type=CACHE_TYPE_NOOP)
 
 
@@ -63,7 +63,7 @@ def sqlite_cache_config(tmpdir: Path) -> ConversationHistoryConfiguration:
 
 @pytest.fixture(scope="module", name="invalid_cache_type_config_fixture")
 def invalid_cache_type_config() -> ConversationHistoryConfiguration:
-    """Fixture containing instance of ConversationCacheConfiguration with improper settings."""
+    """Fixture containing instance of ConversationHistoryConfiguration with improper settings."""
     c = ConversationHistoryConfiguration()
     # the conversation cache type name is incorrect in purpose
     c.type = "foo bar baz"  # pyright: ignore

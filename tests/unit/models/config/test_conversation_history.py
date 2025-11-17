@@ -1,4 +1,4 @@
-"""Unit tests for ConversationCacheConfiguration model."""
+"""Unit tests for ConversationHistoryConfiguration model."""
 
 from pathlib import Path
 
