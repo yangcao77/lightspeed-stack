@@ -38,7 +38,7 @@ class "Configuration" as src.models.config.Configuration {
   authentication : Optional[AuthenticationConfiguration]
   authorization : Optional[AuthorizationConfiguration]
   byok_rag : Optional[list[ByokRag]]
-  conversation_cache : Optional[ConversationCacheConfiguration]
+  conversation_cache : Optional[ConversationHistoryConfiguration]
   customization : Optional[Customization]
   database : Optional[DatabaseConfiguration]
   inference : Optional[InferenceConfiguration]
@@ -53,7 +53,7 @@ class "Configuration" as src.models.config.Configuration {
 class "ConfigurationBase" as src.models.config.ConfigurationBase {
   model_config
 }
-class "ConversationCacheConfiguration" as src.models.config.ConversationCacheConfiguration {
+class "ConversationHistoryConfiguration" as src.models.config.ConversationHistoryConfiguration {
   memory : Optional[InMemoryCacheConfig]
   postgres : Optional[PostgreSQLDatabaseConfiguration]
   sqlite : Optional[SQLiteDatabaseConfiguration]
@@ -185,7 +185,7 @@ src.models.config.AuthorizationConfiguration --|> src.models.config.Configuratio
 src.models.config.ByokRag --|> src.models.config.ConfigurationBase
 src.models.config.CORSConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.Configuration --|> src.models.config.ConfigurationBase
-src.models.config.ConversationCacheConfiguration --|> src.models.config.ConfigurationBase
+src.models.config.ConversationHistoryConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.Customization --|> src.models.config.ConfigurationBase
 src.models.config.DatabaseConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.InMemoryCacheConfig --|> src.models.config.ConfigurationBase
