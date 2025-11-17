@@ -511,7 +511,7 @@ class InferenceConfiguration(ConfigurationBase):
         return self
 
 
-class ConversationCacheConfiguration(ConfigurationBase):
+class ConversationHistoryConfiguration(ConfigurationBase):
     """Conversation cache configuration."""
 
     type: Literal["noop", "memory", "sqlite", "postgres"] | None = None
@@ -608,8 +608,8 @@ class Configuration(ConfigurationBase):
     authorization: Optional[AuthorizationConfiguration] = None
     customization: Optional[Customization] = None
     inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
-    conversation_cache: ConversationCacheConfiguration = Field(
-        default_factory=ConversationCacheConfiguration
+    conversation_cache: ConversationHistoryConfiguration = Field(
+        default_factory=ConversationHistoryConfiguration
     )
     byok_rag: list[ByokRag] = Field(default_factory=list)
     quota_handlers: QuotaHandlersConfiguration = Field(
