@@ -367,6 +367,8 @@ class Action(str, Enum):
     GET_SHIELDS = "get_shields"
     LIST_PROVIDERS = "list_providers"
     GET_PROVIDER = "get_provider"
+    LIST_RAGS = "list_rags"
+    GET_RAG = "get_rag"
     GET_METRICS = "get_metrics"
     GET_CONFIG = "get_config"
 
