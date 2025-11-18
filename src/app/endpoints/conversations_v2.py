@@ -130,7 +130,7 @@ async def get_conversations_list_endpoint_handler(
     skip_userid_check = auth[2]
 
     if configuration.conversation_cache is None:
-        logger.warning("Converastion cache is not configured")
+        logger.warning("Conversation cache is not configured")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -162,7 +162,7 @@ async def get_conversation_endpoint_handler(
     skip_userid_check = auth[2]
 
     if configuration.conversation_cache is None:
-        logger.warning("Converastion cache is not configured")
+        logger.warning("Conversation cache is not configured")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={
@@ -202,7 +202,7 @@ async def delete_conversation_endpoint_handler(
     skip_userid_check = auth[2]
 
     if configuration.conversation_cache is None:
-        logger.warning("Converastion cache is not configured")
+        logger.warning("Conversation cache is not configured")
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail={

@@ -65,7 +65,7 @@ async def info_endpoint_handler(
         llama_stack_version = llama_stack_version_object.version
         logger.debug("Service name: %s", configuration.configuration.name)
         logger.debug("Service version: %s", __version__)
-        logger.debug("LLama Stack version: %s", llama_stack_version)
+        logger.debug("Llama Stack version: %s", llama_stack_version)
         return InfoResponse(
             name=configuration.configuration.name,
             service_version=__version__,
