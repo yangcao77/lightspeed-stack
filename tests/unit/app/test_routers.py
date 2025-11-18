@@ -13,6 +13,7 @@ from app.endpoints import (
     info,
     models,
     shields,
+    rags,
     providers,
     query,
     query_v2,
@@ -66,7 +67,7 @@ def test_include_routers() -> None:
     include_routers(app)
 
     # are all routers added?
-    assert len(app.routers) == 17
+    assert len(app.routers) == 18
     assert root.router in app.get_routers()
     assert info.router in app.get_routers()
     assert models.router in app.get_routers()
@@ -92,13 +93,14 @@ def test_check_prefixes() -> None:
     include_routers(app)
 
     # are all routers added?
-    assert len(app.routers) == 17
+    assert len(app.routers) == 18
     assert app.get_router_prefix(root.router) == ""
     assert app.get_router_prefix(info.router) == "/v1"
     assert app.get_router_prefix(models.router) == "/v1"
     assert app.get_router_prefix(tools.router) == "/v1"
     assert app.get_router_prefix(shields.router) == "/v1"
     assert app.get_router_prefix(providers.router) == "/v1"
+    assert app.get_router_prefix(rags.router) == "/v1"
     assert app.get_router_prefix(query.router) == "/v1"
     assert app.get_router_prefix(streaming_query.router) == "/v1"
     assert app.get_router_prefix(query_v2.router) == "/v2"
