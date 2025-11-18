@@ -1,4 +1,4 @@
-"""Handler for REST API calls to list and retrieve available providers."""
+"""Handler for REST API calls to list and retrieve available RAGs."""
 
 import logging
 from typing import Annotated, Any

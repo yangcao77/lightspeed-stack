@@ -193,6 +193,33 @@ Returns:
 | 404 | Not Found |  |
 | 500 | Internal Server Error |  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+## GET `/v1/rags`
+
+> **Rags Endpoint Handler**
+
+Handle GET requests to list all available RAGs.
+
+Retrieves RAGs from the Llama Stack service.
+
+Raises:
+    HTTPException:
+        - 500 if configuration is not loaded,
+        - 500 if unable to connect to Llama Stack,
+        - 500 for any unexpected retrieval errors.
+
+Returns:
+    RAGListResponse: List of RAGs.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | [RAGListResponse](#raglistresponse) |
+| 500 | Connection to Llama Stack is broken |  |
 ## POST `/v1/query`
 
 > **Query Endpoint Handler**
@@ -876,20 +903,6 @@ Global service configuration.
 | quota_handlers |  |  |
 
 
-## ConversationCacheConfiguration
-
-
-Conversation cache configuration.
-
-
-| Field | Type | Description |
-|-------|------|-------------|
-| type |  |  |
-| memory |  |  |
-| sqlite |  |  |
-| postgres |  |  |
-
-
 ## ConversationData
 
 
@@ -972,6 +985,20 @@ Example:
 | last_used_model |  | Identification of the last model used for the conversation |
 | last_used_provider |  | Identification of the last provider used for the conversation |
 | topic_summary |  | Topic summary for the conversation |
+
+
+## ConversationHistoryConfiguration
+
+
+Conversation cache configuration.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| type |  |  |
+| memory |  |  |
+| sqlite |  |  |
+| postgres |  |  |
 
 
 ## ConversationResponse
@@ -1659,6 +1686,17 @@ Model representing a RAG chunk used in the response.
 | content | string | The content of the chunk |
 | source |  | Source document or URL |
 | score |  | Relevance score |
+
+
+## RAGListResponse
+
+
+Model representing a response to list RAGs request.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| rags | array | List of RAG identifiers |
 
 
 ## ReadinessResponse
