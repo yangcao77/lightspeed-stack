@@ -45,5 +45,5 @@ class CacheFactory:
                 raise ValueError(
                     f"Invalid cache type: {config.type}. "
                     f"Use '{constants.CACHE_TYPE_POSTGRES}' '{constants.CACHE_TYPE_SQLITE}' "
-                    f"'{constants.CACHE_TYPE_MEMORY} or {constants.CACHE_TYPE_NOOP}' options."
+                    f"'{constants.CACHE_TYPE_MEMORY}' or '{constants.CACHE_TYPE_NOOP}' options."
                 )
