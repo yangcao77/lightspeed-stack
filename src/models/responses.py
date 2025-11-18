@@ -87,6 +87,20 @@ class ShieldsResponse(BaseModel):
     )
 
 
+class RAGListResponse(BaseModel):
+    """Model representing a response to list RAGs request."""
+
+    rags: list[str] = Field(
+        ...,
+        title="RAG list response",
+        description="List of RAG identifiers",
+        examples=[
+            "vs_7b52a8cf-0fa3-489c-beab-27e061d102f3",
+            "vs_7b52a8cf-0fa3-489c-cafe-27e061d102f3",
+        ],
+    )
+
+
 class ProvidersListResponse(BaseModel):
     """Model representing a response to providers request."""
 

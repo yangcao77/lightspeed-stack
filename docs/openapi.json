@@ -318,6 +318,36 @@
                 }
             }
         },
+        "/v1/rags": {
+            "get": {
+                "tags": [
+                    "rags"
+                ],
+                "summary": "Rags Endpoint Handler",
+                "description": "Handle GET requests to list all available RAGs.\n\nRetrieves RAGs from the Llama Stack service.\n\nRaises:\n    HTTPException:\n        - 500 if configuration is not loaded,\n        - 500 if unable to connect to Llama Stack,\n        - 500 for any unexpected retrieval errors.\n\nReturns:\n    RAGListResponse: List of RAGs.",
+                "operationId": "rags_endpoint_handler_v1_rags_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RAGListResponse"
+                                }
+                            }
+                        },
+                        "rags": [
+                            "vs_00000000-cafe-babe-0000-000000000000",
+                            "vs_7b52a8cf-0fa3-489c-beab-27e061d102f3",
+                            "vs_7b52a8cf-0fa3-489c-cafe-27e061d102f3"
+                        ]
+                    },
+                    "500": {
+                        "description": "Connection to Llama Stack is broken"
+                    }
+                }
+            }
+        },
         "/v1/query": {
             "post": {
                 "tags": [
@@ -1587,6 +1617,8 @@
                     "get_shields",
                     "list_providers",
                     "get_provider",
+                    "list_rags",
+                    "get_rag",
                     "get_metrics",
                     "get_config",
                     "info",
@@ -3885,6 +3917,28 @@
                 ],
                 "title": "RAGChunk",
                 "description": "Model representing a RAG chunk used in the response."
+            },
+            "RAGListResponse": {
+                "properties": {
+                    "rags": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "RAG list response",
+                        "description": "List of RAG identifiers",
+                        "examples": [
+                            "vs_7b52a8cf-0fa3-489c-beab-27e061d102f3",
+                            "vs_7b52a8cf-0fa3-489c-cafe-27e061d102f3"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "rags"
+                ],
+                "title": "RAGListResponse",
+                "description": "Model representing a response to list RAGs request."
             },
             "ReadinessResponse": {
                 "properties": {
