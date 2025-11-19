@@ -121,7 +121,7 @@ async def get_rag_endpoint_handler(
             - 500 for any unexpected retrieval errors.
 
     Returns:
-        RAGResponse: A single RAG's details
+        RAGInfoResponse: A single RAG's details
     """
     # Used only by the middleware
     _ = auth

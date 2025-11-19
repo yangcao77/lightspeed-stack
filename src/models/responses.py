@@ -94,7 +94,7 @@ class RAGInfoResponse(BaseModel):
         ..., description="Vector DB unique ID", examples=["vs_00000000_0000_0000"]
     )
     name: Optional[str] = Field(
-        ...,
+        None,
         description="Human readable vector DB name",
         examples=["Faiss Store with Knowledge base"],
     )
@@ -104,7 +104,7 @@ class RAGInfoResponse(BaseModel):
         examples=[1763391371],
     )
     last_active_at: Optional[int] = Field(
-        ...,
+        None,
         description="When the vector store was last active, represented as Unix time",
         examples=[1763391371],
     )
@@ -114,7 +114,7 @@ class RAGInfoResponse(BaseModel):
         examples=[0],
     )
     expires_at: Optional[int] = Field(
-        ...,
+        None,
         description="When the vector store expires, represented as Unix time",
         examples=[1763391371],
     )
