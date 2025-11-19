@@ -2265,7 +2265,6 @@ async def test_get_topic_summary_create_turn_parameters(mocker: MockerFixture) -
 
 
 @pytest.mark.asyncio
-<<<<<<< HEAD
 async def test_query_endpoint_quota_exceeded(
     mocker: MockerFixture, dummy_request: Request
 ) -> None:
@@ -2306,7 +2305,6 @@ async def test_query_endpoint_quota_exceeded(
     assert isinstance(detail, dict)
     assert detail["response"] == "Model quota exceeded"  # type: ignore
     assert "gpt-4-turbo" in detail["cause"]  # type: ignore
-=======
 async def test_query_endpoint_generate_topic_summary_default_true(
     mocker: MockerFixture, dummy_request: Request
 ) -> None:
@@ -2401,4 +2399,3 @@ async def test_query_endpoint_generate_topic_summary_explicit_false(
     )
 
     mock_get_topic_summary.assert_not_called()
->>>>>>> 81b4b90 (added unit tests for the extra logic)
