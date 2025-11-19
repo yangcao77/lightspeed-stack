@@ -148,6 +148,7 @@ def test_dump_configuration(tmp_path: Path) -> None:
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
+                "rh_identity_config": None,
             },
             "customization": None,
             "inference": {
@@ -446,6 +447,7 @@ def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
+                "rh_identity_config": None,
             },
             "customization": None,
             "inference": {
