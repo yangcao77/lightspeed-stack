@@ -13,7 +13,7 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from models.config import Action
-from models.responses import RAGListResponse
+from models.responses import RAGListResponse, RAGInfoResponse
 from utils.endpoints import check_configuration_loaded
 
 logger = logging.getLogger(__name__)
@@ -29,6 +29,15 @@ rags_responses: dict[int | str, dict[str, Any]] = {
         ]
     },
     500: {"description": "Connection to Llama Stack is broken"},
+}
+
+rag_responses: dict[int | str, dict[str, Any]] = {
+    200: {},
+    404: {"response": "RAG with given id not found"},
+    500: {
+        "response": "Unable to retrieve list of RAGs",
+        "cause": "Connection to Llama Stack is broken",
+    },
 }
 
 
@@ -91,6 +100,75 @@ async def rags_endpoint_handler(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail={
                 "response": "Unable to retrieve list of RAGs",
+                "cause": str(e),
+            },
+        ) from e
+
+
+@router.get("/rags/{rag_id}", responses=rag_responses)
+@authorize(Action.GET_RAG)
+async def get_rag_endpoint_handler(
+    request: Request,
+    rag_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> RAGInfoResponse:
+    """Retrieve a single RAG by its unique ID.
+
+    Raises:
+        HTTPException:
+            - 404 if RAG with the given ID is not found,
+            - 500 if unable to connect to Llama Stack,
+            - 500 for any unexpected retrieval errors.
+
+    Returns:
+        RAGResponse: A single RAG's details
+    """
+    # Used only by the middleware
+    _ = auth
+
+    # Nothing interesting in the request
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    llama_stack_configuration = configuration.llama_stack_configuration
+    logger.info("Llama stack config: %s", llama_stack_configuration)
+
+    try:
+        # try to get Llama Stack client
+        client = AsyncLlamaStackClientHolder().get_client()
+        # retrieve info about RAG
+        rag_info = await client.vector_stores.retrieve(rag_id)
+        return RAGInfoResponse(
+            id=rag_info.id,
+            name=rag_info.name,
+            created_at=rag_info.created_at,
+            last_active_at=rag_info.last_active_at,
+            expires_at=rag_info.expires_at,
+            object=rag_info.object,
+            status=rag_info.status,
+            usage_bytes=rag_info.usage_bytes,
+        )
+
+    # connection to Llama Stack server
+    except HTTPException:
+        raise
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "response": "Unable to connect to Llama Stack",
+                "cause": str(e),
+            },
+        ) from e
+    # any other exception that can occur during model listing
+    except Exception as e:
+        logger.error("Unable to retrieve info about RAG: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "response": "Unable to retrieve info about RAG",
                 "cause": str(e),
             },
         ) from e

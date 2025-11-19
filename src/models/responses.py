@@ -87,6 +87,49 @@ class ShieldsResponse(BaseModel):
     )
 
 
+class RAGInfoResponse(BaseModel):
+    """Model representing a response with information about RAG DB."""
+
+    id: str = Field(
+        ..., description="Vector DB unique ID", examples=["vs_00000000_0000_0000"]
+    )
+    name: Optional[str] = Field(
+        ...,
+        description="Human readable vector DB name",
+        examples=["Faiss Store with Knowledge base"],
+    )
+    created_at: int = Field(
+        ...,
+        description="When the vector store was created, represented as Unix time",
+        examples=[1763391371],
+    )
+    last_active_at: Optional[int] = Field(
+        ...,
+        description="When the vector store was last active, represented as Unix time",
+        examples=[1763391371],
+    )
+    usage_bytes: int = Field(
+        ...,
+        description="Storage byte(s) used by this vector DB",
+        examples=[0],
+    )
+    expires_at: Optional[int] = Field(
+        ...,
+        description="When the vector store expires, represented as Unix time",
+        examples=[1763391371],
+    )
+    object: str = Field(
+        ...,
+        description="Object type",
+        examples=["vector_store"],
+    )
+    status: str = Field(
+        ...,
+        description="Vector DB status",
+        examples=["completed"],
+    )
+
+
 class RAGListResponse(BaseModel):
     """Model representing a response to list RAGs request."""
 
