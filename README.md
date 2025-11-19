@@ -595,6 +595,17 @@ podman compose up --build
 # Access llama-stack at http://localhost:8321
 ```
 
+#### macOS (arm64)
+
+Emulation of platform amd64 will not work with `podman compose up --build` command.
+
+Instead run the docker command:
+
+```bash
+# Start both services
+docker compose up --build
+```
+
 ### Llama-Stack as Library (Library Mode)
 
 When embedding llama-stack directly in the container, use the existing `Containerfile` directly (this will not build the llama stack service in a separate container). First modify the `lightspeed-stack.yaml` config to use llama stack in library mode.
@@ -620,7 +631,7 @@ podman run \
   my-lightspeed-core:latest
 ```
 
-For macosx users:
+#### macOS
 ```bash
 podman run \
   -p 8080:8080 \
