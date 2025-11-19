@@ -128,8 +128,8 @@ async def test_rag_info_endpoint_configuration_not_loaded(
 
 
 @pytest.mark.asyncio
-async def test_rag_info_endpoint_http_error(mocker: MockerFixture) -> None:
-    """Test that /rags/{rag_id} endpoint raises HTTP 500 if Llama Stack connection fails."""
+async def test_rag_info_endpoint_rag_not_found(mocker: MockerFixture) -> None:
+    """Test that /rags/{rag_id} endpoint returns HTTP 404 when the requested RAG is not found."""
     mock_client = mocker.AsyncMock()
     mock_client.vector_stores.retrieve.side_effect = HTTPException(
         status_code=status.HTTP_404_NOT_FOUND
