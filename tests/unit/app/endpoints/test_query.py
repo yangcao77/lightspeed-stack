@@ -2305,6 +2305,8 @@ async def test_query_endpoint_quota_exceeded(
     assert isinstance(detail, dict)
     assert detail["response"] == "Model quota exceeded"  # type: ignore
     assert "gpt-4-turbo" in detail["cause"]  # type: ignore
+
+
 async def test_query_endpoint_generate_topic_summary_default_true(
     mocker: MockerFixture, dummy_request: Request
 ) -> None:
