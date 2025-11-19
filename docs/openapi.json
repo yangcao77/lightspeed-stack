@@ -348,6 +348,58 @@
                 }
             }
         },
+        "/v1/rags/{rag_id}": {
+            "get": {
+                "tags": [
+                    "rags"
+                ],
+                "summary": "Get Rag Endpoint Handler",
+                "description": "Retrieve a single RAG by its unique ID.\n\nRaises:\n    HTTPException:\n        - 404 if RAG with the given ID is not found,\n        - 500 if unable to connect to Llama Stack,\n        - 500 for any unexpected retrieval errors.\n\nReturns:\n    RAGResponse: A single RAG's details",
+                "operationId": "get_rag_endpoint_handler_v1_rags__rag_id__get",
+                "parameters": [
+                    {
+                        "name": "rag_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Rag Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RAGInfoResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "response": "RAG with given id not found",
+                        "description": "Not Found"
+                    },
+                    "500": {
+                        "response": "Unable to retrieve list of RAGs",
+                        "cause": "Connection to Llama Stack is broken",
+                        "description": "Internal Server Error"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/query": {
             "post": {
                 "tags": [
@@ -3917,6 +3969,108 @@
                 ],
                 "title": "RAGChunk",
                 "description": "Model representing a RAG chunk used in the response."
+            },
+            "RAGInfoResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "Vector DB unique ID",
+                        "examples": [
+                            "vs_00000000_0000_0000"
+                        ]
+                    },
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "Human readable vector DB name",
+                        "examples": [
+                            "Faiss Store with Knowledge base"
+                        ]
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "title": "Created At",
+                        "description": "When the vector store was created, represented as Unix time",
+                        "examples": [
+                            1763391371
+                        ]
+                    },
+                    "last_active_at": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Active At",
+                        "description": "When the vector store was last active, represented as Unix time",
+                        "examples": [
+                            1763391371
+                        ]
+                    },
+                    "usage_bytes": {
+                        "type": "integer",
+                        "title": "Usage Bytes",
+                        "description": "Storage byte(s) used by this vector DB",
+                        "examples": [
+                            0
+                        ]
+                    },
+                    "expires_at": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expires At",
+                        "description": "When the vector store expires, represented as Unix time",
+                        "examples": [
+                            1763391371
+                        ]
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "description": "Object type",
+                        "examples": [
+                            "vector_store"
+                        ]
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "description": "Vector DB status",
+                        "examples": [
+                            "completed"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "created_at",
+                    "last_active_at",
+                    "usage_bytes",
+                    "expires_at",
+                    "object",
+                    "status"
+                ],
+                "title": "RAGInfoResponse",
+                "description": "Model representing a response with information about RAG DB."
             },
             "RAGListResponse": {
                 "properties": {

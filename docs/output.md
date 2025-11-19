@@ -220,6 +220,38 @@ Returns:
 |-------------|-------------|-----------|
 | 200 | Successful Response | [RAGListResponse](#raglistresponse) |
 | 500 | Connection to Llama Stack is broken |  |
+## GET `/v1/rags/{rag_id}`
+
+> **Get Rag Endpoint Handler**
+
+Retrieve a single RAG by its unique ID.
+
+Raises:
+    HTTPException:
+        - 404 if RAG with the given ID is not found,
+        - 500 if unable to connect to Llama Stack,
+        - 500 for any unexpected retrieval errors.
+
+Returns:
+    RAGResponse: A single RAG's details
+
+
+
+### 🔗 Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| rag_id | string | True |  |
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | [RAGInfoResponse](#raginforesponse) |
+| 404 | Not Found |  |
+| 500 | Internal Server Error |  |
+| 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## POST `/v1/query`
 
 > **Query Endpoint Handler**
@@ -1686,6 +1718,24 @@ Model representing a RAG chunk used in the response.
 | content | string | The content of the chunk |
 | source |  | Source document or URL |
 | score |  | Relevance score |
+
+
+## RAGInfoResponse
+
+
+Model representing a response with information about RAG DB.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Vector DB unique ID |
+| name |  | Human readable vector DB name |
+| created_at | integer | When the vector store was created, represented as Unix time |
+| last_active_at |  | When the vector store was last active, represented as Unix time |
+| usage_bytes | integer | Storage byte(s) used by this vector DB |
+| expires_at |  | When the vector store expires, represented as Unix time |
+| object | string | Object type |
+| status | string | Vector DB status |
 
 
 ## RAGListResponse
