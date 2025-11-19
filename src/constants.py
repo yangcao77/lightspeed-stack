@@ -100,6 +100,7 @@ AUTH_MOD_K8S = "k8s"
 AUTH_MOD_NOOP = "noop"
 AUTH_MOD_NOOP_WITH_TOKEN = "noop-with-token"
 AUTH_MOD_JWK_TOKEN = "jwk-token"
+AUTH_MOD_RH_IDENTITY = "rh-identity"
 # Supported authentication modules
 SUPPORTED_AUTHENTICATION_MODULES = frozenset(
     {
@@ -107,6 +108,7 @@ SUPPORTED_AUTHENTICATION_MODULES = frozenset(
         AUTH_MOD_NOOP,
         AUTH_MOD_NOOP_WITH_TOKEN,
         AUTH_MOD_JWK_TOKEN,
+        AUTH_MOD_RH_IDENTITY,
     }
 )
 DEFAULT_AUTHENTICATION_MODULE = AUTH_MOD_NOOP

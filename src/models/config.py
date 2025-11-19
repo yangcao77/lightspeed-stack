@@ -409,6 +409,12 @@ class JwkConfiguration(ConfigurationBase):
     jwt_configuration: JwtConfiguration = Field(default_factory=JwtConfiguration)
 
 
+class RHIdentityConfiguration(ConfigurationBase):
+    """Red Hat Identity authentication configuration."""
+
+    required_entitlements: Optional[list[str]] = None
+
+
 class AuthenticationConfiguration(ConfigurationBase):
     """Authentication configuration."""
 
@@ -417,6 +423,7 @@ class AuthenticationConfiguration(ConfigurationBase):
     k8s_cluster_api: Optional[AnyHttpUrl] = None
     k8s_ca_cert_path: Optional[FilePath] = None
     jwk_config: Optional[JwkConfiguration] = None
+    rh_identity_config: Optional[RHIdentityConfiguration] = None
 
     @model_validator(mode="after")
     def check_authentication_model(self) -> Self:
@@ -434,6 +441,13 @@ class AuthenticationConfiguration(ConfigurationBase):
                     "JWK configuration must be specified when using JWK token authentication"
                 )
 
+        if self.module == constants.AUTH_MOD_RH_IDENTITY:
+            if self.rh_identity_config is None:
+                raise ValueError(
+                    "RH Identity configuration must be specified "
+                    "when using RH Identity authentication"
+                )
+
         return self
 
     @property
@@ -446,6 +460,17 @@ class AuthenticationConfiguration(ConfigurationBase):
         if self.jwk_config is None:
             raise ValueError("JWK configuration should not be None")
         return self.jwk_config
+
+    @property
+    def rh_identity_configuration(self) -> RHIdentityConfiguration:
+        """Return RH Identity configuration if the module is RH Identity."""
+        if self.module != constants.AUTH_MOD_RH_IDENTITY:
+            raise ValueError(
+                "RH Identity configuration is only available for RH Identity authentication module"
+            )
+        if self.rh_identity_config is None:
+            raise ValueError("RH Identity configuration should not be None")
+        return self.rh_identity_config
 
 
 @dataclass
