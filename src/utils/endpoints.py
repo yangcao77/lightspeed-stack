@@ -671,11 +671,17 @@ async def cleanup_after_streaming(
             session.query(UserConversation).filter_by(id=conversation_id).first()
         )
         if not existing_conversation:
-            topic_summary = await get_topic_summary_func(
-                query_request.query,
-                client,
-                llama_stack_model_id,
-            )
+            # Check if topic summary should be generated (default: True)
+            should_generate = query_request.generate_topic_summary
+
+            if should_generate:
+                logger.debug("Generating topic summary for new conversation")
+                topic_summary = await get_topic_summary_func(
+                    query_request.query, client, llama_stack_model_id
+                )
+            else:
+                logger.debug("Topic summary generation disabled by request parameter")
+                topic_summary = None
 
     completed_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
