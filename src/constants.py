@@ -79,7 +79,7 @@ Troubleshooting persistent volume claims in Kubernetes environments
 Example Output:
 Kubernetes Persistent Volume Troubleshooting
 
-ExampleInput:
+Example Input:
 I need a summary about the purpose of RHDH.
 Example Output:
 RHDH Purpose Summary
