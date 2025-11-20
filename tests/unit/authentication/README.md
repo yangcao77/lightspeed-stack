@@ -18,6 +18,9 @@ Unit tests for functions defined in authentication/noop.py
 ## [test_noop_with_token.py](test_noop_with_token.py)
 Unit tests for functions defined in authentication/noop_with_token.py
 
+## [test_rh_identity.py](test_rh_identity.py)
+Unit tests for Red Hat Identity authentication module.
+
 ## [test_utils.py](test_utils.py)
 Unit tests for functions defined in authentication/utils.py
 

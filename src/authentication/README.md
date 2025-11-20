@@ -18,6 +18,9 @@ Manage authentication flow for FastAPI endpoints with no-op auth.
 ## [noop_with_token.py](noop_with_token.py)
 Manage authentication flow for FastAPI endpoints with no-op auth and provided user token.
 
+## [rh_identity.py](rh_identity.py)
+Red Hat Identity header authentication for FastAPI endpoints.
+
 ## [utils.py](utils.py)
 Authentication utility functions.
 

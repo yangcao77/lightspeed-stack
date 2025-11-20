@@ -39,6 +39,9 @@ Unit tests for the /query REST API endpoint.
 ## [test_query_v2.py](test_query_v2.py)
 Unit tests for the /query (v2) REST API endpoint using Responses API.
 
+## [test_rags.py](test_rags.py)
+Unit tests for the /rags REST API endpoints.
+
 ## [test_root.py](test_root.py)
 Unit tests for the / endpoint handler.
 
@@ -47,6 +50,9 @@ Unit tests for the /shields REST API endpoint.
 
 ## [test_streaming_query.py](test_streaming_query.py)
 Unit tests for the /streaming-query REST API endpoint.
+
+## [test_streaming_query_v2.py](test_streaming_query_v2.py)
+Unit tests for the /streaming_query (v2) endpoint using Responses API.
 
 ## [test_tools.py](test_tools.py)
 Unit tests for tools endpoint.
