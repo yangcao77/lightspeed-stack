@@ -9,8 +9,8 @@ Unit tests for AuthenticationConfiguration model.
 ## [test_byok_rag.py](test_byok_rag.py)
 Unit tests for ByokRag model.
 
-## [test_conversation_cache.py](test_conversation_cache.py)
-Unit tests for ConversationCacheConfiguration model.
+## [test_conversation_history.py](test_conversation_history.py)
+Unit tests for ConversationHistoryConfiguration model.
 
 ## [test_cors.py](test_cors.py)
 Unit tests for CORSConfiguration model.

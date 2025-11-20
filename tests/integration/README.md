@@ -12,6 +12,9 @@ Integration tests for configuration loading and handling.
 ## [test_openapi_json.py](test_openapi_json.py)
 Tests the OpenAPI specification that is to be stored in docs/openapi.json.
 
+## [test_rh_identity_integration.py](test_rh_identity_integration.py)
+Integration tests for Red Hat Identity authentication.
+
 ## [test_version.py](test_version.py)
 Test if version is handled correctly.
 

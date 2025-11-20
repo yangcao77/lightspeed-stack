@@ -24,6 +24,9 @@ MCP headers handling.
 ## [quota.py](quota.py)
 Quota handling helper functions.
 
+## [shields.py](shields.py)
+Utility functions for working with Llama Stack shields.
+
 ## [suid.py](suid.py)
 Session ID utility functions.
 
