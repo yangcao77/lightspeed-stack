@@ -13,6 +13,8 @@ class "AuthenticationConfiguration" as src.models.config.AuthenticationConfigura
   k8s_ca_cert_path : Optional[FilePath]
   k8s_cluster_api : Optional[AnyHttpUrl]
   module : str
+  rh_identity_config : Optional[RHIdentityConfiguration]
+  rh_identity_configuration
   skip_tls_verification : bool
   check_authentication_model() -> Self
 }
@@ -152,6 +154,9 @@ class "QuotaLimiterConfiguration" as src.models.config.QuotaLimiterConfiguration
 class "QuotaSchedulerConfiguration" as src.models.config.QuotaSchedulerConfiguration {
   period : Annotated
 }
+class "RHIdentityConfiguration" as src.models.config.RHIdentityConfiguration {
+  required_entitlements : Optional[list[str]]
+}
 class "SQLiteDatabaseConfiguration" as src.models.config.SQLiteDatabaseConfiguration {
   db_path : str
 }
@@ -198,6 +203,7 @@ src.models.config.ModelContextProtocolServer --|> src.models.config.Configuratio
 src.models.config.PostgreSQLDatabaseConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.QuotaHandlersConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.QuotaLimiterConfiguration --|> src.models.config.ConfigurationBase
+src.models.config.RHIdentityConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.SQLiteDatabaseConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.ServiceConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.TLSConfiguration --|> src.models.config.ConfigurationBase

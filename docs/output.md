@@ -233,7 +233,7 @@ Raises:
         - 500 for any unexpected retrieval errors.
 
 Returns:
-    RAGResponse: A single RAG's details
+    RAGInfoResponse: A single RAG's details
 
 
 
@@ -840,6 +840,7 @@ Authentication configuration.
 | k8s_cluster_api |  |  |
 | k8s_ca_cert_path |  |  |
 | jwk_config |  |  |
+| rh_identity_config |  |  |
 
 
 ## AuthorizationConfiguration
@@ -1747,6 +1748,17 @@ Model representing a response to list RAGs request.
 | Field | Type | Description |
 |-------|------|-------------|
 | rags | array | List of RAG identifiers |
+
+
+## RHIdentityConfiguration
+
+
+Red Hat Identity authentication configuration.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| required_entitlements |  |  |
 
 
 ## ReadinessResponse
