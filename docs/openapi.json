@@ -354,7 +354,7 @@
                     "rags"
                 ],
                 "summary": "Get Rag Endpoint Handler",
-                "description": "Retrieve a single RAG by its unique ID.\n\nRaises:\n    HTTPException:\n        - 404 if RAG with the given ID is not found,\n        - 500 if unable to connect to Llama Stack,\n        - 500 for any unexpected retrieval errors.\n\nReturns:\n    RAGResponse: A single RAG's details",
+                "description": "Retrieve a single RAG by its unique ID.\n\nRaises:\n    HTTPException:\n        - 404 if RAG with the given ID is not found,\n        - 500 if unable to connect to Llama Stack,\n        - 500 for any unexpected retrieval errors.\n\nReturns:\n    RAGInfoResponse: A single RAG's details",
                 "operationId": "get_rag_endpoint_handler_v1_rags__rag_id__get",
                 "parameters": [
                     {
@@ -1774,6 +1774,16 @@
                         "anyOf": [
                             {
                                 "$ref": "#/components/schemas/JwkConfiguration"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "rh_identity_config": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/RHIdentityConfiguration"
                             },
                             {
                                 "type": "null"
@@ -4061,11 +4071,8 @@
                 "type": "object",
                 "required": [
                     "id",
-                    "name",
                     "created_at",
-                    "last_active_at",
                     "usage_bytes",
-                    "expires_at",
                     "object",
                     "status"
                 ],
@@ -4093,6 +4100,28 @@
                 ],
                 "title": "RAGListResponse",
                 "description": "Model representing a response to list RAGs request."
+            },
+            "RHIdentityConfiguration": {
+                "properties": {
+                    "required_entitlements": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Required Entitlements"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RHIdentityConfiguration",
+                "description": "Red Hat Identity authentication configuration."
             },
             "ReadinessResponse": {
                 "properties": {
