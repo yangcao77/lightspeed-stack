@@ -34,6 +34,7 @@ from utils.endpoints import (
     get_topic_summary_system_prompt,
 )
 from utils.mcp_headers import mcp_headers_dependency
+from utils.responses import extract_text_from_response_output_item
 from utils.shields import detect_shield_violations, get_available_shields
 from utils.token_counter import TokenCounter
 from utils.types import TurnSummary, ToolCallSummary
@@ -72,39 +73,6 @@ query_v2_response: dict[int | str, dict[str, Any]] = {
         }
     },
 }
-
-
-def _extract_text_from_response_output_item(output_item: Any) -> str:
-    """Extract assistant message text from a Responses API output item."""
-    if getattr(output_item, "type", None) != "message":
-        return ""
-    if getattr(output_item, "role", None) != "assistant":
-        return ""
-
-    content = getattr(output_item, "content", None)
-    if isinstance(content, str):
-        return content
-
-    text_fragments: list[str] = []
-    if isinstance(content, list):
-        for part in content:
-            if isinstance(part, str):
-                text_fragments.append(part)
-                continue
-            text_value = getattr(part, "text", None)
-            if text_value:
-                text_fragments.append(text_value)
-                continue
-            refusal = getattr(part, "refusal", None)
-            if refusal:
-                text_fragments.append(refusal)
-                continue
-            if isinstance(part, dict):
-                dict_text = part.get("text") or part.get("refusal")
-                if dict_text:
-                    text_fragments.append(str(dict_text))
-
-    return "".join(text_fragments)
 
 
 def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches
@@ -270,7 +238,7 @@ async def get_topic_summary(  # pylint: disable=too-many-nested-blocks
 
         # Extract text from response output
         summary_text = "".join(
-            _extract_text_from_response_output_item(output_item)
+            extract_text_from_response_output_item(output_item)
             for output_item in response.output
         )
 
@@ -403,7 +371,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     tool_calls: list[ToolCallSummary] = []
 
     for output_item in response.output:
-        message_text = _extract_text_from_response_output_item(output_item)
+        message_text = extract_text_from_response_output_item(output_item)
         if message_text:
             llm_response += message_text
 
