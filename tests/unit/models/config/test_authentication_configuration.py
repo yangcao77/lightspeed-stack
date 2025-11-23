@@ -64,6 +64,8 @@ def test_authentication_configuration_rh_identity() -> None:
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is not None
+    assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
+    assert auth_config.rh_identity_configuration.required_entitlements == []
 
 
 def test_authentication_configuration_rh_identity_default_value() -> None:
@@ -82,6 +84,8 @@ def test_authentication_configuration_rh_identity_default_value() -> None:
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is not None
+    assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
+    assert auth_config.rh_identity_configuration.required_entitlements is None
 
 
 def test_authentication_configuration_rh_identity_one_entitlement() -> None:
@@ -100,6 +104,8 @@ def test_authentication_configuration_rh_identity_one_entitlement() -> None:
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is not None
+    assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
+    assert auth_config.rh_identity_configuration.required_entitlements == ["foo"]
 
 
 def test_authentication_configuration_rh_identity_more_entitlements() -> None:
@@ -120,12 +126,20 @@ def test_authentication_configuration_rh_identity_more_entitlements() -> None:
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is not None
+    assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
+    assert auth_config.rh_identity_configuration.required_entitlements == [
+        "foo",
+        "bar",
+        "baz",
+    ]
 
 
 def test_authentication_configuration_rh_identity_but_insufficient_config() -> None:
     """Test the AuthenticationConfiguration with RH identity token."""
 
-    with pytest.raises(ValidationError, match="RH"):
+    with pytest.raises(
+        ValidationError, match="RH Identity configuration must be specified"
+    ):
         AuthenticationConfiguration(
             module=AUTH_MOD_RH_IDENTITY,
             skip_tls_verification=False,
