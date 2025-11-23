@@ -229,7 +229,7 @@ def test_authentication_configuration_module_unsupported() -> None:
         )
 
 
-def test_authentication_configuration_in_config() -> None:
+def test_authentication_configuration_in_config_noop() -> None:
     """Test the authentication configuration in main config."""
     # pylint: disable=no-member
     cfg = Configuration(
@@ -250,7 +250,11 @@ def test_authentication_configuration_in_config() -> None:
     assert cfg.authentication.k8s_ca_cert_path is None
     assert cfg.authentication.k8s_cluster_api is None
 
-    cfg2 = Configuration(
+
+def test_authentication_configuration_in_config_k8s() -> None:
+    """Test the authentication configuration in main config."""
+    # pylint: disable=no-member
+    cfg = Configuration(
         name="test_name",
         service=ServiceConfiguration(),
         llama_stack=LlamaStackConfiguration(
@@ -268,10 +272,66 @@ def test_authentication_configuration_in_config() -> None:
             k8s_cluster_api=None,
         ),
     )
-    assert cfg2.authentication is not None
-    assert cfg2.authentication.module == AUTH_MOD_K8S
-    assert cfg2.authentication.skip_tls_verification is True
-    assert cfg2.authentication.k8s_ca_cert_path == Path(
-        "tests/configuration/server.crt"
+    assert cfg.authentication is not None
+    assert cfg.authentication.module == AUTH_MOD_K8S
+    assert cfg.authentication.skip_tls_verification is True
+    assert cfg.authentication.k8s_ca_cert_path == Path("tests/configuration/server.crt")
+    assert cfg.authentication.k8s_cluster_api is None
+
+
+def test_authentication_configuration_in_config_rh_identity() -> None:
+    """Test the authentication configuration in main config."""
+    # pylint: disable=no-member
+    cfg = Configuration(
+        name="test_name",
+        service=ServiceConfiguration(),
+        llama_stack=LlamaStackConfiguration(
+            use_as_library_client=True,
+            library_client_config_path="tests/configuration/run.yaml",
+        ),
+        user_data_collection=UserDataCollection(
+            feedback_enabled=False, feedback_storage=None
+        ),
+        mcp_servers=[],
+        authentication=AuthenticationConfiguration(
+            module=AUTH_MOD_RH_IDENTITY,
+            skip_tls_verification=True,
+            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_cluster_api=None,
+            rh_identity_config=RHIdentityConfiguration(required_entitlements=[]),
+        ),
     )
-    assert cfg2.authentication.k8s_cluster_api is None
+    assert cfg.authentication is not None
+    assert cfg.authentication.module == AUTH_MOD_RH_IDENTITY
+    assert cfg.authentication.skip_tls_verification is True
+    assert cfg.authentication.k8s_ca_cert_path == Path("tests/configuration/server.crt")
+    assert cfg.authentication.k8s_cluster_api is None
+
+
+def test_authentication_configuration_in_config_jwktoken() -> None:
+    """Test the authentication configuration in main config."""
+    # pylint: disable=no-member
+    cfg = Configuration(
+        name="test_name",
+        service=ServiceConfiguration(),
+        llama_stack=LlamaStackConfiguration(
+            use_as_library_client=True,
+            library_client_config_path="tests/configuration/run.yaml",
+        ),
+        user_data_collection=UserDataCollection(
+            feedback_enabled=False, feedback_storage=None
+        ),
+        mcp_servers=[],
+        authentication=AuthenticationConfiguration(
+            module=AUTH_MOD_JWK_TOKEN,
+            skip_tls_verification=True,
+            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_cluster_api=None,
+            jwk_config=JwkConfiguration(url="http://foo.bar.baz"),
+        ),
+    )
+    assert cfg.authentication is not None
+    assert cfg.authentication.module == AUTH_MOD_JWK_TOKEN
+    assert cfg.authentication.skip_tls_verification is True
+    assert cfg.authentication.k8s_ca_cert_path == Path("tests/configuration/server.crt")
+    assert cfg.authentication.k8s_cluster_api is None
