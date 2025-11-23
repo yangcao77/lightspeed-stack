@@ -9,9 +9,9 @@ from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import Annotated, Any, AsyncGenerator, AsyncIterator, Iterator, cast
 
-from litellm.exceptions import RateLimitError
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
+from litellm.exceptions import RateLimitError
 from llama_stack_client import (
     APIConnectionError,
     AsyncLlamaStackClient,  # type: ignore
@@ -21,21 +21,22 @@ from llama_stack_client.types import UserMessage  # type: ignore
 from llama_stack_client.types.agents.agent_turn_response_stream_chunk import (
     AgentTurnResponseStreamChunk,
 )
+from llama_stack_client.types.agents.turn_create_params import Document
 from llama_stack_client.types.shared import ToolCall
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
-from llama_stack_client.types.agents.turn_create_params import Document
 
+import metrics
 from app.endpoints.query import (
+    evaluate_model_hints,
     get_rag_toolgroups,
+    get_topic_summary,
     is_input_shield,
     is_output_shield,
     is_transcripts_enabled,
+    persist_user_conversation_details,
     select_model_and_provider_id,
     validate_attachments_metadata,
     validate_conversation_ownership,
-    persist_user_conversation_details,
-    evaluate_model_hints,
-    get_topic_summary,
 )
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
@@ -43,7 +44,6 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL, MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
-import metrics
 from metrics.utils import update_llm_token_count_from_turn
 from models.config import Action
 from models.context import ResponseGeneratorContext
@@ -51,8 +51,12 @@ from models.database.conversations import UserConversation
 from models.requests import QueryRequest
 from models.responses import (
     ForbiddenResponse,
-    UnauthorizedResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
     QuotaExceededResponse,
+    ServiceUnavailableResponse,
+    UnauthorizedResponse,
+    UnprocessableEntityResponse,
 )
 from utils.endpoints import (
     check_configuration_loaded,
@@ -67,57 +71,40 @@ from utils.token_counter import TokenCounter, extract_token_usage_from_turn
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary
 
-
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query"])
 
+
 streaming_query_responses: dict[int | str, dict[str, Any]] = {
     200: {
-        "description": "Streaming response with Server-Sent Events",
+        "description": "Streaming response (Server-Sent Events)",
         "content": {
-            "application/json": {
-                "schema": {
-                    "type": "string",
-                    "example": (
-                        'data: {"event": "start", '
-                        '"data": {"conversation_id": "123e4567-e89b-12d3-a456-426614174000"}}\n\n'
-                        'data: {"event": "token", "data": {"id": 0, "token": "Hello"}}\n\n'
-                        'data: {"event": "end", "data": {"referenced_documents": [], '
-                        '"truncated": null, "input_tokens": 0, "output_tokens": 0}, '
-                        '"available_quotas": {}}\n\n'
-                    ),
-                }
-            },
-            "text/plain": {
-                "schema": {
-                    "type": "string",
-                    "example": "Hello world!\n\n---\n\nReference: https://example.com/doc",
-                }
-            },
+            "text/event-stream": {
+                "schema": {"type": "string"},
+                "example": (
+                    'data: {"event": "start", '
+                    '"data": {"conversation_id": "123e4567-e89b-12d3-a456-426614174000"}}\n\n'
+                    'data: {"event": "token", "data": {"id": 0, "token": "Hello"}}\n\n'
+                    'data: {"event": "end", "data": {"referenced_documents": [], '
+                    '"truncated": null, "input_tokens": 0, "output_tokens": 0}, '
+                    '"available_quotas": {}}\n\n'
+                ),
+            }
         },
     },
-    400: {
-        "description": "Missing or invalid credentials provided by client",
-        "model": UnauthorizedResponse,
-    },
-    401: {
-        "description": "Unauthorized: Invalid or missing Bearer token for k8s auth",
-        "model": UnauthorizedResponse,
-    },
-    403: {
-        "description": "Client does not have permission to access conversation",
-        "model": ForbiddenResponse,
-    },
-    429: {
-        "description": "The quota has been exceeded",
-        "model": QuotaExceededResponse,
-    },
-    500: {
-        "detail": {
-            "response": "Unable to connect to Llama Stack",
-            "cause": "Connection error.",
-        }
-    },
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(
+        examples=["conversation read", "endpoint", "model override"]
+    ),
+    404: NotFoundResponse.openapi_response(
+        examples=["conversation", "model", "provider"]
+    ),
+    422: UnprocessableEntityResponse.openapi_response(),
+    429: QuotaExceededResponse.openapi_response(),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
 }
 
 
@@ -861,13 +848,12 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
                 user_id,
                 query_request.conversation_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "response": "Access denied",
-                    "cause": "You do not have permission to access this conversation",
-                },
+            response = ForbiddenResponse.conversation(
+                action="read",
+                resource_id=query_request.conversation_id,
+                user_id=user_id,
             )
+            raise HTTPException(**response.model_dump())
 
     try:
         # try to get Llama Stack client
@@ -918,22 +904,22 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
         # Update metrics for the LLM call failure
         metrics.llm_calls_failures_total.inc()
         logger.error("Unable to connect to Llama Stack: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "response": "Unable to connect to Llama Stack",
-                "cause": str(e),
-            },
-        ) from e
+        response = ServiceUnavailableResponse(
+            backend_name="Llama Stack",
+            cause=str(e),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
     except RateLimitError as e:
-        used_model = getattr(e, "model", "unknown")
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={
-                "response": "Model quota exceeded",
-                "cause": f"The token quota for model {used_model} has been exceeded.",
-            },
-        ) from e
+        used_model = getattr(e, "model", "")
+        if used_model:
+            response = QuotaExceededResponse.model(used_model)
+        else:
+            response = QuotaExceededResponse(
+                response="The quota has been exceeded", cause=str(e)
+            )
+        raise HTTPException(**response.model_dump()) from e
+
     except Exception as e:  # pylint: disable=broad-except
         # Handle other errors with OLS-compatible error response
         # This broad exception catch is intentional to ensure all errors

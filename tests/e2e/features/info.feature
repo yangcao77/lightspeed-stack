@@ -22,7 +22,7 @@ Feature: Info tests
     Given The system is in default state
     And  The llama-stack connection is disrupted
      When I access REST API endpoint "info" using HTTP GET method
-     Then The status code of the response is 500
+     Then The status code of the response is 503
       And The body of the response is the following
       """
          {"detail": {"response": "Unable to connect to Llama Stack", "cause": "Connection error."}}
@@ -39,7 +39,7 @@ Feature: Info tests
     Given The system is in default state
     And  The llama-stack connection is disrupted
      When I access REST API endpoint "models" using HTTP GET method
-     Then The status code of the response is 500
+     Then The status code of the response is 503
       And The body of the response is the following
       """
          {"detail": {"response": "Unable to connect to Llama Stack", "cause": "Connection error."}}
@@ -56,7 +56,7 @@ Feature: Info tests
     Given The system is in default state
     And  The llama-stack connection is disrupted
      When I access REST API endpoint "shields" using HTTP GET method
-     Then The status code of the response is 500
+     Then The status code of the response is 503
       And The body of the response is the following
       """
          {"detail": {"response": "Unable to connect to Llama Stack", "cause": "Connection error."}}
@@ -112,7 +112,7 @@ Feature: Info tests
     Given The system is in default state
     And  The llama-stack connection is disrupted
      When I access REST API endpoint "tools" using HTTP GET method
-     Then The status code of the response is 500
+     Then The status code of the response is 503
       And The body of the response is the following
       """
          {"detail": {"response": "Unable to connect to Llama Stack", "cause": "Connection error."}}

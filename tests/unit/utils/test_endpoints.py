@@ -2,24 +2,23 @@
 
 # pylint: disable=too-many-lines
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 import pytest
-from pytest_mock import MockerFixture
 from fastapi import HTTPException
 from pydantic import AnyUrl
+from pytest_mock import MockerFixture
 
 import constants
 from configuration import AppConfig
-from models.config import CustomProfile
-from models.responses import ReferencedDocument
+from models.config import Action, CustomProfile
 from models.requests import QueryRequest
-from models.config import Action
-from utils import endpoints
-from utils.endpoints import get_agent, get_temp_agent
-
+from models.responses import ReferencedDocument
 from tests.unit import config_dict
 from tests.unit.conftest import AgentFixtures
+from utils import endpoints
+from utils.endpoints import get_agent, get_temp_agent
 
 CONFIGURED_SYSTEM_PROMPT = "This is a configured system prompt"
 

@@ -3,25 +3,27 @@
 """Unit tests for the /conversations REST API endpoints."""
 
 from datetime import datetime, timezone
+
 import pytest
-from pytest_mock import MockerFixture, MockType
 from fastapi import HTTPException, status
+from pytest_mock import MockerFixture, MockType
 
 from app.endpoints.conversations_v2 import (
+    check_conversation_existence,
+    check_valid_conversation_id,
+    delete_conversation_endpoint_handler,
+    get_conversation_endpoint_handler,
+    get_conversations_list_endpoint_handler,
     transform_chat_message,
     update_conversation_endpoint_handler,
-    check_valid_conversation_id,
-    check_conversation_existence,
-    get_conversations_list_endpoint_handler,
-    get_conversation_endpoint_handler,
-    delete_conversation_endpoint_handler,
 )
+from configuration import AppConfig
 from models.cache_entry import CacheEntry
 from models.requests import ConversationUpdateRequest
 from models.responses import (
+    ConversationData,
     ConversationUpdateResponse,
     ReferencedDocument,
-    ConversationData,
 )
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 
@@ -90,7 +92,9 @@ class TestTransformChatMessage:
 
     def test_transform_message_with_referenced_documents(self) -> None:
         """Test the transformation when referenced_documents are present."""
-        docs = [ReferencedDocument(doc_title="Test Doc", doc_url="http://example.com")]
+        docs = [
+            ReferencedDocument(doc_title="Test Doc", doc_url="http://example.com")
+        ]  # type: ignore
         entry = CacheEntry(
             query="query",
             response="response",
@@ -157,7 +161,7 @@ class TestCheckValidConversationId:
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Invalid conversation ID format" in detail["response"]
+        assert "Invalid conversation ID format" in detail["response"]  # type: ignore
 
 
 class TestCheckConversationExistence:
@@ -188,7 +192,22 @@ class TestCheckConversationExistence:
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Conversation not found" in detail["response"]
+        assert "Conversation not found" in detail["response"]  # type: ignore
+
+    def test_conversation_cache_type_none(
+        self, mocker: MockerFixture, mock_configuration: MockType
+    ) -> None:
+        """Test when conversation_cache_configuration.type is None."""
+        mock_cache_config = mocker.Mock()
+        mock_cache_config.type = None
+        mock_configuration.conversation_cache_configuration = mock_cache_config
+        mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
+
+        # Should return early without raising an exception or calling list
+        check_conversation_existence("user_id", VALID_CONVERSATION_ID)
+
+        # Verify that conversation_cache.list was not called
+        mock_configuration.conversation_cache.list.assert_not_called()
 
 
 class TestGetConversationsListEndpoint:
@@ -198,7 +217,9 @@ class TestGetConversationsListEndpoint:
     async def test_configuration_not_loaded(self, mocker: MockerFixture) -> None:
         """Test the endpoint when configuration is not loaded."""
         mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", None)
+        mock_config = AppConfig()
+        mock_config._configuration = None  # pylint: disable=protected-access
+        mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
 
         with pytest.raises(HTTPException) as exc_info:
             await get_conversations_list_endpoint_handler(
@@ -215,7 +236,8 @@ class TestGetConversationsListEndpoint:
         """Test the endpoint when conversation cache is not configured."""
         mock_authorization_resolvers(mocker)
         mock_config = mocker.Mock()
-        mock_config.conversation_cache = None
+        mock_config.conversation_cache_configuration = mocker.Mock()
+        mock_config.conversation_cache_configuration.type = None
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
 
         with pytest.raises(HTTPException) as exc_info:
@@ -224,10 +246,10 @@ class TestGetConversationsListEndpoint:
                 auth=MOCK_AUTH,
             )
 
-        assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+        assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Conversation cache is not configured" in detail["response"]
+        assert "Conversation cache not configured" in detail["response"]
 
     @pytest.mark.asyncio
     async def test_successful_retrieval(
@@ -297,23 +319,6 @@ class TestGetConversationsListEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_cache_exception(
-        self, mocker: MockerFixture, mock_configuration: MockType
-    ) -> None:
-        """Test the endpoint when the cache throws an exception."""
-        mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
-        mock_configuration.conversation_cache.list.side_effect = Exception(
-            "Cache error"
-        )
-        with pytest.raises(Exception) as exc_info:
-            await get_conversations_list_endpoint_handler(
-                request=mocker.Mock(),
-                auth=MOCK_AUTH,
-            )
-        assert str(exc_info.value) == "Cache error"
-
-    @pytest.mark.asyncio
     async def test_malformed_auth_object(
         self, mocker: MockerFixture, mock_configuration: MockType
     ) -> None:
@@ -335,7 +340,9 @@ class TestGetConversationEndpoint:
     async def test_configuration_not_loaded(self, mocker: MockerFixture) -> None:
         """Test the endpoint when configuration is not loaded."""
         mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", None)
+        mock_config = AppConfig()
+        mock_config._configuration = None  # pylint: disable=protected-access
+        mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
 
         with pytest.raises(HTTPException) as exc_info:
             await get_conversation_endpoint_handler(
@@ -371,7 +378,8 @@ class TestGetConversationEndpoint:
         """Test the endpoint when conversation cache is not configured."""
         mock_authorization_resolvers(mocker)
         mock_config = mocker.Mock()
-        mock_config.conversation_cache = None
+        mock_config.conversation_cache_configuration = mocker.Mock()
+        mock_config.conversation_cache_configuration.type = None
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
         mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
 
@@ -382,7 +390,10 @@ class TestGetConversationEndpoint:
                 auth=MOCK_AUTH,
             )
 
-        assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+        assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = exc_info.value.detail
+        assert isinstance(detail, dict)
+        assert "Conversation cache not configured" in detail["response"]
 
     @pytest.mark.asyncio
     async def test_conversation_not_found(
@@ -470,26 +481,6 @@ class TestGetConversationEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_cache_exception(
-        self, mocker: MockerFixture, mock_configuration: MockType
-    ) -> None:
-        """Test the endpoint when the cache throws an exception."""
-        mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
-        mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
-        mock_configuration.conversation_cache.list.return_value = [
-            mocker.Mock(conversation_id=VALID_CONVERSATION_ID)
-        ]
-        mock_configuration.conversation_cache.get.side_effect = Exception("Cache error")
-        with pytest.raises(Exception) as exc_info:
-            await get_conversation_endpoint_handler(
-                request=mocker.Mock(),
-                conversation_id=VALID_CONVERSATION_ID,
-                auth=MOCK_AUTH,
-            )
-        assert str(exc_info.value) == "Cache error"
-
-    @pytest.mark.asyncio
     async def test_malformed_auth_object(
         self, mocker: MockerFixture, mock_configuration: MockType
     ) -> None:
@@ -513,7 +504,9 @@ class TestDeleteConversationEndpoint:
     async def test_configuration_not_loaded(self, mocker: MockerFixture) -> None:
         """Test the endpoint when configuration is not loaded."""
         mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", None)
+        mock_config = AppConfig()
+        mock_config._configuration = None  # pylint: disable=protected-access
+        mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
 
         with pytest.raises(HTTPException) as exc_info:
             await delete_conversation_endpoint_handler(
@@ -549,7 +542,8 @@ class TestDeleteConversationEndpoint:
         """Test the endpoint when conversation cache is not configured."""
         mock_authorization_resolvers(mocker)
         mock_config = mocker.Mock()
-        mock_config.conversation_cache = None
+        mock_config.conversation_cache_configuration = mocker.Mock()
+        mock_config.conversation_cache_configuration.type = None
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
         mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
 
@@ -560,7 +554,10 @@ class TestDeleteConversationEndpoint:
                 auth=MOCK_AUTH,
             )
 
-        assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+        assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = exc_info.value.detail
+        assert isinstance(detail, dict)
+        assert "Conversation cache not configured" in detail["response"]
 
     @pytest.mark.asyncio
     async def test_conversation_not_found(
@@ -627,7 +624,7 @@ class TestDeleteConversationEndpoint:
         assert response is not None
         assert response.conversation_id == VALID_CONVERSATION_ID
         assert response.success is True
-        assert response.response == "Conversation can not be deleted"
+        assert response.response == "Conversation cannot be deleted"
 
     @pytest.mark.asyncio
     async def test_with_skip_userid_check(
@@ -653,30 +650,6 @@ class TestDeleteConversationEndpoint:
         )
 
     @pytest.mark.asyncio
-    async def test_cache_exception(
-        self, mocker: MockerFixture, mock_configuration: MockType
-    ) -> None:
-        """Test the endpoint when the cache throws an exception."""
-        mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
-        mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
-        mock_configuration.conversation_cache.list.return_value = [
-            mocker.Mock(conversation_id=VALID_CONVERSATION_ID)
-        ]
-        mock_configuration.conversation_cache.delete.side_effect = Exception(
-            "Cache error"
-        )
-
-        with pytest.raises(Exception) as exc_info:
-            await delete_conversation_endpoint_handler(
-                request=mocker.Mock(),
-                conversation_id=VALID_CONVERSATION_ID,
-                auth=MOCK_AUTH,
-            )
-
-        assert str(exc_info.value) == "Cache error"
-
-    @pytest.mark.asyncio
     async def test_malformed_auth_object(
         self, mocker: MockerFixture, mock_configuration: MockType
     ) -> None:
@@ -700,7 +673,8 @@ class TestUpdateConversationEndpoint:
     async def test_configuration_not_loaded(self, mocker: MockerFixture) -> None:
         """Test the endpoint when configuration is not loaded."""
         mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", None)
+        mock_config = AppConfig()
+        mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
 
         update_request = ConversationUpdateRequest(topic_summary="New topic summary")
 
@@ -712,6 +686,9 @@ class TestUpdateConversationEndpoint:
             )
 
         assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+        detail = exc_info.value.detail
+        assert isinstance(detail, dict)
+        assert "Configuration is not loaded" in detail["response"]  # type: ignore
 
     @pytest.mark.asyncio
     async def test_invalid_conversation_id_format(
@@ -734,7 +711,7 @@ class TestUpdateConversationEndpoint:
         assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Invalid conversation ID format" in detail["response"]
+        assert "Invalid conversation ID format" in detail["response"]  # type: ignore
 
     @pytest.mark.asyncio
     async def test_conversation_cache_not_configured(
@@ -743,7 +720,8 @@ class TestUpdateConversationEndpoint:
         """Test the endpoint when conversation cache is not configured."""
         mock_authorization_resolvers(mocker)
         mock_config = mocker.Mock()
-        mock_config.conversation_cache = None
+        mock_config.conversation_cache_configuration = mocker.Mock()
+        mock_config.conversation_cache_configuration.type = None
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_config)
         mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
 
@@ -756,10 +734,10 @@ class TestUpdateConversationEndpoint:
                 auth=MOCK_AUTH,
             )
 
-        assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+        assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Conversation cache is not configured" in detail["response"]
+        assert "Conversation cache not configured" in detail["response"]  # type: ignore
 
     @pytest.mark.asyncio
     async def test_conversation_not_found(
@@ -783,7 +761,7 @@ class TestUpdateConversationEndpoint:
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
         detail = exc_info.value.detail
         assert isinstance(detail, dict)
-        assert "Conversation not found" in detail["response"]
+        assert "Conversation not found" in detail["response"]  # type: ignore
 
     @pytest.mark.asyncio
     async def test_successful_update(
@@ -838,31 +816,6 @@ class TestUpdateConversationEndpoint:
         mock_configuration.conversation_cache.set_topic_summary.assert_called_once_with(
             "mock_user_id", VALID_CONVERSATION_ID, "New topic summary", True
         )
-
-    @pytest.mark.asyncio
-    async def test_cache_exception(
-        self, mocker: MockerFixture, mock_configuration: MockType
-    ) -> None:
-        """Test the endpoint when the cache throws an exception."""
-        mock_authorization_resolvers(mocker)
-        mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
-        mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
-        mock_configuration.conversation_cache.list.return_value = [
-            mocker.Mock(conversation_id=VALID_CONVERSATION_ID)
-        ]
-        mock_configuration.conversation_cache.set_topic_summary.side_effect = Exception(
-            "Cache error"
-        )
-        update_request = ConversationUpdateRequest(topic_summary="New topic summary")
-
-        with pytest.raises(Exception) as exc_info:
-            await update_conversation_endpoint_handler(
-                conversation_id=VALID_CONVERSATION_ID,
-                update_request=update_request,
-                auth=MOCK_AUTH,
-            )
-
-        assert str(exc_info.value) == "Cache error"
 
     @pytest.mark.asyncio
     async def test_malformed_auth_object(

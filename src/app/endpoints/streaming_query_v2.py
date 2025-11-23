@@ -3,13 +3,12 @@
 import logging
 from typing import Annotated, Any, AsyncIterator, cast
 
-from llama_stack_client import AsyncLlamaStackClient  # type: ignore
+from fastapi import APIRouter, Depends, Request
+from fastapi.responses import StreamingResponse
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObjectStream,
 )
-
-from fastapi import APIRouter, Depends, Request
-from fastapi.responses import StreamingResponse
+from llama_stack_client import AsyncLlamaStackClient  # type: ignore
 
 from app.endpoints.query import (
     is_transcripts_enabled,
@@ -35,7 +34,15 @@ from constants import MEDIA_TYPE_JSON
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
-from models.responses import ForbiddenResponse, UnauthorizedResponse
+from models.responses import (
+    ForbiddenResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
+    QuotaExceededResponse,
+    ServiceUnavailableResponse,
+    UnauthorizedResponse,
+    UnprocessableEntityResponse,
+)
 from utils.endpoints import (
     cleanup_after_streaming,
     get_system_prompt,
@@ -44,7 +51,7 @@ from utils.mcp_headers import mcp_headers_dependency
 from utils.shields import detect_shield_violations, get_available_shields
 from utils.token_counter import TokenCounter
 from utils.transcripts import store_transcript
-from utils.types import TurnSummary, ToolCallSummary
+from utils.types import ToolCallSummary, TurnSummary
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query_v2"])
@@ -75,24 +82,19 @@ streaming_query_v2_responses: dict[int | str, dict[str, Any]] = {
             },
         },
     },
-    400: {
-        "description": "Missing or invalid credentials provided by client",
-        "model": UnauthorizedResponse,
-    },
-    401: {
-        "description": "Unauthorized: Invalid or missing Bearer token for k8s auth",
-        "model": UnauthorizedResponse,
-    },
-    403: {
-        "description": "User is not authorized",
-        "model": ForbiddenResponse,
-    },
-    500: {
-        "detail": {
-            "response": "Unable to connect to Llama Stack",
-            "cause": "Connection error.",
-        }
-    },
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(
+        examples=["conversation read", "endpoint", "model override"]
+    ),
+    404: NotFoundResponse.openapi_response(
+        examples=["conversation", "model", "provider"]
+    ),
+    422: UnprocessableEntityResponse.openapi_response(),
+    429: QuotaExceededResponse.openapi_response(),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
 }
 
 
