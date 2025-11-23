@@ -1,0 +1,1054 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Lightspeed Core Stack",
+    "version": "0.3.0"
+  },
+  "components": {
+    "schemas": {
+      "AccessRule": {
+        "additionalProperties": false,
+        "description": "Rule defining what actions a role can perform.",
+        "properties": {
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "actions": {
+            "items": {
+              "$ref": "#/components/schemas/Action"
+            },
+            "title": "Actions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "role",
+          "actions"
+        ],
+        "title": "AccessRule",
+        "type": "object"
+      },
+      "Action": {
+        "description": "Available actions in the system.",
+        "enum": [
+          "admin",
+          "list_other_conversations",
+          "read_other_conversations",
+          "query_other_conversations",
+          "delete_other_conversations",
+          "query",
+          "streaming_query",
+          "get_conversation",
+          "list_conversations",
+          "delete_conversation",
+          "update_conversation",
+          "feedback",
+          "get_models",
+          "get_tools",
+          "get_shields",
+          "list_providers",
+          "get_provider",
+          "list_rags",
+          "get_rag",
+          "get_metrics",
+          "get_config",
+          "info",
+          "model_override"
+        ],
+        "title": "Action",
+        "type": "string"
+      },
+      "AuthenticationConfiguration": {
+        "additionalProperties": false,
+        "description": "Authentication configuration.",
+        "properties": {
+          "module": {
+            "default": "noop",
+            "title": "Module",
+            "type": "string"
+          },
+          "skip_tls_verification": {
+            "default": false,
+            "title": "Skip Tls Verification",
+            "type": "boolean"
+          },
+          "k8s_cluster_api": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "K8S Cluster Api"
+          },
+          "k8s_ca_cert_path": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "K8S Ca Cert Path"
+          },
+          "jwk_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JwkConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "rh_identity_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RHIdentityConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "AuthenticationConfiguration",
+        "type": "object"
+      },
+      "AuthorizationConfiguration": {
+        "additionalProperties": false,
+        "description": "Authorization configuration.",
+        "properties": {
+          "access_rules": {
+            "items": {
+              "$ref": "#/components/schemas/AccessRule"
+            },
+            "title": "Access Rules",
+            "type": "array"
+          }
+        },
+        "title": "AuthorizationConfiguration",
+        "type": "object"
+      },
+      "ByokRag": {
+        "additionalProperties": false,
+        "description": "BYOK RAG configuration.",
+        "properties": {
+          "rag_id": {
+            "minLength": 1,
+            "title": "Rag Id",
+            "type": "string"
+          },
+          "rag_type": {
+            "default": "inline::faiss",
+            "minLength": 1,
+            "title": "Rag Type",
+            "type": "string"
+          },
+          "embedding_model": {
+            "default": "sentence-transformers/all-mpnet-base-v2",
+            "minLength": 1,
+            "title": "Embedding Model",
+            "type": "string"
+          },
+          "embedding_dimension": {
+            "default": 768,
+            "exclusiveMinimum": 0,
+            "title": "Embedding Dimension",
+            "type": "integer"
+          },
+          "vector_db_id": {
+            "minLength": 1,
+            "title": "Vector Db Id",
+            "type": "string"
+          },
+          "db_path": {
+            "format": "file-path",
+            "title": "Db Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rag_id",
+          "vector_db_id",
+          "db_path"
+        ],
+        "title": "ByokRag",
+        "type": "object"
+      },
+      "CORSConfiguration": {
+        "additionalProperties": false,
+        "description": "CORS configuration.",
+        "properties": {
+          "allow_origins": {
+            "default": [
+              "*"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allow Origins",
+            "type": "array"
+          },
+          "allow_credentials": {
+            "default": false,
+            "title": "Allow Credentials",
+            "type": "boolean"
+          },
+          "allow_methods": {
+            "default": [
+              "*"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allow Methods",
+            "type": "array"
+          },
+          "allow_headers": {
+            "default": [
+              "*"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Allow Headers",
+            "type": "array"
+          }
+        },
+        "title": "CORSConfiguration",
+        "type": "object"
+      },
+      "Configuration": {
+        "additionalProperties": false,
+        "description": "Global service configuration.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "service": {
+            "$ref": "#/components/schemas/ServiceConfiguration"
+          },
+          "llama_stack": {
+            "$ref": "#/components/schemas/LlamaStackConfiguration"
+          },
+          "user_data_collection": {
+            "$ref": "#/components/schemas/UserDataCollection"
+          },
+          "database": {
+            "$ref": "#/components/schemas/DatabaseConfiguration"
+          },
+          "mcp_servers": {
+            "items": {
+              "$ref": "#/components/schemas/ModelContextProtocolServer"
+            },
+            "title": "Mcp Servers",
+            "type": "array"
+          },
+          "authentication": {
+            "$ref": "#/components/schemas/AuthenticationConfiguration"
+          },
+          "authorization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuthorizationConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "customization": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Customization"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "inference": {
+            "$ref": "#/components/schemas/InferenceConfiguration"
+          },
+          "conversation_cache": {
+            "$ref": "#/components/schemas/ConversationHistoryConfiguration"
+          },
+          "byok_rag": {
+            "items": {
+              "$ref": "#/components/schemas/ByokRag"
+            },
+            "title": "Byok Rag",
+            "type": "array"
+          },
+          "quota_handlers": {
+            "$ref": "#/components/schemas/QuotaHandlersConfiguration"
+          }
+        },
+        "required": [
+          "name",
+          "service",
+          "llama_stack",
+          "user_data_collection"
+        ],
+        "title": "Configuration",
+        "type": "object"
+      },
+      "ConversationHistoryConfiguration": {
+        "additionalProperties": false,
+        "description": "Conversation cache configuration.",
+        "properties": {
+          "type": {
+            "anyOf": [
+              {
+                "enum": [
+                  "noop",
+                  "memory",
+                  "sqlite",
+                  "postgres"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Type"
+          },
+          "memory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InMemoryCacheConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "sqlite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SQLiteDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "postgres": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostgreSQLDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "ConversationHistoryConfiguration",
+        "type": "object"
+      },
+      "CustomProfile": {
+        "description": "Custom profile customization for prompts and validation.",
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "prompts": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {},
+            "title": "Prompts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "CustomProfile",
+        "type": "object"
+      },
+      "Customization": {
+        "additionalProperties": false,
+        "description": "Service customization.",
+        "properties": {
+          "profile_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Profile Path"
+          },
+          "disable_query_system_prompt": {
+            "default": false,
+            "title": "Disable Query System Prompt",
+            "type": "boolean"
+          },
+          "system_prompt_path": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "System Prompt Path"
+          },
+          "system_prompt": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "System Prompt"
+          },
+          "custom_profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CustomProfile"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "Customization",
+        "type": "object"
+      },
+      "DatabaseConfiguration": {
+        "additionalProperties": false,
+        "description": "Database configuration.",
+        "properties": {
+          "sqlite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SQLiteDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "postgres": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostgreSQLDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          }
+        },
+        "title": "DatabaseConfiguration",
+        "type": "object"
+      },
+      "InMemoryCacheConfig": {
+        "additionalProperties": false,
+        "description": "In-memory cache configuration.",
+        "properties": {
+          "max_entries": {
+            "exclusiveMinimum": 0,
+            "title": "Max Entries",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_entries"
+        ],
+        "title": "InMemoryCacheConfig",
+        "type": "object"
+      },
+      "InferenceConfiguration": {
+        "additionalProperties": false,
+        "description": "Inference configuration.",
+        "properties": {
+          "default_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Default Model"
+          },
+          "default_provider": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Default Provider"
+          }
+        },
+        "title": "InferenceConfiguration",
+        "type": "object"
+      },
+      "JsonPathOperator": {
+        "description": "Supported operators for JSONPath evaluation.",
+        "enum": [
+          "equals",
+          "contains",
+          "in",
+          "match"
+        ],
+        "title": "JsonPathOperator",
+        "type": "string"
+      },
+      "JwkConfiguration": {
+        "additionalProperties": false,
+        "description": "JWK configuration.",
+        "properties": {
+          "url": {
+            "format": "uri",
+            "minLength": 1,
+            "title": "Url",
+            "type": "string"
+          },
+          "jwt_configuration": {
+            "$ref": "#/components/schemas/JwtConfiguration"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "title": "JwkConfiguration",
+        "type": "object"
+      },
+      "JwtConfiguration": {
+        "additionalProperties": false,
+        "description": "JWT configuration.",
+        "properties": {
+          "user_id_claim": {
+            "default": "user_id",
+            "title": "User Id Claim",
+            "type": "string"
+          },
+          "username_claim": {
+            "default": "username",
+            "title": "Username Claim",
+            "type": "string"
+          },
+          "role_rules": {
+            "items": {
+              "$ref": "#/components/schemas/JwtRoleRule"
+            },
+            "title": "Role Rules",
+            "type": "array"
+          }
+        },
+        "title": "JwtConfiguration",
+        "type": "object"
+      },
+      "JwtRoleRule": {
+        "additionalProperties": false,
+        "description": "Rule for extracting roles from JWT claims.",
+        "properties": {
+          "jsonpath": {
+            "title": "Jsonpath",
+            "type": "string"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/JsonPathOperator"
+          },
+          "negate": {
+            "default": false,
+            "title": "Negate",
+            "type": "boolean"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "roles": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Roles",
+            "type": "array"
+          }
+        },
+        "required": [
+          "jsonpath",
+          "operator",
+          "value",
+          "roles"
+        ],
+        "title": "JwtRoleRule",
+        "type": "object"
+      },
+      "LlamaStackConfiguration": {
+        "additionalProperties": false,
+        "description": "Llama stack configuration.",
+        "properties": {
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Url"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "format": "password",
+                "type": "string",
+                "writeOnly": true
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Api Key"
+          },
+          "use_as_library_client": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Use As Library Client"
+          },
+          "library_client_config_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Library Client Config Path"
+          }
+        },
+        "title": "LlamaStackConfiguration",
+        "type": "object"
+      },
+      "ModelContextProtocolServer": {
+        "additionalProperties": false,
+        "description": "model context protocol server configuration.",
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "provider_id": {
+            "default": "model-context-protocol",
+            "title": "Provider Id",
+            "type": "string"
+          },
+          "url": {
+            "title": "Url",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "url"
+        ],
+        "title": "ModelContextProtocolServer",
+        "type": "object"
+      },
+      "PostgreSQLDatabaseConfiguration": {
+        "additionalProperties": false,
+        "description": "PostgreSQL database configuration.",
+        "properties": {
+          "host": {
+            "default": "localhost",
+            "title": "Host",
+            "type": "string"
+          },
+          "port": {
+            "default": 5432,
+            "exclusiveMinimum": 0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "db": {
+            "title": "Db",
+            "type": "string"
+          },
+          "user": {
+            "title": "User",
+            "type": "string"
+          },
+          "password": {
+            "format": "password",
+            "title": "Password",
+            "type": "string",
+            "writeOnly": true
+          },
+          "namespace": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": "lightspeed-stack",
+            "title": "Namespace"
+          },
+          "ssl_mode": {
+            "default": "prefer",
+            "title": "Ssl Mode",
+            "type": "string"
+          },
+          "gss_encmode": {
+            "default": "prefer",
+            "title": "Gss Encmode",
+            "type": "string"
+          },
+          "ca_cert_path": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ca Cert Path"
+          }
+        },
+        "required": [
+          "db",
+          "user",
+          "password"
+        ],
+        "title": "PostgreSQLDatabaseConfiguration",
+        "type": "object"
+      },
+      "QuotaHandlersConfiguration": {
+        "additionalProperties": false,
+        "description": "Quota limiter configuration.",
+        "properties": {
+          "sqlite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SQLiteDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "postgres": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PostgreSQLDatabaseConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "limiters": {
+            "items": {
+              "$ref": "#/components/schemas/QuotaLimiterConfiguration"
+            },
+            "title": "Limiters",
+            "type": "array"
+          },
+          "scheduler": {
+            "$ref": "#/components/schemas/QuotaSchedulerConfiguration"
+          },
+          "enable_token_history": {
+            "default": false,
+            "title": "Enable Token History",
+            "type": "boolean"
+          }
+        },
+        "title": "QuotaHandlersConfiguration",
+        "type": "object"
+      },
+      "QuotaLimiterConfiguration": {
+        "additionalProperties": false,
+        "description": "Configuration for one quota limiter.",
+        "properties": {
+          "type": {
+            "enum": [
+              "user_limiter",
+              "cluster_limiter"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "initial_quota": {
+            "minimum": 0,
+            "title": "Initial Quota",
+            "type": "integer"
+          },
+          "quota_increase": {
+            "minimum": 0,
+            "title": "Quota Increase",
+            "type": "integer"
+          },
+          "period": {
+            "title": "Period",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name",
+          "initial_quota",
+          "quota_increase",
+          "period"
+        ],
+        "title": "QuotaLimiterConfiguration",
+        "type": "object"
+      },
+      "QuotaSchedulerConfiguration": {
+        "description": "Quota scheduler configuration.",
+        "properties": {
+          "period": {
+            "default": 1,
+            "exclusiveMinimum": 0,
+            "title": "Period",
+            "type": "integer"
+          }
+        },
+        "title": "QuotaSchedulerConfiguration",
+        "type": "object"
+      },
+      "RHIdentityConfiguration": {
+        "additionalProperties": false,
+        "description": "Red Hat Identity authentication configuration.",
+        "properties": {
+          "required_entitlements": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Required Entitlements"
+          }
+        },
+        "title": "RHIdentityConfiguration",
+        "type": "object"
+      },
+      "SQLiteDatabaseConfiguration": {
+        "additionalProperties": false,
+        "description": "SQLite database configuration.",
+        "properties": {
+          "db_path": {
+            "title": "Db Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "db_path"
+        ],
+        "title": "SQLiteDatabaseConfiguration",
+        "type": "object"
+      },
+      "ServiceConfiguration": {
+        "additionalProperties": false,
+        "description": "Service configuration.",
+        "properties": {
+          "host": {
+            "default": "localhost",
+            "title": "Host",
+            "type": "string"
+          },
+          "port": {
+            "default": 8080,
+            "exclusiveMinimum": 0,
+            "title": "Port",
+            "type": "integer"
+          },
+          "auth_enabled": {
+            "default": false,
+            "title": "Auth Enabled",
+            "type": "boolean"
+          },
+          "workers": {
+            "default": 1,
+            "exclusiveMinimum": 0,
+            "title": "Workers",
+            "type": "integer"
+          },
+          "color_log": {
+            "default": true,
+            "title": "Color Log",
+            "type": "boolean"
+          },
+          "access_log": {
+            "default": true,
+            "title": "Access Log",
+            "type": "boolean"
+          },
+          "tls_config": {
+            "$ref": "#/components/schemas/TLSConfiguration"
+          },
+          "cors": {
+            "$ref": "#/components/schemas/CORSConfiguration"
+          }
+        },
+        "title": "ServiceConfiguration",
+        "type": "object"
+      },
+      "TLSConfiguration": {
+        "additionalProperties": false,
+        "description": "TLS configuration.",
+        "properties": {
+          "tls_certificate_path": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tls Certificate Path"
+          },
+          "tls_key_path": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tls Key Path"
+          },
+          "tls_key_password": {
+            "anyOf": [
+              {
+                "format": "file-path",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tls Key Password"
+          }
+        },
+        "title": "TLSConfiguration",
+        "type": "object"
+      },
+      "UserDataCollection": {
+        "additionalProperties": false,
+        "description": "User data collection configuration.",
+        "properties": {
+          "feedback_enabled": {
+            "default": false,
+            "title": "Feedback Enabled",
+            "type": "boolean"
+          },
+          "feedback_storage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Feedback Storage"
+          },
+          "transcripts_enabled": {
+            "default": false,
+            "title": "Transcripts Enabled",
+            "type": "boolean"
+          },
+          "transcripts_storage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Transcripts Storage"
+          }
+        },
+        "title": "UserDataCollection",
+        "type": "object"
+      }
+    }
+  },
+  "paths": {}
+}
