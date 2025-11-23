@@ -1,5 +1,6 @@
 """Unit tests for functions defined in authentication/utils.py"""
 
+from typing import cast
 from fastapi import HTTPException
 from starlette.datastructures import Headers
 
@@ -19,8 +20,11 @@ def test_extract_user_token_no_header() -> None:
     try:
         extract_user_token(headers)
     except HTTPException as exc:
-        assert exc.status_code == 400
-        assert exc.detail == "No Authorization header found"
+        assert exc.status_code == 401
+        assert exc.detail["response"] == (  # type: ignore
+            "Missing or invalid credentials provided by client"
+        )
+        assert exc.detail["cause"] == "No Authorization header found"  # type: ignore
 
 
 def test_extract_user_token_invalid_format() -> None:
@@ -29,5 +33,9 @@ def test_extract_user_token_invalid_format() -> None:
     try:
         extract_user_token(headers)
     except HTTPException as exc:
-        assert exc.status_code == 400
-        assert exc.detail == "No token found in Authorization header"
+        assert exc.status_code == 401
+        detail = cast(dict[str, str], exc.detail)
+        assert detail["response"] == (
+            "Missing or invalid credentials provided by client"
+        )
+        assert detail["cause"] == "No token found in Authorization header"
