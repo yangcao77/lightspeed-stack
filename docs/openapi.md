@@ -32,6 +32,52 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | string |
+| 401 | Unauthorized | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+[UnauthorizedResponse](#unauthorizedresponse) |
+| 403 | Permission denied | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+[ForbiddenResponse](#forbiddenresponse) |
 ## GET `/v1/info`
 
 > **Info Endpoint Handler**
@@ -52,8 +98,142 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [InfoResponse](#inforesponse) |
-| 500 | Internal Server Error |  |
+| 200 | Successful response | [InfoResponse](#inforesponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Token has expired",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid token signature",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Token signed by unknown key",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Token missing claim: user_id",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid or expired Kubernetes token",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Authentication key server returned invalid data",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/models`
 
 > **Models Endpoint Handler**
@@ -78,8 +258,87 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ModelsResponse](#modelsresponse) |
-| 500 | Connection to Llama Stack is broken |  |
+| 200 | Successful response | [ModelsResponse](#modelsresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/tools`
 
 > **Tools Endpoint Handler**
@@ -105,8 +364,87 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ToolsResponse](#toolsresponse) |
-| 500 | Connection to Llama Stack is broken or MCP server error |  |
+| 200 | Successful response | [ToolsResponse](#toolsresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/shields`
 
 > **Shields Endpoint Handler**
@@ -131,24 +469,102 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ShieldsResponse](#shieldsresponse) |
-| 500 | Connection to Llama Stack is broken |  |
+| 200 | Successful response | [ShieldsResponse](#shieldsresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/providers`
 
 > **Providers Endpoint Handler**
 
-Handle GET requests to list all available providers.
+List all available providers grouped by API type.
 
-Retrieves providers from the Llama Stack service, groups them by API type.
+Returns:
+    ProvidersListResponse: Mapping from API type to list of providers.
 
 Raises:
     HTTPException:
-        - 500 if configuration is not loaded,
-        - 500 if unable to connect to Llama Stack,
-        - 500 for any unexpected retrieval errors.
-
-Returns:
-    ProvidersListResponse: Object mapping API types to lists of providers.
+        - 401: Authentication failed
+        - 403: Authorization failed
+        - 500: Lightspeed Stack configuration not loaded
+        - 503: Unable to connect to Llama Stack
 
 
 
@@ -158,23 +574,103 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ProvidersListResponse](#providerslistresponse) |
-| 500 | Connection to Llama Stack is broken |  |
+| 200 | Successful response | [ProvidersListResponse](#providerslistresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/providers/{provider_id}`
 
 > **Get Provider Endpoint Handler**
 
 Retrieve a single provider by its unique ID.
 
+Returns:
+    ProviderResponse: Provider details.
+
 Raises:
     HTTPException:
-        - 404 if provider with the given ID is not found,
-        - 500 if unable to connect to Llama Stack,
-        - 500 for any unexpected retrieval errors.
-
-Returns:
-    ProviderResponse: A single provider's details including API, config, health,
-    provider_id, and provider_type.
+        - 401: Authentication failed
+        - 403: Authorization failed
+        - 404: Provider not found
+        - 500: Lightspeed Stack configuration not loaded
+        - 503: Unable to connect to Llama Stack
 
 
 
@@ -189,26 +685,120 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ProviderResponse](#providerresponse) |
-| 404 | Not Found |  |
-| 500 | Internal Server Error |  |
+| 200 | Successful response | [ProviderResponse](#providerresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Provider with ID openai does not exist",
+    "response": "Provider not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## GET `/v1/rags`
 
 > **Rags Endpoint Handler**
 
-Handle GET requests to list all available RAGs.
+List all available RAGs.
 
-Retrieves RAGs from the Llama Stack service.
+Returns:
+    RAGListResponse: List of RAG identifiers.
 
 Raises:
     HTTPException:
-        - 500 if configuration is not loaded,
-        - 500 if unable to connect to Llama Stack,
-        - 500 for any unexpected retrieval errors.
-
-Returns:
-    RAGListResponse: List of RAGs.
+        - 401: Authentication failed
+        - 403: Authorization failed
+        - 500: Lightspeed Stack configuration not loaded
+        - 503: Unable to connect to Llama Stack
 
 
 
@@ -218,22 +808,103 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [RAGListResponse](#raglistresponse) |
-| 500 | Connection to Llama Stack is broken |  |
+| 200 | Successful response | [RAGListResponse](#raglistresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/rags/{rag_id}`
 
 > **Get Rag Endpoint Handler**
 
 Retrieve a single RAG by its unique ID.
 
+Returns:
+    RAGInfoResponse: A single RAG's details.
+
 Raises:
     HTTPException:
-        - 404 if RAG with the given ID is not found,
-        - 500 if unable to connect to Llama Stack,
-        - 500 for any unexpected retrieval errors.
-
-Returns:
-    RAGInfoResponse: A single RAG's details
+        - 401: Authentication failed
+        - 403: Authorization failed
+        - 404: RAG with the given ID not found
+        - 500: Lightspeed Stack configuration not loaded
+        - 503: Unable to connect to Llama Stack
 
 
 
@@ -248,9 +919,104 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [RAGInfoResponse](#raginforesponse) |
-| 404 | Not Found |  |
-| 500 | Internal Server Error |  |
+| 200 | Successful response | [RAGInfoResponse](#raginforesponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Rag with ID vs_7b52a8cf-0fa3-489c-beab-27e061d102f3 does not exist",
+    "response": "Rag not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## POST `/v1/query`
 
@@ -276,12 +1042,282 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [QueryResponse](#queryresponse) |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access conversation | [ForbiddenResponse](#forbiddenresponse) |
-| 429 | The quota has been exceeded | [QuotaExceededResponse](#quotaexceededresponse) |
-| 500 | Internal Server Error |  |
-| 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+| 200 | Successful response | [QueryResponse](#queryresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to read conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User lacks model_override permission required to override model/provider.",
+    "response": "This instance does not permit overriding model/provider in the query request (missing permission: MODEL_OVERRIDE). Please remove the model and provider fields from your request."
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Provider with ID openai does not exist",
+    "response": "Provider not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Model with ID gpt-4-turbo is not configured",
+    "response": "Model not found"
+  }
+}
+```
+ |
+| 422 | Request validation failed | [UnprocessableEntityResponse](#unprocessableentityresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid request format. The request body could not be parsed.",
+    "response": "Invalid request format"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Missing required attributes: ['query', 'model', 'provider']",
+    "response": "Missing required attributes"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+    "response": "Invalid attribute value"
+  }
+}
+```
+ |
+| 429 | Quota limit exceeded | [QuotaExceededResponse](#quotaexceededresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+    "response": "The model quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## POST `/v1/streaming_query`
 
 > **Streaming Query Endpoint Handler**
@@ -311,14 +1347,282 @@ Raises:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Streaming response with Server-Sent Events | string
-string |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token for k8s auth | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access conversation | [ForbiddenResponse](#forbiddenresponse) |
-| 429 | The quota has been exceeded | [QuotaExceededResponse](#quotaexceededresponse) |
-| 500 | Internal Server Error |  |
-| 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+| 200 | Streaming response (Server-Sent Events) | ...string |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to read conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User lacks model_override permission required to override model/provider.",
+    "response": "This instance does not permit overriding model/provider in the query request (missing permission: MODEL_OVERRIDE). Please remove the model and provider fields from your request."
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Provider with ID openai does not exist",
+    "response": "Provider not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Model with ID gpt-4-turbo is not configured",
+    "response": "Model not found"
+  }
+}
+```
+ |
+| 422 | Request validation failed | [UnprocessableEntityResponse](#unprocessableentityresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid request format. The request body could not be parsed.",
+    "response": "Invalid request format"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Missing required attributes: ['query', 'model', 'provider']",
+    "response": "Missing required attributes"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+    "response": "Invalid attribute value"
+  }
+}
+```
+ |
+| 429 | Quota limit exceeded | [QuotaExceededResponse](#quotaexceededresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+    "response": "The model quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/config`
 
 > **Config Endpoint Handler**
@@ -329,7 +1633,7 @@ Process GET requests to the /config endpoint and returns the
 current service configuration.
 
 Returns:
-    Configuration: The loaded service configuration object.
+    ConfigurationResponse: The loaded service configuration response.
 
 
 
@@ -339,8 +1643,70 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [Configuration](#configuration) |
-| 503 | Service Unavailable |  |
+| 200 | Successful response | [ConfigurationResponse](#configurationresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
 ## POST `/v1/feedback`
 
 > **Feedback Endpoint Handler**
@@ -375,10 +1741,111 @@ Raises:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Feedback received and stored | [FeedbackResponse](#feedbackresponse) |
-| 401 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access resource | [ForbiddenResponse](#forbiddenresponse) |
-| 500 | User feedback can not be stored | [ErrorResponse](#errorresponse) |
+| 200 | Successful response | [FeedbackResponse](#feedbackresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Storing feedback is disabled.",
+    "response": "Storing feedback is disabled"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to store feedback at directory: /path/example",
+    "response": "Failed to store feedback"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## GET `/v1/feedback/status`
 
@@ -400,7 +1867,7 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Feedback status successfully retrieved | [StatusResponse](#statusresponse) |
+| 200 | Successful response | [StatusResponse](#statusresponse) |
 ## PUT `/v1/feedback/status`
 
 > **Update Feedback Status**
@@ -426,9 +1893,70 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Feedback status successfully updated | [FeedbackStatusUpdateResponse](#feedbackstatusupdateresponse) |
-| 401 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access resource | [ForbiddenResponse](#forbiddenresponse) |
+| 200 | Successful response | [FeedbackStatusUpdateResponse](#feedbackstatusupdateresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## GET `/v1/conversations`
 
@@ -444,9 +1972,99 @@ Handle request to retrieve all conversations for the authenticated user.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | List of conversations retrieved successfully | [ConversationsListResponse](#conversationslistresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
+| 200 | Successful response | [ConversationsListResponse](#conversationslistresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to query the database",
+    "response": "Database query failed"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/v1/conversations/{conversation_id}`
 
 > **Get Conversation Endpoint Handler**
@@ -480,12 +2098,145 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Conversation retrieved successfully | [ConversationResponse](#conversationresponse) |
-| 400 | Invalid request | [BadRequestResponse](#badrequestresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access conversation | [AccessDeniedResponse](#accessdeniedresponse) |
-| 404 | Conversation not found | [NotFoundResponse](#notfoundresponse) |
-| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
+| 200 | Successful response | [ConversationResponse](#conversationresponse) |
+| 400 | Invalid request format | [BadRequestResponse](#badrequestresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
+    "response": "Invalid conversation ID format"
+  }
+}
+```
+ |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to read conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to query the database",
+    "response": "Database query failed"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## DELETE `/v1/conversations/{conversation_id}`
 
@@ -514,12 +2265,171 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Conversation deleted successfully | [ConversationDeleteResponse](#conversationdeleteresponse) |
-| 400 | Invalid request | [BadRequestResponse](#badrequestresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access conversation | [AccessDeniedResponse](#accessdeniedresponse) |
-| 404 | Conversation not found | [NotFoundResponse](#notfoundresponse) |
-| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
+| 200 | Successful response | [ConversationDeleteResponse](#conversationdeleteresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "response": "Conversation deleted successfully",
+  "success": true
+}
+```
+
+
+
+
+```json
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "response": "Conversation can not be deleted",
+  "success": true
+}
+```
+ |
+| 400 | Invalid request format | [BadRequestResponse](#badrequestresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
+    "response": "Invalid conversation ID format"
+  }
+}
+```
+ |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to delete conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to query the database",
+    "response": "Database query failed"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## GET `/v2/conversations`
 
@@ -535,7 +2445,82 @@ Handle request to retrieve all conversations for the authenticated user.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ConversationsListResponseV2](#conversationslistresponsev2) |
+| 200 | Successful response | [ConversationsListResponseV2](#conversationslistresponsev2) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation cache is not configured or unavailable.",
+    "response": "Conversation cache not configured"
+  }
+}
+```
+ |
 ## GET `/v2/conversations/{conversation_id}`
 
 > **Get Conversation Endpoint Handler**
@@ -555,10 +2540,116 @@ Handle request to retrieve a conversation by ID.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ConversationResponse](#conversationresponse) |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 404 | Not Found |  |
+| 200 | Successful response | [ConversationResponse](#conversationresponse) |
+| 400 | Invalid request format | [BadRequestResponse](#badrequestresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
+    "response": "Invalid conversation ID format"
+  }
+}
+```
+ |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation cache is not configured or unavailable.",
+    "response": "Conversation cache not configured"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## DELETE `/v2/conversations/{conversation_id}`
 
@@ -579,10 +2670,142 @@ Handle request to delete a conversation by ID.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ConversationDeleteResponse](#conversationdeleteresponse) |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 404 | Not Found |  |
+| 200 | Successful response | [ConversationDeleteResponse](#conversationdeleteresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "response": "Conversation deleted successfully",
+  "success": true
+}
+```
+
+
+
+
+```json
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "response": "Conversation can not be deleted",
+  "success": true
+}
+```
+ |
+| 400 | Invalid request format | [BadRequestResponse](#badrequestresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
+    "response": "Invalid conversation ID format"
+  }
+}
+```
+ |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation cache is not configured or unavailable.",
+    "response": "Conversation cache not configured"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## PUT `/v2/conversations/{conversation_id}`
 
@@ -607,10 +2830,116 @@ Handle request to update a conversation topic summary by ID.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [ConversationUpdateResponse](#conversationupdateresponse) |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token | [UnauthorizedResponse](#unauthorizedresponse) |
-| 404 | Not Found |  |
+| 200 | Successful response | [ConversationUpdateResponse](#conversationupdateresponse) |
+| 400 | Invalid request format | [BadRequestResponse](#badrequestresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
+    "response": "Invalid conversation ID format"
+  }
+}
+```
+ |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation cache is not configured or unavailable.",
+    "response": "Conversation cache not configured"
+  }
+}
+```
+ |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
 ## POST `/v2/query`
 
@@ -636,12 +2965,282 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Successful Response | [QueryResponse](#queryresponse) |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Client does not have permission to access conversation | [ForbiddenResponse](#forbiddenresponse) |
-| 429 | The quota has been exceeded | [QuotaExceededResponse](#quotaexceededresponse) |
-| 500 | Internal Server Error |  |
-| 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+| 200 | Successful response | [QueryResponse](#queryresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to read conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User lacks model_override permission required to override model/provider.",
+    "response": "This instance does not permit overriding model/provider in the query request (missing permission: MODEL_OVERRIDE). Please remove the model and provider fields from your request."
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Provider with ID openai does not exist",
+    "response": "Provider not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Model with ID gpt-4-turbo is not configured",
+    "response": "Model not found"
+  }
+}
+```
+ |
+| 422 | Request validation failed | [UnprocessableEntityResponse](#unprocessableentityresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid request format. The request body could not be parsed.",
+    "response": "Invalid request format"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Missing required attributes: ['query', 'model', 'provider']",
+    "response": "Missing required attributes"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+    "response": "Invalid attribute value"
+  }
+}
+```
+ |
+| 429 | Quota limit exceeded | [QuotaExceededResponse](#quotaexceededresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+    "response": "The model quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## POST `/v2/streaming_query`
 
 > **Streaming Query Endpoint Handler V2**
@@ -673,11 +3272,281 @@ Raises:
 |-------------|-------------|-----------|
 | 200 | Streaming response with Server-Sent Events | string
 string |
-| 400 | Missing or invalid credentials provided by client | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Unauthorized: Invalid or missing Bearer token for k8s auth | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | User is not authorized | [ForbiddenResponse](#forbiddenresponse) |
-| 500 | Internal Server Error |  |
-| 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to read conversation with ID 123e4567-e89b-12d3-a456-426614174000",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User lacks model_override permission required to override model/provider.",
+    "response": "This instance does not permit overriding model/provider in the query request (missing permission: MODEL_OVERRIDE). Please remove the model and provider fields from your request."
+  }
+}
+```
+ |
+| 404 | Resource not found | [NotFoundResponse](#notfoundresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Conversation with ID 123e4567-e89b-12d3-a456-426614174000 does not exist",
+    "response": "Conversation not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Provider with ID openai does not exist",
+    "response": "Provider not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Model with ID gpt-4-turbo is not configured",
+    "response": "Model not found"
+  }
+}
+```
+ |
+| 422 | Request validation failed | [UnprocessableEntityResponse](#unprocessableentityresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid request format. The request body could not be parsed.",
+    "response": "Invalid request format"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Missing required attributes: ['query', 'model', 'provider']",
+    "response": "Missing required attributes"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+    "response": "Invalid attribute value"
+  }
+}
+```
+ |
+| 429 | Quota limit exceeded | [QuotaExceededResponse](#quotaexceededresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+    "response": "The model quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/readiness`
 
 > **Readiness Probe Get Method**
@@ -696,8 +3565,70 @@ service is ready.
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Service is ready | [ReadinessResponse](#readinessresponse) |
-| 503 | Service is not ready | [ReadinessResponse](#readinessresponse) |
+| 200 | Successful response | [ReadinessResponse](#readinessresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/liveness`
 
 > **Liveness Probe Get Method**
@@ -715,7 +3646,53 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | Service is alive | [LivenessResponse](#livenessresponse) |
+| 200 | Successful response | [LivenessResponse](#livenessresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
 ## POST `/authorized`
 
 > **Authorized Endpoint Handler**
@@ -736,10 +3713,53 @@ Returns:
 
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
-| 200 | The user is logged-in and authorized to access OLS | [AuthorizedResponse](#authorizedresponse) |
-| 400 | Missing or invalid credentials provided by client for the noop and noop-with-token authentication modules | [UnauthorizedResponse](#unauthorizedresponse) |
-| 401 | Missing or invalid credentials provided by client for the k8s authentication module | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | User is not authorized | [ForbiddenResponse](#forbiddenresponse) |
+| 200 | Successful response | [AuthorizedResponse](#authorizedresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
 ## GET `/metrics`
 
 > **Metrics Endpoint Handler**
@@ -762,21 +3782,90 @@ Prometheus format.
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | string |
+| 401 | Unauthorized | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+[UnauthorizedResponse](#unauthorizedresponse) |
+| 403 | Permission denied | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+[ForbiddenResponse](#forbiddenresponse) |
+| 500 | Internal server error | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+[InternalServerErrorResponse](#internalservererrorresponse) |
+| 503 | Service unavailable | ...
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+
+[ServiceUnavailableResponse](#serviceunavailableresponse) |
 ---
 
 # 📋 Components
 
-
-
-## AccessDeniedResponse
-
-
-403 Access Denied - User does not have permission to perform the action.
-
-
-| Field | Type | Description |
-|-------|------|-------------|
-| detail |  |  |
 
 
 ## AccessRule
@@ -875,11 +3964,12 @@ Attributes:
 ## BadRequestResponse
 
 
-400 Bad Request - Invalid resource identifier.
+400 Bad Request. Invalid resource identifier.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
@@ -936,6 +4026,17 @@ Global service configuration.
 | quota_handlers |  |  |
 
 
+## ConfigurationResponse
+
+
+Success response model for the config endpoint.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| configuration |  |  |
+
+
 ## ConversationData
 
 
@@ -964,21 +4065,12 @@ Attributes:
     success: Whether the deletion was successful.
     response: A message about the deletion result.
 
-Example:
-    ```python
-    delete_response = ConversationDeleteResponse(
-        conversation_id="123e4567-e89b-12d3-a456-426614174000",
-        success=True,
-        response="Conversation deleted successfully"
-    )
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
-| conversation_id | string |  |
-| success | boolean |  |
-| response | string |  |
+| conversation_id | string | The conversation ID (UUID) that was deleted. |
+| success | boolean | Whether the deletion was successful. |
+| response | string | A message about the deletion result. |
 
 
 ## ConversationDetails
@@ -994,19 +4086,6 @@ Attributes:
     last_used_model: The last model used for the conversation.
     last_used_provider: The provider of the last used model.
     topic_summary: The topic summary for the conversation.
-
-Example:
-    ```python
-    conversation = ConversationDetails(
-        conversation_id="123e4567-e89b-12d3-a456-426614174000"
-        created_at="2024-01-01T00:00:00Z",
-        last_message_at="2024-01-01T00:05:00Z",
-        message_count=5,
-        last_used_model="gemini/gemini-2.0-flash",
-        last_used_provider="gemini",
-        topic_summary="Openshift Microservices Deployment Strategies",
-    )
-    ```
 
 
 | Field | Type | Description |
@@ -1042,23 +4121,6 @@ Model representing a response for retrieving a conversation.
 Attributes:
     conversation_id: The conversation ID (UUID).
     chat_history: The simplified chat history as a list of conversation turns.
-
-Example:
-    ```python
-    conversation_response = ConversationResponse(
-        conversation_id="123e4567-e89b-12d3-a456-426614174000",
-        chat_history=[
-            {
-                "messages": [
-                    {"content": "Hello", "type": "user"},
-                    {"content": "Hi there!", "type": "assistant"}
-                ],
-                "started_at": "2024-01-01T00:01:00Z",
-                "completed_at": "2024-01-01T00:01:05Z"
-            }
-        ]
-    )
-    ```
 
 
 | Field | Type | Description |
@@ -1098,15 +4160,6 @@ Attributes:
     success: Whether the update was successful.
     message: A message about the update result.
 
-Example:
-    ```python
-    update_response = ConversationUpdateResponse(
-        conversation_id="123e4567-e89b-12d3-a456-426614174000",
-        success=True,
-        message="Topic summary updated successfully",
-    )
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1122,31 +4175,6 @@ Model representing a response for listing conversations of a user.
 
 Attributes:
     conversations: List of conversation details associated with the user.
-
-Example:
-    ```python
-    conversations_list = ConversationsListResponse(
-        conversations=[
-            ConversationDetails(
-                conversation_id="123e4567-e89b-12d3-a456-426614174000",
-                created_at="2024-01-01T00:00:00Z",
-                last_message_at="2024-01-01T00:05:00Z",
-                message_count=5,
-                last_used_model="gemini/gemini-2.0-flash",
-                last_used_provider="gemini",
-                topic_summary="Openshift Microservices Deployment Strategies",
-            ),
-            ConversationDetails(
-                conversation_id="456e7890-e12b-34d5-a678-901234567890"
-                created_at="2024-01-01T01:00:00Z",
-                message_count=2,
-                last_used_model="gemini/gemini-2.0-flash",
-                last_used_provider="gemini",
-                topic_summary="RHDH Purpose Summary",
-            )
-        ]
-    )
-    ```
 
 
 | Field | Type | Description |
@@ -1219,17 +4247,6 @@ Nested detail model for error responses.
 | cause | string | Detailed explanation of what caused the error |
 
 
-## ErrorResponse
-
-
-Model representing error response for query endpoint.
-
-
-| Field | Type | Description |
-|-------|------|-------------|
-| detail | object | Error details |
-
-
 ## FeedbackCategory
 
 
@@ -1286,11 +4303,6 @@ Model representing a response to a feedback request.
 Attributes:
     response: The response of the feedback request.
 
-Example:
-    ```python
-    feedback_response = FeedbackResponse(response="feedback received")
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1326,18 +4338,6 @@ Model representing a response to a feedback status update request.
 Attributes:
     status: The previous and current status of the service and who updated it.
 
-Example:
-    ```python
-    status_response = StatusResponse(
-        status={
-            "previous_status": true,
-            "updated_status": false,
-            "updated_by": "user/test",
-            "timestamp": "2023-03-15 12:34:56"
-        },
-    )
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1347,11 +4347,12 @@ Example:
 ## ForbiddenResponse
 
 
-403 Forbidden - User does not have access to this resource.
+403 Forbidden. Access denied.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
@@ -1397,21 +4398,24 @@ Attributes:
     service_version: Service version.
     llama_stack_version: Llama Stack version.
 
-Example:
-    ```python
-    info_response = InfoResponse(
-        name="Lightspeed Stack",
-        service_version="1.0.0",
-        llama_stack_version="0.2.22",
-    )
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
 | name | string | Service name |
 | service_version | string | Service version |
 | llama_stack_version | string | Llama Stack version |
+
+
+## InternalServerErrorResponse
+
+
+500 Internal Server Error.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status_code | integer |  |
+| detail |  |  |
 
 
 ## JsonPathOperator
@@ -1470,11 +4474,6 @@ Model representing a response to a liveness request.
 Attributes:
     alive: If app is alive.
 
-Example:
-    ```python
-    liveness_response = LivenessResponse(alive=True)
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1527,6 +4526,7 @@ Model representing a response to models request.
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
@@ -1606,6 +4606,7 @@ Attributes:
     system_prompt: The optional system prompt.
     attachments: The optional attachments.
     no_tools: Whether to bypass all tools and MCP servers (default: False).
+    generate_topic_summary: Whether to generate topic summary for new conversations.
     media_type: The optional media type for response format (application/json or text/plain).
 
 Example:
@@ -1623,6 +4624,7 @@ Example:
 | system_prompt |  | The optional system prompt. |
 | attachments |  | The optional list of attachments. |
 | no_tools |  | Whether to bypass all tools and MCP servers |
+| generate_topic_summary |  | Whether to generate topic summary for new conversations |
 | media_type |  | Media type for the response format |
 
 
@@ -1659,11 +4661,12 @@ Attributes:
 ## QuotaExceededResponse
 
 
-429 Too Many Requests - LLM quota exceeded.
+429 Too Many Requests - Quota limit exceeded.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
@@ -1771,21 +4774,6 @@ Attributes:
     reason: The reason for the readiness.
     providers: List of unhealthy providers in case of readiness failure.
 
-Example:
-    ```python
-    readiness_response = ReadinessResponse(
-        ready=False,
-        reason="Service is not ready",
-        providers=[
-            ProviderHealthStatus(
-                provider_id="ollama",
-                status="unhealthy",
-                message="Server is unavailable"
-            )
-        ]
-    )
-    ```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1842,11 +4830,12 @@ Service configuration.
 ## ServiceUnavailableResponse
 
 
-503 Backend Unavailable - Unable to reach backend service.
+503 Backend Unavailable.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
@@ -1869,14 +4858,6 @@ Model representing a response to a status request.
 Attributes:
     functionality: The functionality of the service.
     status: The status of the service.
-
-Example:
-    ```python
-    status_response = StatusResponse(
-        functionality="feedback",
-        status={"enabled": True},
-    )
-    ```
 
 
 | Field | Type | Description |
@@ -1930,6 +4911,19 @@ Model representing a response to tools request.
 
 | Field | Type | Description |
 |-------|------|-------------|
+| status_code | integer |  |
+| detail |  |  |
+
+
+## UnprocessableEntityResponse
+
+
+422 Unprocessable Entity - Request validation failed.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status_code | integer |  |
 | detail |  |  |
 
 
