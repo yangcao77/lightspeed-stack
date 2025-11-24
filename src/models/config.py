@@ -38,9 +38,23 @@ class ConfigurationBase(BaseModel):
 class TLSConfiguration(ConfigurationBase):
     """TLS configuration."""
 
-    tls_certificate_path: Optional[FilePath] = None
-    tls_key_path: Optional[FilePath] = None
-    tls_key_password: Optional[FilePath] = None
+    tls_certificate_path: Optional[FilePath] = Field(
+        None,
+        title="TLS certificate path",
+        description="SSL/TLS certificate file path for HTTPS support.",
+    )
+
+    tls_key_path: Optional[FilePath] = Field(
+        None,
+        title="TLS key path",
+        description="SSL/TLS private key file path for HTTPS support.",
+    )
+
+    tls_key_password: Optional[FilePath] = Field(
+        None,
+        title="SSL/TLS key password path",
+        description="Path to file containing the password to decrypt the SSL/TLS private key.",
+    )
 
     @model_validator(mode="after")
     def check_tls_configuration(self) -> Self:
@@ -155,7 +169,11 @@ class ServiceConfiguration(ConfigurationBase):
     workers: PositiveInt = 1
     color_log: bool = True
     access_log: bool = True
-    tls_config: TLSConfiguration = Field(default_factory=TLSConfiguration)
+    tls_config: TLSConfiguration = Field(
+        default_factory=lambda: TLSConfiguration(
+            tls_certificate_path=None, tls_key_path=None, tls_key_password=None
+        )
+    )
     cors: CORSConfiguration = Field(default_factory=CORSConfiguration)
 
     @model_validator(mode="after")
