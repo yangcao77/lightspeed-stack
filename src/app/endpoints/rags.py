@@ -3,9 +3,9 @@
 import logging
 from typing import Annotated, Any
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.params import Depends
-from llama_stack_client import APIConnectionError
+from llama_stack_client import APIConnectionError, BadRequestError
 
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
@@ -13,7 +13,15 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from models.config import Action
-from models.responses import RAGListResponse, RAGInfoResponse
+from models.responses import (
+    ForbiddenResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
+    RAGInfoResponse,
+    RAGListResponse,
+    ServiceUnavailableResponse,
+    UnauthorizedResponse,
+)
 from utils.endpoints import check_configuration_loaded
 
 logger = logging.getLogger(__name__)
@@ -21,23 +29,24 @@ router = APIRouter(tags=["rags"])
 
 
 rags_responses: dict[int | str, dict[str, Any]] = {
-    200: {
-        "rags": [
-            "vs_00000000-cafe-babe-0000-000000000000",
-            "vs_7b52a8cf-0fa3-489c-beab-27e061d102f3",
-            "vs_7b52a8cf-0fa3-489c-cafe-27e061d102f3",
-        ]
-    },
-    500: {"description": "Connection to Llama Stack is broken"},
+    200: RAGListResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
 }
 
 rag_responses: dict[int | str, dict[str, Any]] = {
-    200: {},
-    404: {"response": "RAG with given id not found"},
-    500: {
-        "response": "Unable to retrieve list of RAGs",
-        "cause": "Connection to Llama Stack is broken",
-    },
+    200: RAGInfoResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["rag"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
 }
 
 
@@ -48,18 +57,17 @@ async def rags_endpoint_handler(
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> RAGListResponse:
     """
-    Handle GET requests to list all available RAGs.
+    List all available RAGs.
 
-    Retrieves RAGs from the Llama Stack service.
+    Returns:
+        RAGListResponse: List of RAG identifiers.
 
     Raises:
         HTTPException:
-            - 500 if configuration is not loaded,
-            - 500 if unable to connect to Llama Stack,
-            - 500 for any unexpected retrieval errors.
-
-    Returns:
-        RAGListResponse: List of RAGs.
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth
@@ -86,23 +94,8 @@ async def rags_endpoint_handler(
     # connection to Llama Stack server
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "response": "Unable to connect to Llama Stack",
-                "cause": str(e),
-            },
-        ) from e
-    # any other exception that can occur during model listing
-    except Exception as e:
-        logger.error("Unable to retrieve list of RAGs: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "response": "Unable to retrieve list of RAGs",
-                "cause": str(e),
-            },
-        ) from e
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
 
 
 @router.get("/rags/{rag_id}", responses=rag_responses)
@@ -114,14 +107,16 @@ async def get_rag_endpoint_handler(
 ) -> RAGInfoResponse:
     """Retrieve a single RAG by its unique ID.
 
+    Returns:
+        RAGInfoResponse: A single RAG's details.
+
     Raises:
         HTTPException:
-            - 404 if RAG with the given ID is not found,
-            - 500 if unable to connect to Llama Stack,
-            - 500 for any unexpected retrieval errors.
-
-    Returns:
-        RAGInfoResponse: A single RAG's details
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: RAG with the given ID not found
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth
@@ -149,26 +144,11 @@ async def get_rag_endpoint_handler(
             status=rag_info.status,
             usage_bytes=rag_info.usage_bytes,
         )
-
-    # connection to Llama Stack server
-    except HTTPException:
-        raise
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "response": "Unable to connect to Llama Stack",
-                "cause": str(e),
-            },
-        ) from e
-    # any other exception that can occur during model listing
-    except Exception as e:
-        logger.error("Unable to retrieve info about RAG: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={
-                "response": "Unable to retrieve info about RAG",
-                "cause": str(e),
-            },
-        ) from e
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("RAG not found: %s", e)
+        response = NotFoundResponse(resource="rag", resource_id=rag_id)
+        raise HTTPException(**response.model_dump()) from e

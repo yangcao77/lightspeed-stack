@@ -7,18 +7,19 @@ Currently four events have been registered:
 4. after_scenario
 """
 
-import requests
+import os
 import subprocess
 import time
-import os
-from behave.model import Scenario, Feature
+
+import requests
+from behave.model import Feature, Scenario
 from behave.runner import Context
 
 from tests.e2e.utils.utils import (
-    switch_config,
-    restart_container,
-    remove_config_backup,
     create_config_backup,
+    remove_config_backup,
+    restart_container,
+    switch_config,
 )
 
 

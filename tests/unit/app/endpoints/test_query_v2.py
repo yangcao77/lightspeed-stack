@@ -2,22 +2,21 @@
 """Unit tests for the /query (v2) REST API endpoint using Responses API."""
 
 from typing import Any
-from litellm.exceptions import RateLimitError
+
 import pytest
-from pytest_mock import MockerFixture
-from fastapi import HTTPException, status, Request
-
+from fastapi import HTTPException, Request, status
+from litellm.exceptions import RateLimitError
 from llama_stack_client import APIConnectionError
-
-from models.requests import QueryRequest, Attachment
-from models.config import ModelContextProtocolServer
+from pytest_mock import MockerFixture
 
 from app.endpoints.query_v2 import (
-    get_rag_tools,
     get_mcp_tools,
-    retrieve_response,
+    get_rag_tools,
     query_endpoint_handler_v2,
+    retrieve_response,
 )
+from models.config import ModelContextProtocolServer
+from models.requests import Attachment, QueryRequest
 
 # User ID must be proper UUID
 MOCK_AUTH = (
@@ -490,8 +489,10 @@ async def test_query_endpoint_handler_v2_api_connection_error(
             mcp_headers={},
         )
 
-    assert exc.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-    assert "Unable to connect to Llama Stack" in str(exc.value.detail)
+    assert exc.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    detail = exc.value.detail
+    assert isinstance(detail, dict)
+    assert detail["response"] == "Unable to connect to Llama Stack"
     fail_metric.inc.assert_called_once()
 
 
@@ -527,7 +528,7 @@ async def test_query_endpoint_quota_exceeded(
     assert exc_info.value.status_code == status.HTTP_429_TOO_MANY_REQUESTS
     detail = exc_info.value.detail
     assert isinstance(detail, dict)
-    assert detail["response"] == "Model quota exceeded"  # type: ignore
+    assert detail["response"] == "The model quota has been exceeded"  # type: ignore
     assert "gpt-4-turbo" in detail["cause"]  # type: ignore
 
 

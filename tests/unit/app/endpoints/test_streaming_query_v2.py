@@ -3,20 +3,19 @@
 
 from types import SimpleNamespace
 from typing import Any, AsyncIterator
+
 import pytest
-from pytest_mock import MockerFixture
-from fastapi import HTTPException, status, Request
+from fastapi import HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-
 from llama_stack_client import APIConnectionError
-
-from models.requests import QueryRequest
-from models.config import Action, ModelContextProtocolServer
+from pytest_mock import MockerFixture
 
 from app.endpoints.streaming_query_v2 import (
     retrieve_response,
     streaming_query_endpoint_handler_v2,
 )
+from models.config import Action, ModelContextProtocolServer
+from models.requests import QueryRequest
 
 
 @pytest.fixture
@@ -223,7 +222,7 @@ async def test_streaming_query_endpoint_handler_v2_api_connection_error(
             mcp_headers={},
         )
 
-    assert exc.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert exc.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert "Unable to connect to Llama Stack" in str(exc.value.detail)
     fail_metric.inc.assert_called_once()
 

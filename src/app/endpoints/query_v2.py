@@ -3,33 +3,37 @@
 import logging
 from typing import Annotated, Any, cast
 
-from llama_stack_client import AsyncLlamaStackClient  # type: ignore
+from fastapi import APIRouter, Depends, Request
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObject,
 )
+from llama_stack_client import AsyncLlamaStackClient  # type: ignore
 
-from fastapi import APIRouter, Request, Depends
-
+import metrics
 from app.endpoints.query import (
     query_endpoint_handler_base,
     validate_attachments_metadata,
 )
-from constants import DEFAULT_RAG_TOOL
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import AppConfig, configuration
-import metrics
+from constants import DEFAULT_RAG_TOOL
 from models.config import Action
 from models.requests import QueryRequest
 from models.responses import (
     ForbiddenResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
     QueryResponse,
-    ReferencedDocument,
-    UnauthorizedResponse,
     QuotaExceededResponse,
+    ReferencedDocument,
+    ServiceUnavailableResponse,
+    UnauthorizedResponse,
+    UnprocessableEntityResponse,
 )
 from utils.endpoints import (
+    check_configuration_loaded,
     get_system_prompt,
     get_topic_summary_system_prompt,
 )
@@ -37,41 +41,26 @@ from utils.mcp_headers import mcp_headers_dependency
 from utils.responses import extract_text_from_response_output_item
 from utils.shields import detect_shield_violations, get_available_shields
 from utils.token_counter import TokenCounter
-from utils.types import TurnSummary, ToolCallSummary
+from utils.types import ToolCallSummary, TurnSummary
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["query_v2"])
 
 query_v2_response: dict[int | str, dict[str, Any]] = {
-    200: {
-        "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-        "response": "LLM answer",
-        "referenced_documents": [
-            {
-                "doc_url": "https://docs.openshift.com/"
-                "container-platform/4.15/operators/olm/index.html",
-                "doc_title": "Operator Lifecycle Manager (OLM)",
-            }
-        ],
-    },
-    400: {
-        "description": "Missing or invalid credentials provided by client",
-        "model": UnauthorizedResponse,
-    },
-    403: {
-        "description": "Client does not have permission to access conversation",
-        "model": ForbiddenResponse,
-    },
-    429: {
-        "description": "The quota has been exceeded",
-        "model": QuotaExceededResponse,
-    },
-    500: {
-        "detail": {
-            "response": "Unable to connect to Llama Stack",
-            "cause": "Connection error.",
-        }
-    },
+    200: QueryResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(
+        examples=["endpoint", "conversation read", "model override"]
+    ),
+    404: NotFoundResponse.openapi_response(
+        examples=["conversation", "model", "provider"]
+    ),
+    422: UnprocessableEntityResponse.openapi_response(),
+    429: QuotaExceededResponse.openapi_response(),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
 }
 
 
@@ -225,27 +214,23 @@ async def get_topic_summary(  # pylint: disable=too-many-nested-blocks
     """
     topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
 
-    try:
-        # Use Responses API to generate topic summary
-        response = await client.responses.create(
-            input=question,
-            model=model_id,
-            instructions=topic_summary_system_prompt,
-            stream=False,
-            store=False,  # Don't store topic summary requests
-        )
-        response = cast(OpenAIResponseObject, response)
+    # Use Responses API to generate topic summary
+    response = await client.responses.create(
+        input=question,
+        model=model_id,
+        instructions=topic_summary_system_prompt,
+        stream=False,
+        store=False,  # Don't store topic summary requests
+    )
+    response = cast(OpenAIResponseObject, response)
 
-        # Extract text from response output
-        summary_text = "".join(
-            extract_text_from_response_output_item(output_item)
-            for output_item in response.output
-        )
+    # Extract text from response output
+    summary_text = "".join(
+        extract_text_from_response_output_item(output_item)
+        for output_item in response.output
+    )
 
-        return summary_text.strip() if summary_text else ""
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        logger.warning("Failed to generate topic summary: %s", e)
-        return ""  # Return empty string on failure
+    return summary_text.strip() if summary_text else ""
 
 
 @router.post("/query", responses=query_v2_response)
@@ -265,6 +250,7 @@ async def query_endpoint_handler_v2(
     Returns:
         QueryResponse: Contains the conversation ID and the LLM-generated response.
     """
+    check_configuration_loaded(configuration)
     return await query_endpoint_handler_base(
         request=request,
         query_request=query_request,

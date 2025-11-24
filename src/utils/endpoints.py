@@ -3,25 +3,29 @@
 from contextlib import suppress
 from datetime import UTC, datetime
 from typing import Any
-from fastapi import HTTPException, status
+
+from fastapi import HTTPException
 from llama_stack_client._client import AsyncLlamaStackClient
 from llama_stack_client.lib.agents.agent import AsyncAgent
 from pydantic import AnyUrl, ValidationError
 
 import constants
-from models.cache_entry import CacheEntry
-from models.requests import QueryRequest
-from models.responses import ReferencedDocument
-from models.database.conversations import UserConversation
-from models.config import Action
 from app.database import get_session
-from configuration import AppConfig
-from utils.suid import get_suid
-from utils.types import TurnSummary
-from utils.types import GraniteToolParser
-
-
+from configuration import AppConfig, LogicError
 from log import get_logger
+from models.cache_entry import CacheEntry
+from models.config import Action
+from models.database.conversations import UserConversation
+from models.requests import QueryRequest
+from models.responses import (
+    ForbiddenResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
+    ReferencedDocument,
+    UnprocessableEntityResponse,
+)
+from utils.suid import get_suid
+from utils.types import GraniteToolParser, TurnSummary
 
 logger = get_logger(__name__)
 
@@ -111,17 +115,19 @@ def can_access_conversation(
 
 def check_configuration_loaded(config: AppConfig) -> None:
     """
-    Ensure the application configuration object is present.
+    Raise an error if the configuration is not loaded.
+
+    Args:
+        config (AppConfig): The application configuration.
 
     Raises:
-        HTTPException: HTTP 500 Internal Server Error with detail `{"response":
-        "Configuration is not loaded"}` when `config` is None.
+        HTTPException: If configuration is missing.
     """
-    if config is None:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail={"response": "Configuration is not loaded"},
-        )
+    try:
+        _ = config.configuration
+    except LogicError as e:
+        response = InternalServerErrorResponse.configuration_not_loaded()
+        raise HTTPException(**response.model_dump()) from e
 
 
 def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
@@ -155,16 +161,15 @@ def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
         and config.customization.disable_query_system_prompt
     )
     if system_prompt_disabled and query_request.system_prompt:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "response": (
-                    "This instance does not support customizing the system prompt in the "
-                    "query request (disable_query_system_prompt is set). Please remove the "
-                    "system_prompt field from your request."
-                )
-            },
+        response = UnprocessableEntityResponse(
+            response="System prompt customization is disabled",
+            cause=(
+                "This instance does not support customizing the system prompt in the "
+                "query request (disable_query_system_prompt is set). Please remove the "
+                "system_prompt field from your request."
+            ),
         )
+        raise HTTPException(**response.model_dump())
 
     if query_request.system_prompt:
         # Query taking precedence over configuration is the only behavior that
@@ -216,16 +221,8 @@ def validate_model_provider_override(
     if (query_request.model is not None or query_request.provider is not None) and (
         Action.MODEL_OVERRIDE not in authorized_actions
     ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "response": (
-                    "This instance does not permit overriding model/provider in the query request "
-                    "(missing permission: MODEL_OVERRIDE). Please remove the model and provider "
-                    "fields from your request."
-                )
-            },
-        )
+        response = ForbiddenResponse.model_override()
+        raise HTTPException(**response.model_dump())
 
 
 # # pylint: disable=R0913,R0917
@@ -332,13 +329,10 @@ async def get_agent(
             session_id = str(sessions_response.data[0]["session_id"])
         except IndexError as e:
             logger.error("No sessions found for conversation %s", conversation_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail={
-                    "response": "Conversation not found",
-                    "cause": f"Conversation {conversation_id} could not be retrieved.",
-                },
-            ) from e
+            response = NotFoundResponse(
+                resource="conversation", resource_id=conversation_id
+            )
+            raise HTTPException(**response.model_dump()) from e
     else:
         conversation_id = agent.agent_id
         logger.debug("New conversation ID: %s", conversation_id)

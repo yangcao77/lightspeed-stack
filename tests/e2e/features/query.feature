@@ -53,11 +53,16 @@ Feature: Query endpoint API tests
      """
      {"query": "Write a simple code for reversing string"}
      """
-      Then The status code of the response is 400
+      Then The status code of the response is 401
       And The body of the response is the following
-          """
-          {"detail": "No Authorization header found"}
-          """
+      """
+      {
+        "detail": {
+          "response": "Missing or invalid credentials provided by client",
+          "cause": "No Authorization header found"
+        }
+      }
+      """
 
   Scenario: Check if LLM responds to sent question with error when attempting to access conversation
     Given The system is in default state
@@ -110,7 +115,7 @@ Scenario: Check if LLM responds for query request with error for missing query
     """
     {"query": "Say hello"}
     """
-     Then The status code of the response is 500
+     Then The status code of the response is 503
       And The body of the response contains Unable to connect to Llama Stack
 
   Scenario: Check if LLM responds properly when XML and JSON attachments are sent
