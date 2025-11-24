@@ -96,7 +96,7 @@ class QuotaLimiter(ABC):
             self._initialize_tables()
         except Exception as e:
             self.connection.close()
-            logger.exception("Error initializing Postgres database:\n%s", e)
+            logger.exception("Error initializing quota limiter database:\n%s", e)
             raise
 
         self.connection.autocommit = True
