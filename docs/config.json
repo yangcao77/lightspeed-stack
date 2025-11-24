@@ -974,7 +974,8 @@
               }
             ],
             "default": null,
-            "title": "Tls Certificate Path"
+            "description": "SSL/TLS certificate file path for HTTPS support.",
+            "title": "TLS certificate path"
           },
           "tls_key_path": {
             "anyOf": [
@@ -987,7 +988,8 @@
               }
             ],
             "default": null,
-            "title": "Tls Key Path"
+            "description": "SSL/TLS private key file path for HTTPS support.",
+            "title": "TLS key path"
           },
           "tls_key_password": {
             "anyOf": [
@@ -1000,7 +1002,8 @@
               }
             ],
             "default": null,
-            "title": "Tls Key Password"
+            "description": "Path to file containing the password to decrypt the SSL/TLS private key.",
+            "title": "SSL/TLS key password path"
           }
         },
         "title": "TLSConfiguration",

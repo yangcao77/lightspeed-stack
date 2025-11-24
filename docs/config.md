@@ -365,9 +365,9 @@ TLS configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| tls_certificate_path |  |  |
-| tls_key_path |  |  |
-| tls_key_password |  |  |
+| tls_certificate_path |  | SSL/TLS certificate file path for HTTPS support. |
+| tls_key_path |  | SSL/TLS private key file path for HTTPS support. |
+| tls_key_password |  | Path to file containing the password to decrypt the SSL/TLS private key. |
 
 
 ## UserDataCollection
