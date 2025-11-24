@@ -151,6 +151,7 @@ async def test_streaming_query_endpoint_handler_configuration_not_loaded(
     """Test the streaming query endpoint handler if configuration is not loaded."""
     # simulate state when no configuration is loaded
     mock_config = AppConfig()
+    mock_config._configuration = None  # pylint: disable=protected-access
     mocker.patch("app.endpoints.streaming_query.configuration", mock_config)
     # Mock authorization resolvers to avoid accessing configuration properties
     mock_authorization_resolvers(mocker)

@@ -109,7 +109,7 @@ Feature: feedback endpoint API tests
         """
         {
             "detail": {
-                "response": "Feedback is disabled",
+                "response": "Storing feedback is disabled",
                 "cause": "Storing feedback is disabled."
             }
         }  

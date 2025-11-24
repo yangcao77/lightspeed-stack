@@ -62,7 +62,7 @@ async def test_assert_feedback_enabled_disabled(mocker: MockerFixture) -> None:
         await assert_feedback_enabled(mocker.Mock())
 
     assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
-    assert exc_info.value.detail["response"] == "Feedback is disabled"  # type: ignore
+    assert exc_info.value.detail["response"] == "Storing feedback is disabled"  # type: ignore
     assert exc_info.value.detail["cause"] == "Storing feedback is disabled."  # type: ignore
 
 

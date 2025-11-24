@@ -271,9 +271,6 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
             )
             response = authorization_api.create_subject_access_review(sar)
 
-            if not response.status.allowed:
-                response = ForbiddenResponse.endpoint(user_id=user_info.user.uid)
-                raise HTTPException(**response.model_dump())
         except Exception as e:
             logger.error("API exception during SubjectAccessReview: %s", e)
             response = ServiceUnavailableResponse(
@@ -281,6 +278,10 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
                 cause="Unable to perform authorization check",
             )
             raise HTTPException(**response.model_dump()) from e
+
+        if not response.status.allowed:
+            response = ForbiddenResponse.endpoint(user_id=user_info.user.uid)
+            raise HTTPException(**response.model_dump())
 
         return (
             user_info.user.uid,

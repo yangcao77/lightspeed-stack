@@ -23,6 +23,7 @@ async def test_shields_endpoint_handler_configuration_not_loaded(
 
     # simulate state when no configuration is loaded
     mock_config = AppConfig()
+    mock_config._configuration = None  # pylint: disable=protected-access
     mocker.patch("app.endpoints.shields.configuration", mock_config)
 
     request = Request(

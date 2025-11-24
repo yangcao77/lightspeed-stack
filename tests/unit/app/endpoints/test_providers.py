@@ -39,7 +39,7 @@ async def test_providers_endpoint_configuration_not_loaded(
 async def test_providers_endpoint_connection_error(
     mocker: MockerFixture, minimal_config: AppConfig
 ) -> None:
-    """Test that /providers endpoint raises HTTP 500 if Llama Stack connection fails."""
+    """Test that /providers endpoint raises HTTP 503 if Llama Stack connection fails."""
     mocker.patch("app.endpoints.providers.configuration", minimal_config)
 
     mocker.patch(

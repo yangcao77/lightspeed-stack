@@ -64,8 +64,8 @@ async def test_noop_with_token_auth_dependency_no_token() -> None:
     Test that NoopWithTokenAuthDependency raises an HTTPException when no
     Authorization header is present in the request.
 
-    Asserts that the exception has a status code of 400 and the detail message
-    "No Authorization header found".
+    Asserts that the exception has a status code of 401 and a structured
+    detail message indicating that no Authorization header was found.
     """
     dependency = NoopWithTokenAuthDependency()
 

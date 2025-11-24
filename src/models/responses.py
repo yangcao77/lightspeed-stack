@@ -1287,7 +1287,7 @@ class ForbiddenResponse(AbstractErrorResponse):
                 {
                     "label": "feedback",
                     "detail": {
-                        "response": "Storing feedback is disabled.",
+                        "response": "Storing feedback is disabled",
                         "cause": "Storing feedback is disabled.",
                     },
                 },
@@ -1332,7 +1332,7 @@ class ForbiddenResponse(AbstractErrorResponse):
     def feedback_disabled(cls) -> "ForbiddenResponse":
         """Create a ForbiddenResponse for disabled feedback."""
         return cls(
-            response="Feedback is disabled",
+            response="Storing feedback is disabled",
             cause="Storing feedback is disabled.",
         )
 

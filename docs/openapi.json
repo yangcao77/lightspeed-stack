@@ -2013,7 +2013,7 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "Storing feedback is disabled.",
-                                                "response": "Storing feedback is disabled."
+                                                "response": "Storing feedback is disabled"
                                             }
                                         }
                                     }
@@ -5674,7 +5674,7 @@
                     {
                         "detail": {
                             "cause": "Storing feedback is disabled.",
-                            "response": "Storing feedback is disabled."
+                            "response": "Storing feedback is disabled"
                         },
                         "label": "feedback"
                     },

@@ -6,12 +6,16 @@ from models.responses import UnauthorizedResponse
 
 
 def extract_user_token(headers: Headers) -> str:
-    """Extract the bearer token from an HTTP authorization header.
+    """Extract the bearer token from an HTTP Authorization header.
 
     Args:
-        header: The authorization header containing the token.
+        headers: The request headers containing the Authorization value.
+
     Returns:
-        The extracted token if present, else an empty string.
+        The extracted bearer token.
+
+    Raises:
+        HTTPException: If the Authorization header is missing or malformed.
     """
     authorization_header = headers.get("Authorization")
     if not authorization_header:

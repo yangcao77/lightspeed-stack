@@ -207,7 +207,7 @@ class TestForbiddenResponse:
         assert isinstance(response, AbstractErrorResponse)
         assert response.status_code == status.HTTP_403_FORBIDDEN
         assert isinstance(response.detail, DetailModel)
-        assert response.detail.response == "Feedback is disabled"
+        assert response.detail.response == "Storing feedback is disabled"
         assert response.detail.cause == "Storing feedback is disabled."
 
     def test_openapi_response(self) -> None:
@@ -238,6 +238,10 @@ class TestForbiddenResponse:
         assert "detail" in feedback_example["value"]
         assert (
             feedback_example["value"]["detail"]["response"]
+            == "Storing feedback is disabled"
+        )
+        assert (
+            feedback_example["value"]["detail"]["cause"]
             == "Storing feedback is disabled."
         )
 

@@ -18,6 +18,7 @@ async def test_config_endpoint_handler_configuration_not_loaded(
     mock_authorization_resolvers(mocker)
 
     mock_config = AppConfig()
+    mock_config._configuration = None  # pylint: disable=protected-access
     mocker.patch("app.endpoints.config.configuration", mock_config)
 
     # HTTP request mock required by URL endpoint handler
