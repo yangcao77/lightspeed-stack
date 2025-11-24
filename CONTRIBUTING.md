@@ -7,6 +7,7 @@
 * [Prerequisites](#prerequisites)
     * [Tooling installation](#tooling-installation)
 * [Setting up your development environment](#setting-up-your-development-environment)
+* [PR description](#pr-description)
 * [Definition of Done](#definition-of-done)
     * [A deliverable is to be considered “done” when](#a-deliverable-is-to-be-considered-done-when)
 * [Automation](#automation)
@@ -83,6 +84,14 @@ make check-types
 ```
 
 Happy hacking!
+
+
+## PR description
+
+* Jira ticket needs to be added into PR title, for example: `LCORE-740: type hints for models unit tests`
+* Fill-in all relevant information in the PR template
+    - unused parts of PR template (like information about testing etc.) can be deleted
+* Please note that CodeRabbitAI will create a summary of your pull request
 
 
 ## Definition of Done
