@@ -970,6 +970,11 @@ id="postgresqldatabaseconfiguration">PostgreSQLDatabaseConfiguration</h2>
 <h2 id="tlsconfiguration">TLSConfiguration</h2>
 <p>TLS configuration.</p>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -981,17 +986,18 @@ id="postgresqldatabaseconfiguration">PostgreSQLDatabaseConfiguration</h2>
 <tr class="odd">
 <td>tls_certificate_path</td>
 <td></td>
-<td></td>
+<td>SSL/TLS certificate file path for HTTPS support.</td>
 </tr>
 <tr class="even">
 <td>tls_key_path</td>
 <td></td>
-<td></td>
+<td>SSL/TLS private key file path for HTTPS support.</td>
 </tr>
 <tr class="odd">
 <td>tls_key_password</td>
 <td></td>
-<td></td>
+<td>Path to file containing the password to decrypt the SSL/TLS private
+key.</td>
 </tr>
 </tbody>
 </table>
