@@ -156,7 +156,7 @@ to enable it automatically).
 
 ## Code coverage measurement
 
-During testing, code coverage is measured. If the coverage is below defined threshold (see `pyproject.toml` settings for actual value stored in section `[tool.coverage.report]`), tests will fail. We measured and checked code coverage in order to be able to develop software with high quality.
+During testing, code coverage is measured. If the coverage is below the defined threshold (see `pyproject.toml` settings for actual value stored in section `[tool.coverage.report]`), tests will fail. We measured and checked code coverage in order to be able to develop software with high quality.
 
 Code coverage reports are generated in JSON and also in format compatible with [_JUnit_ test automation framework](https://junit.org/junit5/). It is also possible to start `make coverage-report` to generate code coverage reports in the form of interactive HTML pages. These pages are stored in the `htmlcov` subdirectory. Just open the index page from this subdirectory in your web browser.
 
@@ -164,7 +164,7 @@ Code coverage reports are generated in JSON and also in format compatible with [
 
 ## Linters
 
-_Black_, _Ruff_, Pyright, _Pylint_, __Pydocstyle__, __Mypy__, and __Bandit__ tools are used as linters. There are a bunch of linter rules enabled for this repository. All of them are specified in `pyproject.toml`, such us in sections `[tool.ruff]` and `[tool.pylint."MESSAGES CONTROL"]`. Some specific rules can be disabled using `ignore` parameter (empty now).
+_Black_, _Ruff_, Pyright, _Pylint_, __Pydocstyle__, __Mypy__, and __Bandit__ tools are used as linters. There are a bunch of linter rules enabled for this repository. All of them are specified in `pyproject.toml`, such as in sections `[tool.ruff]` and `[tool.pylint."MESSAGES CONTROL"]`. Some specific rules can be disabled using `ignore` parameter (empty now).
 
 
 ### Type hints checks
@@ -191,7 +191,7 @@ ruff linter
 
 Description of all _Ruff_ rules are available on https://docs.astral.sh/ruff/rules/
 
-Ruff rules can be disabled in source code (for given line or block) by using special `noqa` comment line. For example:
+Ruff rules can be disabled in source code (for a given line or block) by using a special `noqa` comment line. For example:
 
 ```python
 # noqa: E501
@@ -251,6 +251,6 @@ def function_with_pep484_type_annotations(param1: int, param2: str) -> bool:
     """
 ```
 
-For further guidance, see the rest of our codebase, or check sources online. There are many, eg. [this one](https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e).
+For further guidance, see the rest of our codebase, or check sources online. There are many, e.g. [this one](https://gist.github.com/redlotus/3bc387c2591e3e908c9b63b97b11d24e).
 
 
