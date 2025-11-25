@@ -336,7 +336,7 @@ SQLite database configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| db_path | string |  |
+| db_path | string | Path to file where SQLite database is stored |
 
 
 ## ServiceConfiguration
