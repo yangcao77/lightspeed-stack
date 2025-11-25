@@ -158,7 +158,7 @@ class "RHIdentityConfiguration" as src.models.config.RHIdentityConfiguration {
   required_entitlements : Optional[list[str]]
 }
 class "SQLiteDatabaseConfiguration" as src.models.config.SQLiteDatabaseConfiguration {
-  db_path : str
+  db_path : Optional[str]
 }
 class "ServiceConfiguration" as src.models.config.ServiceConfiguration {
   access_log : bool
