@@ -12,6 +12,7 @@ jobs:
         environment: [ "ci", "azure"]
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      E2E_OPENAI_MODEL: ${{ vars.E2E_OPENAI_MODEL }}
       CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
       CLIENT_ID: ${{ secrets.CLIENT_ID }}
       TENANT_ID: ${{ secrets.TENANT_ID }}
@@ -139,10 +140,7 @@ jobs:
           # Update paths for container environment (relative -> absolute)
           sed -i 's|db_path: \.llama/distributions|db_path: /app-root/.llama/distributions|g' run.yaml
           sed -i 's|db_path: tmp/|db_path: /app-root/.llama/distributions/|g' run.yaml
-          
-          # Set OpenAI API key for container
-          sed -i "s|api_key: \${env\.OPENAI_API_KEY}|api_key: $OPENAI_API_KEY|g" run.yaml
-          
+                    
           echo "Successfully configured for environment: $ENVIRONMENT"
           echo "Using configuration: $(basename "$CONFIG_FILE")"
 
