@@ -89,7 +89,11 @@ class CORSConfiguration(ConfigurationBase):
 class SQLiteDatabaseConfiguration(ConfigurationBase):
     """SQLite database configuration."""
 
-    db_path: str
+    db_path: str = Field(
+        ...,
+        title="DB path",
+        description="Path to file where SQLite database is stored",
+    )
 
 
 class InMemoryCacheConfig(ConfigurationBase):
