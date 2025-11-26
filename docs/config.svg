@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="758px" preserveAspectRatio="none" style="width:7002px;height:758px;background:#FFFFFF;" version="1.1" viewBox="0 0 7002 758" width="7002px" zoomAndPan="magnify">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="758px" preserveAspectRatio="none" style="width:7006px;height:758px;background:#FFFFFF;" version="1.1" viewBox="0 0 7006 758" width="7006px" zoomAndPan="magnify">
   <defs/>
   <g>
     <!--class src.models.config.AccessRule-->
@@ -15,13 +15,13 @@
     </g>
     <!--class src.models.config.Action-->
     <g id="elem_src.models.config.Action">
-      <rect codeLine="6" fill="#F1F1F1" height="67.0679" id="src.models.config.Action" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="73.4538" x="6657.15" y="83.27"/>
-      <ellipse cx="6672.15" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M6672.2594,94.8012 Q6671.3375,94.8012 6670.6031,95.1137 Q6669.8844,95.4262 6669.3844,96.02 Q6668.8844,96.5981 6668.6031,97.4731 Q6668.3375,98.3481 6668.3375,99.4419 Q6668.3375,100.8794 6668.775,101.9262 Q6669.2281,102.9731 6670.0719,103.52 Q6670.9313,104.0669 6672.2438,104.0669 Q6673.025,104.0669 6673.7125,103.9419 Q6674.4156,103.8012 6675.4156,103.4887 L6675.4156,105.3637 Q6674.5563,105.6919 6673.7906,105.8169 Q6673.0406,105.9419 6672.025,105.9419 Q6670.1031,105.9419 6668.7906,105.145 Q6667.4938,104.3325 6666.8375,102.8637 Q6666.1813,101.3794 6666.1813,99.4106 Q6666.1813,97.9887 6666.5719,96.8169 Q6666.9781,95.6294 6667.7594,94.7544 Q6668.5406,93.8794 6669.6813,93.4106 Q6670.8219,92.9262 6672.2906,92.9262 Q6673.2438,92.9262 6674.1344,93.1294 Q6675.0406,93.3169 6675.9781,93.7856 L6675.15,95.5669 Q6674.3688,95.1919 6673.7125,95.0044 Q6673.0563,94.8012 6672.2594,94.8012 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="41.4538" x="6686.15" y="104.702">Action</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6658.15" x2="6729.6038" y1="115.27" y2="115.27"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.4919" x="6663.15" y="134.2359">name</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6658.15" x2="6729.6038" y1="142.3379" y2="142.3379"/>
+      <rect codeLine="6" fill="#F1F1F1" height="67.0679" id="src.models.config.Action" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="73.4538" x="6661.15" y="83.27"/>
+      <ellipse cx="6676.15" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M6676.2594,94.8012 Q6675.3375,94.8012 6674.6031,95.1137 Q6673.8844,95.4262 6673.3844,96.02 Q6672.8844,96.5981 6672.6031,97.4731 Q6672.3375,98.3481 6672.3375,99.4419 Q6672.3375,100.8794 6672.775,101.9262 Q6673.2281,102.9731 6674.0719,103.52 Q6674.9313,104.0669 6676.2438,104.0669 Q6677.025,104.0669 6677.7125,103.9419 Q6678.4156,103.8012 6679.4156,103.4887 L6679.4156,105.3637 Q6678.5563,105.6919 6677.7906,105.8169 Q6677.0406,105.9419 6676.025,105.9419 Q6674.1031,105.9419 6672.7906,105.145 Q6671.4938,104.3325 6670.8375,102.8637 Q6670.1813,101.3794 6670.1813,99.4106 Q6670.1813,97.9887 6670.5719,96.8169 Q6670.9781,95.6294 6671.7594,94.7544 Q6672.5406,93.8794 6673.6813,93.4106 Q6674.8219,92.9262 6676.2906,92.9262 Q6677.2438,92.9262 6678.1344,93.1294 Q6679.0406,93.3169 6679.9781,93.7856 L6679.15,95.5669 Q6678.3688,95.1919 6677.7125,95.0044 Q6677.0563,94.8012 6676.2594,94.8012 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="41.4538" x="6690.15" y="104.702">Action</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6662.15" x2="6733.6038" y1="115.27" y2="115.27"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.4919" x="6667.15" y="134.2359">name</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6662.15" x2="6733.6038" y1="142.3379" y2="142.3379"/>
     </g>
     <!--class src.models.config.AuthenticationConfiguration-->
     <g id="elem_src.models.config.AuthenticationConfiguration">
@@ -68,483 +68,483 @@
     </g>
     <!--class src.models.config.CORSConfiguration-->
     <g id="elem_src.models.config.CORSConfiguration">
-      <rect codeLine="31" fill="#F1F1F1" height="143.3396" id="src.models.config.CORSConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="230.7351" x="1168.51" y="391.42"/>
-      <ellipse cx="1215.9978" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M1216.1072,402.9513 Q1215.1853,402.9513 1214.4509,403.2638 Q1213.7322,403.5763 1213.2322,404.17 Q1212.7322,404.7481 1212.4509,405.6231 Q1212.1853,406.4981 1212.1853,407.5919 Q1212.1853,409.0294 1212.6228,410.0763 Q1213.0759,411.1231 1213.9197,411.67 Q1214.7791,412.2169 1216.0916,412.2169 Q1216.8728,412.2169 1217.5603,412.0919 Q1218.2634,411.9513 1219.2634,411.6388 L1219.2634,413.5138 Q1218.4041,413.8419 1217.6384,413.9669 Q1216.8884,414.0919 1215.8728,414.0919 Q1213.9509,414.0919 1212.6384,413.295 Q1211.3416,412.4825 1210.6853,411.0138 Q1210.0291,409.5294 1210.0291,407.5606 Q1210.0291,406.1388 1210.4197,404.9669 Q1210.8259,403.7794 1211.6072,402.9044 Q1212.3884,402.0294 1213.5291,401.5606 Q1214.6697,401.0763 1216.1384,401.0763 Q1217.0916,401.0763 1217.9822,401.2794 Q1218.8884,401.4669 1219.8259,401.9356 L1218.9978,403.7169 Q1218.2166,403.3419 1217.5603,403.1544 Q1216.9041,402.9513 1216.1072,402.9513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="127.2595" x="1236.4978" y="412.852">CORSConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1169.51" x2="1398.2451" y1="423.42" y2="423.42"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153.3554" x="1174.51" y="442.3859">allow_credentials : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="150.9334" x="1174.51" y="461.4539">allow_headers : list[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="156.0154" x="1174.51" y="480.5218">allow_methods : list[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="142.9815" x="1174.51" y="499.5897">allow_origins : list[str]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1169.51" x2="1398.2451" y1="507.6917" y2="507.6917"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="218.7351" x="1174.51" y="526.6576">check_cors_configuration() -&gt; Self</text>
+      <rect codeLine="31" fill="#F1F1F1" height="143.3396" id="src.models.config.CORSConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="234.0252" x="1168.86" y="391.42"/>
+      <ellipse cx="1217.9928" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M1218.1022,402.9513 Q1217.1803,402.9513 1216.446,403.2638 Q1215.7272,403.5763 1215.2272,404.17 Q1214.7272,404.7481 1214.446,405.6231 Q1214.1803,406.4981 1214.1803,407.5919 Q1214.1803,409.0294 1214.6178,410.0763 Q1215.071,411.1231 1215.9147,411.67 Q1216.7741,412.2169 1218.0866,412.2169 Q1218.8678,412.2169 1219.5553,412.0919 Q1220.2585,411.9513 1221.2585,411.6388 L1221.2585,413.5138 Q1220.3991,413.8419 1219.6335,413.9669 Q1218.8835,414.0919 1217.8678,414.0919 Q1215.946,414.0919 1214.6335,413.295 Q1213.3366,412.4825 1212.6803,411.0138 Q1212.0241,409.5294 1212.0241,407.5606 Q1212.0241,406.1388 1212.4147,404.9669 Q1212.821,403.7794 1213.6022,402.9044 Q1214.3835,402.0294 1215.5241,401.5606 Q1216.6647,401.0763 1218.1335,401.0763 Q1219.0866,401.0763 1219.9772,401.2794 Q1220.8835,401.4669 1221.821,401.9356 L1220.9928,403.7169 Q1220.2116,403.3419 1219.5553,403.1544 Q1218.8991,402.9513 1218.1022,402.9513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="127.2595" x="1238.4928" y="412.852">CORSConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1169.86" x2="1401.8852" y1="423.42" y2="423.42"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="219.3652" x="1174.86" y="442.3859">allow_credentials : Optional[bool]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="216.9432" x="1174.86" y="461.4539">allow_headers : Optional[list[str]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="222.0252" x="1174.86" y="480.5218">allow_methods : Optional[list[str]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="208.9912" x="1174.86" y="499.5897">allow_origins : Optional[list[str]]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1169.86" x2="1401.8852" y1="507.6917" y2="507.6917"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="218.7351" x="1174.86" y="526.6576">check_cors_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.Configuration-->
     <g id="elem_src.models.config.Configuration">
-      <rect codeLine="38" fill="#F1F1F1" height="314.9508" id="src.models.config.Configuration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="443.4085" x="1995.17" y="305.61"/>
-      <ellipse cx="2167.0824" cy="321.61" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M2167.1918,317.1413 Q2166.2699,317.1413 2165.5355,317.4538 Q2164.8168,317.7663 2164.3168,318.36 Q2163.8168,318.9381 2163.5355,319.8131 Q2163.2699,320.6881 2163.2699,321.7819 Q2163.2699,323.2194 2163.7074,324.2663 Q2164.1605,325.3131 2165.0043,325.86 Q2165.8637,326.4069 2167.1762,326.4069 Q2167.9574,326.4069 2168.6449,326.2819 Q2169.348,326.1413 2170.348,325.8288 L2170.348,327.7038 Q2169.4887,328.0319 2168.723,328.1569 Q2167.973,328.2819 2166.9574,328.2819 Q2165.0355,328.2819 2163.723,327.485 Q2162.4262,326.6725 2161.7699,325.2038 Q2161.1137,323.7194 2161.1137,321.7506 Q2161.1137,320.3288 2161.5043,319.1569 Q2161.9105,317.9694 2162.6918,317.0944 Q2163.473,316.2194 2164.6137,315.7506 Q2165.7543,315.2663 2167.223,315.2663 Q2168.1762,315.2663 2169.0668,315.4694 Q2169.973,315.6569 2170.9105,316.1256 L2170.0824,317.9069 Q2169.3012,317.5319 2168.6449,317.3444 Q2167.9887,317.1413 2167.1918,317.1413 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91.0836" x="2187.5824" y="327.042">Configuration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1996.17" x2="2437.5785" y1="337.61" y2="337.61"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="360.7927" x="2001.17" y="356.5759">authentication : Optional[AuthenticationConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="345.8128" x="2001.17" y="375.6439">authorization : Optional[AuthorizationConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="222.7532" x="2001.17" y="394.7118">byok_rag : Optional[list[ByokRag]]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="431.4085" x="2001.17" y="413.7797">conversation_cache : Optional[ConversationHistoryConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="264.221" x="2001.17" y="432.8476">customization : Optional[Customization]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="290.6109" x="2001.17" y="451.9155">database : Optional[DatabaseConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="293.1029" x="2001.17" y="470.9834">inference : Optional[InferenceConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="76.0477" x="2001.17" y="490.0514">llama_stack</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="377.6206" x="2001.17" y="509.1193">mcp_servers : Optional[list[ModelContextProtocolServer]]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="2001.17" y="528.1872">name : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="371.1947" x="2001.17" y="547.2551">quota_handlers : Optional[QuotaHandlersConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="45.7238" x="2001.17" y="566.323">service</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133.6575" x="2001.17" y="585.3909">user_data_collection</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1996.17" x2="2437.5785" y1="593.4929" y2="593.4929"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185.1773" x="2001.17" y="612.4589">dump(filename: str) -&gt; None</text>
+      <rect codeLine="38" fill="#F1F1F1" height="314.9508" id="src.models.config.Configuration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="443.4085" x="1999.17" y="305.61"/>
+      <ellipse cx="2171.0824" cy="321.61" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M2171.1918,317.1413 Q2170.2699,317.1413 2169.5355,317.4538 Q2168.8168,317.7663 2168.3168,318.36 Q2167.8168,318.9381 2167.5355,319.8131 Q2167.2699,320.6881 2167.2699,321.7819 Q2167.2699,323.2194 2167.7074,324.2663 Q2168.1605,325.3131 2169.0043,325.86 Q2169.8637,326.4069 2171.1762,326.4069 Q2171.9574,326.4069 2172.6449,326.2819 Q2173.348,326.1413 2174.348,325.8288 L2174.348,327.7038 Q2173.4887,328.0319 2172.723,328.1569 Q2171.973,328.2819 2170.9574,328.2819 Q2169.0355,328.2819 2167.723,327.485 Q2166.4262,326.6725 2165.7699,325.2038 Q2165.1137,323.7194 2165.1137,321.7506 Q2165.1137,320.3288 2165.5043,319.1569 Q2165.9105,317.9694 2166.6918,317.0944 Q2167.473,316.2194 2168.6137,315.7506 Q2169.7543,315.2663 2171.223,315.2663 Q2172.1762,315.2663 2173.0668,315.4694 Q2173.973,315.6569 2174.9105,316.1256 L2174.0824,317.9069 Q2173.3012,317.5319 2172.6449,317.3444 Q2171.9887,317.1413 2171.1918,317.1413 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91.0836" x="2191.5824" y="327.042">Configuration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2000.17" x2="2441.5785" y1="337.61" y2="337.61"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="360.7927" x="2005.17" y="356.5759">authentication : Optional[AuthenticationConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="345.8128" x="2005.17" y="375.6439">authorization : Optional[AuthorizationConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="222.7532" x="2005.17" y="394.7118">byok_rag : Optional[list[ByokRag]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="431.4085" x="2005.17" y="413.7797">conversation_cache : Optional[ConversationHistoryConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="264.221" x="2005.17" y="432.8476">customization : Optional[Customization]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="290.6109" x="2005.17" y="451.9155">database : Optional[DatabaseConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="293.1029" x="2005.17" y="470.9834">inference : Optional[InferenceConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="76.0477" x="2005.17" y="490.0514">llama_stack</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="377.6206" x="2005.17" y="509.1193">mcp_servers : Optional[list[ModelContextProtocolServer]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="2005.17" y="528.1872">name : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="371.1947" x="2005.17" y="547.2551">quota_handlers : Optional[QuotaHandlersConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="45.7238" x="2005.17" y="566.323">service</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133.6575" x="2005.17" y="585.3909">user_data_collection</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2000.17" x2="2441.5785" y1="593.4929" y2="593.4929"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185.1773" x="2005.17" y="612.4589">dump(filename: str) -&gt; None</text>
     </g>
     <!--class src.models.config.ConfigurationBase-->
     <g id="elem_src.models.config.ConfigurationBase">
-      <rect codeLine="54" fill="#F1F1F1" height="67.0679" id="src.models.config.ConfigurationBase" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="154.6395" x="3263.56" y="681.56"/>
-      <ellipse cx="3278.56" cy="697.56" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3278.6694,693.0913 Q3277.7475,693.0913 3277.0131,693.4038 Q3276.2944,693.7163 3275.7944,694.31 Q3275.2944,694.8881 3275.0131,695.7631 Q3274.7475,696.6381 3274.7475,697.7319 Q3274.7475,699.1694 3275.185,700.2163 Q3275.6381,701.2631 3276.4819,701.81 Q3277.3413,702.3569 3278.6538,702.3569 Q3279.435,702.3569 3280.1225,702.2319 Q3280.8256,702.0913 3281.8256,701.7788 L3281.8256,703.6538 Q3280.9663,703.9819 3280.2006,704.1069 Q3279.4506,704.2319 3278.435,704.2319 Q3276.5131,704.2319 3275.2006,703.435 Q3273.9038,702.6225 3273.2475,701.1538 Q3272.5913,699.6694 3272.5913,697.7006 Q3272.5913,696.2788 3272.9819,695.1069 Q3273.3881,693.9194 3274.1694,693.0444 Q3274.9506,692.1694 3276.0913,691.7006 Q3277.2319,691.2163 3278.7006,691.2163 Q3279.6538,691.2163 3280.5444,691.4194 Q3281.4506,691.6069 3282.3881,692.0756 L3281.56,693.8569 Q3280.7788,693.4819 3280.1225,693.2944 Q3279.4663,693.0913 3278.6694,693.0913 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122.6395" x="3292.56" y="702.992">ConfigurationBase</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3264.56" x2="3417.1995" y1="713.56" y2="713.56"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="88.7737" x="3269.56" y="732.5259">model_config</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3264.56" x2="3417.1995" y1="740.6279" y2="740.6279"/>
+      <rect codeLine="54" fill="#F1F1F1" height="67.0679" id="src.models.config.ConfigurationBase" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="154.6395" x="3267.56" y="681.56"/>
+      <ellipse cx="3282.56" cy="697.56" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3282.6694,693.0913 Q3281.7475,693.0913 3281.0131,693.4038 Q3280.2944,693.7163 3279.7944,694.31 Q3279.2944,694.8881 3279.0131,695.7631 Q3278.7475,696.6381 3278.7475,697.7319 Q3278.7475,699.1694 3279.185,700.2163 Q3279.6381,701.2631 3280.4819,701.81 Q3281.3413,702.3569 3282.6538,702.3569 Q3283.435,702.3569 3284.1225,702.2319 Q3284.8256,702.0913 3285.8256,701.7788 L3285.8256,703.6538 Q3284.9663,703.9819 3284.2006,704.1069 Q3283.4506,704.2319 3282.435,704.2319 Q3280.5131,704.2319 3279.2006,703.435 Q3277.9038,702.6225 3277.2475,701.1538 Q3276.5913,699.6694 3276.5913,697.7006 Q3276.5913,696.2788 3276.9819,695.1069 Q3277.3881,693.9194 3278.1694,693.0444 Q3278.9506,692.1694 3280.0913,691.7006 Q3281.2319,691.2163 3282.7006,691.2163 Q3283.6538,691.2163 3284.5444,691.4194 Q3285.4506,691.6069 3286.3881,692.0756 L3285.56,693.8569 Q3284.7788,693.4819 3284.1225,693.2944 Q3283.4663,693.0913 3282.6694,693.0913 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="122.6395" x="3296.56" y="702.992">ConfigurationBase</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3268.56" x2="3421.1995" y1="713.56" y2="713.56"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="88.7737" x="3273.56" y="732.5259">model_config</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3268.56" x2="3421.1995" y1="740.6279" y2="740.6279"/>
     </g>
     <!--class src.models.config.ConversationHistoryConfiguration-->
     <g id="elem_src.models.config.ConversationHistoryConfiguration">
-      <rect codeLine="57" fill="#F1F1F1" height="143.3396" id="src.models.config.ConversationHistoryConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="383.1106" x="1505.32" y="391.42"/>
-      <ellipse cx="1579.9607" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M1580.0701,402.9513 Q1579.1482,402.9513 1578.4138,403.2638 Q1577.6951,403.5763 1577.1951,404.17 Q1576.6951,404.7481 1576.4138,405.6231 Q1576.1482,406.4981 1576.1482,407.5919 Q1576.1482,409.0294 1576.5857,410.0763 Q1577.0388,411.1231 1577.8826,411.67 Q1578.742,412.2169 1580.0545,412.2169 Q1580.8357,412.2169 1581.5232,412.0919 Q1582.2263,411.9513 1583.2263,411.6388 L1583.2263,413.5138 Q1582.367,413.8419 1581.6013,413.9669 Q1580.8513,414.0919 1579.8357,414.0919 Q1577.9138,414.0919 1576.6013,413.295 Q1575.3045,412.4825 1574.6482,411.0138 Q1573.992,409.5294 1573.992,407.5606 Q1573.992,406.1388 1574.3826,404.9669 Q1574.7888,403.7794 1575.5701,402.9044 Q1576.3513,402.0294 1577.492,401.5606 Q1578.6326,401.0763 1580.1013,401.0763 Q1581.0545,401.0763 1581.9451,401.2794 Q1582.8513,401.4669 1583.7888,401.9356 L1582.9607,403.7169 Q1582.1795,403.3419 1581.5232,403.1544 Q1580.867,402.9513 1580.0701,402.9513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="225.3291" x="1600.4607" y="412.852">ConversationHistoryConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1506.32" x2="1887.4306" y1="423.42" y2="423.42"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="283.9609" x="1511.32" y="442.3859">memory : Optional[InMemoryCacheConfig]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="1511.32" y="461.4539">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="1511.32" y="480.5218">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="371.1106" x="1511.32" y="499.5897">type : Literal['noop', 'memory', 'sqlite', 'postgres'] | None</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1506.32" x2="1887.4306" y1="507.6917" y2="507.6917"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="228.8991" x="1511.32" y="526.6576">check_cache_configuration() -&gt; Self</text>
+      <rect codeLine="57" fill="#F1F1F1" height="143.3396" id="src.models.config.ConversationHistoryConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="383.1106" x="1509.32" y="391.42"/>
+      <ellipse cx="1583.9607" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M1584.0701,402.9513 Q1583.1482,402.9513 1582.4138,403.2638 Q1581.6951,403.5763 1581.1951,404.17 Q1580.6951,404.7481 1580.4138,405.6231 Q1580.1482,406.4981 1580.1482,407.5919 Q1580.1482,409.0294 1580.5857,410.0763 Q1581.0388,411.1231 1581.8826,411.67 Q1582.742,412.2169 1584.0545,412.2169 Q1584.8357,412.2169 1585.5232,412.0919 Q1586.2263,411.9513 1587.2263,411.6388 L1587.2263,413.5138 Q1586.367,413.8419 1585.6013,413.9669 Q1584.8513,414.0919 1583.8357,414.0919 Q1581.9138,414.0919 1580.6013,413.295 Q1579.3045,412.4825 1578.6482,411.0138 Q1577.992,409.5294 1577.992,407.5606 Q1577.992,406.1388 1578.3826,404.9669 Q1578.7888,403.7794 1579.5701,402.9044 Q1580.3513,402.0294 1581.492,401.5606 Q1582.6326,401.0763 1584.1013,401.0763 Q1585.0545,401.0763 1585.9451,401.2794 Q1586.8513,401.4669 1587.7888,401.9356 L1586.9607,403.7169 Q1586.1795,403.3419 1585.5232,403.1544 Q1584.867,402.9513 1584.0701,402.9513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="225.3291" x="1604.4607" y="412.852">ConversationHistoryConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1510.32" x2="1891.4306" y1="423.42" y2="423.42"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="283.9609" x="1515.32" y="442.3859">memory : Optional[InMemoryCacheConfig]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="1515.32" y="461.4539">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="1515.32" y="480.5218">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="371.1106" x="1515.32" y="499.5897">type : Literal['noop', 'memory', 'sqlite', 'postgres'] | None</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1510.32" x2="1891.4306" y1="507.6917" y2="507.6917"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="228.8991" x="1515.32" y="526.6576">check_cache_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.CustomProfile-->
     <g id="elem_src.models.config.CustomProfile">
-      <rect codeLine="64" fill="#F1F1F1" height="105.2038" id="src.models.config.CustomProfile" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="221.0473" x="3767.35" y="64.2"/>
-      <ellipse cx="3826.8848" cy="80.2" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3826.9942,75.7313 Q3826.0723,75.7313 3825.3379,76.0438 Q3824.6192,76.3563 3824.1192,76.95 Q3823.6192,77.5281 3823.3379,78.4031 Q3823.0723,79.2781 3823.0723,80.3719 Q3823.0723,81.8094 3823.5098,82.8563 Q3823.9629,83.9031 3824.8067,84.45 Q3825.6661,84.9969 3826.9786,84.9969 Q3827.7598,84.9969 3828.4473,84.8719 Q3829.1504,84.7313 3830.1504,84.4188 L3830.1504,86.2938 Q3829.2911,86.6219 3828.5254,86.7469 Q3827.7754,86.8719 3826.7598,86.8719 Q3824.8379,86.8719 3823.5254,86.075 Q3822.2286,85.2625 3821.5723,83.7938 Q3820.9161,82.3094 3820.9161,80.3406 Q3820.9161,78.9188 3821.3067,77.7469 Q3821.7129,76.5594 3822.4942,75.6844 Q3823.2754,74.8094 3824.4161,74.3406 Q3825.5567,73.8563 3827.0254,73.8563 Q3827.9786,73.8563 3828.8692,74.0594 Q3829.7754,74.2469 3830.7129,74.7156 L3829.8848,76.4969 Q3829.1036,76.1219 3828.4473,75.9344 Q3827.7911,75.7313 3826.9942,75.7313 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="93.4776" x="3847.3848" y="85.632">CustomProfile</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3768.35" x2="3987.3973" y1="96.2" y2="96.2"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="58.7438" x="3773.35" y="115.1659">path : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="209.0473" x="3773.35" y="134.2339">prompts : Optional[dict[str, str]]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3768.35" x2="3987.3973" y1="142.3358" y2="142.3358"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="187.9773" x="3773.35" y="161.3018">get_prompts() -&gt; dict[str, str]</text>
+      <rect codeLine="64" fill="#F1F1F1" height="105.2038" id="src.models.config.CustomProfile" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="221.0473" x="3771.35" y="64.2"/>
+      <ellipse cx="3830.8848" cy="80.2" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3830.9942,75.7313 Q3830.0723,75.7313 3829.3379,76.0438 Q3828.6192,76.3563 3828.1192,76.95 Q3827.6192,77.5281 3827.3379,78.4031 Q3827.0723,79.2781 3827.0723,80.3719 Q3827.0723,81.8094 3827.5098,82.8563 Q3827.9629,83.9031 3828.8067,84.45 Q3829.6661,84.9969 3830.9786,84.9969 Q3831.7598,84.9969 3832.4473,84.8719 Q3833.1504,84.7313 3834.1504,84.4188 L3834.1504,86.2938 Q3833.2911,86.6219 3832.5254,86.7469 Q3831.7754,86.8719 3830.7598,86.8719 Q3828.8379,86.8719 3827.5254,86.075 Q3826.2286,85.2625 3825.5723,83.7938 Q3824.9161,82.3094 3824.9161,80.3406 Q3824.9161,78.9188 3825.3067,77.7469 Q3825.7129,76.5594 3826.4942,75.6844 Q3827.2754,74.8094 3828.4161,74.3406 Q3829.5567,73.8563 3831.0254,73.8563 Q3831.9786,73.8563 3832.8692,74.0594 Q3833.7754,74.2469 3834.7129,74.7156 L3833.8848,76.4969 Q3833.1036,76.1219 3832.4473,75.9344 Q3831.7911,75.7313 3830.9942,75.7313 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="93.4776" x="3851.3848" y="85.632">CustomProfile</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3772.35" x2="3991.3973" y1="96.2" y2="96.2"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="58.7438" x="3777.35" y="115.1659">path : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="209.0473" x="3777.35" y="134.2339">prompts : Optional[dict[str, str]]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3772.35" x2="3991.3973" y1="142.3358" y2="142.3358"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="187.9773" x="3777.35" y="161.3018">get_prompts() -&gt; dict[str, str]</text>
     </g>
     <!--class src.models.config.Customization-->
     <g id="elem_src.models.config.Customization">
-      <rect codeLine="69" fill="#F1F1F1" height="162.4075" id="src.models.config.Customization" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="280.267" x="3737.74" y="381.88"/>
-      <ellipse cx="3826.2967" cy="397.88" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3826.4061,393.4113 Q3825.4842,393.4113 3824.7498,393.7238 Q3824.0311,394.0363 3823.5311,394.63 Q3823.0311,395.2081 3822.7498,396.0831 Q3822.4842,396.9581 3822.4842,398.0519 Q3822.4842,399.4894 3822.9217,400.5363 Q3823.3748,401.5831 3824.2186,402.13 Q3825.0779,402.6769 3826.3904,402.6769 Q3827.1717,402.6769 3827.8592,402.5519 Q3828.5623,402.4113 3829.5623,402.0988 L3829.5623,403.9738 Q3828.7029,404.3019 3827.9373,404.4269 Q3827.1873,404.5519 3826.1717,404.5519 Q3824.2498,404.5519 3822.9373,403.755 Q3821.6404,402.9425 3820.9842,401.4738 Q3820.3279,399.9894 3820.3279,398.0206 Q3820.3279,396.5988 3820.7186,395.4269 Q3821.1248,394.2394 3821.9061,393.3644 Q3822.6873,392.4894 3823.8279,392.0206 Q3824.9686,391.5363 3826.4373,391.5363 Q3827.3904,391.5363 3828.2811,391.7394 Q3829.1873,391.9269 3830.1248,392.3956 L3829.2967,394.1769 Q3828.5154,393.8019 3827.8592,393.6144 Q3827.2029,393.4113 3826.4061,393.4113 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94.6536" x="3846.7967" y="403.312">Customization</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3738.74" x2="4017.007" y1="413.88" y2="413.88"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="268.225" x="3743.74" y="432.8459">custom_profile : Optional[CustomProfile]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="240.0291" x="3743.74" y="451.9139">disable_query_system_prompt : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="173.7674" x="3743.74" y="470.9818">profile_path : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197.0073" x="3743.74" y="490.0497">system_prompt : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="268.267" x="3743.74" y="509.1176">system_prompt_path : Optional[FilePath]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3738.74" x2="4017.007" y1="517.2196" y2="517.2196"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="236.3051" x="3743.74" y="536.1855">check_customization_model() -&gt; Self</text>
+      <rect codeLine="69" fill="#F1F1F1" height="162.4075" id="src.models.config.Customization" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="280.267" x="3741.74" y="381.88"/>
+      <ellipse cx="3830.2967" cy="397.88" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3830.4061,393.4113 Q3829.4842,393.4113 3828.7498,393.7238 Q3828.0311,394.0363 3827.5311,394.63 Q3827.0311,395.2081 3826.7498,396.0831 Q3826.4842,396.9581 3826.4842,398.0519 Q3826.4842,399.4894 3826.9217,400.5363 Q3827.3748,401.5831 3828.2186,402.13 Q3829.0779,402.6769 3830.3904,402.6769 Q3831.1717,402.6769 3831.8592,402.5519 Q3832.5623,402.4113 3833.5623,402.0988 L3833.5623,403.9738 Q3832.7029,404.3019 3831.9373,404.4269 Q3831.1873,404.5519 3830.1717,404.5519 Q3828.2498,404.5519 3826.9373,403.755 Q3825.6404,402.9425 3824.9842,401.4738 Q3824.3279,399.9894 3824.3279,398.0206 Q3824.3279,396.5988 3824.7186,395.4269 Q3825.1248,394.2394 3825.9061,393.3644 Q3826.6873,392.4894 3827.8279,392.0206 Q3828.9686,391.5363 3830.4373,391.5363 Q3831.3904,391.5363 3832.2811,391.7394 Q3833.1873,391.9269 3834.1248,392.3956 L3833.2967,394.1769 Q3832.5154,393.8019 3831.8592,393.6144 Q3831.2029,393.4113 3830.4061,393.4113 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="94.6536" x="3850.7967" y="403.312">Customization</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3742.74" x2="4021.007" y1="413.88" y2="413.88"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="268.225" x="3747.74" y="432.8459">custom_profile : Optional[CustomProfile]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="240.0291" x="3747.74" y="451.9139">disable_query_system_prompt : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="173.7674" x="3747.74" y="470.9818">profile_path : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197.0073" x="3747.74" y="490.0497">system_prompt : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="268.267" x="3747.74" y="509.1176">system_prompt_path : Optional[FilePath]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3742.74" x2="4021.007" y1="517.2196" y2="517.2196"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="236.3051" x="3747.74" y="536.1855">check_customization_model() -&gt; Self</text>
     </g>
     <!--class src.models.config.DatabaseConfiguration-->
     <g id="elem_src.models.config.DatabaseConfiguration">
-      <rect codeLine="77" fill="#F1F1F1" height="143.3396" id="src.models.config.DatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="376.9507" x="5734.4" y="391.42"/>
-      <ellipse cx="5842.0596" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M5842.169,402.9513 Q5841.2471,402.9513 5840.5128,403.2638 Q5839.794,403.5763 5839.294,404.17 Q5838.794,404.7481 5838.5128,405.6231 Q5838.2471,406.4981 5838.2471,407.5919 Q5838.2471,409.0294 5838.6846,410.0763 Q5839.1378,411.1231 5839.9815,411.67 Q5840.8409,412.2169 5842.1534,412.2169 Q5842.9346,412.2169 5843.6221,412.0919 Q5844.3253,411.9513 5845.3253,411.6388 L5845.3253,413.5138 Q5844.4659,413.8419 5843.7003,413.9669 Q5842.9503,414.0919 5841.9346,414.0919 Q5840.0128,414.0919 5838.7003,413.295 Q5837.4034,412.4825 5836.7471,411.0138 Q5836.0909,409.5294 5836.0909,407.5606 Q5836.0909,406.1388 5836.4815,404.9669 Q5836.8878,403.7794 5837.669,402.9044 Q5838.4503,402.0294 5839.5909,401.5606 Q5840.7315,401.0763 5842.2003,401.0763 Q5843.1534,401.0763 5844.044,401.2794 Q5844.9503,401.4669 5845.8878,401.9356 L5845.0596,403.7169 Q5844.2784,403.3419 5843.6221,403.1544 Q5842.9659,402.9513 5842.169,402.9513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153.1314" x="5862.5596" y="412.852">DatabaseConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5735.4" x2="6110.3507" y1="423.42" y2="423.42"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40.8798" x="5740.4" y="442.3859">config</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="52.1358" x="5740.4" y="461.4539">db_type</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="5740.4" y="480.5218">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="5740.4" y="499.5897">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5735.4" x2="6110.3507" y1="507.6917" y2="507.6917"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="251.495" x="5740.4" y="526.6576">check_database_configuration() -&gt; Self</text>
+      <rect codeLine="77" fill="#F1F1F1" height="143.3396" id="src.models.config.DatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="376.9507" x="5738.4" y="391.42"/>
+      <ellipse cx="5846.0596" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M5846.169,402.9513 Q5845.2471,402.9513 5844.5128,403.2638 Q5843.794,403.5763 5843.294,404.17 Q5842.794,404.7481 5842.5128,405.6231 Q5842.2471,406.4981 5842.2471,407.5919 Q5842.2471,409.0294 5842.6846,410.0763 Q5843.1378,411.1231 5843.9815,411.67 Q5844.8409,412.2169 5846.1534,412.2169 Q5846.9346,412.2169 5847.6221,412.0919 Q5848.3253,411.9513 5849.3253,411.6388 L5849.3253,413.5138 Q5848.4659,413.8419 5847.7003,413.9669 Q5846.9503,414.0919 5845.9346,414.0919 Q5844.0128,414.0919 5842.7003,413.295 Q5841.4034,412.4825 5840.7471,411.0138 Q5840.0909,409.5294 5840.0909,407.5606 Q5840.0909,406.1388 5840.4815,404.9669 Q5840.8878,403.7794 5841.669,402.9044 Q5842.4503,402.0294 5843.5909,401.5606 Q5844.7315,401.0763 5846.2003,401.0763 Q5847.1534,401.0763 5848.044,401.2794 Q5848.9503,401.4669 5849.8878,401.9356 L5849.0596,403.7169 Q5848.2784,403.3419 5847.6221,403.1544 Q5846.9659,402.9513 5846.169,402.9513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153.1314" x="5866.5596" y="412.852">DatabaseConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5739.4" x2="6114.3507" y1="423.42" y2="423.42"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40.8798" x="5744.4" y="442.3859">config</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="52.1358" x="5744.4" y="461.4539">db_type</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="5744.4" y="480.5218">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="5744.4" y="499.5897">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5739.4" x2="6114.3507" y1="507.6917" y2="507.6917"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="251.495" x="5744.4" y="526.6576">check_database_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.InMemoryCacheConfig-->
     <g id="elem_src.models.config.InMemoryCacheConfig">
-      <rect codeLine="84" fill="#F1F1F1" height="67.0679" id="src.models.config.InMemoryCacheConfig" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="183.4514" x="2473.15" y="429.55"/>
-      <ellipse cx="2488.15" cy="445.55" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M2488.2594,441.0813 Q2487.3375,441.0813 2486.6031,441.3938 Q2485.8844,441.7063 2485.3844,442.3 Q2484.8844,442.8781 2484.6031,443.7531 Q2484.3375,444.6281 2484.3375,445.7219 Q2484.3375,447.1594 2484.775,448.2063 Q2485.2281,449.2531 2486.0719,449.8 Q2486.9313,450.3469 2488.2438,450.3469 Q2489.025,450.3469 2489.7125,450.2219 Q2490.4156,450.0813 2491.4156,449.7688 L2491.4156,451.6438 Q2490.5563,451.9719 2489.7906,452.0969 Q2489.0406,452.2219 2488.025,452.2219 Q2486.1031,452.2219 2484.7906,451.425 Q2483.4938,450.6125 2482.8375,449.1438 Q2482.1813,447.6594 2482.1813,445.6906 Q2482.1813,444.2688 2482.5719,443.0969 Q2482.9781,441.9094 2483.7594,441.0344 Q2484.5406,440.1594 2485.6813,439.6906 Q2486.8219,439.2063 2488.2906,439.2063 Q2489.2438,439.2063 2490.1344,439.4094 Q2491.0406,439.5969 2491.9781,440.0656 L2491.15,441.8469 Q2490.3688,441.4719 2489.7125,441.2844 Q2489.0563,441.0813 2488.2594,441.0813 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="151.4514" x="2502.15" y="450.982">InMemoryCacheConfig</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="2474.15" x2="2655.6014" y1="461.55" y2="461.55"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160.3834" x="2479.15" y="480.5159">max_entries : Annotated</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="2474.15" x2="2655.6014" y1="488.6179" y2="488.6179"/>
+      <rect codeLine="84" fill="#F1F1F1" height="67.0679" id="src.models.config.InMemoryCacheConfig" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="183.4514" x="2477.15" y="429.55"/>
+      <ellipse cx="2492.15" cy="445.55" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M2492.2594,441.0813 Q2491.3375,441.0813 2490.6031,441.3938 Q2489.8844,441.7063 2489.3844,442.3 Q2488.8844,442.8781 2488.6031,443.7531 Q2488.3375,444.6281 2488.3375,445.7219 Q2488.3375,447.1594 2488.775,448.2063 Q2489.2281,449.2531 2490.0719,449.8 Q2490.9313,450.3469 2492.2438,450.3469 Q2493.025,450.3469 2493.7125,450.2219 Q2494.4156,450.0813 2495.4156,449.7688 L2495.4156,451.6438 Q2494.5563,451.9719 2493.7906,452.0969 Q2493.0406,452.2219 2492.025,452.2219 Q2490.1031,452.2219 2488.7906,451.425 Q2487.4938,450.6125 2486.8375,449.1438 Q2486.1813,447.6594 2486.1813,445.6906 Q2486.1813,444.2688 2486.5719,443.0969 Q2486.9781,441.9094 2487.7594,441.0344 Q2488.5406,440.1594 2489.6813,439.6906 Q2490.8219,439.2063 2492.2906,439.2063 Q2493.2438,439.2063 2494.1344,439.4094 Q2495.0406,439.5969 2495.9781,440.0656 L2495.15,441.8469 Q2494.3688,441.4719 2493.7125,441.2844 Q2493.0563,441.0813 2492.2594,441.0813 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="151.4514" x="2506.15" y="450.982">InMemoryCacheConfig</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2478.15" x2="2659.6014" y1="461.55" y2="461.55"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160.3834" x="2483.15" y="480.5159">max_entries : Annotated</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2478.15" x2="2659.6014" y1="488.6179" y2="488.6179"/>
     </g>
     <!--class src.models.config.InferenceConfiguration-->
     <g id="elem_src.models.config.InferenceConfiguration">
-      <rect codeLine="87" fill="#F1F1F1" height="105.2038" id="src.models.config.InferenceConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="295.6949" x="2692.03" y="410.48"/>
-      <ellipse cx="2758.5577" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M2758.6671,422.0113 Q2757.7452,422.0113 2757.0109,422.3238 Q2756.2921,422.6363 2755.7921,423.23 Q2755.2921,423.8081 2755.0109,424.6831 Q2754.7452,425.5581 2754.7452,426.6519 Q2754.7452,428.0894 2755.1827,429.1363 Q2755.6359,430.1831 2756.4796,430.73 Q2757.339,431.2769 2758.6515,431.2769 Q2759.4327,431.2769 2760.1202,431.1519 Q2760.8234,431.0113 2761.8234,430.6988 L2761.8234,432.5738 Q2760.964,432.9019 2760.1984,433.0269 Q2759.4484,433.1519 2758.4327,433.1519 Q2756.5109,433.1519 2755.1984,432.355 Q2753.9015,431.5425 2753.2452,430.0738 Q2752.589,428.5894 2752.589,426.6206 Q2752.589,425.1988 2752.9796,424.0269 Q2753.3859,422.8394 2754.1671,421.9644 Q2754.9484,421.0894 2756.089,420.6206 Q2757.2296,420.1363 2758.6984,420.1363 Q2759.6515,420.1363 2760.5421,420.3394 Q2761.4484,420.5269 2762.3859,420.9956 L2761.5577,422.7769 Q2760.7765,422.4019 2760.1202,422.2144 Q2759.464,422.0113 2758.6671,422.0113 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="154.1394" x="2779.0577" y="431.912">InferenceConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="2693.03" x2="2986.7249" y1="442.48" y2="442.48"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="188.9713" x="2698.03" y="461.4459">default_model : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="203.1673" x="2698.03" y="480.5139">default_provider : Optional[str]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="2693.03" x2="2986.7249" y1="488.6158" y2="488.6158"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="283.6949" x="2698.03" y="507.5818">check_default_model_and_provider() -&gt; Self</text>
+      <rect codeLine="87" fill="#F1F1F1" height="105.2038" id="src.models.config.InferenceConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="295.6949" x="2696.03" y="410.48"/>
+      <ellipse cx="2762.5577" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M2762.6671,422.0113 Q2761.7452,422.0113 2761.0109,422.3238 Q2760.2921,422.6363 2759.7921,423.23 Q2759.2921,423.8081 2759.0109,424.6831 Q2758.7452,425.5581 2758.7452,426.6519 Q2758.7452,428.0894 2759.1827,429.1363 Q2759.6359,430.1831 2760.4796,430.73 Q2761.339,431.2769 2762.6515,431.2769 Q2763.4327,431.2769 2764.1202,431.1519 Q2764.8234,431.0113 2765.8234,430.6988 L2765.8234,432.5738 Q2764.964,432.9019 2764.1984,433.0269 Q2763.4484,433.1519 2762.4327,433.1519 Q2760.5109,433.1519 2759.1984,432.355 Q2757.9015,431.5425 2757.2452,430.0738 Q2756.589,428.5894 2756.589,426.6206 Q2756.589,425.1988 2756.9796,424.0269 Q2757.3859,422.8394 2758.1671,421.9644 Q2758.9484,421.0894 2760.089,420.6206 Q2761.2296,420.1363 2762.6984,420.1363 Q2763.6515,420.1363 2764.5421,420.3394 Q2765.4484,420.5269 2766.3859,420.9956 L2765.5577,422.7769 Q2764.7765,422.4019 2764.1202,422.2144 Q2763.464,422.0113 2762.6671,422.0113 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="154.1394" x="2783.0577" y="431.912">InferenceConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2697.03" x2="2990.7249" y1="442.48" y2="442.48"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="188.9713" x="2702.03" y="461.4459">default_model : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="203.1673" x="2702.03" y="480.5139">default_provider : Optional[str]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="2697.03" x2="2990.7249" y1="488.6158" y2="488.6158"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="283.6949" x="2702.03" y="507.5818">check_default_model_and_provider() -&gt; Self</text>
     </g>
     <!--class src.models.config.JsonPathOperator-->
     <g id="elem_src.models.config.JsonPathOperator">
-      <rect codeLine="92" fill="#F1F1F1" height="67.0679" id="src.models.config.JsonPathOperator" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="150.0616" x="6471.84" y="83.27"/>
-      <ellipse cx="6486.84" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M6486.9494,94.8012 Q6486.0275,94.8012 6485.2931,95.1137 Q6484.5744,95.4262 6484.0744,96.02 Q6483.5744,96.5981 6483.2931,97.4731 Q6483.0275,98.3481 6483.0275,99.4419 Q6483.0275,100.8794 6483.465,101.9262 Q6483.9181,102.9731 6484.7619,103.52 Q6485.6213,104.0669 6486.9338,104.0669 Q6487.715,104.0669 6488.4025,103.9419 Q6489.1056,103.8012 6490.1056,103.4887 L6490.1056,105.3637 Q6489.2463,105.6919 6488.4806,105.8169 Q6487.7306,105.9419 6486.715,105.9419 Q6484.7931,105.9419 6483.4806,105.145 Q6482.1838,104.3325 6481.5275,102.8637 Q6480.8713,101.3794 6480.8713,99.4106 Q6480.8713,97.9887 6481.2619,96.8169 Q6481.6681,95.6294 6482.4494,94.7544 Q6483.2306,93.8794 6484.3713,93.4106 Q6485.5119,92.9262 6486.9806,92.9262 Q6487.9338,92.9262 6488.8244,93.1294 Q6489.7306,93.3169 6490.6681,93.7856 L6489.84,95.5669 Q6489.0588,95.1919 6488.4025,95.0044 Q6487.7463,94.8012 6486.9494,94.8012 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="118.0616" x="6500.84" y="104.702">JsonPathOperator</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6472.84" x2="6620.9016" y1="115.27" y2="115.27"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.4919" x="6477.84" y="134.2359">name</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6472.84" x2="6620.9016" y1="142.3379" y2="142.3379"/>
+      <rect codeLine="92" fill="#F1F1F1" height="67.0679" id="src.models.config.JsonPathOperator" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="150.0616" x="6475.84" y="83.27"/>
+      <ellipse cx="6490.84" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M6490.9494,94.8012 Q6490.0275,94.8012 6489.2931,95.1137 Q6488.5744,95.4262 6488.0744,96.02 Q6487.5744,96.5981 6487.2931,97.4731 Q6487.0275,98.3481 6487.0275,99.4419 Q6487.0275,100.8794 6487.465,101.9262 Q6487.9181,102.9731 6488.7619,103.52 Q6489.6213,104.0669 6490.9338,104.0669 Q6491.715,104.0669 6492.4025,103.9419 Q6493.1056,103.8012 6494.1056,103.4887 L6494.1056,105.3637 Q6493.2463,105.6919 6492.4806,105.8169 Q6491.7306,105.9419 6490.715,105.9419 Q6488.7931,105.9419 6487.4806,105.145 Q6486.1838,104.3325 6485.5275,102.8637 Q6484.8713,101.3794 6484.8713,99.4106 Q6484.8713,97.9887 6485.2619,96.8169 Q6485.6681,95.6294 6486.4494,94.7544 Q6487.2306,93.8794 6488.3713,93.4106 Q6489.5119,92.9262 6490.9806,92.9262 Q6491.9338,92.9262 6492.8244,93.1294 Q6493.7306,93.3169 6494.6681,93.7856 L6493.84,95.5669 Q6493.0588,95.1919 6492.4025,95.0044 Q6491.7463,94.8012 6490.9494,94.8012 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="118.0616" x="6504.84" y="104.702">JsonPathOperator</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6476.84" x2="6624.9016" y1="115.27" y2="115.27"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.4919" x="6481.84" y="134.2359">name</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6476.84" x2="6624.9016" y1="142.3379" y2="142.3379"/>
     </g>
     <!--class src.models.config.JwkConfiguration-->
     <g id="elem_src.models.config.JwkConfiguration">
-      <rect codeLine="95" fill="#F1F1F1" height="86.1358" id="src.models.config.JwkConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="314.8469" x="3022.45" y="420.02"/>
-      <ellipse cx="3118.9307" cy="436.02" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3119.04,431.5513 Q3118.1182,431.5513 3117.3838,431.8638 Q3116.665,432.1763 3116.165,432.77 Q3115.665,433.3481 3115.3838,434.2231 Q3115.1182,435.0981 3115.1182,436.1919 Q3115.1182,437.6294 3115.5557,438.6763 Q3116.0088,439.7231 3116.8525,440.27 Q3117.7119,440.8169 3119.0244,440.8169 Q3119.8057,440.8169 3120.4932,440.6919 Q3121.1963,440.5513 3122.1963,440.2388 L3122.1963,442.1138 Q3121.3369,442.4419 3120.5713,442.5669 Q3119.8213,442.6919 3118.8057,442.6919 Q3116.8838,442.6919 3115.5713,441.895 Q3114.2744,441.0825 3113.6182,439.6138 Q3112.9619,438.1294 3112.9619,436.1606 Q3112.9619,434.7388 3113.3525,433.5669 Q3113.7588,432.3794 3114.54,431.5044 Q3115.3213,430.6294 3116.4619,430.1606 Q3117.6025,429.6763 3119.0713,429.6763 Q3120.0244,429.6763 3120.915,429.8794 Q3121.8213,430.0669 3122.7588,430.5356 L3121.9307,432.3169 Q3121.1494,431.9419 3120.4932,431.7544 Q3119.8369,431.5513 3119.04,431.5513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113.3856" x="3139.4307" y="441.452">JwkConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3023.45" x2="3336.2969" y1="452.02" y2="452.02"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="302.8469" x="3028.45" y="470.9859">jwt_configuration : Optional[JwtConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="102.5356" x="3028.45" y="490.0539">url : AnyHttpUrl</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3023.45" x2="3336.2969" y1="498.1558" y2="498.1558"/>
+      <rect codeLine="95" fill="#F1F1F1" height="86.1358" id="src.models.config.JwkConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="314.8469" x="3026.45" y="420.02"/>
+      <ellipse cx="3122.9307" cy="436.02" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3123.04,431.5513 Q3122.1182,431.5513 3121.3838,431.8638 Q3120.665,432.1763 3120.165,432.77 Q3119.665,433.3481 3119.3838,434.2231 Q3119.1182,435.0981 3119.1182,436.1919 Q3119.1182,437.6294 3119.5557,438.6763 Q3120.0088,439.7231 3120.8525,440.27 Q3121.7119,440.8169 3123.0244,440.8169 Q3123.8057,440.8169 3124.4932,440.6919 Q3125.1963,440.5513 3126.1963,440.2388 L3126.1963,442.1138 Q3125.3369,442.4419 3124.5713,442.5669 Q3123.8213,442.6919 3122.8057,442.6919 Q3120.8838,442.6919 3119.5713,441.895 Q3118.2744,441.0825 3117.6182,439.6138 Q3116.9619,438.1294 3116.9619,436.1606 Q3116.9619,434.7388 3117.3525,433.5669 Q3117.7588,432.3794 3118.54,431.5044 Q3119.3213,430.6294 3120.4619,430.1606 Q3121.6025,429.6763 3123.0713,429.6763 Q3124.0244,429.6763 3124.915,429.8794 Q3125.8213,430.0669 3126.7588,430.5356 L3125.9307,432.3169 Q3125.1494,431.9419 3124.4932,431.7544 Q3123.8369,431.5513 3123.04,431.5513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113.3856" x="3143.4307" y="441.452">JwkConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3027.45" x2="3340.2969" y1="452.02" y2="452.02"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="302.8469" x="3032.45" y="470.9859">jwt_configuration : Optional[JwtConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="102.5356" x="3032.45" y="490.0539">url : AnyHttpUrl</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3027.45" x2="3340.2969" y1="498.1558" y2="498.1558"/>
     </g>
     <!--class src.models.config.JwtConfiguration-->
     <g id="elem_src.models.config.JwtConfiguration">
-      <rect codeLine="99" fill="#F1F1F1" height="105.2038" id="src.models.config.JwtConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="259.2951" x="3372.23" y="410.48"/>
-      <ellipse cx="3442.1457" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3442.2551,422.0113 Q3441.3332,422.0113 3440.5989,422.3238 Q3439.8801,422.6363 3439.3801,423.23 Q3438.8801,423.8081 3438.5989,424.6831 Q3438.3332,425.5581 3438.3332,426.6519 Q3438.3332,428.0894 3438.7707,429.1363 Q3439.2239,430.1831 3440.0676,430.73 Q3440.927,431.2769 3442.2395,431.2769 Q3443.0207,431.2769 3443.7082,431.1519 Q3444.4114,431.0113 3445.4114,430.6988 L3445.4114,432.5738 Q3444.552,432.9019 3443.7864,433.0269 Q3443.0364,433.1519 3442.0207,433.1519 Q3440.0989,433.1519 3438.7864,432.355 Q3437.4895,431.5425 3436.8332,430.0738 Q3436.177,428.5894 3436.177,426.6206 Q3436.177,425.1988 3436.5676,424.0269 Q3436.9739,422.8394 3437.7551,421.9644 Q3438.5364,421.0894 3439.677,420.6206 Q3440.8176,420.1363 3442.2864,420.1363 Q3443.2395,420.1363 3444.1301,420.3394 Q3445.0364,420.5269 3445.9739,420.9956 L3445.1457,422.7769 Q3444.3645,422.4019 3443.7082,422.2144 Q3443.052,422.0113 3442.2551,422.0113 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="110.9636" x="3462.6457" y="431.912">JwtConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3373.23" x2="3630.5251" y1="442.48" y2="442.48"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="247.2951" x="3378.23" y="461.4459">role_rules : Optional[list[JwtRoleRule]]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="117.1516" x="3378.23" y="480.5139">user_id_claim : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="136.2055" x="3378.23" y="499.5818">username_claim : str</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3373.23" x2="3630.5251" y1="507.6838" y2="507.6838"/>
+      <rect codeLine="99" fill="#F1F1F1" height="105.2038" id="src.models.config.JwtConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="259.2951" x="3376.23" y="410.48"/>
+      <ellipse cx="3446.1457" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3446.2551,422.0113 Q3445.3332,422.0113 3444.5989,422.3238 Q3443.8801,422.6363 3443.3801,423.23 Q3442.8801,423.8081 3442.5989,424.6831 Q3442.3332,425.5581 3442.3332,426.6519 Q3442.3332,428.0894 3442.7707,429.1363 Q3443.2239,430.1831 3444.0676,430.73 Q3444.927,431.2769 3446.2395,431.2769 Q3447.0207,431.2769 3447.7082,431.1519 Q3448.4114,431.0113 3449.4114,430.6988 L3449.4114,432.5738 Q3448.552,432.9019 3447.7864,433.0269 Q3447.0364,433.1519 3446.0207,433.1519 Q3444.0989,433.1519 3442.7864,432.355 Q3441.4895,431.5425 3440.8332,430.0738 Q3440.177,428.5894 3440.177,426.6206 Q3440.177,425.1988 3440.5676,424.0269 Q3440.9739,422.8394 3441.7551,421.9644 Q3442.5364,421.0894 3443.677,420.6206 Q3444.8176,420.1363 3446.2864,420.1363 Q3447.2395,420.1363 3448.1301,420.3394 Q3449.0364,420.5269 3449.9739,420.9956 L3449.1457,422.7769 Q3448.3645,422.4019 3447.7082,422.2144 Q3447.052,422.0113 3446.2551,422.0113 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="110.9636" x="3466.6457" y="431.912">JwtConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3377.23" x2="3634.5251" y1="442.48" y2="442.48"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="247.2951" x="3382.23" y="461.4459">role_rules : Optional[list[JwtRoleRule]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="117.1516" x="3382.23" y="480.5139">user_id_claim : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="136.2055" x="3382.23" y="499.5818">username_claim : str</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3377.23" x2="3634.5251" y1="507.6838" y2="507.6838"/>
     </g>
     <!--class src.models.config.JwtRoleRule-->
     <g id="elem_src.models.config.JwtRoleRule">
-      <rect codeLine="104" fill="#F1F1F1" height="219.6113" id="src.models.config.JwtRoleRule" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="200.5932" x="6446.58" y="353.28"/>
-      <ellipse cx="6503.9098" cy="369.28" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M6504.0192,364.8113 Q6503.0973,364.8113 6502.3629,365.1238 Q6501.6442,365.4363 6501.1442,366.03 Q6500.6442,366.6081 6500.3629,367.4831 Q6500.0973,368.3581 6500.0973,369.4519 Q6500.0973,370.8894 6500.5348,371.9363 Q6500.9879,372.9831 6501.8317,373.53 Q6502.691,374.0769 6504.0035,374.0769 Q6504.7848,374.0769 6505.4723,373.9519 Q6506.1754,373.8113 6507.1754,373.4988 L6507.1754,375.3738 Q6506.316,375.7019 6505.5504,375.8269 Q6504.8004,375.9519 6503.7848,375.9519 Q6501.8629,375.9519 6500.5504,375.155 Q6499.2535,374.3425 6498.5973,372.8738 Q6497.941,371.3894 6497.941,369.4206 Q6497.941,367.9988 6498.3317,366.8269 Q6498.7379,365.6394 6499.5192,364.7644 Q6500.3004,363.8894 6501.441,363.4206 Q6502.5817,362.9363 6504.0504,362.9363 Q6505.0035,362.9363 6505.8942,363.1394 Q6506.8004,363.3269 6507.7379,363.7956 L6506.9098,365.5769 Q6506.1285,365.2019 6505.4723,365.0144 Q6504.816,364.8113 6504.0192,364.8113 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77.4337" x="6524.4098" y="374.712">JwtRoleRule</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6447.58" x2="6646.1732" y1="385.28" y2="385.28"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="104.4256" x="6452.58" y="404.2459">compiled_regex</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86.1837" x="6452.58" y="423.3139">jsonpath : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86.1557" x="6452.58" y="442.3818">negate : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.9178" x="6452.58" y="461.4497">operator</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="89.2357" x="6452.58" y="480.5176">roles : list[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="70.8957" x="6452.58" y="499.5855">value : Any</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6447.58" x2="6646.1732" y1="507.6875" y2="507.6875"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153.4954" x="6452.58" y="526.6534">check_jsonpath() -&gt; Self</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="188.5932" x="6452.58" y="545.7214">check_regex_pattern() -&gt; Self</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="128.3515" x="6452.58" y="564.7893">check_roles() -&gt; Self</text>
+      <rect codeLine="104" fill="#F1F1F1" height="219.6113" id="src.models.config.JwtRoleRule" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="200.5932" x="6450.58" y="353.28"/>
+      <ellipse cx="6507.9098" cy="369.28" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M6508.0192,364.8113 Q6507.0973,364.8113 6506.3629,365.1238 Q6505.6442,365.4363 6505.1442,366.03 Q6504.6442,366.6081 6504.3629,367.4831 Q6504.0973,368.3581 6504.0973,369.4519 Q6504.0973,370.8894 6504.5348,371.9363 Q6504.9879,372.9831 6505.8317,373.53 Q6506.691,374.0769 6508.0035,374.0769 Q6508.7848,374.0769 6509.4723,373.9519 Q6510.1754,373.8113 6511.1754,373.4988 L6511.1754,375.3738 Q6510.316,375.7019 6509.5504,375.8269 Q6508.8004,375.9519 6507.7848,375.9519 Q6505.8629,375.9519 6504.5504,375.155 Q6503.2535,374.3425 6502.5973,372.8738 Q6501.941,371.3894 6501.941,369.4206 Q6501.941,367.9988 6502.3317,366.8269 Q6502.7379,365.6394 6503.5192,364.7644 Q6504.3004,363.8894 6505.441,363.4206 Q6506.5817,362.9363 6508.0504,362.9363 Q6509.0035,362.9363 6509.8942,363.1394 Q6510.8004,363.3269 6511.7379,363.7956 L6510.9098,365.5769 Q6510.1285,365.2019 6509.4723,365.0144 Q6508.816,364.8113 6508.0192,364.8113 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="77.4337" x="6528.4098" y="374.712">JwtRoleRule</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6451.58" x2="6650.1732" y1="385.28" y2="385.28"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="104.4256" x="6456.58" y="404.2459">compiled_regex</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86.1837" x="6456.58" y="423.3139">jsonpath : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="86.1557" x="6456.58" y="442.3818">negate : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.9178" x="6456.58" y="461.4497">operator</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="89.2357" x="6456.58" y="480.5176">roles : list[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="70.8957" x="6456.58" y="499.5855">value : Any</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6451.58" x2="6650.1732" y1="507.6875" y2="507.6875"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="153.4954" x="6456.58" y="526.6534">check_jsonpath() -&gt; Self</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="188.5932" x="6456.58" y="545.7214">check_regex_pattern() -&gt; Self</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="128.3515" x="6456.58" y="564.7893">check_roles() -&gt; Self</text>
     </g>
     <!--class src.models.config.LlamaStackConfiguration-->
     <g id="elem_src.models.config.LlamaStackConfiguration">
-      <rect codeLine="115" fill="#F1F1F1" height="143.3396" id="src.models.config.LlamaStackConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="274.219" x="1886.77" y="45.14"/>
-      <ellipse cx="1936.8198" cy="61.14" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M1936.9292,56.6712 Q1936.0073,56.6712 1935.273,56.9837 Q1934.5542,57.2962 1934.0542,57.89 Q1933.5542,58.4681 1933.273,59.3431 Q1933.0073,60.2181 1933.0073,61.3119 Q1933.0073,62.7494 1933.4448,63.7962 Q1933.898,64.8431 1934.7417,65.39 Q1935.6011,65.9369 1936.9136,65.9369 Q1937.6948,65.9369 1938.3823,65.8119 Q1939.0855,65.6712 1940.0855,65.3587 L1940.0855,67.2337 Q1939.2261,67.5619 1938.4605,67.6869 Q1937.7105,67.8119 1936.6948,67.8119 Q1934.773,67.8119 1933.4605,67.015 Q1932.1636,66.2025 1931.5073,64.7337 Q1930.8511,63.2494 1930.8511,61.2806 Q1930.8511,59.8587 1931.2417,58.6869 Q1931.648,57.4994 1932.4292,56.6244 Q1933.2105,55.7494 1934.3511,55.2806 Q1935.4917,54.7962 1936.9605,54.7962 Q1937.9136,54.7962 1938.8042,54.9994 Q1939.7105,55.1869 1940.648,55.6556 L1939.8198,57.4369 Q1939.0386,57.0619 1938.3823,56.8744 Q1937.7261,56.6712 1936.9292,56.6712 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="165.6194" x="1957.3198" y="66.572">LlamaStackConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1887.77" x2="2159.989" y1="77.14" y2="77.14"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185.4013" x="1892.77" y="96.1059">api_key : Optional[SecretStr]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="262.219" x="1892.77" y="115.1739">library_client_config_path : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="112.6296" x="1892.77" y="134.2418">url : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="240.6031" x="1892.77" y="153.3097">use_as_library_client : Optional[bool]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1887.77" x2="2159.989" y1="161.4117" y2="161.4117"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="219.8271" x="1892.77" y="180.3776">check_llama_stack_model() -&gt; Self</text>
+      <rect codeLine="115" fill="#F1F1F1" height="143.3396" id="src.models.config.LlamaStackConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="274.219" x="1890.77" y="45.14"/>
+      <ellipse cx="1940.8198" cy="61.14" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M1940.9292,56.6712 Q1940.0073,56.6712 1939.273,56.9837 Q1938.5542,57.2962 1938.0542,57.89 Q1937.5542,58.4681 1937.273,59.3431 Q1937.0073,60.2181 1937.0073,61.3119 Q1937.0073,62.7494 1937.4448,63.7962 Q1937.898,64.8431 1938.7417,65.39 Q1939.6011,65.9369 1940.9136,65.9369 Q1941.6948,65.9369 1942.3823,65.8119 Q1943.0855,65.6712 1944.0855,65.3587 L1944.0855,67.2337 Q1943.2261,67.5619 1942.4605,67.6869 Q1941.7105,67.8119 1940.6948,67.8119 Q1938.773,67.8119 1937.4605,67.015 Q1936.1636,66.2025 1935.5073,64.7337 Q1934.8511,63.2494 1934.8511,61.2806 Q1934.8511,59.8587 1935.2417,58.6869 Q1935.648,57.4994 1936.4292,56.6244 Q1937.2105,55.7494 1938.3511,55.2806 Q1939.4917,54.7962 1940.9605,54.7962 Q1941.9136,54.7962 1942.8042,54.9994 Q1943.7105,55.1869 1944.648,55.6556 L1943.8198,57.4369 Q1943.0386,57.0619 1942.3823,56.8744 Q1941.7261,56.6712 1940.9292,56.6712 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="165.6194" x="1961.3198" y="66.572">LlamaStackConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1891.77" x2="2163.989" y1="77.14" y2="77.14"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="185.4013" x="1896.77" y="96.1059">api_key : Optional[SecretStr]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="262.219" x="1896.77" y="115.1739">library_client_config_path : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="112.6296" x="1896.77" y="134.2418">url : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="240.6031" x="1896.77" y="153.3097">use_as_library_client : Optional[bool]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1891.77" x2="2163.989" y1="161.4117" y2="161.4117"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="219.8271" x="1896.77" y="180.3776">check_llama_stack_model() -&gt; Self</text>
     </g>
     <!--class src.models.config.ModelContextProtocolServer-->
     <g id="elem_src.models.config.ModelContextProtocolServer">
-      <rect codeLine="122" fill="#F1F1F1" height="105.2038" id="src.models.config.ModelContextProtocolServer" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="221.8673" x="4052.94" y="410.48"/>
-      <ellipse cx="4067.94" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M4068.0494,422.0113 Q4067.1275,422.0113 4066.3931,422.3238 Q4065.6744,422.6363 4065.1744,423.23 Q4064.6744,423.8081 4064.3931,424.6831 Q4064.1275,425.5581 4064.1275,426.6519 Q4064.1275,428.0894 4064.565,429.1363 Q4065.0181,430.1831 4065.8619,430.73 Q4066.7213,431.2769 4068.0338,431.2769 Q4068.815,431.2769 4069.5025,431.1519 Q4070.2056,431.0113 4071.2056,430.6988 L4071.2056,432.5738 Q4070.3463,432.9019 4069.5806,433.0269 Q4068.8306,433.1519 4067.815,433.1519 Q4065.8931,433.1519 4064.5806,432.355 Q4063.2838,431.5425 4062.6275,430.0738 Q4061.9713,428.5894 4061.9713,426.6206 Q4061.9713,425.1988 4062.3619,424.0269 Q4062.7681,422.8394 4063.5494,421.9644 Q4064.3306,421.0894 4065.4713,420.6206 Q4066.6119,420.1363 4068.0806,420.1363 Q4069.0338,420.1363 4069.9244,420.3394 Q4070.8306,420.5269 4071.7681,420.9956 L4070.94,422.7769 Q4070.1588,422.4019 4069.5025,422.2144 Q4068.8463,422.0113 4068.0494,422.0113 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="189.8673" x="4081.94" y="431.912">ModelContextProtocolServer</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4053.94" x2="4273.8073" y1="442.48" y2="442.48"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="4058.94" y="461.4459">name : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="102.8856" x="4058.94" y="480.5139">provider_id : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.6198" x="4058.94" y="499.5818">url : str</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4053.94" x2="4273.8073" y1="507.6838" y2="507.6838"/>
+      <rect codeLine="122" fill="#F1F1F1" height="105.2038" id="src.models.config.ModelContextProtocolServer" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="221.8673" x="4056.94" y="410.48"/>
+      <ellipse cx="4071.94" cy="426.48" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M4072.0494,422.0113 Q4071.1275,422.0113 4070.3931,422.3238 Q4069.6744,422.6363 4069.1744,423.23 Q4068.6744,423.8081 4068.3931,424.6831 Q4068.1275,425.5581 4068.1275,426.6519 Q4068.1275,428.0894 4068.565,429.1363 Q4069.0181,430.1831 4069.8619,430.73 Q4070.7213,431.2769 4072.0338,431.2769 Q4072.815,431.2769 4073.5025,431.1519 Q4074.2056,431.0113 4075.2056,430.6988 L4075.2056,432.5738 Q4074.3463,432.9019 4073.5806,433.0269 Q4072.8306,433.1519 4071.815,433.1519 Q4069.8931,433.1519 4068.5806,432.355 Q4067.2838,431.5425 4066.6275,430.0738 Q4065.9713,428.5894 4065.9713,426.6206 Q4065.9713,425.1988 4066.3619,424.0269 Q4066.7681,422.8394 4067.5494,421.9644 Q4068.3306,421.0894 4069.4713,420.6206 Q4070.6119,420.1363 4072.0806,420.1363 Q4073.0338,420.1363 4073.9244,420.3394 Q4074.8306,420.5269 4075.7681,420.9956 L4074.94,422.7769 Q4074.1588,422.4019 4073.5025,422.2144 Q4072.8463,422.0113 4072.0494,422.0113 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="189.8673" x="4085.94" y="431.912">ModelContextProtocolServer</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4057.94" x2="4277.8073" y1="442.48" y2="442.48"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="4062.94" y="461.4459">name : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="102.8856" x="4062.94" y="480.5139">provider_id : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.6198" x="4062.94" y="499.5818">url : str</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4057.94" x2="4277.8073" y1="507.6838" y2="507.6838"/>
     </g>
     <!--class src.models.config.PostgreSQLDatabaseConfiguration-->
     <g id="elem_src.models.config.PostgreSQLDatabaseConfiguration">
-      <rect codeLine="127" fill="#F1F1F1" height="238.6792" id="src.models.config.PostgreSQLDatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="262.0751" x="4309.84" y="343.75"/>
-      <ellipse cx="4324.84" cy="359.75" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M4324.9494,355.2813 Q4324.0275,355.2813 4323.2931,355.5938 Q4322.5744,355.9063 4322.0744,356.5 Q4321.5744,357.0781 4321.2931,357.9531 Q4321.0275,358.8281 4321.0275,359.9219 Q4321.0275,361.3594 4321.465,362.4063 Q4321.9181,363.4531 4322.7619,364 Q4323.6213,364.5469 4324.9338,364.5469 Q4325.715,364.5469 4326.4025,364.4219 Q4327.1056,364.2813 4328.1056,363.9688 L4328.1056,365.8438 Q4327.2463,366.1719 4326.4806,366.2969 Q4325.7306,366.4219 4324.715,366.4219 Q4322.7931,366.4219 4321.4806,365.625 Q4320.1838,364.8125 4319.5275,363.3438 Q4318.8713,361.8594 4318.8713,359.8906 Q4318.8713,358.4688 4319.2619,357.2969 Q4319.6681,356.1094 4320.4494,355.2344 Q4321.2306,354.3594 4322.3713,353.8906 Q4323.5119,353.4063 4324.9806,353.4063 Q4325.9338,353.4063 4326.8244,353.6094 Q4327.7306,353.7969 4328.6681,354.2656 L4327.84,356.0469 Q4327.0588,355.6719 4326.4025,355.4844 Q4325.7463,355.2813 4324.9494,355.2813 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="230.0751" x="4338.84" y="365.182">PostgreSQLDatabaseConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4310.84" x2="4570.9151" y1="375.75" y2="375.75"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="212.0852" x="4315.84" y="394.7159">ca_cert_path : Optional[FilePath]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="45.7938" x="4315.84" y="413.7839">db : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="118.1456" x="4315.84" y="432.8518">gss_encmode : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.4558" x="4315.84" y="451.9197">host : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="169.8614" x="4315.84" y="470.9876">namespace : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="134.3295" x="4315.84" y="490.0555">password : SecretStr</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="108.1356" x="4315.84" y="509.1234">port : Annotated</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="89.8797" x="4315.84" y="528.1914">ssl_mode : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.6098" x="4315.84" y="547.2593">user : str</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4310.84" x2="4570.9151" y1="555.3613" y2="555.3613"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="248.891" x="4315.84" y="574.3272">check_postgres_configuration() -&gt; Self</text>
+      <rect codeLine="127" fill="#F1F1F1" height="238.6792" id="src.models.config.PostgreSQLDatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="262.0751" x="4313.84" y="343.75"/>
+      <ellipse cx="4328.84" cy="359.75" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M4328.9494,355.2813 Q4328.0275,355.2813 4327.2931,355.5938 Q4326.5744,355.9063 4326.0744,356.5 Q4325.5744,357.0781 4325.2931,357.9531 Q4325.0275,358.8281 4325.0275,359.9219 Q4325.0275,361.3594 4325.465,362.4063 Q4325.9181,363.4531 4326.7619,364 Q4327.6213,364.5469 4328.9338,364.5469 Q4329.715,364.5469 4330.4025,364.4219 Q4331.1056,364.2813 4332.1056,363.9688 L4332.1056,365.8438 Q4331.2463,366.1719 4330.4806,366.2969 Q4329.7306,366.4219 4328.715,366.4219 Q4326.7931,366.4219 4325.4806,365.625 Q4324.1838,364.8125 4323.5275,363.3438 Q4322.8713,361.8594 4322.8713,359.8906 Q4322.8713,358.4688 4323.2619,357.2969 Q4323.6681,356.1094 4324.4494,355.2344 Q4325.2306,354.3594 4326.3713,353.8906 Q4327.5119,353.4063 4328.9806,353.4063 Q4329.9338,353.4063 4330.8244,353.6094 Q4331.7306,353.7969 4332.6681,354.2656 L4331.84,356.0469 Q4331.0588,355.6719 4330.4025,355.4844 Q4329.7463,355.2813 4328.9494,355.2813 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="230.0751" x="4342.84" y="365.182">PostgreSQLDatabaseConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4314.84" x2="4574.9151" y1="375.75" y2="375.75"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="212.0852" x="4319.84" y="394.7159">ca_cert_path : Optional[FilePath]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="111.8036" x="4319.84" y="413.7839">db : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="184.1553" x="4319.84" y="432.8518">gss_encmode : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123.4656" x="4319.84" y="451.9197">host : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="169.8614" x="4319.84" y="470.9876">namespace : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="200.3393" x="4319.84" y="490.0555">password : Optional[SecretStr]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="174.3414" x="4319.84" y="509.1234">port : Optional[PositiveInt]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="155.8894" x="4319.84" y="528.1914">ssl_mode : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123.6196" x="4319.84" y="547.2593">user : Optional[str]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4314.84" x2="4574.9151" y1="555.3613" y2="555.3613"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="248.891" x="4319.84" y="574.3272">check_postgres_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.QuotaHandlersConfiguration-->
     <g id="elem_src.models.config.QuotaHandlersConfiguration">
-      <rect codeLine="139" fill="#F1F1F1" height="143.3396" id="src.models.config.QuotaHandlersConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="376.9507" x="4607.4" y="391.42"/>
-      <ellipse cx="4695.8587" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M4695.9681,402.9513 Q4695.0462,402.9513 4694.3118,403.2638 Q4693.5931,403.5763 4693.0931,404.17 Q4692.5931,404.7481 4692.3118,405.6231 Q4692.0462,406.4981 4692.0462,407.5919 Q4692.0462,409.0294 4692.4837,410.0763 Q4692.9368,411.1231 4693.7806,411.67 Q4694.64,412.2169 4695.9525,412.2169 Q4696.7337,412.2169 4697.4212,412.0919 Q4698.1243,411.9513 4699.1243,411.6388 L4699.1243,413.5138 Q4698.265,413.8419 4697.4993,413.9669 Q4696.7493,414.0919 4695.7337,414.0919 Q4693.8118,414.0919 4692.4993,413.295 Q4691.2025,412.4825 4690.5462,411.0138 Q4689.89,409.5294 4689.89,407.5606 Q4689.89,406.1388 4690.2806,404.9669 Q4690.6868,403.7794 4691.4681,402.9044 Q4692.2493,402.0294 4693.39,401.5606 Q4694.5306,401.0763 4695.9993,401.0763 Q4696.9525,401.0763 4697.8431,401.2794 Q4698.7493,401.4669 4699.6868,401.9356 L4698.8587,403.7169 Q4698.0775,403.3419 4697.4212,403.1544 Q4696.765,402.9513 4695.9681,402.9513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="191.5333" x="4716.3587" y="412.852">QuotaHandlersConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4608.4" x2="4983.3507" y1="423.42" y2="423.42"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180.1093" x="4613.4" y="442.3859">enable_token_history : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="333.0308" x="4613.4" y="461.4539">limiters : Optional[list[QuotaLimiterConfiguration]]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="4613.4" y="480.5218">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="339.1208" x="4613.4" y="499.5897">scheduler : Optional[QuotaSchedulerConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="4613.4" y="518.6576">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="4608.4" x2="4983.3507" y1="526.7596" y2="526.7596"/>
+      <rect codeLine="139" fill="#F1F1F1" height="143.3396" id="src.models.config.QuotaHandlersConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="376.9507" x="4611.4" y="391.42"/>
+      <ellipse cx="4699.8587" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M4699.9681,402.9513 Q4699.0462,402.9513 4698.3118,403.2638 Q4697.5931,403.5763 4697.0931,404.17 Q4696.5931,404.7481 4696.3118,405.6231 Q4696.0462,406.4981 4696.0462,407.5919 Q4696.0462,409.0294 4696.4837,410.0763 Q4696.9368,411.1231 4697.7806,411.67 Q4698.64,412.2169 4699.9525,412.2169 Q4700.7337,412.2169 4701.4212,412.0919 Q4702.1243,411.9513 4703.1243,411.6388 L4703.1243,413.5138 Q4702.265,413.8419 4701.4993,413.9669 Q4700.7493,414.0919 4699.7337,414.0919 Q4697.8118,414.0919 4696.4993,413.295 Q4695.2025,412.4825 4694.5462,411.0138 Q4693.89,409.5294 4693.89,407.5606 Q4693.89,406.1388 4694.2806,404.9669 Q4694.6868,403.7794 4695.4681,402.9044 Q4696.2493,402.0294 4697.39,401.5606 Q4698.5306,401.0763 4699.9993,401.0763 Q4700.9525,401.0763 4701.8431,401.2794 Q4702.7493,401.4669 4703.6868,401.9356 L4702.8587,403.7169 Q4702.0775,403.3419 4701.4212,403.1544 Q4700.765,402.9513 4699.9681,402.9513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="191.5333" x="4720.3587" y="412.852">QuotaHandlersConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4612.4" x2="4987.3507" y1="423.42" y2="423.42"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180.1093" x="4617.4" y="442.3859">enable_token_history : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="333.0308" x="4617.4" y="461.4539">limiters : Optional[list[QuotaLimiterConfiguration]]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="364.9507" x="4617.4" y="480.5218">postgres : Optional[PostgreSQLDatabaseConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="339.1208" x="4617.4" y="499.5897">scheduler : Optional[QuotaSchedulerConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="308.1809" x="4617.4" y="518.6576">sqlite : Optional[SQLiteDatabaseConfiguration]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="4612.4" x2="4987.3507" y1="526.7596" y2="526.7596"/>
     </g>
     <!--class src.models.config.QuotaLimiterConfiguration-->
     <g id="elem_src.models.config.QuotaLimiterConfiguration">
-      <rect codeLine="146" fill="#F1F1F1" height="143.3396" id="src.models.config.QuotaLimiterConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="293.287" x="5019.23" y="391.42"/>
-      <ellipse cx="5072.4088" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M5072.5182,402.9513 Q5071.5963,402.9513 5070.8619,403.2638 Q5070.1432,403.5763 5069.6432,404.17 Q5069.1432,404.7481 5068.8619,405.6231 Q5068.5963,406.4981 5068.5963,407.5919 Q5068.5963,409.0294 5069.0338,410.0763 Q5069.4869,411.1231 5070.3307,411.67 Q5071.1901,412.2169 5072.5026,412.2169 Q5073.2838,412.2169 5073.9713,412.0919 Q5074.6744,411.9513 5075.6744,411.6388 L5075.6744,413.5138 Q5074.8151,413.8419 5074.0494,413.9669 Q5073.2994,414.0919 5072.2838,414.0919 Q5070.3619,414.0919 5069.0494,413.295 Q5067.7526,412.4825 5067.0963,411.0138 Q5066.4401,409.5294 5066.4401,407.5606 Q5066.4401,406.1388 5066.8307,404.9669 Q5067.2369,403.7794 5068.0182,402.9044 Q5068.7994,402.0294 5069.9401,401.5606 Q5071.0807,401.0763 5072.5494,401.0763 Q5073.5026,401.0763 5074.3932,401.2794 Q5075.2994,401.4669 5076.2369,401.9356 L5075.4088,403.7169 Q5074.6276,403.3419 5073.9713,403.1544 Q5073.3151,402.9513 5072.5182,402.9513 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="178.4293" x="5092.9088" y="412.852">QuotaLimiterConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5020.23" x2="5311.517" y1="423.42" y2="423.42"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="161.0834" x="5025.23" y="442.3859">initial_quota : Annotated</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="5025.23" y="461.4539">name : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71.5537" x="5025.23" y="480.5218">period : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180.1933" x="5025.23" y="499.5897">quota_increase : Annotated</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="281.287" x="5025.23" y="518.6576">type : Literal['user_limiter', 'cluster_limiter']</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5020.23" x2="5311.517" y1="526.7596" y2="526.7596"/>
+      <rect codeLine="146" fill="#F1F1F1" height="143.3396" id="src.models.config.QuotaLimiterConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="293.287" x="5023.23" y="391.42"/>
+      <ellipse cx="5076.4088" cy="407.42" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M5076.5182,402.9513 Q5075.5963,402.9513 5074.8619,403.2638 Q5074.1432,403.5763 5073.6432,404.17 Q5073.1432,404.7481 5072.8619,405.6231 Q5072.5963,406.4981 5072.5963,407.5919 Q5072.5963,409.0294 5073.0338,410.0763 Q5073.4869,411.1231 5074.3307,411.67 Q5075.1901,412.2169 5076.5026,412.2169 Q5077.2838,412.2169 5077.9713,412.0919 Q5078.6744,411.9513 5079.6744,411.6388 L5079.6744,413.5138 Q5078.8151,413.8419 5078.0494,413.9669 Q5077.2994,414.0919 5076.2838,414.0919 Q5074.3619,414.0919 5073.0494,413.295 Q5071.7526,412.4825 5071.0963,411.0138 Q5070.4401,409.5294 5070.4401,407.5606 Q5070.4401,406.1388 5070.8307,404.9669 Q5071.2369,403.7794 5072.0182,402.9044 Q5072.7994,402.0294 5073.9401,401.5606 Q5075.0807,401.0763 5076.5494,401.0763 Q5077.5026,401.0763 5078.3932,401.2794 Q5079.2994,401.4669 5080.2369,401.9356 L5079.4088,403.7169 Q5078.6276,403.3419 5077.9713,403.1544 Q5077.3151,402.9513 5076.5182,402.9513 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="178.4293" x="5096.9088" y="412.852">QuotaLimiterConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5024.23" x2="5315.517" y1="423.42" y2="423.42"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="161.0834" x="5029.23" y="442.3859">initial_quota : Annotated</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.0658" x="5029.23" y="461.4539">name : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71.5537" x="5029.23" y="480.5218">period : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="180.1933" x="5029.23" y="499.5897">quota_increase : Annotated</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="281.287" x="5029.23" y="518.6576">type : Literal['user_limiter', 'cluster_limiter']</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5024.23" x2="5315.517" y1="526.7596" y2="526.7596"/>
     </g>
     <!--class src.models.config.QuotaSchedulerConfiguration-->
     <g id="elem_src.models.config.QuotaSchedulerConfiguration">
-      <rect codeLine="153" fill="#F1F1F1" height="67.0679" id="src.models.config.QuotaSchedulerConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="229.5532" x="6766.1" y="83.27"/>
-      <ellipse cx="6781.1" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M6781.2094,94.8012 Q6780.2875,94.8012 6779.5531,95.1137 Q6778.8344,95.4262 6778.3344,96.02 Q6777.8344,96.5981 6777.5531,97.4731 Q6777.2875,98.3481 6777.2875,99.4419 Q6777.2875,100.8794 6777.725,101.9262 Q6778.1781,102.9731 6779.0219,103.52 Q6779.8813,104.0669 6781.1938,104.0669 Q6781.975,104.0669 6782.6625,103.9419 Q6783.3656,103.8012 6784.3656,103.4887 L6784.3656,105.3637 Q6783.5063,105.6919 6782.7406,105.8169 Q6781.9906,105.9419 6780.975,105.9419 Q6779.0531,105.9419 6777.7406,105.145 Q6776.4438,104.3325 6775.7875,102.8637 Q6775.1313,101.3794 6775.1313,99.4106 Q6775.1313,97.9887 6775.5219,96.8169 Q6775.9281,95.6294 6776.7094,94.7544 Q6777.4906,93.8794 6778.6313,93.4106 Q6779.7719,92.9262 6781.2406,92.9262 Q6782.1938,92.9262 6783.0844,93.1294 Q6783.9906,93.3169 6784.9281,93.7856 L6784.1,95.5669 Q6783.3188,95.1919 6782.6625,95.0044 Q6782.0063,94.8012 6781.2094,94.8012 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197.5532" x="6795.1" y="104.702">QuotaSchedulerConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6767.1" x2="6994.6532" y1="115.27" y2="115.27"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123.1995" x="6772.1" y="134.2359">period : Annotated</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6767.1" x2="6994.6532" y1="142.3379" y2="142.3379"/>
+      <rect codeLine="153" fill="#F1F1F1" height="67.0679" id="src.models.config.QuotaSchedulerConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="229.5532" x="6770.1" y="83.27"/>
+      <ellipse cx="6785.1" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M6785.2094,94.8012 Q6784.2875,94.8012 6783.5531,95.1137 Q6782.8344,95.4262 6782.3344,96.02 Q6781.8344,96.5981 6781.5531,97.4731 Q6781.2875,98.3481 6781.2875,99.4419 Q6781.2875,100.8794 6781.725,101.9262 Q6782.1781,102.9731 6783.0219,103.52 Q6783.8813,104.0669 6785.1938,104.0669 Q6785.975,104.0669 6786.6625,103.9419 Q6787.3656,103.8012 6788.3656,103.4887 L6788.3656,105.3637 Q6787.5063,105.6919 6786.7406,105.8169 Q6785.9906,105.9419 6784.975,105.9419 Q6783.0531,105.9419 6781.7406,105.145 Q6780.4438,104.3325 6779.7875,102.8637 Q6779.1313,101.3794 6779.1313,99.4106 Q6779.1313,97.9887 6779.5219,96.8169 Q6779.9281,95.6294 6780.7094,94.7544 Q6781.4906,93.8794 6782.6313,93.4106 Q6783.7719,92.9262 6785.2406,92.9262 Q6786.1938,92.9262 6787.0844,93.1294 Q6787.9906,93.3169 6788.9281,93.7856 L6788.1,95.5669 Q6787.3188,95.1919 6786.6625,95.0044 Q6786.0063,94.8012 6785.2094,94.8012 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="197.5532" x="6799.1" y="104.702">QuotaSchedulerConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6771.1" x2="6998.6532" y1="115.27" y2="115.27"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="123.1995" x="6776.1" y="134.2359">period : Annotated</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6771.1" x2="6998.6532" y1="142.3379" y2="142.3379"/>
     </g>
     <!--class src.models.config.RHIdentityConfiguration-->
     <g id="elem_src.models.config.RHIdentityConfiguration">
-      <rect codeLine="156" fill="#F1F1F1" height="67.0679" id="src.models.config.RHIdentityConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="281.009" x="5347.37" y="429.55"/>
-      <ellipse cx="5403.1598" cy="445.55" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M5403.2692,441.0813 Q5402.3473,441.0813 5401.6129,441.3938 Q5400.8942,441.7063 5400.3942,442.3 Q5399.8942,442.8781 5399.6129,443.7531 Q5399.3473,444.6281 5399.3473,445.7219 Q5399.3473,447.1594 5399.7848,448.2063 Q5400.2379,449.2531 5401.0817,449.8 Q5401.9411,450.3469 5403.2536,450.3469 Q5404.0348,450.3469 5404.7223,450.2219 Q5405.4254,450.0813 5406.4254,449.7688 L5406.4254,451.6438 Q5405.5661,451.9719 5404.8004,452.0969 Q5404.0504,452.2219 5403.0348,452.2219 Q5401.1129,452.2219 5399.8004,451.425 Q5398.5036,450.6125 5397.8473,449.1438 Q5397.1911,447.6594 5397.1911,445.6906 Q5397.1911,444.2688 5397.5817,443.0969 Q5397.9879,441.9094 5398.7692,441.0344 Q5399.5504,440.1594 5400.6911,439.6906 Q5401.8317,439.2063 5403.3004,439.2063 Q5404.2536,439.2063 5405.1442,439.4094 Q5406.0504,439.5969 5406.9879,440.0656 L5406.1598,441.8469 Q5405.3786,441.4719 5404.7223,441.2844 Q5404.0661,441.0813 5403.2692,441.0813 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160.9294" x="5423.6598" y="450.982">RHIdentityConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5348.37" x2="5627.379" y1="461.55" y2="461.55"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="269.009" x="5353.37" y="480.5159">required_entitlements : Optional[list[str]]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5348.37" x2="5627.379" y1="488.6179" y2="488.6179"/>
+      <rect codeLine="156" fill="#F1F1F1" height="67.0679" id="src.models.config.RHIdentityConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="281.009" x="5351.37" y="429.55"/>
+      <ellipse cx="5407.1598" cy="445.55" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M5407.2692,441.0813 Q5406.3473,441.0813 5405.6129,441.3938 Q5404.8942,441.7063 5404.3942,442.3 Q5403.8942,442.8781 5403.6129,443.7531 Q5403.3473,444.6281 5403.3473,445.7219 Q5403.3473,447.1594 5403.7848,448.2063 Q5404.2379,449.2531 5405.0817,449.8 Q5405.9411,450.3469 5407.2536,450.3469 Q5408.0348,450.3469 5408.7223,450.2219 Q5409.4254,450.0813 5410.4254,449.7688 L5410.4254,451.6438 Q5409.5661,451.9719 5408.8004,452.0969 Q5408.0504,452.2219 5407.0348,452.2219 Q5405.1129,452.2219 5403.8004,451.425 Q5402.5036,450.6125 5401.8473,449.1438 Q5401.1911,447.6594 5401.1911,445.6906 Q5401.1911,444.2688 5401.5817,443.0969 Q5401.9879,441.9094 5402.7692,441.0344 Q5403.5504,440.1594 5404.6911,439.6906 Q5405.8317,439.2063 5407.3004,439.2063 Q5408.2536,439.2063 5409.1442,439.4094 Q5410.0504,439.5969 5410.9879,440.0656 L5410.1598,441.8469 Q5409.3786,441.4719 5408.7223,441.2844 Q5408.0661,441.0813 5407.2692,441.0813 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="160.9294" x="5427.6598" y="450.982">RHIdentityConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5352.37" x2="5631.379" y1="461.55" y2="461.55"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="269.009" x="5357.37" y="480.5159">required_entitlements : Optional[list[str]]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5352.37" x2="5631.379" y1="488.6179" y2="488.6179"/>
     </g>
     <!--class src.models.config.SQLiteDatabaseConfiguration-->
     <g id="elem_src.models.config.SQLiteDatabaseConfiguration">
-      <rect codeLine="159" fill="#F1F1F1" height="67.0679" id="src.models.config.SQLiteDatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="227.6493" x="5643.05" y="83.27"/>
-      <ellipse cx="5658.05" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M5658.1594,94.8012 Q5657.2375,94.8012 5656.5031,95.1137 Q5655.7844,95.4262 5655.2844,96.02 Q5654.7844,96.5981 5654.5031,97.4731 Q5654.2375,98.3481 5654.2375,99.4419 Q5654.2375,100.8794 5654.675,101.9262 Q5655.1281,102.9731 5655.9719,103.52 Q5656.8313,104.0669 5658.1438,104.0669 Q5658.925,104.0669 5659.6125,103.9419 Q5660.3156,103.8012 5661.3156,103.4887 L5661.3156,105.3637 Q5660.4563,105.6919 5659.6906,105.8169 Q5658.9406,105.9419 5657.925,105.9419 Q5656.0031,105.9419 5654.6906,105.145 Q5653.3938,104.3325 5652.7375,102.8637 Q5652.0813,101.3794 5652.0813,99.4106 Q5652.0813,97.9887 5652.4719,96.8169 Q5652.8781,95.6294 5653.6594,94.7544 Q5654.4406,93.8794 5655.5813,93.4106 Q5656.7219,92.9262 5658.1906,92.9262 Q5659.1438,92.9262 5660.0344,93.1294 Q5660.9406,93.3169 5661.8781,93.7856 L5661.05,95.5669 Q5660.2688,95.1919 5659.6125,95.0044 Q5658.9563,94.8012 5658.1594,94.8012 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="195.6493" x="5672.05" y="104.702">SQLiteDatabaseConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5644.05" x2="5869.6993" y1="115.27" y2="115.27"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="148.1895" x="5649.05" y="134.2359">db_path : Optional[str]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="5644.05" x2="5869.6993" y1="142.3379" y2="142.3379"/>
+      <rect codeLine="159" fill="#F1F1F1" height="67.0679" id="src.models.config.SQLiteDatabaseConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="227.6493" x="5647.05" y="83.27"/>
+      <ellipse cx="5662.05" cy="99.27" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M5662.1594,94.8012 Q5661.2375,94.8012 5660.5031,95.1137 Q5659.7844,95.4262 5659.2844,96.02 Q5658.7844,96.5981 5658.5031,97.4731 Q5658.2375,98.3481 5658.2375,99.4419 Q5658.2375,100.8794 5658.675,101.9262 Q5659.1281,102.9731 5659.9719,103.52 Q5660.8313,104.0669 5662.1438,104.0669 Q5662.925,104.0669 5663.6125,103.9419 Q5664.3156,103.8012 5665.3156,103.4887 L5665.3156,105.3637 Q5664.4563,105.6919 5663.6906,105.8169 Q5662.9406,105.9419 5661.925,105.9419 Q5660.0031,105.9419 5658.6906,105.145 Q5657.3938,104.3325 5656.7375,102.8637 Q5656.0813,101.3794 5656.0813,99.4106 Q5656.0813,97.9887 5656.4719,96.8169 Q5656.8781,95.6294 5657.6594,94.7544 Q5658.4406,93.8794 5659.5813,93.4106 Q5660.7219,92.9262 5662.1906,92.9262 Q5663.1438,92.9262 5664.0344,93.1294 Q5664.9406,93.3169 5665.8781,93.7856 L5665.05,95.5669 Q5664.2688,95.1919 5663.6125,95.0044 Q5662.9563,94.8012 5662.1594,94.8012 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="195.6493" x="5676.05" y="104.702">SQLiteDatabaseConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5648.05" x2="5873.6993" y1="115.27" y2="115.27"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="148.1895" x="5653.05" y="134.2359">db_path : Optional[str]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="5648.05" x2="5873.6993" y1="142.3379" y2="142.3379"/>
     </g>
     <!--class src.models.config.ServiceConfiguration-->
     <g id="elem_src.models.config.ServiceConfiguration">
-      <rect codeLine="162" fill="#F1F1F1" height="219.6113" id="src.models.config.ServiceConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="265.399" x="1494.18" y="7"/>
-      <ellipse cx="1553.7358" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M1553.8452,18.5313 Q1552.9233,18.5313 1552.1889,18.8438 Q1551.4702,19.1563 1550.9702,19.75 Q1550.4702,20.3281 1550.1889,21.2031 Q1549.9233,22.0781 1549.9233,23.1719 Q1549.9233,24.6094 1550.3608,25.6563 Q1550.8139,26.7031 1551.6577,27.25 Q1552.517,27.7969 1553.8295,27.7969 Q1554.6108,27.7969 1555.2983,27.6719 Q1556.0014,27.5313 1557.0014,27.2188 L1557.0014,29.0938 Q1556.142,29.4219 1555.3764,29.5469 Q1554.6264,29.6719 1553.6108,29.6719 Q1551.6889,29.6719 1550.3764,28.875 Q1549.0795,28.0625 1548.4233,26.5938 Q1547.767,25.1094 1547.767,23.1406 Q1547.767,21.7188 1548.1577,20.5469 Q1548.5639,19.3594 1549.3452,18.4844 Q1550.1264,17.6094 1551.267,17.1406 Q1552.4077,16.6563 1553.8764,16.6563 Q1554.8295,16.6563 1555.7202,16.8594 Q1556.6264,17.0469 1557.5639,17.5156 L1556.7358,19.2969 Q1555.9545,18.9219 1555.2983,18.7344 Q1554.642,18.5313 1553.8452,18.5313 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="137.7875" x="1574.2358" y="28.432">ServiceConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1495.18" x2="1758.579" y1="39" y2="39"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109.7036" x="1500.18" y="57.9659">access_log : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="129.7515" x="1500.18" y="77.0339">auth_enabled : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="100.1556" x="1500.18" y="96.1018">color_log : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="231.9791" x="1500.18" y="115.1697">cors : Optional[CORSConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.4558" x="1500.18" y="134.2376">host : str</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="108.1356" x="1500.18" y="153.3055">port : Annotated</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="253.399" x="1500.18" y="172.3734">tls_config : Optional[TLSConfiguration]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133.3355" x="1500.18" y="191.4414">workers : Annotated</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="1495.18" x2="1758.579" y1="199.5433" y2="199.5433"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="236.781" x="1500.18" y="218.5093">check_service_configuration() -&gt; Self</text>
+      <rect codeLine="162" fill="#F1F1F1" height="219.6113" id="src.models.config.ServiceConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="265.399" x="1498.18" y="7"/>
+      <ellipse cx="1557.7358" cy="23" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M1557.8452,18.5313 Q1556.9233,18.5313 1556.1889,18.8438 Q1555.4702,19.1563 1554.9702,19.75 Q1554.4702,20.3281 1554.1889,21.2031 Q1553.9233,22.0781 1553.9233,23.1719 Q1553.9233,24.6094 1554.3608,25.6563 Q1554.8139,26.7031 1555.6577,27.25 Q1556.517,27.7969 1557.8295,27.7969 Q1558.6108,27.7969 1559.2983,27.6719 Q1560.0014,27.5313 1561.0014,27.2188 L1561.0014,29.0938 Q1560.142,29.4219 1559.3764,29.5469 Q1558.6264,29.6719 1557.6108,29.6719 Q1555.6889,29.6719 1554.3764,28.875 Q1553.0795,28.0625 1552.4233,26.5938 Q1551.767,25.1094 1551.767,23.1406 Q1551.767,21.7188 1552.1577,20.5469 Q1552.5639,19.3594 1553.3452,18.4844 Q1554.1264,17.6094 1555.267,17.1406 Q1556.4077,16.6563 1557.8764,16.6563 Q1558.8295,16.6563 1559.7202,16.8594 Q1560.6264,17.0469 1561.5639,17.5156 L1560.7358,19.2969 Q1559.9545,18.9219 1559.2983,18.7344 Q1558.642,18.5313 1557.8452,18.5313 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="137.7875" x="1578.2358" y="28.432">ServiceConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1499.18" x2="1762.579" y1="39" y2="39"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="109.7036" x="1504.18" y="57.9659">access_log : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="129.7515" x="1504.18" y="77.0339">auth_enabled : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="100.1556" x="1504.18" y="96.1018">color_log : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="231.9791" x="1504.18" y="115.1697">cors : Optional[CORSConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.4558" x="1504.18" y="134.2376">host : str</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="108.1356" x="1504.18" y="153.3055">port : Annotated</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="253.399" x="1504.18" y="172.3734">tls_config : Optional[TLSConfiguration]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="133.3355" x="1504.18" y="191.4414">workers : Annotated</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="1499.18" x2="1762.579" y1="199.5433" y2="199.5433"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="236.781" x="1504.18" y="218.5093">check_service_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.TLSConfiguration-->
     <g id="elem_src.models.config.TLSConfiguration">
-      <rect codeLine="173" fill="#F1F1F1" height="124.2717" id="src.models.config.TLSConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="264.4471" x="6146.65" y="400.95"/>
-      <ellipse cx="6217.6787" cy="416.95" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M6217.7881,412.4813 Q6216.8662,412.4813 6216.1319,412.7938 Q6215.4131,413.1063 6214.9131,413.7 Q6214.4131,414.2781 6214.1319,415.1531 Q6213.8662,416.0281 6213.8662,417.1219 Q6213.8662,418.5594 6214.3037,419.6063 Q6214.7569,420.6531 6215.6006,421.2 Q6216.46,421.7469 6217.7725,421.7469 Q6218.5537,421.7469 6219.2412,421.6219 Q6219.9444,421.4813 6220.9444,421.1688 L6220.9444,423.0438 Q6220.085,423.3719 6219.3194,423.4969 Q6218.5694,423.6219 6217.5537,423.6219 Q6215.6319,423.6219 6214.3194,422.825 Q6213.0225,422.0125 6212.3662,420.5438 Q6211.71,419.0594 6211.71,417.0906 Q6211.71,415.6688 6212.1006,414.4969 Q6212.5069,413.3094 6213.2881,412.4344 Q6214.0694,411.5594 6215.21,411.0906 Q6216.3506,410.6063 6217.8194,410.6063 Q6218.7725,410.6063 6219.6631,410.8094 Q6220.5694,410.9969 6221.5069,411.4656 L6220.6787,413.2469 Q6219.8975,412.8719 6219.2412,412.6844 Q6218.585,412.4813 6217.7881,412.4813 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113.8896" x="6238.1787" y="422.382">TLSConfiguration</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6147.65" x2="6410.0971" y1="432.95" y2="432.95"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="252.4471" x="6152.65" y="451.9159">tls_certificate_path : Optional[FilePath]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="243.5151" x="6152.65" y="470.9839">tls_key_password : Optional[FilePath]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="209.9432" x="6152.65" y="490.0518">tls_key_path : Optional[FilePath]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="6147.65" x2="6410.0971" y1="498.1538" y2="498.1538"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="206.4292" x="6152.65" y="517.1197">check_tls_configuration() -&gt; Self</text>
+      <rect codeLine="173" fill="#F1F1F1" height="124.2717" id="src.models.config.TLSConfiguration" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="264.4471" x="6150.65" y="400.95"/>
+      <ellipse cx="6221.6787" cy="416.95" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M6221.7881,412.4813 Q6220.8662,412.4813 6220.1319,412.7938 Q6219.4131,413.1063 6218.9131,413.7 Q6218.4131,414.2781 6218.1319,415.1531 Q6217.8662,416.0281 6217.8662,417.1219 Q6217.8662,418.5594 6218.3037,419.6063 Q6218.7569,420.6531 6219.6006,421.2 Q6220.46,421.7469 6221.7725,421.7469 Q6222.5537,421.7469 6223.2412,421.6219 Q6223.9444,421.4813 6224.9444,421.1688 L6224.9444,423.0438 Q6224.085,423.3719 6223.3194,423.4969 Q6222.5694,423.6219 6221.5537,423.6219 Q6219.6319,423.6219 6218.3194,422.825 Q6217.0225,422.0125 6216.3662,420.5438 Q6215.71,419.0594 6215.71,417.0906 Q6215.71,415.6688 6216.1006,414.4969 Q6216.5069,413.3094 6217.2881,412.4344 Q6218.0694,411.5594 6219.21,411.0906 Q6220.3506,410.6063 6221.8194,410.6063 Q6222.7725,410.6063 6223.6631,410.8094 Q6224.5694,410.9969 6225.5069,411.4656 L6224.6787,413.2469 Q6223.8975,412.8719 6223.2412,412.6844 Q6222.585,412.4813 6221.7881,412.4813 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="113.8896" x="6242.1787" y="422.382">TLSConfiguration</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6151.65" x2="6414.0971" y1="432.95" y2="432.95"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="252.4471" x="6156.65" y="451.9159">tls_certificate_path : Optional[FilePath]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="243.5151" x="6156.65" y="470.9839">tls_key_password : Optional[FilePath]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="209.9432" x="6156.65" y="490.0518">tls_key_path : Optional[FilePath]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="6151.65" x2="6414.0971" y1="498.1538" y2="498.1538"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="206.4292" x="6156.65" y="517.1197">check_tls_configuration() -&gt; Self</text>
     </g>
     <!--class src.models.config.UserDataCollection-->
     <g id="elem_src.models.config.UserDataCollection">
-      <rect codeLine="179" fill="#F1F1F1" height="143.3396" id="src.models.config.UserDataCollection" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="357.5186" x="3059.12" y="45.14"/>
-      <ellipse cx="3170.3565" cy="61.14" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
-      <path d="M3170.4659,56.6712 Q3169.544,56.6712 3168.8096,56.9837 Q3168.0909,57.2962 3167.5909,57.89 Q3167.0909,58.4681 3166.8096,59.3431 Q3166.544,60.2181 3166.544,61.3119 Q3166.544,62.7494 3166.9815,63.7962 Q3167.4346,64.8431 3168.2784,65.39 Q3169.1378,65.9369 3170.4503,65.9369 Q3171.2315,65.9369 3171.919,65.8119 Q3172.6221,65.6712 3173.6221,65.3587 L3173.6221,67.2337 Q3172.7628,67.5619 3171.9971,67.6869 Q3171.2471,67.8119 3170.2315,67.8119 Q3168.3096,67.8119 3166.9971,67.015 Q3165.7003,66.2025 3165.044,64.7337 Q3164.3878,63.2494 3164.3878,61.2806 Q3164.3878,59.8587 3164.7784,58.6869 Q3165.1846,57.4994 3165.9659,56.6244 Q3166.7471,55.7494 3167.8878,55.2806 Q3169.0284,54.7962 3170.4971,54.7962 Q3171.4503,54.7962 3172.3409,54.9994 Q3173.2471,55.1869 3174.1846,55.6556 L3173.3565,57.4369 Q3172.5753,57.0619 3171.919,56.8744 Q3171.2628,56.6712 3170.4659,56.6712 Z " fill="#000000"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="126.5455" x="3190.8565" y="66.572">UserDataCollection</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3060.12" x2="3415.6386" y1="77.14" y2="77.14"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="159.4174" x="3065.12" y="96.1059">feedback_enabled : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="211.0492" x="3065.12" y="115.1739">feedback_storage : Optional[str]</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="170.0714" x="3065.12" y="134.2418">transcripts_enabled : bool</text>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="221.7032" x="3065.12" y="153.3097">transcripts_storage : Optional[str]</text>
-      <line style="stroke:#181818;stroke-width:0.5;" x1="3060.12" x2="3415.6386" y1="161.4117" y2="161.4117"/>
-      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="345.5186" x="3065.12" y="180.3776">check_storage_location_is_set_when_needed() -&gt; Self</text>
+      <rect codeLine="179" fill="#F1F1F1" height="143.3396" id="src.models.config.UserDataCollection" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="357.5186" x="3063.12" y="45.14"/>
+      <ellipse cx="3174.3565" cy="61.14" fill="#ADD1B2" rx="11" ry="11" style="stroke:#181818;stroke-width:1.0;"/>
+      <path d="M3174.4659,56.6712 Q3173.544,56.6712 3172.8096,56.9837 Q3172.0909,57.2962 3171.5909,57.89 Q3171.0909,58.4681 3170.8096,59.3431 Q3170.544,60.2181 3170.544,61.3119 Q3170.544,62.7494 3170.9815,63.7962 Q3171.4346,64.8431 3172.2784,65.39 Q3173.1378,65.9369 3174.4503,65.9369 Q3175.2315,65.9369 3175.919,65.8119 Q3176.6221,65.6712 3177.6221,65.3587 L3177.6221,67.2337 Q3176.7628,67.5619 3175.9971,67.6869 Q3175.2471,67.8119 3174.2315,67.8119 Q3172.3096,67.8119 3170.9971,67.015 Q3169.7003,66.2025 3169.044,64.7337 Q3168.3878,63.2494 3168.3878,61.2806 Q3168.3878,59.8587 3168.7784,58.6869 Q3169.1846,57.4994 3169.9659,56.6244 Q3170.7471,55.7494 3171.8878,55.2806 Q3173.0284,54.7962 3174.4971,54.7962 Q3175.4503,54.7962 3176.3409,54.9994 Q3177.2471,55.1869 3178.1846,55.6556 L3177.3565,57.4369 Q3176.5753,57.0619 3175.919,56.8744 Q3175.2628,56.6712 3174.4659,56.6712 Z " fill="#000000"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="126.5455" x="3194.8565" y="66.572">UserDataCollection</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3064.12" x2="3419.6386" y1="77.14" y2="77.14"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="159.4174" x="3069.12" y="96.1059">feedback_enabled : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="211.0492" x="3069.12" y="115.1739">feedback_storage : Optional[str]</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="170.0714" x="3069.12" y="134.2418">transcripts_enabled : bool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="221.7032" x="3069.12" y="153.3097">transcripts_storage : Optional[str]</text>
+      <line style="stroke:#181818;stroke-width:0.5;" x1="3064.12" x2="3419.6386" y1="161.4117" y2="161.4117"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="345.5186" x="3069.12" y="180.3776">check_storage_location_is_set_when_needed() -&gt; Self</text>
     </g>
     <!--link src.models.config.AccessRule to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.AccessRule_src.models.config.ConfigurationBase">
-      <path codeLine="186" d="M88.17,506.31 C100.47,543.28 124.08,594.98 164.87,620.56 C353.87,739.09 442.98,642.06 665.87,651.56 C1692.73,695.32 2924.7209,709.9691 3245.1509,713.1891 " fill="none" id="src.models.config.AccessRule-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.15,713.37,3245.2112,707.1894,3245.0906,719.1888,3263.15,713.37" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="186" d="M88.17,506.31 C100.47,543.28 124.08,594.98 164.87,620.56 C353.87,739.09 442.98,642.07 665.87,651.56 C1694.56,695.38 2928.8309,709.9897 3249.3109,713.1997 " fill="none" id="src.models.config.AccessRule-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.31,713.38,3249.371,707.2,3249.2508,719.1994,3267.31,713.38" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.AuthenticationConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.AuthenticationConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="187" d="M483.23,573.29 C509.12,592.07 537.61,609.17 566.87,620.56 C726.03,682.5 779.34,642.44 949.87,651.56 C1858.74,700.19 2946.0605,711.2564 3245.1505,713.4764 " fill="none" id="src.models.config.AuthenticationConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.15,713.61,3245.195,707.4766,3245.106,719.4762,3263.15,713.61" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="187" d="M483.23,573.29 C509.12,592.07 537.61,609.17 566.87,620.56 C726.03,682.5 779.34,642.44 949.87,651.56 C1860.52,700.27 2950.0605,711.2777 3249.2805,713.4777 " fill="none" id="src.models.config.AuthenticationConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.28,713.61,3249.3246,707.4778,3249.2364,719.4775,3267.28,713.61" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.AuthorizationConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.AuthorizationConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="188" d="M740.99,496.84 C767.03,534.07 815,593.2 872.87,620.56 C1016.86,688.63 1070.88,642.31 1229.87,651.56 C2023.26,697.72 2968.4609,710.3653 3245.1709,713.2053 " fill="none" id="src.models.config.AuthorizationConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.17,713.39,3245.2325,707.2056,3245.1094,719.205,3263.17,713.39" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="188" d="M740.99,496.84 C767.02,534.07 814.99,593.21 872.87,620.56 C1017.27,688.8 1071.44,642.31 1230.87,651.56 C2025.39,697.68 2971.961,710.3442 3249.061,713.2042 " fill="none" id="src.models.config.AuthorizationConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.06,713.39,3249.1229,707.2045,3248.999,719.2039,3267.06,713.39" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.ByokRag to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.ByokRag_src.models.config.ConfigurationBase">
-      <path codeLine="189" d="M1064.26,544.39 C1087.29,573.17 1116.87,602.86 1150.87,620.56 C1256.84,675.73 1298.74,642.72 1417.87,651.56 C2133.66,704.66 2984.6302,712.5972 3245.3602,713.7972 " fill="none" id="src.models.config.ByokRag-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.36,713.88,3245.3878,707.7972,3245.3326,719.7971,3263.36,713.88" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="189" d="M1064.24,544.42 C1087.27,573.21 1116.86,602.89 1150.87,620.56 C1258.45,676.46 1300.97,642.7 1421.87,651.56 C2137.7,704.06 2988.6502,712.3861 3249.3602,713.7461 " fill="none" id="src.models.config.ByokRag-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.36,713.84,3249.3915,707.7462,3249.3289,719.746,3267.36,713.84" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.CORSConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.CORSConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="190" d="M1317.32,535.05 C1341.2,576.97 1377.65,626.6 1425.87,651.56 C1508.66,694.41 2897.0808,710.002 3245.3408,713.252 " fill="none" id="src.models.config.CORSConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.34,713.42,3245.3968,707.2523,3245.2848,719.2518,3263.34,713.42" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="190" d="M1320.03,535.07 C1344.34,577.01 1381.31,626.64 1429.87,651.56 C1512.78,694.12 2900.3308,709.9186 3249.0608,713.2386 " fill="none" id="src.models.config.CORSConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.06,713.41,3249.1179,707.2389,3249.0037,719.2384,3267.06,713.41" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.Configuration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.Configuration_src.models.config.ConfigurationBase">
-      <path codeLine="191" d="M2439.07,614.11 C2444.67,616.4 2450.27,618.56 2455.87,620.56 C2603.92,673.45 3057.8518,700.4751 3245.1818,709.6951 " fill="none" id="src.models.config.Configuration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.16,710.58,3245.4767,703.7024,3244.8868,715.6879,3263.16,710.58" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="191" d="M2443.07,614.11 C2448.67,616.4 2454.27,618.56 2459.87,620.56 C2607.92,673.45 3061.8518,700.4751 3249.1818,709.6951 " fill="none" id="src.models.config.Configuration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.16,710.58,3249.4767,703.7024,3248.8868,715.6879,3267.16,710.58" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.ConversationHistoryConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.ConversationHistoryConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="192" d="M1756.63,534.94 C1796.84,577.1 1853.72,627.03 1915.87,651.56 C2041.27,701.05 2966.3305,711.4578 3245.3405,713.5078 " fill="none" id="src.models.config.ConversationHistoryConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.34,713.64,3245.3846,707.5079,3245.2964,719.5076,3263.34,713.64" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="192" d="M1760.63,534.94 C1800.84,577.1 1857.72,627.03 1919.87,651.56 C2045.27,701.05 2970.3305,711.4578 3249.3405,713.5078 " fill="none" id="src.models.config.ConversationHistoryConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.34,713.64,3249.3846,707.5079,3249.2964,719.5076,3267.34,713.64" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.Customization to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.Customization_src.models.config.ConfigurationBase">
-      <path codeLine="193" d="M3825.67,544.69 C3796.53,583.11 3756.84,626.14 3710.87,651.56 C3661.85,678.68 3529.5875,695.768 3436.3175,705.258 " fill="none" id="src.models.config.Customization-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.41,707.08,3436.9249,711.2271,3435.7102,699.2888,3418.41,707.08" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="193" d="M3829.67,544.69 C3800.53,583.11 3760.84,626.14 3714.87,651.56 C3665.85,678.68 3533.5875,695.768 3440.3175,705.258 " fill="none" id="src.models.config.Customization-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.41,707.08,3440.9249,711.2271,3439.7102,699.2888,3422.41,707.08" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.DatabaseConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.DatabaseConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="194" d="M5865.05,534.81 C5825.71,577.22 5769.7,627.46 5707.87,651.56 C5598.99,694.02 3833.2994,710.248 3436.6294,713.378 " fill="none" id="src.models.config.DatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.63,713.52,3436.6768,719.3778,3436.5821,707.3782,3418.63,713.52" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="194" d="M5869.05,534.81 C5829.71,577.22 5773.7,627.46 5711.87,651.56 C5602.99,694.02 3837.2994,710.248 3440.6294,713.378 " fill="none" id="src.models.config.DatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.63,713.52,3440.6768,719.3778,3440.5821,707.3782,3422.63,713.52" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.InMemoryCacheConfig to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.InMemoryCacheConfig_src.models.config.ConfigurationBase">
-      <path codeLine="195" d="M2578.21,496.86 C2594.97,533.51 2627.42,591.55 2674.87,620.56 C2772.25,680.1 3091.332,702.3597 3245.202,709.9797 " fill="none" id="src.models.config.InMemoryCacheConfig-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.18,710.87,3245.4988,703.987,3244.9053,715.9723,3263.18,710.87" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="195" d="M2582.21,496.86 C2598.97,533.51 2631.42,591.55 2678.87,620.56 C2776.25,680.1 3095.332,702.3597 3249.202,709.9797 " fill="none" id="src.models.config.InMemoryCacheConfig-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.18,710.87,3249.4988,703.987,3248.9053,715.9723,3267.18,710.87" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.InferenceConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.InferenceConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="196" d="M2882.51,516.07 C2913.22,550.35 2957.47,593.72 3004.87,620.56 C3086.55,666.8 3174.7491,688.2968 3245.6391,700.4568 " fill="none" id="src.models.config.InferenceConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.38,703.5,3246.6535,694.5432,3244.6247,706.3705,3263.38,703.5" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="196" d="M2886.51,516.07 C2917.22,550.35 2961.47,593.72 3008.87,620.56 C3090.55,666.8 3178.7491,688.2968 3249.6391,700.4568 " fill="none" id="src.models.config.InferenceConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.38,703.5,3250.6535,694.5432,3248.6247,706.3705,3267.38,703.5" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.JwkConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.JwkConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="197" d="M3207.19,506.5 C3238.95,555.81 3280.9555,621.0458 3309.8655,665.9458 " fill="none" id="src.models.config.JwkConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3319.61,681.08,3314.9102,662.6976,3304.8207,669.194,3319.61,681.08" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="197" d="M3211.19,506.5 C3242.95,555.81 3284.9555,621.0458 3313.8655,665.9458 " fill="none" id="src.models.config.JwkConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3323.61,681.08,3318.9102,662.6976,3308.8207,669.194,3323.61,681.08" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.JwtConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.JwtConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="198" d="M3468.52,515.89 C3436.55,565.52 3399.0372,623.7875 3371.8872,665.9375 " fill="none" id="src.models.config.JwtConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3362.14,681.07,3376.9314,669.1866,3366.8431,662.6885,3362.14,681.07" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="198" d="M3472.52,515.89 C3440.55,565.52 3403.0372,623.7875 3375.8872,665.9375 " fill="none" id="src.models.config.JwtConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3366.14,681.07,3380.9314,669.1866,3370.8431,662.6885,3366.14,681.07" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.JwtRoleRule to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.JwtRoleRule_src.models.config.ConfigurationBase">
-      <path codeLine="199" d="M6484.85,573.03 C6469.07,591.95 6450.38,609.18 6428.87,620.56 C6180.72,751.93 6078.46,641.1 5797.87,651.56 C4861.12,686.49 3740.7173,707.2081 3436.6073,712.4781 " fill="none" id="src.models.config.JwtRoleRule-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.61,712.79,3436.7113,718.4772,3436.5033,706.479,3418.61,712.79" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="199" d="M6488.85,573.03 C6473.07,591.95 6454.38,609.18 6432.87,620.56 C6184.72,751.93 6082.46,641.1 5801.87,651.56 C4865.12,686.49 3744.7173,707.2081 3440.6073,712.4781 " fill="none" id="src.models.config.JwtRoleRule-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.61,712.79,3440.7113,718.4772,3440.5033,706.479,3422.61,712.79" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.LlamaStackConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.LlamaStackConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="200" d="M1988.08,188.54 C1938.95,296.79 1868.41,503.33 1977.87,620.56 C2065.84,714.77 2969.1503,716.5376 3245.1603,714.8876 " fill="none" id="src.models.config.LlamaStackConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.16,714.78,3245.1245,708.8877,3245.1962,720.8875,3263.16,714.78" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="200" d="M1992.08,188.54 C1942.95,296.79 1872.41,503.33 1981.87,620.56 C2069.84,714.77 2973.1503,716.5376 3249.1603,714.8876 " fill="none" id="src.models.config.LlamaStackConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.16,714.78,3249.1245,708.8877,3249.1962,720.8875,3267.16,714.78" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.ModelContextProtocolServer to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.ModelContextProtocolServer_src.models.config.ConfigurationBase">
-      <path codeLine="201" d="M4135.75,515.83 C4113.52,551.41 4079.08,596.43 4035.87,620.56 C3931.32,678.98 3594.9376,701.9513 3436.5076,709.8713 " fill="none" id="src.models.config.ModelContextProtocolServer-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.53,710.77,3436.8071,715.8638,3436.208,703.8788,3418.53,710.77" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="201" d="M4139.75,515.83 C4117.52,551.41 4083.08,596.43 4039.87,620.56 C3935.32,678.98 3598.9376,701.9513 3440.5076,709.8713 " fill="none" id="src.models.config.ModelContextProtocolServer-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.53,710.77,3440.8071,715.8638,3440.208,703.8788,3422.53,710.77" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.PostgreSQLDatabaseConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.PostgreSQLDatabaseConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="202" d="M4346.88,582.6 C4330.09,597.54 4311.6,610.94 4291.87,620.56 C4138.49,695.4 3635.358,710.0891 3436.678,713.0791 " fill="none" id="src.models.config.PostgreSQLDatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.68,713.35,3436.7682,719.0785,3436.5877,707.0798,3418.68,713.35" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="202" d="M4350.88,582.6 C4334.09,597.54 4315.6,610.94 4295.87,620.56 C4142.49,695.4 3639.358,710.0891 3440.678,713.0791 " fill="none" id="src.models.config.PostgreSQLDatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.68,713.35,3440.7682,719.0785,3440.5877,707.0798,3422.68,713.35" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.QuotaHandlersConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.QuotaHandlersConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="203" d="M4723.95,534.9 C4686.97,566.82 4639.34,601.55 4589.87,620.56 C4374.34,703.4 3674.8299,713.1005 3436.5499,714.0205 " fill="none" id="src.models.config.QuotaHandlersConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.55,714.09,3436.573,720.0205,3436.5267,708.0205,3418.55,714.09" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="203" d="M4727.95,534.9 C4690.97,566.82 4643.34,601.55 4593.87,620.56 C4378.34,703.4 3678.8299,713.1005 3440.5499,714.0205 " fill="none" id="src.models.config.QuotaHandlersConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.55,714.09,3440.573,720.0205,3440.5267,708.0205,3422.55,714.09" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.QuotaLimiterConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.QuotaLimiterConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="204" d="M5111.75,534.86 C5082.92,566.98 5044.61,601.89 5001.87,620.56 C4855.85,684.35 3745.2174,707.3656 3436.6274,712.5856 " fill="none" id="src.models.config.QuotaLimiterConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.63,712.89,3436.7289,718.5847,3436.5259,706.5864,3418.63,712.89" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="204" d="M5115.75,534.86 C5086.92,566.98 5048.61,601.89 5005.87,620.56 C4859.85,684.35 3749.2174,707.3656 3440.6274,712.5856 " fill="none" id="src.models.config.QuotaLimiterConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.63,712.89,3440.7289,718.5847,3440.5259,706.5864,3422.63,712.89" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.RHIdentityConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.RHIdentityConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="205" d="M5465.9,497.06 C5438.86,534.5 5389.18,593.83 5329.87,620.56 C5141.05,705.69 5071.7,640.43 4864.87,651.56 C4310.91,681.39 3660.9804,703.6923 3436.6104,711.0223 " fill="none" id="src.models.config.RHIdentityConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.62,711.61,3436.8063,717.0191,3436.4145,705.0255,3418.62,711.61" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="205" d="M5469.9,497.06 C5442.86,534.5 5393.18,593.83 5333.87,620.56 C5145.05,705.69 5075.7,640.43 4868.87,651.56 C4314.91,681.39 3664.9804,703.6923 3440.6104,711.0223 " fill="none" id="src.models.config.RHIdentityConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.62,711.61,3440.8063,717.0191,3440.4145,705.0255,3422.62,711.61" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.SQLiteDatabaseConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.SQLiteDatabaseConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="206" d="M5749.93,150.51 C5726.33,261.42 5650.47,616.66 5645.87,620.56 C5559.2,694.2 3829.0195,710.6711 3436.5995,713.4811 " fill="none" id="src.models.config.SQLiteDatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.6,713.61,3436.6425,719.481,3436.5566,707.4813,3418.6,713.61" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="206" d="M5753.93,150.51 C5730.33,261.42 5654.47,616.66 5649.87,620.56 C5563.2,694.2 3833.0195,710.6711 3440.5995,713.4811 " fill="none" id="src.models.config.SQLiteDatabaseConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.6,713.61,3440.6425,719.481,3440.5566,707.4813,3422.6,713.61" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.ServiceConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.ServiceConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="207" d="M1528.5,226.92 C1511.81,251.26 1496.96,278.07 1487.87,305.61 C1444.03,438.55 1392.61,518 1487.87,620.56 C1549.21,686.59 2901.6315,708.4243 3245.2715,712.9243 " fill="none" id="src.models.config.ServiceConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3263.27,713.16,3245.3501,706.9248,3245.193,718.9238,3263.27,713.16" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="207" d="M1532.5,226.92 C1515.81,251.26 1500.96,278.07 1491.87,305.61 C1448.03,438.55 1396.61,518 1491.87,620.56 C1553.21,686.59 2905.6315,708.4243 3249.2715,712.9243 " fill="none" id="src.models.config.ServiceConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3267.27,713.16,3249.3501,706.9248,3249.193,718.9238,3267.27,713.16" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.TLSConfiguration to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.TLSConfiguration_src.models.config.ConfigurationBase">
-      <path codeLine="208" d="M6237.45,525.67 C6210.78,559.9 6172.92,599.7 6128.87,620.56 C5969.73,695.95 5909.73,642.37 5733.87,651.56 C4824.19,699.11 3735.9894,710.9321 3436.6594,713.3921 " fill="none" id="src.models.config.TLSConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.66,713.54,3436.7087,719.3919,3436.6101,707.3923,3418.66,713.54" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="208" d="M6241.45,525.67 C6214.78,559.9 6176.92,599.7 6132.87,620.56 C5973.73,695.95 5913.73,642.37 5737.87,651.56 C4828.19,699.11 3739.9894,710.9321 3440.6594,713.3921 " fill="none" id="src.models.config.TLSConfiguration-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.66,713.54,3440.7087,719.3919,3440.6101,707.3923,3422.66,713.54" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.UserDataCollection to src.models.config.ConfigurationBase-->
     <g id="link_src.models.config.UserDataCollection_src.models.config.ConfigurationBase">
-      <path codeLine="209" d="M3416.88,152.61 C3502.55,179.23 3597.46,225.58 3648.87,305.61 C3724.54,423.38 3732.24,508.12 3648.87,620.56 C3621.29,657.77 3518.0041,682.6955 3436.1341,697.9855 " fill="none" id="src.models.config.UserDataCollection-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="none" points="3418.44,701.29,3437.2356,703.8835,3435.0326,692.0874,3418.44,701.29" style="stroke:#181818;stroke-width:1.0;"/>
+      <path codeLine="209" d="M3420.88,152.61 C3506.55,179.23 3601.46,225.58 3652.87,305.61 C3728.54,423.38 3736.24,508.12 3652.87,620.56 C3625.29,657.77 3522.0041,682.6955 3440.1341,697.9855 " fill="none" id="src.models.config.UserDataCollection-to-src.models.config.ConfigurationBase" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="none" points="3422.44,701.29,3441.2356,703.8835,3439.0326,692.0874,3422.44,701.29" style="stroke:#181818;stroke-width:1.0;"/>
     </g>
     <!--link src.models.config.CustomProfile to src.models.config.Customization-->
     <g id="link_src.models.config.CustomProfile_src.models.config.Customization">
-      <path codeLine="210" d="M3877.87,169.72 C3877.87,225.89 3877.87,304.16 3877.87,369.55 " fill="none" id="src.models.config.CustomProfile-to-src.models.config.Customization" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="3877.87,381.55,3881.87,375.55,3877.87,369.55,3873.87,375.55,3877.87,381.55" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="90.7271" x="3878.87" y="271.507">custom_profile</text>
+      <path codeLine="210" d="M3881.87,169.72 C3881.87,225.89 3881.87,304.16 3881.87,369.55 " fill="none" id="src.models.config.CustomProfile-to-src.models.config.Customization" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="3881.87,381.55,3885.87,375.55,3881.87,369.55,3877.87,375.55,3881.87,381.55" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="90.7271" x="3882.87" y="271.507">custom_profile</text>
     </g>
     <!--link src.models.config.JsonPathOperator to src.models.config.JwtRoleRule-->
     <g id="link_src.models.config.JsonPathOperator_src.models.config.JwtRoleRule">
-      <path codeLine="211" d="M6546.87,150.82 C6546.87,197.02 6546.87,271.15 6546.87,341.12 " fill="none" id="src.models.config.JsonPathOperator-to-src.models.config.JwtRoleRule" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="6546.87,353.12,6550.87,347.12,6546.87,341.12,6542.87,347.12,6546.87,353.12" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53.781" x="6547.87" y="271.507">operator</text>
+      <path codeLine="211" d="M6550.87,150.82 C6550.87,197.02 6550.87,271.15 6550.87,341.12 " fill="none" id="src.models.config.JsonPathOperator-to-src.models.config.JwtRoleRule" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="6550.87,353.12,6554.87,347.12,6550.87,341.12,6546.87,347.12,6550.87,353.12" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53.781" x="6551.87" y="271.507">operator</text>
     </g>
     <!--link src.models.config.LlamaStackConfiguration to src.models.config.Configuration-->
     <g id="link_src.models.config.LlamaStackConfiguration_src.models.config.Configuration">
-      <path codeLine="212" d="M2063.63,188.72 C2082.61,222.58 2100.2625,254.0723 2123.1325,294.8723 " fill="none" id="src.models.config.LlamaStackConfiguration-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="2129,305.34,2129.5555,298.1503,2123.1325,294.8723,2122.577,302.062,2129,305.34" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="70.616" x="2109.87" y="271.507">llama_stack</text>
+      <path codeLine="212" d="M2067.63,188.72 C2086.61,222.58 2104.2625,254.0723 2127.1325,294.8723 " fill="none" id="src.models.config.LlamaStackConfiguration-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2133,305.34,2133.5555,298.1503,2127.1325,294.8723,2126.577,302.062,2133,305.34" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="70.616" x="2113.87" y="271.507">llama_stack</text>
     </g>
     <!--link src.models.config.SQLiteDatabaseConfiguration to src.models.config.DatabaseConfiguration-->
     <g id="link_src.models.config.SQLiteDatabaseConfiguration_src.models.config.DatabaseConfiguration">
-      <path codeLine="213" d="M5772.79,150.82 C5799.33,205.85 5847.9786,306.7507 5883.4286,380.2807 " fill="none" id="src.models.config.SQLiteDatabaseConfiguration-to-src.models.config.DatabaseConfiguration" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="5888.64,391.09,5889.6374,383.9482,5883.4286,380.2807,5882.4312,387.4225,5888.64,391.09" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="32.955" x="5830.87" y="271.507">sqlite</text>
+      <path codeLine="213" d="M5776.79,150.82 C5803.33,205.85 5851.9786,306.7507 5887.4286,380.2807 " fill="none" id="src.models.config.SQLiteDatabaseConfiguration-to-src.models.config.DatabaseConfiguration" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="5892.64,391.09,5893.6374,383.9482,5887.4286,380.2807,5886.4312,387.4225,5892.64,391.09" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="32.955" x="5834.87" y="271.507">sqlite</text>
     </g>
     <!--link src.models.config.ServiceConfiguration to src.models.config.Configuration-->
     <g id="link_src.models.config.ServiceConfiguration_src.models.config.Configuration">
-      <path codeLine="214" d="M1760.02,195.5 C1829.27,235.91 1905.3857,280.3217 1984.4157,326.4417 " fill="none" id="src.models.config.ServiceConfiguration-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="1994.78,332.49,1991.614,326.0111,1984.4157,326.4417,1987.5818,332.9206,1994.78,332.49" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="42.458" x="1887.87" y="271.507">service</text>
+      <path codeLine="214" d="M1764.02,195.5 C1833.27,235.91 1909.3857,280.3217 1988.4157,326.4417 " fill="none" id="src.models.config.ServiceConfiguration-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1998.78,332.49,1995.614,326.0111,1988.4157,326.4417,1991.5818,332.9206,1998.78,332.49" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="42.458" x="1891.87" y="271.507">service</text>
     </g>
     <!--link src.models.config.UserDataCollection to src.models.config.Configuration-->
     <g id="link_src.models.config.UserDataCollection_src.models.config.Configuration">
-      <path codeLine="215" d="M3058.78,142.82 C2896.56,169.63 2653.43,220.29 2455.87,305.61 C2450.18,308.07 2455.321,305.5148 2449.611,308.2248 " fill="none" id="src.models.config.UserDataCollection-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
-      <polygon fill="#181818" points="2438.77,313.37,2445.9056,314.4111,2449.611,308.2248,2442.4754,307.1837,2438.77,313.37" style="stroke:#181818;stroke-width:1.0;"/>
-      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="124.1111" x="2579.87" y="271.507">user_data_collection</text>
+      <path codeLine="215" d="M3062.78,142.82 C2900.56,169.63 2657.43,220.29 2459.87,305.61 C2454.18,308.07 2459.321,305.5148 2453.611,308.2248 " fill="none" id="src.models.config.UserDataCollection-to-src.models.config.Configuration" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2442.77,313.37,2449.9056,314.4111,2453.611,308.2248,2446.4754,307.1837,2442.77,313.37" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="124.1111" x="2583.87" y="271.507">user_data_collection</text>
     </g>
-    <!--SRC=[lLbHRzms37xFhp3wagve-ZpaeK2MOKYBT6rpwrDn47IsxauxsN8aEMdMxh-Fb6IVPKi-1oxsb8j8KHJvaI9fpKnMqPBfckPinMggg94ggsJ5pd91jSvUNEKvq_gk4Un5HdMcLVwcb0KJ-aqkgotVlJaoPD_FiepcXijAPvUPuDfylRB_he6W971SPjgeit-Fmf6Q58n4AnHrxErgp9vLXkSK6QujTwFebAZq3Yl_xyS3SQoWuSSQrwdu-lxn4B2k0qw_26k7NpN9AScPCgIcPj-NyGSNx1EihLi-qMZ35A4rxxDTLKytnjHVb416KBxfZ0MMsnDUeFhcAQBbtSqxJnmfEzvuL5eVU4sCqEI1ARxrbW6v6oa5aFCzom-41dOZrgWlVyaktcOh9hQXHwJY_ppB8V4D7aI8AQB02hf_Lm-f5d3hzL65tvxauOxk4kTvgXLUR5elNLMLDDIm0bPPkM55mQiTANZ9Aksi4UUmiWTKHNTWxCYYUQhPOFc1vH1c11GPxEXkS_tnRZN7ZYC-PpuXv2F95RFEfq8V_Uf8UqOBfheW1PYjErh9m3L5d0Oks_5gI7DOoQNI8SfYI9brgV650Xm6WPEExBNVsE5ik2yEGDos0RWGSDu8Unv7QtjjMK7iQ1SQEGKhzDclUzGRs2hLE3vpo0MoZ6XttISWPq4DtL0TdF2xNnk9vTMMALRb0VUxTd74BWGjAT66vWVCFNbDD5CF3XxXxJ-Wcs2_OT_C9oMDpALOMLvh4CpINTAwRm3JP4-hGWn4VKRAZIUCjC6pUSxWLmC_2LuSK2K4ottYAfgoVhc5j8h7sTCipFx4DoiEiz_0I7EWXdmMRfR7OpcGEUdHz16Jszo9h8Jrq5yVxDer0ijjGFFKKfkT2hFY9xUs-doRX8I-5zm4U01kM4bky5aBUHHmdrTIrkUlitEdAFvo8l5NgzFvEllX_D3b15H-HbAmS0T4eLjJPkppM9lv9ExWLYjPrYOmIy5pcw9U8ui5w8x10-qOdHeXor0X7t-J2hN1-xqBPpp1wZYAPw-yZMUkwKOmSjymzKJq4zG4fLVjcAkze55DuTFkSDSaVR8mySxgNoZzraSXax1HbDVPoWMNVOqHQ_yZjDrjsunw6fsHI4nSDyBfefj-8_18AMul5tdkuyavUKgCsPKsR4iRORe2PGY9bWwOU83AK4LOl7NwWWZawcvBp4BljQmGInzhPXk8XE93jaXfFoovKv86RBw8Dw4pmrhUZ83GA5V4jQLtNmqpJmqpLWFxd4Jb2lntGFMbgt_XU05D0ULbbyfm5QqIBFTLQsMajMevVAYLDGHxGHJRiMzeAF13a3mhjgCsX7pYaTv1_ZR3Uk-1YiQLj4yTO5gPFNYq97iivXzuIgeO7O-8mUeM2vCLrYLpd97WTlLZpSc11U_hYa5zR5RkHe9l58L4d0iESUfHbCgx3ZQZLKWbL9DGKfyFRNiCi5xHbKwrwNehOOFqXYxM-Y-c3MZNWtZesQi5U3kHWHEAdDZbS3cZPIusdMuxQ0WXw-4vtTeUZZcYk1raHBnJmrqUfSARTewtJuuoWzvCQq62Cp0Skt-SyzgNwlJRaQvr4uPBRx0sWw8NomOZ3wmYUrTD7kDMy1BhjN7YiL9l7JLCWqjgIZ06pYdKgBXVjPIbZtLenzW5fimOuxTMv1N7jfZO7cNW_p16cEAo6FGql080kLwilt5OCTlaxZs2LN8x-McNXhUB6stgVl4ThZPk5OyK6uc1KUAa1BTxwjXzmnMyB9P1i1B-Zi7dgk_k-0c79rIOs34Ow8HXVppIzPIppegmzaTIGkvwmvJ6x8aBoQ8tEfD2gf0HPoD1Fp0Sswo7oIoIcN1ODnx__NKxbWIPxk3IG7-_ors-lpwTkeQ24mORibbZMLKXjxl18fjCySWBRpFffUWJVASQcQEX9gxt1Go1aBhkPWk92uuPxHMtZ1KRVBr7_kyec9tfBlOS6KKhdIiEZUXuVv-O5k6zwUY0DZ-YvR07kjp7FRmF5IZ2Yk3oa-FxYuiVR-VCICwUDs1VA3On9buWjHq6Bn0ndhik4VOJ1KsFcfR83iOT2mJ5y_W2WR6kUv6uQ7kzGEAeMrqao_nCMLsZk41Cgl5Q87AYZraWzLHJia3qHDc-L6gqYbqWD5NGBH0vLQ0j4HkhnHR86vKg2sH5geB5oRKTRbzSl3evRxuSJ9lFPepRudBxMU3oEFfvJfo_ElaHxpBuolHS1BsQFLg-z1tcV3JDqRtz9ZKJ1dD4nZvk_GS0]-->
+    <!--SRC=[lLbVRziu37_lfp3sqjsmxldGXm5T3uTsw6vRStiQ0a6HbKGNMN8bfLrkk-y-weyTovOS5nxkgQb4KXJv8qNIcff2u8hg6XEwe3LMs4XL22de6U5Ow-B55I5Kw_izfoyAh0kjo9jAbfJhDqIADTkyEH8Kty-A0XF3fD35PS6PDb-ltBzBs50IA2uBRTJPVqVXTZShs6uweLR73jVURAamZ61BSEsezmgFYSfpEFd_FEsG9mKDFzPs7VElxvzs4UaoeWoBiBRxNIE24Q7Ae1gRRLV6dupJJx2sREZuNXkg4AvPb-nA76wCgRyeRWb1-NrhBB3S5h7IgcyE2ItlRsx3va3P8UDHQRrZDJ9SeqUgs3fO1kIkfEImJRQKx12Ex8QSKL_-LboyBHQKhsEFICN-VPP3qWm1H1PJI84LTFUk0L8Du9RBemhl3d9tZpUPyyAk4rwk6YzT2I4DDhI4LLgjQ5aoiK4bgwZGtXff2YUxjwlm1eoTM3I7clQM7oc1C4EWI8-ZlStrn_l553iEwBpvE9TFY2Zgd8zvP4Fhu6LBjAMuf6feP43UyaXLKN1NUOeA7BfX8a_bCKMaqZ4QKuYQTFdXnIEyHW6Mpm3BmDZYiS-N1gfbMm6i43XvSEM0DtzjAI36j0yXWi4ANVBhpkuDi4erZ6C2EKDM2UskknkMiiG6hx2EJlWZh0t4Ch6cYWeIKTysYmDopd65aJQOx6oE8ZNIL3scmFF1kWdu3VrcFYbf995yuMYTGMmsRvFRmnwmZxPObBmdwhFTkGaR0stisOnG-BM7dyXU7535EIKXmPNxgdwvXlHhZtEdEPZzPT-sDCpUWP6cGCtIERWvce3bIEQeH_D7ZBBv4sa5wx6_FhYrQmiips3DKqjjDYhEdf_yskBpNHOI-e4p4-41g64bon2ocwLHG7qkfApFNnVdNb7xoukqlngTpfV53- -7DYTOvISa1GTtG9HrQywCNHfdiv3iFTng9QlQH6Of6N4vwdNH9AeDXOVS4terOfA-GY7-HXLgWlTx6yxs1AVZ89w3yYwUcSOhJj73dge3qWUe7QgWsl6j3e86jOVJ5NpQunhT7orWWhEw5yhN14d8P6oKfFMsyi7bNcsBjVyHslwsJKOzZSv496Qkcw3qqOs_8NYa57ENIvG5wUISFIL5x4iWkiPxRjf2fW-9PXymyGWLf4gG1Ejq1I78rIrBoaBljHGMInzhwXgDZE9ziaGBq2_DSv9wPA7ODx4puvhV382mLxxOQqhqhXfccXfcg8RjXp8LBj3VmsueSSCBnqfe7Z2hsbHcLwrLekMkQesCl5ODHGYrgePWBv6Y6_hD6Why42LFGJVOXL18F38uADocRVe2H1unt_lIzz02ff7PWKUpvOwr-GUU4f7QjqUaO7Ld2vE5hKkcE2D3xUl7cg4TZTxN1OKwsYpyZJXRAGo9c706SHfGbCkx7ZQ3LKWbMADOKge-zvVk55tvL9kljp8so3EqiTPzCLr0-rubGCzTBSBRYGoSKUG4byVbXDQwN2LClO4M4lAVFJ6nkuMZ4yljE2InLyDDdwGgi_YefJAzPuaPzaXlXN5FaEOeeuqDvcoMRLwyqszGlcREE23Fu6mFnRCjFupSKO6slYeznZzdbQtxXWdCIRtpkt4wdLERWZ7iN4GDceH5ipFtqO_jcBh0c1bJzCwAJ33RXYFNw_Hc0N6iKSLasUkDc024-PwkozYllDqZ4JnYg-rcqjGizM-NDjhO_T8SliPk54yKBPa1LUQa3BL_Ckd3dYbueHm1fnNypOqRskD779vHOOIZDq2Am_LufEzD9vsL8EsEmBZS7EFDJYcG3ycoCwgJNAgOqCvOehwYFoRg9C20F9-v8e1ndHWt_dqtb0GvSUVJG9VVvwxGfvzENNt16OFroPondAhmHlX19XrzAYmjlF4ebSpJTASQegEXHgxt1GnX8NNTpYWo5nmIkYkkAIrNjWeO-B_TiTaPRrAlYr5OQA8ODBH3_kvcNaJmfjy7j8MHC0CUw9QVjl0-2524bj7bHpyNN5pyU3jbrdBsl87-JB6PiVGCgStmUOQ8uPntZh1VA6XyP3L7TZGscI4edSTd24nrxxF49Tlq6H87NUyiMUPNoceRpXbYSWtS394Z_T0CgQUQcncYHyhskLAJLUmCeRc2ReR8iG9jZjXKBJP3tg1KcI4hKHNCJgxDaFpYujN9kVLbRsfzDc5ibvRRpGANnn7IS-ByrScFWPVHrwhd8kZLv17rPUWmfwDfYkxDjws9C9WYClMHx2S0]-->
   </g>
 </svg>

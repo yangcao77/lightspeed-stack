@@ -127,14 +127,14 @@ class "ModelContextProtocolServer" as src.models.config.ModelContextProtocolServ
 }
 class "PostgreSQLDatabaseConfiguration" as src.models.config.PostgreSQLDatabaseConfiguration {
   ca_cert_path : Optional[FilePath]
-  db : str
-  gss_encmode : str
-  host : str
+  db : Optional[str]
+  gss_encmode : Optional[str]
+  host : Optional[str]
   namespace : Optional[str]
-  password : SecretStr
-  port : Annotated
-  ssl_mode : str
-  user : str
+  password : Optional[SecretStr]
+  port : Optional[PositiveInt]
+  ssl_mode : Optional[str]
+  user : Optional[str]
   check_postgres_configuration() -> Self
 }
 class "QuotaHandlersConfiguration" as src.models.config.QuotaHandlersConfiguration {

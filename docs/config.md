@@ -273,18 +273,28 @@ model context protocol server configuration.
 
 PostgreSQL database configuration.
 
+PostgreSQL database is used by Lightspeed Core Stack service for storing information about
+conversation IDs. It can also be leveraged to store conversation history and information
+about quota usage.
+
+Useful resources:
+
+- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)
+- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)
+- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| host | string |  |
-| port | integer |  |
-| db | string |  |
-| user | string |  |
-| password | string |  |
-| namespace |  |  |
-| ssl_mode | string |  |
-| gss_encmode | string |  |
-| ca_cert_path |  |  |
+| host | string | Database server host or socket directory |
+| port | integer | Database server port |
+| db | string | Database name to connect to |
+| user | string | Database user name used to authenticate |
+| password | string | Password used to authenticate |
+| namespace |  | Database namespace |
+| ssl_mode | string | SSL mode |
+| gss_encmode | string | This option determines whether or with what priority a secure GSS TCP/IP connection will be negotiated with the server. |
+| ca_cert_path |  | Path to CA certificate |
 
 
 ## QuotaHandlersConfiguration
