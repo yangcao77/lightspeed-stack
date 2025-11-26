@@ -30,10 +30,10 @@ class "ByokRag" as src.models.config.ByokRag {
   vector_db_id : Annotated
 }
 class "CORSConfiguration" as src.models.config.CORSConfiguration {
-  allow_credentials : bool
-  allow_headers : list[str]
-  allow_methods : list[str]
-  allow_origins : list[str]
+  allow_credentials : Optional[bool]
+  allow_headers : Optional[list[str]]
+  allow_methods : Optional[list[str]]
+  allow_origins : Optional[list[str]]
   check_cors_configuration() -> Self
 }
 class "Configuration" as src.models.config.Configuration {

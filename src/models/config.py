@@ -44,7 +44,8 @@ class TLSConfiguration(ConfigurationBase):
     instant messaging, and voice over IP, but its use in securing HTTPS remains
     the most publicly visible.
 
-    See also:
+    Useful resources:
+
       - [FastAPI HTTPS Deployment](https://fastapi.tiangolo.com/deployment/https/)
       - [Transport Layer Security Overview](https://en.wikipedia.org/wiki/Transport_Layer_Security)
       - [What is TLS](https://www.ssltrust.eu/learning/ssl/transport-layer-security-tls)
@@ -81,7 +82,8 @@ class CORSConfiguration(ConfigurationBase):
     frontend running in a browser has JavaScript code that communicates with a
     backend, and the backend is in a different 'origin' than the frontend.
 
-    See also:
+    Useful resources:
+
       - [CORS in FastAPI](https://fastapi.tiangolo.com/tutorial/cors/)
       - [Wikipedia article](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
       - [What is CORS?](https://dev.to/akshay_chauhan/what-is-cors-explained-8f1)
@@ -91,9 +93,10 @@ class CORSConfiguration(ConfigurationBase):
     allow_origins: list[str] = Field(
         ["*"],
         title="Allow origins",
-        description="An origin is the combination of protocol (http, https), "
-        "domain (myapp.com, localhost, localhost.tiangolo.com), and port (80, "
-        "443, 8080).",
+        description="A list of origins allowed for cross-origin requests. An origin "
+        "is the combination of protocol (http, https), domain "
+        "(myapp.com, localhost, localhost.tiangolo.com), and port (80, 443, 8080). "
+        "Use ['*'] to allow all origins.",
     )
 
     allow_credentials: bool = Field(
@@ -127,8 +130,8 @@ class CORSConfiguration(ConfigurationBase):
         if self.allow_credentials and "*" in self.allow_origins:
             raise ValueError(
                 "Invalid CORS configuration: allow_credentials can not be set to true when "
-                "allow origins contains '*' wildcard."
-                "Use explicit origins or disable credential."
+                "allow origins contains the '*' wildcard."
+                "Use explicit origins or disable credentials."
             )
         return self
 
