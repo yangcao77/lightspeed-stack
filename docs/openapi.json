@@ -7184,7 +7184,8 @@
                 "properties": {
                     "db_path": {
                         "type": "string",
-                        "title": "Db Path"
+                        "title": "DB path",
+                        "description": "Path to file where SQLite database is stored"
                     }
                 },
                 "additionalProperties": false,
@@ -7350,7 +7351,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Tls Certificate Path"
+                        "title": "TLS certificate path",
+                        "description": "SSL/TLS certificate file path for HTTPS support."
                     },
                     "tls_key_path": {
                         "anyOf": [
@@ -7362,7 +7364,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Tls Key Path"
+                        "title": "TLS key path",
+                        "description": "SSL/TLS private key file path for HTTPS support."
                     },
                     "tls_key_password": {
                         "anyOf": [
@@ -7374,13 +7377,14 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Tls Key Password"
+                        "title": "SSL/TLS key password path",
+                        "description": "Path to file containing the password to decrypt the SSL/TLS private key."
                     }
                 },
                 "additionalProperties": false,
                 "type": "object",
                 "title": "TLSConfiguration",
-                "description": "TLS configuration."
+                "description": "TLS configuration.\n\nSee also:\n- https://fastapi.tiangolo.com/deployment/https/\n- https://en.wikipedia.org/wiki/Transport_Layer_Security"
             },
             "ToolCall": {
                 "properties": {
