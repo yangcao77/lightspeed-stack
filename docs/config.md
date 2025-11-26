@@ -1,19 +1,9 @@
 # Lightspeed Core Stack
 
 
-
-## 🌍 Base URL
-
-
-| URL | Description |
-|-----|-------------|
-
-
-# 🛠️ APIs
-
 ---
 
-# 📋 Components
+# 📋 Configuration schema
 
 
 
@@ -85,13 +75,23 @@ BYOK RAG configuration.
 
 CORS configuration.
 
+CORS or 'Cross-Origin Resource Sharing' refers to the situations when a
+frontend running in a browser has JavaScript code that communicates with a
+backend, and the backend is in a different 'origin' than the frontend.
+
+Useful resources:
+
+  - [CORS in FastAPI](https://fastapi.tiangolo.com/tutorial/cors/)
+  - [Wikipedia article](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)
+  - [What is CORS?](https://dev.to/akshay_chauhan/what-is-cors-explained-8f1)
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| allow_origins | array |  |
-| allow_credentials | boolean |  |
-| allow_methods | array |  |
-| allow_headers | array |  |
+| allow_origins | array | A list of origins allowed for cross-origin requests. An origin is the combination of protocol (http, https), domain (myapp.com, localhost, localhost.tiangolo.com), and port (80, 443, 8080). Use ['*'] to allow all origins. |
+| allow_credentials | boolean | Indicate that cookies should be supported for cross-origin requests |
+| allow_methods | array | A list of HTTP methods that should be allowed for cross-origin requests. You can use ['*'] to allow all standard methods. |
+| allow_headers | array | A list of HTTP request headers that should be supported for cross-origin requests. You can use ['*'] to allow all headers. The Accept, Accept-Language, Content-Language and Content-Type headers are always allowed for simple CORS requests. |
 
 
 ## Configuration
@@ -373,9 +373,17 @@ Service configuration.
 
 TLS configuration.
 
-See also:
-- https://fastapi.tiangolo.com/deployment/https/
-- https://en.wikipedia.org/wiki/Transport_Layer_Security
+Transport Layer Security (TLS) is a cryptographic protocol designed to
+provide communications security over a computer network, such as the
+Internet. The protocol is widely used in applications such as email,
+instant messaging, and voice over IP, but its use in securing HTTPS remains
+the most publicly visible.
+
+Useful resources:
+
+  - [FastAPI HTTPS Deployment](https://fastapi.tiangolo.com/deployment/https/)
+  - [Transport Layer Security Overview](https://en.wikipedia.org/wiki/Transport_Layer_Security)
+  - [What is TLS](https://www.ssltrust.eu/learning/ssl/transport-layer-security-tls)
 
 
 | Field | Type | Description |

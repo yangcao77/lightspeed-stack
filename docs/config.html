@@ -172,20 +172,8 @@
 <h1 class="title"> </h1>
 </header>
 <h1 id="lightspeed-core-stack">Lightspeed Core Stack</h1>
-<h2 id="base-url">🌍 Base URL</h2>
-<table>
-<thead>
-<tr class="header">
-<th>URL</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-</tbody>
-</table>
-<h1 id="apis">🛠️ APIs</h1>
 <hr />
-<h1 id="components">📋 Components</h1>
+<h1 id="configuration-schema">📋 Configuration schema</h1>
 <h2 id="accessrule">AccessRule</h2>
 <p>Rule defining what actions a role can perform.</p>
 <table>
@@ -317,7 +305,27 @@
 </table>
 <h2 id="corsconfiguration">CORSConfiguration</h2>
 <p>CORS configuration.</p>
+<p>CORS or ‘Cross-Origin Resource Sharing’ refers to the situations when
+a frontend running in a browser has JavaScript code that communicates
+with a backend, and the backend is in a different ‘origin’ than the
+frontend.</p>
+<p>Useful resources:</p>
+<ul>
+<li><a href="https://fastapi.tiangolo.com/tutorial/cors/">CORS in
+FastAPI</a></li>
+<li><a
+href="https://en.wikipedia.org/wiki/Cross-origin_resource_sharing">Wikipedia
+article</a></li>
+<li><a
+href="https://dev.to/akshay_chauhan/what-is-cors-explained-8f1">What is
+CORS?</a></li>
+</ul>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -329,22 +337,30 @@
 <tr class="odd">
 <td>allow_origins</td>
 <td>array</td>
-<td></td>
+<td>A list of origins allowed for cross-origin requests. An origin is
+the combination of protocol (http, https), domain (myapp.com, localhost,
+localhost.tiangolo.com), and port (80, 443, 8080). Use [’*’] to allow
+all origins.</td>
 </tr>
 <tr class="even">
 <td>allow_credentials</td>
 <td>boolean</td>
-<td></td>
+<td>Indicate that cookies should be supported for cross-origin
+requests</td>
 </tr>
 <tr class="odd">
 <td>allow_methods</td>
 <td>array</td>
-<td></td>
+<td>A list of HTTP methods that should be allowed for cross-origin
+requests. You can use [’*’] to allow all standard methods.</td>
 </tr>
 <tr class="even">
 <td>allow_headers</td>
 <td>array</td>
-<td></td>
+<td>A list of HTTP request headers that should be supported for
+cross-origin requests. You can use [’*’] to allow all headers. The
+Accept, Accept-Language, Content-Language and Content-Type headers are
+always allowed for simple CORS requests.</td>
 </tr>
 </tbody>
 </table>
@@ -981,8 +997,22 @@ id="postgresqldatabaseconfiguration">PostgreSQLDatabaseConfiguration</h2>
 </table>
 <h2 id="tlsconfiguration">TLSConfiguration</h2>
 <p>TLS configuration.</p>
-<p>See also: - https://fastapi.tiangolo.com/deployment/https/ -
-https://en.wikipedia.org/wiki/Transport_Layer_Security</p>
+<p>Transport Layer Security (TLS) is a cryptographic protocol designed
+to provide communications security over a computer network, such as the
+Internet. The protocol is widely used in applications such as email,
+instant messaging, and voice over IP, but its use in securing HTTPS
+remains the most publicly visible.</p>
+<p>Useful resources:</p>
+<ul>
+<li><a href="https://fastapi.tiangolo.com/deployment/https/">FastAPI
+HTTPS Deployment</a></li>
+<li><a
+href="https://en.wikipedia.org/wiki/Transport_Layer_Security">Transport
+Layer Security Overview</a></li>
+<li><a
+href="https://www.ssltrust.eu/learning/ssl/transport-layer-security-tls">What
+is TLS</a></li>
+</ul>
 <table>
 <colgroup>
 <col style="width: 26%" />
