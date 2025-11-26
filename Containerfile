@@ -22,7 +22,7 @@ RUN pip3.12 install "uv==0.8.15"
 # Add explicit files and directories
 # (avoid accidental inclusion of local directories or env files or credentials)
 COPY ${LSC_SOURCE_DIR}/src ./src
-COPY ${LSC_SOURCE_DIR}/pyproject.toml ${LSC_SOURCE_DIR}/LICENSE ${LSC_SOURCE_DIR}/README.md ${LSC_SOURCE_DIR}/uv.lock ${LSC_SOURCE_DIR}/requirements.txt ./
+COPY ${LSC_SOURCE_DIR}/pyproject.toml ${LSC_SOURCE_DIR}/LICENSE ${LSC_SOURCE_DIR}/README.md ${LSC_SOURCE_DIR}/uv.lock ${LSC_SOURCE_DIR}/requirements.*.txt ./
 
 # Bundle additional dependencies for library mode.
 # Source cachi2 environment for hermetic builds if available, otherwise use normal installation
@@ -30,7 +30,7 @@ COPY ${LSC_SOURCE_DIR}/pyproject.toml ${LSC_SOURCE_DIR}/LICENSE ${LSC_SOURCE_DIR
 # PIP_FIND_LINKS=/cachi2/output/deps/pip
 # PIP_NO_INDEX=true
 RUN if [ -f /cachi2/cachi2.env ]; then \
-    . /cachi2/cachi2.env && uv venv --seed --no-index --find-links ${PIP_FIND_LINKS} && . .venv/bin/activate && pip install --no-index --find-links ${PIP_FIND_LINKS} -r requirements.txt; \
+    . /cachi2/cachi2.env && uv venv --seed --no-index --find-links ${PIP_FIND_LINKS} && . .venv/bin/activate && pip install --no-index --find-links ${PIP_FIND_LINKS} -r requirements.$(uname -m).txt; \
     else \
     uv sync --locked --no-dev --group llslibdev; \
     fi
