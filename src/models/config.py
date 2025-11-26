@@ -153,17 +153,73 @@ class InMemoryCacheConfig(ConfigurationBase):
 
 
 class PostgreSQLDatabaseConfiguration(ConfigurationBase):
-    """PostgreSQL database configuration."""
+    """PostgreSQL database configuration.
 
-    host: str = "localhost"
-    port: PositiveInt = 5432
-    db: str
-    user: str
-    password: SecretStr
-    namespace: Optional[str] = "lightspeed-stack"
-    ssl_mode: str = constants.POSTGRES_DEFAULT_SSL_MODE
-    gss_encmode: str = constants.POSTGRES_DEFAULT_GSS_ENCMODE
-    ca_cert_path: Optional[FilePath] = None
+    PostgreSQL database is used by Lightspeed Core Stack service for storing information about
+    conversation IDs. It can also be leveraged to store conversation history and information
+    about quota usage.
+
+    Useful resources:
+
+    - [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)
+    - [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)
+    - [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)
+    """
+
+    host: str = Field(
+        "localhost",
+        title="Hostname",
+        description="Database server host or socket directory",
+    )
+
+    port: PositiveInt = Field(
+        5432,
+        title="Port",
+        description="Database server port",
+    )
+
+    db: str = Field(
+        ...,
+        title="Database name",
+        description="Database name to connect to",
+    )
+
+    user: str = Field(
+        ...,
+        title="User name",
+        description="Database user name used to authenticate",
+    )
+
+    password: SecretStr = Field(
+        ...,
+        title="Password",
+        description="Password used to authenticate",
+    )
+
+    namespace: Optional[str] = Field(
+        "lightspeed-stack",
+        title="Name space",
+        description="Database namespace",
+    )
+
+    ssl_mode: str = Field(
+        constants.POSTGRES_DEFAULT_SSL_MODE,
+        title="SSL mode",
+        description="SSL mode",
+    )
+
+    gss_encmode: str = Field(
+        constants.POSTGRES_DEFAULT_GSS_ENCMODE,
+        title="GSS encmode",
+        description="This option determines whether or with what priority a secure GSS "
+        "TCP/IP connection will be negotiated with the server.",
+    )
+
+    ca_cert_path: Optional[FilePath] = Field(
+        None,
+        title="CA certificate path",
+        description="Path to CA certificate",
+    )
 
     @model_validator(mode="after")
     def check_postgres_configuration(self) -> Self:
