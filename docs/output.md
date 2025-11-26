@@ -4806,7 +4806,7 @@ SQLite database configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| db_path | string |  |
+| db_path | string | Path to file where SQLite database is stored |
 
 
 ## ServiceConfiguration
@@ -4871,12 +4871,16 @@ Attributes:
 
 TLS configuration.
 
+See also:
+- https://fastapi.tiangolo.com/deployment/https/
+- https://en.wikipedia.org/wiki/Transport_Layer_Security
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| tls_certificate_path |  |  |
-| tls_key_path |  |  |
-| tls_key_password |  |  |
+| tls_certificate_path |  | SSL/TLS certificate file path for HTTPS support. |
+| tls_key_path |  | SSL/TLS private key file path for HTTPS support. |
+| tls_key_password |  | Path to file containing the password to decrypt the SSL/TLS private key. |
 
 
 ## ToolCall

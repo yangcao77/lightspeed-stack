@@ -36,7 +36,12 @@ class ConfigurationBase(BaseModel):
 
 
 class TLSConfiguration(ConfigurationBase):
-    """TLS configuration."""
+    """TLS configuration.
+
+    See also:
+    - https://fastapi.tiangolo.com/deployment/https/
+    - https://en.wikipedia.org/wiki/Transport_Layer_Security
+    """
 
     tls_certificate_path: Optional[FilePath] = Field(
         None,

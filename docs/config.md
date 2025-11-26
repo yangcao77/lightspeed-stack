@@ -1,8 +1,19 @@
 # Lightspeed Core Stack
 
+
+
+## 🌍 Base URL
+
+
+| URL | Description |
+|-----|-------------|
+
+
+# 🛠️ APIs
+
 ---
 
-# 📋 Configuration options
+# 📋 Components
 
 
 
@@ -361,6 +372,10 @@ Service configuration.
 
 
 TLS configuration.
+
+See also:
+- https://fastapi.tiangolo.com/deployment/https/
+- https://en.wikipedia.org/wiki/Transport_Layer_Security
 
 
 | Field | Type | Description |
