@@ -173,7 +173,7 @@
 </header>
 <h1 id="lightspeed-core-stack">Lightspeed Core Stack</h1>
 <hr />
-<h1 id="configuration-schema">📋 Configuration schema</h1>
+<h1 id="components">📋 Components</h1>
 <h2 id="accessrule">AccessRule</h2>
 <p>Rule defining what actions a role can perform.</p>
 <table>
@@ -222,12 +222,12 @@
 </tr>
 <tr class="odd">
 <td>k8s_cluster_api</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
 <td>k8s_ca_cert_path</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -456,7 +456,7 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tbody>
 <tr class="odd">
 <td>type</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
@@ -512,7 +512,7 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tbody>
 <tr class="odd">
 <td>profile_path</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
@@ -522,12 +522,12 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 </tr>
 <tr class="odd">
 <td>system_prompt_path</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
 <td>system_prompt</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -551,12 +551,12 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>sqlite</td>
 <td></td>
-<td></td>
+<td>SQLite database configuration</td>
 </tr>
 <tr class="even">
 <td>postgres</td>
 <td></td>
-<td></td>
+<td>PostgreSQL database configuration</td>
 </tr>
 </tbody>
 </table>
@@ -591,12 +591,12 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tbody>
 <tr class="odd">
 <td>default_model</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
 <td>default_provider</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 </tbody>
@@ -705,22 +705,22 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tbody>
 <tr class="odd">
 <td>url</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="even">
 <td>api_key</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="odd">
 <td>use_as_library_client</td>
-<td></td>
+<td>boolean</td>
 <td></td>
 </tr>
 <tr class="even">
 <td>library_client_config_path</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 </tbody>
@@ -811,7 +811,7 @@ Use PostgreSQL in Python</a></li>
 </tr>
 <tr class="even">
 <td>namespace</td>
-<td></td>
+<td>string</td>
 <td>Database namespace</td>
 </tr>
 <tr class="odd">
@@ -827,7 +827,7 @@ TCP/IP connection will be negotiated with the server.</td>
 </tr>
 <tr class="odd">
 <td>ca_cert_path</td>
-<td></td>
+<td>string</td>
 <td>Path to CA certificate</td>
 </tr>
 </tbody>
@@ -939,7 +939,7 @@ TCP/IP connection will be negotiated with the server.</td>
 <tbody>
 <tr class="odd">
 <td>required_entitlements</td>
-<td></td>
+<td>array</td>
 <td></td>
 </tr>
 </tbody>
@@ -1049,17 +1049,17 @@ is TLS</a></li>
 <tbody>
 <tr class="odd">
 <td>tls_certificate_path</td>
-<td></td>
+<td>string</td>
 <td>SSL/TLS certificate file path for HTTPS support.</td>
 </tr>
 <tr class="even">
 <td>tls_key_path</td>
-<td></td>
+<td>string</td>
 <td>SSL/TLS private key file path for HTTPS support.</td>
 </tr>
 <tr class="odd">
 <td>tls_key_password</td>
-<td></td>
+<td>string</td>
 <td>Path to file containing the password to decrypt the SSL/TLS private
 key.</td>
 </tr>
@@ -1083,7 +1083,7 @@ key.</td>
 </tr>
 <tr class="even">
 <td>feedback_storage</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 <tr class="odd">
@@ -1093,7 +1093,7 @@ key.</td>
 </tr>
 <tr class="even">
 <td>transcripts_storage</td>
-<td></td>
+<td>string</td>
 <td></td>
 </tr>
 </tbody>
