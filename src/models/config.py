@@ -232,8 +232,17 @@ class PostgreSQLDatabaseConfiguration(ConfigurationBase):
 class DatabaseConfiguration(ConfigurationBase):
     """Database configuration."""
 
-    sqlite: Optional[SQLiteDatabaseConfiguration] = None
-    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
+    sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
+        None,
+        title="SQLite configuration",
+        description="SQLite database configuration",
+    )
+
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = Field(
+        None,
+        title="PostgreSQL configuration",
+        description="PostgreSQL database configuration",
+    )
 
     @model_validator(mode="after")
     def check_database_configuration(self) -> Self:
@@ -762,7 +771,9 @@ class Configuration(ConfigurationBase):
     service: ServiceConfiguration
     llama_stack: LlamaStackConfiguration
     user_data_collection: UserDataCollection
-    database: DatabaseConfiguration = Field(default_factory=DatabaseConfiguration)
+    database: DatabaseConfiguration = Field(
+        default_factory=lambda: DatabaseConfiguration(sqlite=None, postgres=None),
+    )
     mcp_servers: list[ModelContextProtocolServer] = Field(default_factory=list)
     authentication: AuthenticationConfiguration = Field(
         default_factory=AuthenticationConfiguration
