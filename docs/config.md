@@ -3,7 +3,7 @@
 
 ---
 
-# 📋 Configuration schema
+# 📋 Components
 
 
 
@@ -37,8 +37,8 @@ Authentication configuration.
 |-------|------|-------------|
 | module | string |  |
 | skip_tls_verification | boolean |  |
-| k8s_cluster_api |  |  |
-| k8s_ca_cert_path |  |  |
+| k8s_cluster_api | string |  |
+| k8s_ca_cert_path | string |  |
 | jwk_config |  |  |
 | rh_identity_config |  |  |
 
@@ -125,7 +125,7 @@ Conversation cache configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| type |  |  |
+| type | string |  |
 | memory |  |  |
 | sqlite |  |  |
 | postgres |  |  |
@@ -151,10 +151,10 @@ Service customization.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| profile_path |  |  |
+| profile_path | string |  |
 | disable_query_system_prompt | boolean |  |
-| system_prompt_path |  |  |
-| system_prompt |  |  |
+| system_prompt_path | string |  |
+| system_prompt | string |  |
 | custom_profile |  |  |
 
 
@@ -166,8 +166,8 @@ Database configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| sqlite |  |  |
-| postgres |  |  |
+| sqlite |  | SQLite database configuration |
+| postgres |  | PostgreSQL database configuration |
 
 
 ## InMemoryCacheConfig
@@ -189,8 +189,8 @@ Inference configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| default_model |  |  |
-| default_provider |  |  |
+| default_model | string |  |
+| default_provider | string |  |
 
 
 ## JsonPathOperator
@@ -249,10 +249,10 @@ Llama stack configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| url |  |  |
-| api_key |  |  |
-| use_as_library_client |  |  |
-| library_client_config_path |  |  |
+| url | string |  |
+| api_key | string |  |
+| use_as_library_client | boolean |  |
+| library_client_config_path | string |  |
 
 
 ## ModelContextProtocolServer
@@ -291,10 +291,10 @@ Useful resources:
 | db | string | Database name to connect to |
 | user | string | Database user name used to authenticate |
 | password | string | Password used to authenticate |
-| namespace |  | Database namespace |
+| namespace | string | Database namespace |
 | ssl_mode | string | SSL mode |
 | gss_encmode | string | This option determines whether or with what priority a secure GSS TCP/IP connection will be negotiated with the server. |
-| ca_cert_path |  | Path to CA certificate |
+| ca_cert_path | string | Path to CA certificate |
 
 
 ## QuotaHandlersConfiguration
@@ -346,7 +346,7 @@ Red Hat Identity authentication configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| required_entitlements |  |  |
+| required_entitlements | array |  |
 
 
 ## SQLiteDatabaseConfiguration
@@ -398,9 +398,9 @@ Useful resources:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| tls_certificate_path |  | SSL/TLS certificate file path for HTTPS support. |
-| tls_key_path |  | SSL/TLS private key file path for HTTPS support. |
-| tls_key_password |  | Path to file containing the password to decrypt the SSL/TLS private key. |
+| tls_certificate_path | string | SSL/TLS certificate file path for HTTPS support. |
+| tls_key_path | string | SSL/TLS private key file path for HTTPS support. |
+| tls_key_password | string | Path to file containing the password to decrypt the SSL/TLS private key. |
 
 
 ## UserDataCollection
@@ -412,6 +412,6 @@ User data collection configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | feedback_enabled | boolean |  |
-| feedback_storage |  |  |
+| feedback_storage | string |  |
 | transcripts_enabled | boolean |  |
-| transcripts_storage |  |  |
+| transcripts_storage | string |  |
