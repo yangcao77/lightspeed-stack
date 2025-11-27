@@ -22,6 +22,9 @@ The service includes comprehensive user data collection capabilities for various
 * [Configuration](#configuration)
     * [LLM Compatibility](#llm-compatibility)
     * [Set LLM provider and model](#set-llm-provider-and-model)
+    * [Selecting provider and model](#selecting-provider-and-model)
+        * [Provider and model selection in REST API request](#provider-and-model-selection-in-rest-api-request)
+        * [Default provider and model](#default-provider-and-model)
     * [Supported providers](#supported-providers)
     * [Integration with Llama Stack](#integration-with-llama-stack)
     * [Llama Stack as separate server](#llama-stack-as-separate-server)
@@ -50,7 +53,9 @@ The service includes comprehensive user data collection capabilities for various
     * [Running Linux container image](#running-linux-container-image)
     * [Building Container Images](#building-container-images)
         * [Llama-Stack as Separate Service (Server Mode)](#llama-stack-as-separate-service-server-mode)
+            * [macOS (arm64)](#macos-arm64)
         * [Llama-Stack as Library (Library Mode)](#llama-stack-as-library-library-mode)
+            * [macOS](#macos)
         * [Verify it's running properly](#verify-its-running-properly)
     * [Custom Container Image](#custom-container-image)
 * [Endpoints](#endpoints)
@@ -194,6 +199,43 @@ models:
     model_type: llm
     provider_model_id: gpt-4-turbo
 ```
+
+## Selecting provider and model
+
+It is possible to configure multiple LLM providers and models are configured. In this case it is needed to:
+
+- select the provider + model in query request
+- specify default model and provider in Lightspeed Core Stack configuration file
+
+### Provider and model selection in REST API request
+
+Provider and model can be specified in `/v1/query` and `/v1/streaming-query` REST API requests:
+
+```json
+{
+  "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
+  "generate_topic_summary": true,
+  "provider": "openai",
+  "model": "gpt-5",
+  "no_tools": false,
+  "query": "write a deployment yaml for the mongodb image",
+  "system_prompt": "You are a helpful assistant"
+}
+```
+
+### Default provider and model
+
+It is possible to configure default provider and model in Lightspeed Core Stack configuration file, under the `inference` node:
+
+```yaml
+inference:
+    - default_provider: SELECTED PROVIDER
+      default_model: SELECTED MODEL
+```
+
+These settings will be used when no provider or model are specified in REST API request.
+
+
 
 ## Supported providers
 
