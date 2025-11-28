@@ -1,5 +1,6 @@
 """Handler for REST API call to provide answer to query using Response API."""
 
+import json
 import logging
 from typing import Annotated, Any, cast
 
@@ -133,7 +134,7 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
             id=str(getattr(output_item, "id")),
             name=DEFAULT_RAG_TOOL,
             args=args,
-            response=response_payload,
+            response=json.dumps(response_payload) if response_payload else None,
         )
 
     if item_type == "web_search_call":
@@ -436,13 +437,92 @@ def parse_referenced_documents_from_responses_api(
     Returns:
         list[ReferencedDocument]: List of referenced documents with doc_url and doc_title
     """
-    # TODO(ltomasbo): need to parse source documents from Responses API response.
-    # The Responses API has a different structure than Agent API for referenced documents.
-    # Need to extract from:
-    # - OpenAIResponseOutputMessageFileSearchToolCall.results
-    # - OpenAIResponseAnnotationCitation in message content
-    # - OpenAIResponseAnnotationFileCitation in message content
-    return []
+    documents: list[ReferencedDocument] = []
+    # Use a set to track unique documents by (doc_url, doc_title) tuple
+    seen_docs: set[tuple[str | None, str | None]] = set()
+
+    if not response.output:
+        return documents
+
+    for output_item in response.output:
+        item_type = getattr(output_item, "type", None)
+
+        # 1. Parse from file_search_call results
+        if item_type == "file_search_call":
+            results = getattr(output_item, "results", []) or []
+            for result in results:
+                # Handle both object and dict access
+                if isinstance(result, dict):
+                    filename = result.get("filename")
+                    attributes = result.get("attributes", {})
+                else:
+                    filename = getattr(result, "filename", None)
+                    attributes = getattr(result, "attributes", {})
+
+                # Try to get URL from attributes
+                # Look for common URL fields in attributes
+                doc_url = (
+                    attributes.get("link")
+                    or attributes.get("url")
+                    or attributes.get("doc_url")
+                )
+
+                # If we have at least a filename or url
+                if filename or doc_url:
+                    # Treat empty string as None for URL to satisfy AnyUrl | None
+                    final_url = doc_url if doc_url else None
+                    if (final_url, filename) not in seen_docs:
+                        documents.append(
+                            ReferencedDocument(doc_url=final_url, doc_title=filename)
+                        )
+                        seen_docs.add((final_url, filename))
+
+        # 2. Parse from message content annotations
+        elif item_type == "message":
+            content = getattr(output_item, "content", None)
+            if isinstance(content, list):
+                for part in content:
+                    # Skip if part is a string or doesn't have annotations
+                    if isinstance(part, str):
+                        continue
+
+                    annotations = getattr(part, "annotations", []) or []
+                    for annotation in annotations:
+                        # Handle both object and dict access for annotations
+                        if isinstance(annotation, dict):
+                            anno_type = annotation.get("type")
+                            anno_url = annotation.get("url")
+                            anno_title = annotation.get("title") or annotation.get(
+                                "filename"
+                            )
+                        else:
+                            anno_type = getattr(annotation, "type", None)
+                            anno_url = getattr(annotation, "url", None)
+                            anno_title = getattr(annotation, "title", None) or getattr(
+                                annotation, "filename", None
+                            )
+
+                        if anno_type == "url_citation":
+                            # Treat empty string as None
+                            final_url = anno_url if anno_url else None
+                            if (final_url, anno_title) not in seen_docs:
+                                documents.append(
+                                    ReferencedDocument(
+                                        doc_url=final_url, doc_title=anno_title
+                                    )
+                                )
+                                seen_docs.add((final_url, anno_title))
+
+                        elif anno_type == "file_citation":
+                            if (None, anno_title) not in seen_docs:
+                                documents.append(
+                                    ReferencedDocument(
+                                        doc_url=None, doc_title=anno_title
+                                    )
+                                )
+                                seen_docs.add((None, anno_title))
+
+    return documents
 
 
 def extract_token_usage_from_responses_api(
