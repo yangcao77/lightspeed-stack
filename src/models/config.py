@@ -152,7 +152,7 @@ class InMemoryCacheConfig(ConfigurationBase):
     max_entries: PositiveInt = Field(
         ...,
         title="Max entries",
-        description="Maximum number of entrie stored in in-memory database",
+        description="Maximum number of entries stored in the in-memory cache",
     )
 
 
@@ -284,12 +284,38 @@ class DatabaseConfiguration(ConfigurationBase):
 
 
 class ServiceConfiguration(ConfigurationBase):
-    """Service configuration."""
+    """Service configuration.
 
-    host: str = "localhost"
-    port: PositiveInt = 8080
-    auth_enabled: bool = False
-    workers: PositiveInt = 1
+    Lightspeed Core Stack is a REST API service that needs to accept requests
+    on specified hostname and port. It is also possible to enable
+    authentication and specify number of Uvicorn workers. When more workers are
+    specified, it will be possible to serve requests concurrently.
+    """
+
+    host: str = Field(
+        "localhost",
+        title="Host",
+        description="Service hostname",
+    )
+
+    port: PositiveInt = Field(
+        8080,
+        title="Port",
+        description="Service port",
+    )
+
+    auth_enabled: bool = Field(
+        False,
+        title="Authentication enabled",
+        description="Enables authentication subsystem",
+    )
+
+    workers: PositiveInt = Field(
+        1,
+        title="Number of workers",
+        description="Number of workers to be started",
+    )
+
     color_log: bool = True
     access_log: bool = True
     tls_config: TLSConfiguration = Field(
