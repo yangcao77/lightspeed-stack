@@ -420,7 +420,8 @@ class LlamaStackConfiguration(ConfigurationBase):
     use_as_library_client: Optional[bool] = Field(
         None,
         title="Use as library",
-        description="When set to true Llama Stack will be used in library mode (default=server mode)",
+        description="When set to true Llama Stack will be used in library mode, not in "
+        "server mode (default)",
     )
 
     library_client_config_path: Optional[str] = Field(
@@ -523,16 +524,41 @@ class JsonPathOperator(str, Enum):
 class JwtRoleRule(ConfigurationBase):
     """Rule for extracting roles from JWT claims."""
 
-    jsonpath: str  # JSONPath expression to evaluate against the JWT payload
-    operator: JsonPathOperator  # Comparison operator
-    negate: bool = False  # If True, negate the rule
-    value: Any  # Value to compare against
-    roles: list[str]  # Roles to assign if rule matches
+    jsonpath: str = Field(
+        ...,
+        title="JSON path",
+        description="JSONPath expression to evaluate against the JWT payload",
+    )
+
+    operator: JsonPathOperator = Field(
+        ...,
+        title="Operator",
+        description="JSON path comparison operator",
+    )
+
+    negate: bool = Field(
+        False,
+        title="Negate rule",
+        description="If set to true, the meaning of rule is negated",
+    )
+
+    value: Any = Field(
+        ...,
+        title="Value",
+        description="Value to compare against",
+    )
+
+    roles: list[str] = Field(
+        ...,
+        title="List of roles",
+        description="Roles to be assigned if rule matches",
+    )
 
     @model_validator(mode="after")
     def check_jsonpath(self) -> Self:
         """Verify that the JSONPath expression is valid."""
         try:
+            # try to parse the JSONPath
             jsonpath_ng.parse(self.jsonpath)
             return self
         except JSONPathError as e:
@@ -794,7 +820,7 @@ class InferenceConfiguration(ConfigurationBase):
 
 
 class ConversationHistoryConfiguration(ConfigurationBase):
-    """Conversation cache configuration."""
+    """Conversation history configuration."""
 
     type: Literal["noop", "memory", "sqlite", "postgres"] | None = None
     memory: Optional[InMemoryCacheConfig] = None
