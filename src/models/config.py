@@ -1,5 +1,7 @@
 """Model with service configuration."""
 
+# pylint: disable=too-many-lines
+
 from pathlib import Path
 from typing import Optional, Any, Pattern
 from enum import Enum
