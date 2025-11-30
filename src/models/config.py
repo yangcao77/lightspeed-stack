@@ -149,7 +149,11 @@ class SQLiteDatabaseConfiguration(ConfigurationBase):
 class InMemoryCacheConfig(ConfigurationBase):
     """In-memory cache configuration."""
 
-    max_entries: PositiveInt
+    max_entries: PositiveInt = Field(
+        ...,
+        title="Max entries",
+        description="Maximum number of entrie stored in in-memory database",
+    )
 
 
 class PostgreSQLDatabaseConfiguration(ConfigurationBase):
