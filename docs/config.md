@@ -3,7 +3,7 @@
 
 ---
 
-# 📋 Components
+# 📋 Configuration schema
 
 
 
@@ -102,25 +102,25 @@ Global service configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| name | string |  |
-| service |  |  |
-| llama_stack |  |  |
-| user_data_collection |  |  |
-| database |  |  |
-| mcp_servers | array |  |
-| authentication |  |  |
-| authorization |  |  |
-| customization |  |  |
-| inference |  |  |
+| name | string | Name of the service. That value will be used in REST API endpoints. |
+| service |  | This section contains Lightspeed Core Stack service configuration. |
+| llama_stack |  | This section contains Llama Stack configuration. Lightspeed Core Stack service can call Llama Stack in library mode or in server mode. |
+| user_data_collection |  | This section contains configuration for subsystem that collects user data(transcription history and feedbacks). |
+| database |  | Configuration for database to store conversation IDs and other runtime data |
+| mcp_servers | array | MCP (Model Context Protocol) servers provide tools and capabilities to the AI agents. These are configured in this section. Only MCP servers defined in the lightspeed-stack.yaml configuration are available to the agents. Tools configured in the llama-stack run.yaml are not accessible to lightspeed-core agents. |
+| authentication |  | Authentication configuration |
+| authorization |  | Lightspeed Core Stack implements a modular authentication and authorization system with multiple authentication methods. Authorization is configurable through role-based access control. Authentication is handled through selectable modules configured via the module field in the authentication configuration. |
+| customization |  | It is possible to customize Lightspeed Core Stack via this section. System prompt can be customized and also different parts of the service can be replaced by custom Python modules. |
+| inference |  | One LLM provider and one its model might be selected as default ones. When no provider+model pair is specified in REST API calls (query endpoints), the default provider and model are used. |
 | conversation_cache |  |  |
-| byok_rag | array |  |
-| quota_handlers |  |  |
+| byok_rag | array | BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file |
+| quota_handlers |  | Quota handlers configuration |
 
 
 ## ConversationHistoryConfiguration
 
 
-Conversation cache configuration.
+Conversation history configuration.
 
 
 | Field | Type | Description |
@@ -178,7 +178,7 @@ In-memory cache configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| max_entries | integer |  |
+| max_entries | integer | Maximum number of entries stored in the in-memory cache |
 
 
 ## InferenceConfiguration
@@ -234,11 +234,11 @@ Rule for extracting roles from JWT claims.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| jsonpath | string |  |
-| operator |  |  |
-| negate | boolean |  |
-| value |  |  |
-| roles | array |  |
+| jsonpath | string | JSONPath expression to evaluate against the JWT payload |
+| operator |  | JSON path comparison operator |
+| negate | boolean | If set to true, the meaning of the rule is negated |
+| value |  | Value to compare against |
+| roles | array | Roles to be assigned if the rule matches |
 
 
 ## LlamaStackConfiguration
@@ -246,26 +246,49 @@ Rule for extracting roles from JWT claims.
 
 Llama stack configuration.
 
+Llama Stack is a comprehensive system that provides a uniform set of tools
+for building, scaling, and deploying generative AI applications, enabling
+developers to create, integrate, and orchestrate multiple AI services and
+capabilities into an adaptable setup.
+
+Useful resources:
+
+  - [Llama Stack](https://www.llama.com/products/llama-stack/)
+  - [Python Llama Stack client](https://github.com/llamastack/llama-stack-client-python)
+  - [Build AI Applications with Llama Stack](https://llamastack.github.io/)
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| url | string |  |
-| api_key | string |  |
-| use_as_library_client | boolean |  |
-| library_client_config_path | string |  |
+| url | string | URL to Llama Stack service; used when library mode is disabled |
+| api_key | string | API key to access Llama Stack service |
+| use_as_library_client | boolean | When set to true Llama Stack will be used in library mode, not in server mode (default) |
+| library_client_config_path | string | Path to configuration file used when Llama Stack is run in library mode |
 
 
 ## ModelContextProtocolServer
 
 
-model context protocol server configuration.
+Model context protocol server configuration.
+
+MCP (Model Context Protocol) servers provide tools and
+capabilities to the AI agents. These are configured by this structure.
+Only MCP servers defined in the lightspeed-stack.yaml configuration are
+available to the agents. Tools configured in the llama-stack run.yaml
+are not accessible to lightspeed-core agents.
+
+Useful resources:
+
+- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)
+- [MCP FAQs](https://modelcontextprotocol.io/faqs)
+- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)
 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| name | string |  |
-| provider_id | string |  |
-| url | string |  |
+| name | string | MCP server name that must be unique |
+| provider_id | string | MCP provider identification |
+| url | string | URL of the MCP server |
 
 
 ## PostgreSQLDatabaseConfiguration
@@ -302,14 +325,19 @@ Useful resources:
 
 Quota limiter configuration.
 
+It is possible to limit quota usage per user or per service or services
+(that typically run in one cluster). Each limit is configured as a separate
+_quota limiter_. It can be of type `user_limiter` or `cluster_limiter`
+(which is name that makes sense in OpenShift deployment).
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| sqlite |  |  |
-| postgres |  |  |
-| limiters | array |  |
-| scheduler |  |  |
-| enable_token_history | boolean |  |
+| sqlite |  | SQLite database configuration |
+| postgres |  | PostgreSQL database configuration |
+| limiters | array | Quota limiters configuration |
+| scheduler |  | Quota scheduler configuration |
+| enable_token_history | boolean | Enables storing information about token usage history |
 
 
 ## QuotaLimiterConfiguration
@@ -317,14 +345,32 @@ Quota limiter configuration.
 
 Configuration for one quota limiter.
 
+There are three configuration options for each limiter:
+
+1. ``period`` is specified in a human-readable form, see
+   https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+   for all possible options. When the end of the period is reached, the
+   quota is reset or increased.
+2. ``initial_quota`` is the value set at the beginning of the period.
+3. ``quota_increase`` is the value (if specified) used to increase the
+   quota when the period is reached.
+
+There are two basic use cases:
+
+1. When the quota needs to be reset to a specific value periodically (for
+   example on a weekly or monthly basis), set ``initial_quota`` to the
+   required value.
+2. When the quota needs to be increased by a specific value periodically
+   (for example on a daily basis), set ``quota_increase``.
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| type | string |  |
-| name | string |  |
-| initial_quota | integer |  |
-| quota_increase | integer |  |
-| period | string |  |
+| type | string | Quota limiter type, either user_limiter or cluster_limiter |
+| name | string | Human readable quota limiter name |
+| initial_quota | integer | Quota set at beginning of the period |
+| quota_increase | integer | Delta value used to increase quota when period is reached |
+| period | string | Period specified in human readable form |
 
 
 ## QuotaSchedulerConfiguration
@@ -335,7 +381,7 @@ Quota scheduler configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| period | integer |  |
+| period | integer | Quota scheduler period specified in seconds |
 
 
 ## RHIdentityConfiguration
@@ -365,17 +411,22 @@ SQLite database configuration.
 
 Service configuration.
 
+Lightspeed Core Stack is a REST API service that accepts requests
+on a specified hostname and port. It is also possible to enable
+authentication and specify the number of Uvicorn workers. When more
+workers are specified, the service can handle requests concurrently.
+
 
 | Field | Type | Description |
 |-------|------|-------------|
-| host | string |  |
-| port | integer |  |
-| auth_enabled | boolean |  |
-| workers | integer |  |
-| color_log | boolean |  |
-| access_log | boolean |  |
-| tls_config |  |  |
-| cors |  |  |
+| host | string | Service hostname |
+| port | integer | Service port |
+| auth_enabled | boolean | Enables the authentication subsystem |
+| workers | integer | Number of Uvicorn worker processes to start |
+| color_log | boolean | Enables colorized logging |
+| access_log | boolean | Enables logging of all access information |
+| tls_config |  | Transport Layer Security configuration for HTTPS support |
+| cors |  | Cross-Origin Resource Sharing configuration for cross-domain requests |
 
 
 ## TLSConfiguration

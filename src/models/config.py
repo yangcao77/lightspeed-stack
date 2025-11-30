@@ -1,5 +1,7 @@
 """Model with service configuration."""
 
+# pylint: disable=too-many-lines
+
 from pathlib import Path
 from typing import Optional, Any, Pattern
 from enum import Enum
@@ -149,7 +151,11 @@ class SQLiteDatabaseConfiguration(ConfigurationBase):
 class InMemoryCacheConfig(ConfigurationBase):
     """In-memory cache configuration."""
 
-    max_entries: PositiveInt
+    max_entries: PositiveInt = Field(
+        ...,
+        title="Max entries",
+        description="Maximum number of entries stored in the in-memory cache",
+    )
 
 
 class PostgreSQLDatabaseConfiguration(ConfigurationBase):
@@ -280,26 +286,67 @@ class DatabaseConfiguration(ConfigurationBase):
 
 
 class ServiceConfiguration(ConfigurationBase):
-    """Service configuration."""
+    """Service configuration.
 
-    host: str = "localhost"
-    port: PositiveInt = 8080
-    auth_enabled: bool = False
-    workers: PositiveInt = 1
-    color_log: bool = True
-    access_log: bool = True
+    Lightspeed Core Stack is a REST API service that accepts requests
+    on a specified hostname and port. It is also possible to enable
+    authentication and specify the number of Uvicorn workers. When more
+    workers are specified, the service can handle requests concurrently.
+    """
+
+    host: str = Field(
+        "localhost",
+        title="Host",
+        description="Service hostname",
+    )
+
+    port: PositiveInt = Field(
+        8080,
+        title="Port",
+        description="Service port",
+    )
+
+    auth_enabled: bool = Field(
+        False,
+        title="Authentication enabled",
+        description="Enables the authentication subsystem",
+    )
+
+    workers: PositiveInt = Field(
+        1,
+        title="Number of workers",
+        description="Number of Uvicorn worker processes to start",
+    )
+
+    color_log: bool = Field(
+        True,
+        title="Color log",
+        description="Enables colorized logging",
+    )
+
+    access_log: bool = Field(
+        True,
+        title="Access log",
+        description="Enables logging of all access information",
+    )
+
     tls_config: TLSConfiguration = Field(
         default_factory=lambda: TLSConfiguration(
             tls_certificate_path=None, tls_key_path=None, tls_key_password=None
-        )
+        ),
+        title="TLS configuration",
+        description="Transport Layer Security configuration for HTTPS support",
     )
+
     cors: CORSConfiguration = Field(
         default_factory=lambda: CORSConfiguration(
             allow_origins=["*"],
             allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],
-        )
+        ),
+        title="CORS configuration",
+        description="Cross-Origin Resource Sharing configuration for cross-domain requests",
     )
 
     @model_validator(mode="after")
@@ -311,20 +358,79 @@ class ServiceConfiguration(ConfigurationBase):
 
 
 class ModelContextProtocolServer(ConfigurationBase):
-    """model context protocol server configuration."""
+    """Model context protocol server configuration.
 
-    name: str
-    provider_id: str = "model-context-protocol"
-    url: str
+    MCP (Model Context Protocol) servers provide tools and
+    capabilities to the AI agents. These are configured by this structure.
+    Only MCP servers defined in the lightspeed-stack.yaml configuration are
+    available to the agents. Tools configured in the llama-stack run.yaml
+    are not accessible to lightspeed-core agents.
+
+    Useful resources:
+
+    - [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)
+    - [MCP FAQs](https://modelcontextprotocol.io/faqs)
+    - [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+    """
+
+    name: str = Field(
+        ...,
+        title="MCP name",
+        description="MCP server name that must be unique",
+    )
+
+    provider_id: str = Field(
+        "model-context-protocol",
+        title="Provider ID",
+        description="MCP provider identification",
+    )
+
+    url: str = Field(
+        ...,
+        title="MCP server URL",
+        description="URL of the MCP server",
+    )
 
 
 class LlamaStackConfiguration(ConfigurationBase):
-    """Llama stack configuration."""
+    """Llama stack configuration.
 
-    url: Optional[str] = None
-    api_key: Optional[SecretStr] = None
-    use_as_library_client: Optional[bool] = None
-    library_client_config_path: Optional[str] = None
+    Llama Stack is a comprehensive system that provides a uniform set of tools
+    for building, scaling, and deploying generative AI applications, enabling
+    developers to create, integrate, and orchestrate multiple AI services and
+    capabilities into an adaptable setup.
+
+    Useful resources:
+
+      - [Llama Stack](https://www.llama.com/products/llama-stack/)
+      - [Python Llama Stack client](https://github.com/llamastack/llama-stack-client-python)
+      - [Build AI Applications with Llama Stack](https://llamastack.github.io/)
+    """
+
+    url: Optional[str] = Field(
+        None,
+        title="Llama Stack URL",
+        description="URL to Llama Stack service; used when library mode is disabled",
+    )
+
+    api_key: Optional[SecretStr] = Field(
+        None,
+        title="API key",
+        description="API key to access Llama Stack service",
+    )
+
+    use_as_library_client: Optional[bool] = Field(
+        None,
+        title="Use as library",
+        description="When set to true Llama Stack will be used in library mode, not in "
+        "server mode (default)",
+    )
+
+    library_client_config_path: Optional[str] = Field(
+        None,
+        title="Llama Stack configuration path",
+        description="Path to configuration file used when Llama Stack is run in library mode",
+    )
 
     @model_validator(mode="after")
     def check_llama_stack_model(self) -> Self:
@@ -341,6 +447,8 @@ class LlamaStackConfiguration(ConfigurationBase):
             Self: The validated LlamaStackConfiguration instance.
         """
         if self.url is None:
+            # when URL is not set, it is supposed that Llama Stack should be run in library mode
+            # it means that use_as_library_client attribute must be set to True
             if self.use_as_library_client is None:
                 raise ValueError(
                     "Llama stack URL is not specified and library client mode is not specified"
@@ -349,9 +457,17 @@ class LlamaStackConfiguration(ConfigurationBase):
                 raise ValueError(
                     "Llama stack URL is not specified and library client mode is not enabled"
                 )
+
+        # None -> False conversion
         if self.use_as_library_client is None:
             self.use_as_library_client = False
+
         if self.use_as_library_client:
+            # when use_as_library_client is set to true, Llama Stack will be run in library mode
+            # it means that:
+            # - Llama Stack URL should not be set, and
+            # - library_client_config_path attribute must be set and must point to
+            #   a regular readable YAML file
             if self.library_client_config_path is None:
                 # pylint: disable=line-too-long
                 raise ValueError(
@@ -412,16 +528,41 @@ class JsonPathOperator(str, Enum):
 class JwtRoleRule(ConfigurationBase):
     """Rule for extracting roles from JWT claims."""
 
-    jsonpath: str  # JSONPath expression to evaluate against the JWT payload
-    operator: JsonPathOperator  # Comparison operator
-    negate: bool = False  # If True, negate the rule
-    value: Any  # Value to compare against
-    roles: list[str]  # Roles to assign if rule matches
+    jsonpath: str = Field(
+        ...,
+        title="JSON path",
+        description="JSONPath expression to evaluate against the JWT payload",
+    )
+
+    operator: JsonPathOperator = Field(
+        ...,
+        title="Operator",
+        description="JSON path comparison operator",
+    )
+
+    negate: bool = Field(
+        False,
+        title="Negate rule",
+        description="If set to true, the meaning of the rule is negated",
+    )
+
+    value: Any = Field(
+        ...,
+        title="Value",
+        description="Value to compare against",
+    )
+
+    roles: list[str] = Field(
+        ...,
+        title="List of roles",
+        description="Roles to be assigned if the rule matches",
+    )
 
     @model_validator(mode="after")
     def check_jsonpath(self) -> Self:
         """Verify that the JSONPath expression is valid."""
         try:
+            # try to parse the JSONPath
             jsonpath_ng.parse(self.jsonpath)
             return self
         except JSONPathError as e:
@@ -683,7 +824,7 @@ class InferenceConfiguration(ConfigurationBase):
 
 
 class ConversationHistoryConfiguration(ConfigurationBase):
-    """Conversation cache configuration."""
+    """Conversation history configuration."""
 
     type: Literal["noop", "memory", "sqlite", "postgres"] | None = None
     memory: Optional[InMemoryCacheConfig] = None
@@ -737,56 +878,204 @@ class ByokRag(ConfigurationBase):
 
 
 class QuotaLimiterConfiguration(ConfigurationBase):
-    """Configuration for one quota limiter."""
+    """Configuration for one quota limiter.
 
-    type: Literal["user_limiter", "cluster_limiter"]
-    name: str
-    initial_quota: NonNegativeInt
-    quota_increase: NonNegativeInt
-    period: str
+    There are three configuration options for each limiter:
+
+    1. ``period`` is specified in a human-readable form, see
+       https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+       for all possible options. When the end of the period is reached, the
+       quota is reset or increased.
+    2. ``initial_quota`` is the value set at the beginning of the period.
+    3. ``quota_increase`` is the value (if specified) used to increase the
+       quota when the period is reached.
+
+    There are two basic use cases:
+
+    1. When the quota needs to be reset to a specific value periodically (for
+       example on a weekly or monthly basis), set ``initial_quota`` to the
+       required value.
+    2. When the quota needs to be increased by a specific value periodically
+       (for example on a daily basis), set ``quota_increase``.
+    """
+
+    type: Literal["user_limiter", "cluster_limiter"] = Field(
+        ...,
+        title="Quota limiter type",
+        description="Quota limiter type, either user_limiter or cluster_limiter",
+    )
+
+    name: str = Field(
+        ...,
+        title="Quota limiter name",
+        description="Human readable quota limiter name",
+    )
+
+    initial_quota: NonNegativeInt = Field(
+        ...,
+        title="Initial quota",
+        description="Quota set at beginning of the period",
+    )
+
+    quota_increase: NonNegativeInt = Field(
+        ...,
+        title="Quota increase",
+        description="Delta value used to increase quota when period is reached",
+    )
+
+    period: str = Field(
+        ...,
+        title="Period",
+        description="Period specified in human readable form",
+    )
 
 
-class QuotaSchedulerConfiguration(BaseModel):
+class QuotaSchedulerConfiguration(ConfigurationBase):
     """Quota scheduler configuration."""
 
-    period: PositiveInt = 1
+    period: PositiveInt = Field(
+        1,
+        title="Period",
+        description="Quota scheduler period specified in seconds",
+    )
 
 
 class QuotaHandlersConfiguration(ConfigurationBase):
-    """Quota limiter configuration."""
+    """Quota limiter configuration.
 
-    sqlite: Optional[SQLiteDatabaseConfiguration] = None
-    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
-    limiters: list[QuotaLimiterConfiguration] = Field(default_factory=list)
-    scheduler: QuotaSchedulerConfiguration = Field(
-        default_factory=QuotaSchedulerConfiguration
+    It is possible to limit quota usage per user or per service or services
+    (that typically run in one cluster). Each limit is configured as a separate
+    _quota limiter_. It can be of type `user_limiter` or `cluster_limiter`
+    (which is name that makes sense in OpenShift deployment).
+    """
+
+    sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
+        None,
+        title="SQLite configuration",
+        description="SQLite database configuration",
     )
-    enable_token_history: bool = False
+
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = Field(
+        None,
+        title="PostgreSQL configuration",
+        description="PostgreSQL database configuration",
+    )
+
+    limiters: list[QuotaLimiterConfiguration] = Field(
+        default_factory=list,
+        title="Quota limiters",
+        description="Quota limiters configuration",
+    )
+
+    scheduler: QuotaSchedulerConfiguration = Field(
+        default_factory=lambda: QuotaSchedulerConfiguration(period=1),
+        title="Quota scheduler",
+        description="Quota scheduler configuration",
+    )
+
+    enable_token_history: bool = Field(
+        False,
+        title="Enable token history",
+        description="Enables storing information about token usage history",
+    )
 
 
 class Configuration(ConfigurationBase):
     """Global service configuration."""
 
-    name: str
-    service: ServiceConfiguration
-    llama_stack: LlamaStackConfiguration
-    user_data_collection: UserDataCollection
+    name: str = Field(
+        ...,
+        title="Service name",
+        description="Name of the service. That value will be used in REST API endpoints.",
+    )
+
+    service: ServiceConfiguration = Field(
+        ...,
+        title="Service configuration",
+        description="This section contains Lightspeed Core Stack service configuration.",
+    )
+
+    llama_stack: LlamaStackConfiguration = Field(
+        ...,
+        title="Llama Stack configuration",
+        description="This section contains Llama Stack configuration. "
+        "Lightspeed Core Stack service can call Llama Stack in library mode or in server mode.",
+    )
+
+    user_data_collection: UserDataCollection = Field(
+        ...,
+        title="User data collection configuration",
+        description="This section contains configuration for subsystem that collects user data"
+        "(transcription history and feedbacks).",
+    )
+
     database: DatabaseConfiguration = Field(
         default_factory=lambda: DatabaseConfiguration(sqlite=None, postgres=None),
+        title="Database Configuration",
+        description="Configuration for database to store conversation IDs and other runtime data",
     )
-    mcp_servers: list[ModelContextProtocolServer] = Field(default_factory=list)
+
+    mcp_servers: list[ModelContextProtocolServer] = Field(
+        default_factory=list,
+        title="Model Context Protocol Server and tools configuration",
+        description="MCP (Model Context Protocol) servers provide tools and "
+        "capabilities to the AI agents. These are configured in this section. "
+        "Only MCP servers defined in the lightspeed-stack.yaml configuration are "
+        "available to the agents. Tools configured in the llama-stack run.yaml "
+        "are not accessible to lightspeed-core agents.",
+    )
+
     authentication: AuthenticationConfiguration = Field(
-        default_factory=AuthenticationConfiguration
+        default_factory=AuthenticationConfiguration,
+        title="Authentication configuration",
+        description="Authentication configuration",
     )
-    authorization: Optional[AuthorizationConfiguration] = None
-    customization: Optional[Customization] = None
-    inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
+
+    authorization: Optional[AuthorizationConfiguration] = Field(
+        None,
+        title="Authorization configuration",
+        description="Lightspeed Core Stack implements a modular "
+        "authentication and authorization system with multiple authentication "
+        "methods. Authorization is configurable through role-based access "
+        "control. Authentication is handled through selectable modules "
+        "configured via the module field in the authentication configuration.",
+    )
+
+    customization: Optional[Customization] = Field(
+        None,
+        title="Custom profile configuration",
+        description="It is possible to customize Lightspeed Core Stack via this "
+        "section. System prompt can be customized and also different parts of "
+        "the service can be replaced by custom Python modules.",
+    )
+
+    inference: InferenceConfiguration = Field(
+        default_factory=InferenceConfiguration,
+        title="Inference configuration",
+        description="One LLM provider and one its model might be selected as "
+        "default ones. When no provider+model pair is specified in REST API "
+        "calls (query endpoints), the default provider and model are used.",
+    )
+
     conversation_cache: ConversationHistoryConfiguration = Field(
-        default_factory=ConversationHistoryConfiguration
+        default_factory=ConversationHistoryConfiguration,
+        title="Conversation history configuration",
+        description="Conversation history configuration.",
     )
-    byok_rag: list[ByokRag] = Field(default_factory=list)
+
+    byok_rag: list[ByokRag] = Field(
+        default_factory=list,
+        title="BYOK RAG configuration",
+        description="BYOK RAG configuration. This configuration can be used to "
+        "reconfigure Llama Stack through its run.yaml configuration file",
+    )
+
     quota_handlers: QuotaHandlersConfiguration = Field(
-        default_factory=QuotaHandlersConfiguration
+        default_factory=lambda: QuotaHandlersConfiguration(
+            sqlite=None, postgres=None, enable_token_history=False
+        ),
+        title="Quota handlers",
+        description="Quota handlers configuration",
     )
 
     def dump(self, filename: str = "configuration.json") -> None:
