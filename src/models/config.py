@@ -939,15 +939,43 @@ class QuotaSchedulerConfiguration(ConfigurationBase):
 
 
 class QuotaHandlersConfiguration(ConfigurationBase):
-    """Quota limiter configuration."""
+    """Quota limiter configuration.
 
-    sqlite: Optional[SQLiteDatabaseConfiguration] = None
-    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
-    limiters: list[QuotaLimiterConfiguration] = Field(default_factory=list)
-    scheduler: QuotaSchedulerConfiguration = Field(
-        default_factory=QuotaSchedulerConfiguration
+    It is possible to limit quota usage per user or per service or services
+    (that typically run in one cluster). Each limit is configured as a separate
+    _quota limiter_. It can be of type `user_limiter` or `cluster_limiter`
+    (which is name that makes sense in OpenShift deployment).
+    """
+
+    sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
+        None,
+        title="SQLite configuration",
+        description="SQLite database configuration",
     )
-    enable_token_history: bool = False
+
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = Field(
+        None,
+        title="PostgreSQL configuration",
+        description="PostgreSQL database configuration",
+    )
+
+    limiters: list[QuotaLimiterConfiguration] = Field(
+        default_factory=list,
+        title="Quota limiters",
+        description="Quota limiters configuration",
+    )
+
+    scheduler: QuotaSchedulerConfiguration = Field(
+        default_factory=lambda: QuotaSchedulerConfiguration(period=1),
+        title="Quota scheduler",
+        description="Quota scheduler configuration",
+    )
+
+    enable_token_history: bool = Field(
+        False,
+        title="Enable token history",
+        description="Enables storing information about token usage history",
+    )
 
 
 class Configuration(ConfigurationBase):
