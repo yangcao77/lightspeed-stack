@@ -981,26 +981,99 @@ class QuotaHandlersConfiguration(ConfigurationBase):
 class Configuration(ConfigurationBase):
     """Global service configuration."""
 
-    name: str
-    service: ServiceConfiguration
-    llama_stack: LlamaStackConfiguration
-    user_data_collection: UserDataCollection
+    name: str = Field(
+        ...,
+        title="Service name",
+        description="Name of the service. That value will be used in REST API endpoints.",
+    )
+
+    service: ServiceConfiguration = Field(
+        ...,
+        title="Service configuration",
+        description="This section contains Lightspeed Core Stack service configuration.",
+    )
+
+    llama_stack: LlamaStackConfiguration = Field(
+        ...,
+        title="Llama Stack configuration",
+        description="This section contains Llama Stack configuration. "
+        "Lightspeed Core Stack service can call Llama Stack in library mode or in server mode.",
+    )
+
+    user_data_collection: UserDataCollection = Field(
+        ...,
+        title="User data collection configuration",
+        description="This section contains configuration for subsystem that collects user data"
+        "(transcription history and feedbacks).",
+    )
+
     database: DatabaseConfiguration = Field(
         default_factory=lambda: DatabaseConfiguration(sqlite=None, postgres=None),
+        title="Database Configuration",
+        description="Configuration for database to store conversation IDs and other runtime data",
     )
-    mcp_servers: list[ModelContextProtocolServer] = Field(default_factory=list)
+
+    mcp_servers: list[ModelContextProtocolServer] = Field(
+        default_factory=list,
+        title="Model Context Protocol Server and tools configuration",
+        description="MCP (Model Context Protocol) servers provide tools and "
+        "capabilities to the AI agents. These are configured in this section. "
+        "Only MCP servers defined in the lightspeed-stack.yaml configuration are "
+        "available to the agents. Tools configured in the llama-stack run.yaml "
+        "are not accessible to lightspeed-core agents.",
+    )
+
     authentication: AuthenticationConfiguration = Field(
-        default_factory=AuthenticationConfiguration
+        default_factory=AuthenticationConfiguration,
+        title="Authentication configuration",
+        description="Authentication configuration",
     )
-    authorization: Optional[AuthorizationConfiguration] = None
-    customization: Optional[Customization] = None
-    inference: InferenceConfiguration = Field(default_factory=InferenceConfiguration)
+
+    authorization: Optional[AuthorizationConfiguration] = Field(
+        None,
+        title="Authorization configuration",
+        description="Lightspeed Core Stack implements a modular "
+        "authentication and authorization system with multiple authentication "
+        "methods. Authorization is configurable through role-based access "
+        "control. Authentication is handled through selectable modules "
+        "configured via the module field in the authentication configuration.",
+    )
+
+    customization: Optional[Customization] = Field(
+        None,
+        title="Custom profile configuration",
+        description="It is possible to customize Lightspeed Core Stack via this "
+        "section. System prompt can be customized and also different parts of "
+        "the service can be replaced by custom Python modules.",
+    )
+
+    inference: InferenceConfiguration = Field(
+        default_factory=InferenceConfiguration,
+        title="Inference configuration",
+        description="One LLM provider and one its model might be selected as "
+        "default ones. When no provider+model pair is specified in REST API "
+        "calls (query endpoints), the default provider and model are used.",
+    )
+
     conversation_cache: ConversationHistoryConfiguration = Field(
-        default_factory=ConversationHistoryConfiguration
+        default_factory=ConversationHistoryConfiguration,
+        title="Conversation history configuration",
+        description="Conversation history configuration.",
     )
-    byok_rag: list[ByokRag] = Field(default_factory=list)
+
+    byok_rag: list[ByokRag] = Field(
+        default_factory=list,
+        title="BYOK RAG configuration",
+        description="BYOK RAG configuration. This configuration can be used to "
+        "reconfigure Llama Stack through its run.yaml configuration file",
+    )
+
     quota_handlers: QuotaHandlersConfiguration = Field(
-        default_factory=QuotaHandlersConfiguration
+        default_factory=lambda: QuotaHandlersConfiguration(
+            sqlite=None, postgres=None, enable_token_history=False
+        ),
+        title="Quota handlers",
+        description="Quota handlers configuration",
     )
 
     def dump(self, filename: str = "configuration.json") -> None:
