@@ -386,17 +386,48 @@ class ModelContextProtocolServer(ConfigurationBase):
     url: str = Field(
         ...,
         title="MCP server URL",
-        description="URL to MCP server",
+        description="URL of the MCP server",
     )
 
 
 class LlamaStackConfiguration(ConfigurationBase):
-    """Llama stack configuration."""
+    """Llama stack configuration.
 
-    url: Optional[str] = None
-    api_key: Optional[SecretStr] = None
-    use_as_library_client: Optional[bool] = None
-    library_client_config_path: Optional[str] = None
+    Llama Stack is a comprehensive system that provides a uniform set of tools
+    for building, scaling, and deploying generative AI applications, enabling
+    developers to create, integrate, and orchestrate multiple AI services and
+    capabilities into an adaptable setup.
+
+    Useful resources:
+
+      - [Llama Stack](https://www.llama.com/products/llama-stack/)
+      - [Python Llama Stack client](https://github.com/llamastack/llama-stack-client-python)
+      - [Build AI Applications with Llama Stack](https://llamastack.github.io/)
+    """
+
+    url: Optional[str] = Field(
+        None,
+        title="Llama Stack URL",
+        description="URL to Llama Stack service; used when library mode is disabled",
+    )
+
+    api_key: Optional[SecretStr] = Field(
+        None,
+        title="API key",
+        description="API key to access Llama Stack service",
+    )
+
+    use_as_library_client: Optional[bool] = Field(
+        None,
+        title="Use as library",
+        description="When set to true Llama Stack will be used in library mode (default=server mode)",
+    )
+
+    library_client_config_path: Optional[str] = Field(
+        None,
+        title="Llama Stack configuration path",
+        description="Path to configuration file used when Llama Stack is run in library mode",
+    )
 
     @model_validator(mode="after")
     def check_llama_stack_model(self) -> Self:
@@ -413,6 +444,8 @@ class LlamaStackConfiguration(ConfigurationBase):
             Self: The validated LlamaStackConfiguration instance.
         """
         if self.url is None:
+            # when URL is not set, it is supposed that Llama Stack should be run in library mode
+            # it means that use_as_library_client attribute must be set to True
             if self.use_as_library_client is None:
                 raise ValueError(
                     "Llama stack URL is not specified and library client mode is not specified"
@@ -421,9 +454,15 @@ class LlamaStackConfiguration(ConfigurationBase):
                 raise ValueError(
                     "Llama stack URL is not specified and library client mode is not enabled"
                 )
+
+        # None -> False conversion
         if self.use_as_library_client is None:
             self.use_as_library_client = False
+
         if self.use_as_library_client:
+            # when use_as_library_client is set to true, Llama Stack will be run in library mode
+            # it means that library_client_config_path attribute must be set and must point to
+            # a regular readable YAML file
             if self.library_client_config_path is None:
                 # pylint: disable=line-too-long
                 raise ValueError(
