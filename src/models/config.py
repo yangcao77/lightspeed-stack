@@ -874,13 +874,55 @@ class ByokRag(ConfigurationBase):
 
 
 class QuotaLimiterConfiguration(ConfigurationBase):
-    """Configuration for one quota limiter."""
+    """Configuration for one quota limiter.
 
-    type: Literal["user_limiter", "cluster_limiter"]
-    name: str
-    initial_quota: NonNegativeInt
-    quota_increase: NonNegativeInt
-    period: str
+    There are three configuration options for each limiter:
+
+    1. `period` specified in a human-readable form, see
+       https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
+       for all possible options. When the end of the period is reached, quota is
+       reset or increased
+    2. `initial_quota` is set at beginning of the period
+    3. `quota_increase` this value (if specified) is used to increase quota
+       when period is reached
+
+    There are two basic use cases:
+
+    1. When quota needs to be reset specific value periodically (for example on
+       weekly on monthly basis), specify `initial_quota` to the required value
+    2. When quota needs to be increased by specific value periodically (for
+       example on daily basis), specify `quota_increase`
+    """
+
+    type: Literal["user_limiter", "cluster_limiter"] = Field(
+        ...,
+        title="Quota limiter type",
+        description="Quota limiter type, either user_limiter or cluster_limiter",
+    )
+
+    name: str = Field(
+        ...,
+        title="Quota limiter name",
+        description="Human readable quota limiter name",
+    )
+
+    initial_quota: NonNegativeInt = Field(
+        ...,
+        title="Initial quota",
+        description="Quota set at beginning of the period",
+    )
+
+    quota_increase: NonNegativeInt = Field(
+        ...,
+        title="Quota increase",
+        description="Delta value used to increase quota when period is reached",
+    )
+
+    period: str = Field(
+        ...,
+        title="Period",
+        description="Period specified in human readable form",
+    )
 
 
 class QuotaSchedulerConfiguration(BaseModel):
