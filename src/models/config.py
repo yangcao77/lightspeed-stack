@@ -313,19 +313,19 @@ class ServiceConfiguration(ConfigurationBase):
     workers: PositiveInt = Field(
         1,
         title="Number of workers",
-        description="Number of Uvicorn workers processes to start",
+        description="Number of Uvicorn worker processes to start",
     )
 
     color_log: bool = Field(
         True,
         title="Color log",
-        description="Enables colorized log",
+        description="Enables colorized logging",
     )
 
     access_log: bool = Field(
         True,
         title="Access log",
-        description="Enables logging all access information",
+        description="Enables logging of all access information",
     )
 
     tls_config: TLSConfiguration = Field(
@@ -462,8 +462,10 @@ class LlamaStackConfiguration(ConfigurationBase):
 
         if self.use_as_library_client:
             # when use_as_library_client is set to true, Llama Stack will be run in library mode
-            # it means that library_client_config_path attribute must be set and must point to
-            # a regular readable YAML file
+            # it means that:
+            # - Llama Stack URL should not be set, and
+            # - library_client_config_path attribute must be set and must point to
+            #   a regular readable YAML file
             if self.library_client_config_path is None:
                 # pylint: disable=line-too-long
                 raise ValueError(
@@ -539,7 +541,7 @@ class JwtRoleRule(ConfigurationBase):
     negate: bool = Field(
         False,
         title="Negate rule",
-        description="If set to true, the meaning of rule is negated",
+        description="If set to true, the meaning of the rule is negated",
     )
 
     value: Any = Field(
@@ -551,7 +553,7 @@ class JwtRoleRule(ConfigurationBase):
     roles: list[str] = Field(
         ...,
         title="List of roles",
-        description="Roles to be assigned if rule matches",
+        description="Roles to be assigned if the rule matches",
     )
 
     @model_validator(mode="after")
@@ -878,20 +880,21 @@ class QuotaLimiterConfiguration(ConfigurationBase):
 
     There are three configuration options for each limiter:
 
-    1. `period` specified in a human-readable form, see
+    1. ``period`` is specified in a human-readable form, see
        https://www.postgresql.org/docs/current/datatype-datetime.html#DATATYPE-INTERVAL-INPUT
-       for all possible options. When the end of the period is reached, quota is
-       reset or increased
-    2. `initial_quota` is set at beginning of the period
-    3. `quota_increase` this value (if specified) is used to increase quota
-       when period is reached
+       for all possible options. When the end of the period is reached, the
+       quota is reset or increased.
+    2. ``initial_quota`` is the value set at the beginning of the period.
+    3. ``quota_increase`` is the value (if specified) used to increase the
+       quota when the period is reached.
 
     There are two basic use cases:
 
-    1. When quota needs to be reset specific value periodically (for example on
-       weekly on monthly basis), specify `initial_quota` to the required value
-    2. When quota needs to be increased by specific value periodically (for
-       example on daily basis), specify `quota_increase`
+    1. When the quota needs to be reset to a specific value periodically (for
+       example on a weekly or monthly basis), set ``initial_quota`` to the
+       required value.
+    2. When the quota needs to be increased by a specific value periodically
+       (for example on a daily basis), set ``quota_increase``.
     """
 
     type: Literal["user_limiter", "cluster_limiter"] = Field(
@@ -925,10 +928,14 @@ class QuotaLimiterConfiguration(ConfigurationBase):
     )
 
 
-class QuotaSchedulerConfiguration(BaseModel):
+class QuotaSchedulerConfiguration(ConfigurationBase):
     """Quota scheduler configuration."""
 
-    period: PositiveInt = 1
+    period: PositiveInt = Field(
+        1,
+        title="Period",
+        description="Quota scheduler period specified in seconds",
+    )
 
 
 class QuotaHandlersConfiguration(ConfigurationBase):
