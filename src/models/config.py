@@ -286,10 +286,10 @@ class DatabaseConfiguration(ConfigurationBase):
 class ServiceConfiguration(ConfigurationBase):
     """Service configuration.
 
-    Lightspeed Core Stack is a REST API service that needs to accept requests
-    on specified hostname and port. It is also possible to enable
-    authentication and specify number of Uvicorn workers. When more workers are
-    specified, it will be possible to serve requests concurrently.
+    Lightspeed Core Stack is a REST API service that accepts requests
+    on a specified hostname and port. It is also possible to enable
+    authentication and specify the number of Uvicorn workers. When more
+    workers are specified, the service can handle requests concurrently.
     """
 
     host: str = Field(
@@ -307,29 +307,44 @@ class ServiceConfiguration(ConfigurationBase):
     auth_enabled: bool = Field(
         False,
         title="Authentication enabled",
-        description="Enables authentication subsystem",
+        description="Enables the authentication subsystem",
     )
 
     workers: PositiveInt = Field(
         1,
         title="Number of workers",
-        description="Number of workers to be started",
+        description="Number of Uvicorn workers processes to start",
     )
 
-    color_log: bool = True
-    access_log: bool = True
+    color_log: bool = Field(
+        True,
+        title="Color log",
+        description="Enables colorized log",
+    )
+
+    access_log: bool = Field(
+        True,
+        title="Access log",
+        description="Enables logging all access information",
+    )
+
     tls_config: TLSConfiguration = Field(
         default_factory=lambda: TLSConfiguration(
             tls_certificate_path=None, tls_key_path=None, tls_key_password=None
-        )
+        ),
+        title="TLS configuration",
+        description="TLS configuration",
     )
+
     cors: CORSConfiguration = Field(
         default_factory=lambda: CORSConfiguration(
             allow_origins=["*"],
             allow_credentials=False,
             allow_methods=["*"],
             allow_headers=["*"],
-        )
+        ),
+        title="CORS configuration",
+        description="CORS configuration",
     )
 
     @model_validator(mode="after")
