@@ -333,7 +333,7 @@ class ServiceConfiguration(ConfigurationBase):
             tls_certificate_path=None, tls_key_path=None, tls_key_password=None
         ),
         title="TLS configuration",
-        description="TLS configuration",
+        description="Transport Layer Security configuration for HTTPS support",
     )
 
     cors: CORSConfiguration = Field(
@@ -344,7 +344,7 @@ class ServiceConfiguration(ConfigurationBase):
             allow_headers=["*"],
         ),
         title="CORS configuration",
-        description="CORS configuration",
+        description="Cross-Origin Resource Sharing configuration for cross-domain requests",
     )
 
     @model_validator(mode="after")
@@ -356,11 +356,38 @@ class ServiceConfiguration(ConfigurationBase):
 
 
 class ModelContextProtocolServer(ConfigurationBase):
-    """model context protocol server configuration."""
+    """Model context protocol server configuration.
 
-    name: str
-    provider_id: str = "model-context-protocol"
-    url: str
+    MCP (Model Context Protocol) servers provide tools and
+    capabilities to the AI agents. These are configured by this structure.
+    Only MCP servers defined in the lightspeed-stack.yaml configuration are
+    available to the agents. Tools configured in the llama-stack run.yaml
+    are not accessible to lightspeed-core agents.
+
+    Useful resources:
+
+    - [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)
+    - [MCP FAQs](https://modelcontextprotocol.io/faqs)
+    - [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+    """
+
+    name: str = Field(
+        ...,
+        title="MCP name",
+        description="MCP server name that must be unique",
+    )
+
+    provider_id: str = Field(
+        "model-context-protocol",
+        title="Provider ID",
+        description="MCP provider identification",
+    )
+
+    url: str = Field(
+        ...,
+        title="MCP server URL",
+        description="URL to MCP server",
+    )
 
 
 class LlamaStackConfiguration(ConfigurationBase):
