@@ -778,7 +778,7 @@ async def test_retrieve_response_parses_referenced_documents(
     mocker: MockerFixture,
 ) -> None:
     """Test that retrieve_response correctly parses referenced documents from response."""
-    mock_client = mocker.Mock()
+    mock_client = mocker.AsyncMock()
 
     # 1. Output item with message content annotations (citations)
     output_item_1 = mocker.Mock()

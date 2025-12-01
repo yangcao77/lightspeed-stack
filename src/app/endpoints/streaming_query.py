@@ -1057,7 +1057,7 @@ async def retrieve_response(
         }
 
         vector_db_ids = [
-            vector_db.identifier for vector_db in await client.vector_dbs.list()
+            vector_store.id for vector_store in (await client.vector_stores.list()).data
         ]
         toolgroups = (get_rag_toolgroups(vector_db_ids) or []) + [
             mcp_server.name for mcp_server in configuration.mcp_servers
@@ -1077,11 +1077,11 @@ async def retrieve_response(
     ]
 
     response = await agent.create_turn(
-        messages=[UserMessage(role="user", content=query_request.query)],
+        messages=[UserMessage(role="user", content=query_request.query).model_dump()],
         session_id=session_id,
-        documents=documents,
+        # documents=documents,
         stream=True,
-        toolgroups=toolgroups,
+        # toolgroups=toolgroups,
     )
     response = cast(AsyncIterator[AgentTurnResponseStreamChunk], response)
 
