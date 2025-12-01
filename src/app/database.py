@@ -13,6 +13,7 @@ from models.config import SQLiteDatabaseConfiguration, PostgreSQLDatabaseConfigu
 
 logger = get_logger(__name__)
 
+# pylint: disable=invalid-name
 engine: Engine | None = None
 session_local: sessionmaker | None = None
 
