@@ -21,5 +21,12 @@ user_data_collection:
   transcripts_enabled: true
   transcripts_storage: "/tmp/data/transcripts"
 
+# Conversation cache for storing Q&A history
+conversation_cache:
+  type: "sqlite"
+  sqlite:
+    db_path: "/tmp/data/conversation-cache.db"
+
 authentication:
   module: "noop-with-token"
+

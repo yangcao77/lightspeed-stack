@@ -79,11 +79,23 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
         context.scenario_config = (
             "tests/e2e/configuration/lightspeed-stack-invalid-feedback-storage.yaml"
         )
+    if "NoCacheConfig" in scenario.effective_tags:
+        context.scenario_config = (
+            "tests/e2e/configuration/lightspeed-stack-no-cache.yaml"
+        )
+        # Switch config and restart immediately
+        switch_config(
+            context.scenario_config
+        )  # Copies to default lightspeed-stack.yaml
+        restart_container("lightspeed-stack")
 
 
 def after_scenario(context: Context, scenario: Scenario) -> None:
     """Run after each scenario is run."""
     if "InvalidFeedbackStorageConfig" in scenario.effective_tags:
+        switch_config(context.feature_config)
+        restart_container("lightspeed-stack")
+    if "NoCacheConfig" in scenario.effective_tags:
         switch_config(context.feature_config)
         restart_container("lightspeed-stack")
 
