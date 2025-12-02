@@ -1,17 +1,13 @@
 """Handler for REST API calls to manage conversation history using Conversations API."""
 
 import logging
-from typing import Any, cast
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from llama_stack_client import (
     APIConnectionError,
+    APIStatusError,
     NOT_GIVEN,
-    BadRequestError,
-    NotFoundError,
-)
-from llama_stack_client.types.conversation_delete_response import (
-    ConversationDeleteResponse as CDR,
 )
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -49,7 +45,7 @@ from utils.suid import (
 )
 
 logger = logging.getLogger("app.endpoints.handlers")
-router = APIRouter(tags=["conversations_v3"])
+router = APIRouter(tags=["conversations_v1"])
 
 conversation_get_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationResponse.openapi_response(),
@@ -74,7 +70,6 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(
         examples=["conversation delete", "endpoint"]
     ),
-    404: NotFoundResponse.openapi_response(examples=["conversation"]),
     500: InternalServerErrorResponse.openapi_response(
         examples=["database", "configuration"]
     ),
@@ -113,51 +108,68 @@ def simplify_conversation_items(items: list[dict]) -> list[dict[str, Any]]:
 
     Args:
         items: The full conversation items list from llama-stack Conversations API
+            (in reverse chronological order, newest first)
 
     Returns:
         Simplified items with only essential message and tool call information
+        (in chronological order, oldest first, grouped by turns)
     """
+    # Filter only message type items
+    message_items = [item for item in items if item.get("type") == "message"]
+
+    # Process from bottom up (reverse to get chronological order)
+    # Assume items are grouped correctly: user input followed by assistant output
+    reversed_messages = list(reversed(message_items))
+
     chat_history = []
+    i = 0
+    while i < len(reversed_messages):
+        # Extract text content from user message
+        user_item = reversed_messages[i]
+        user_content = user_item.get("content", [])
+        user_text = ""
+        for content_part in user_content:
+            if isinstance(content_part, dict):
+                content_type = content_part.get("type")
+                if content_type == "input_text":
+                    user_text += content_part.get("text", "")
+            elif isinstance(content_part, str):
+                user_text += content_part
 
-    # Group items by turns (user message -> assistant response)
-    current_turn: dict[str, Any] = {"messages": []}
-
-    for item in items:
-        item_type = item.get("type")
-        item_role = item.get("role")
-
-        # Handle message items
-        if item_type == "message":
-            content = item.get("content", [])
-
-            # Extract text content from content array
-            text_content = ""
-            for content_part in content:
+        # Extract text content from assistant message (next item)
+        assistant_text = ""
+        if i + 1 < len(reversed_messages):
+            assistant_item = reversed_messages[i + 1]
+            assistant_content = assistant_item.get("content", [])
+            for content_part in assistant_content:
                 if isinstance(content_part, dict):
-                    if content_part.get("type") == "text":
-                        text_content += content_part.get("text", "")
+                    content_type = content_part.get("type")
+                    if content_type == "output_text":
+                        assistant_text += content_part.get("text", "")
                 elif isinstance(content_part, str):
-                    text_content += content_part
+                    assistant_text += content_part
 
-            message = {
-                "content": text_content,
-                "type": item_role,
+        # Create turn with user message first, then assistant message
+        chat_history.append(
+            {
+                "messages": [
+                    {"content": user_text, "type": "user"},
+                    {"content": assistant_text, "type": "assistant"},
+                ]
             }
-            current_turn["messages"].append(message)
+        )
 
-            # If this is an assistant message, it marks the end of a turn
-            if item_role == "assistant" and current_turn["messages"]:
-                chat_history.append(current_turn)
-                current_turn = {"messages": []}
-
-    # Add any remaining turn
-    if current_turn["messages"]:
-        chat_history.append(current_turn)
+        # Move to next pair (skip both user and assistant)
+        i += 2
 
     return chat_history
 
 
-@router.get("/conversations", responses=conversations_list_responses)
+@router.get(
+    "/conversations",
+    responses=conversations_list_responses,
+    summary="Conversations List Endpoint Handler V1",
+)
 @authorize(Action.LIST_CONVERSATIONS)
 async def get_conversations_list_endpoint_handler(
     request: Request,
@@ -214,7 +226,11 @@ async def get_conversations_list_endpoint_handler(
             raise HTTPException(**response.model_dump()) from e
 
 
-@router.get("/conversations/{conversation_id}", responses=conversation_get_responses)
+@router.get(
+    "/conversations/{conversation_id}",
+    responses=conversation_get_responses,
+    summary="Conversation Get Endpoint Handler V1",
+)
 @authorize(Action.GET_CONVERSATION)
 async def get_conversation_endpoint_handler(
     request: Request,
@@ -278,15 +294,18 @@ async def get_conversation_endpoint_handler(
         raise HTTPException(**response)
 
     # If reached this, user is authorized to retrieve this conversation
-    # Note: We check if conversation exists in DB but don't fail if it doesn't,
-    # as it might exist in llama-stack but not be persisted yet
     try:
         conversation = retrieve_conversation(normalized_conv_id)
         if conversation is None:
-            logger.warning(
-                "Conversation %s not found in database, will try llama-stack",
+            logger.error(
+                "Conversation %s not found in database.",
                 normalized_conv_id,
             )
+            response = NotFoundResponse(
+                resource="conversation", resource_id=normalized_conv_id
+            ).model_dump()
+            raise HTTPException(**response)
+
     except SQLAlchemyError as e:
         logger.error(
             "Database error occurred while retrieving conversation %s: %s",
@@ -313,18 +332,16 @@ async def get_conversation_endpoint_handler(
         # Use Conversations API to retrieve conversation items
         conversation_items_response = await client.conversations.items.list(
             conversation_id=llama_stack_conv_id,
-            after=NOT_GIVEN,  # No pagination cursor
-            include=NOT_GIVEN,  # Include all available data
-            limit=1000,  # Max items to retrieve
-            order="asc",  # Get items in chronological order
+            after=NOT_GIVEN,
+            include=NOT_GIVEN,
+            limit=NOT_GIVEN,
+            order=NOT_GIVEN,
         )
-
         items = (
             conversation_items_response.data
             if hasattr(conversation_items_response, "data")
             else []
         )
-
         # Convert items to dict format for processing
         items_dicts = [
             item.model_dump() if hasattr(item, "model_dump") else dict(item)
@@ -336,10 +353,10 @@ async def get_conversation_endpoint_handler(
             len(items_dicts),
             conversation_id,
         )
-
         # Simplify the conversation items to include only essential information
         chat_history = simplify_conversation_items(items_dicts)
 
+        # Conversations api has no support for message level timestamps
         return ConversationResponse(
             conversation_id=normalized_conv_id,
             chat_history=chat_history,
@@ -352,7 +369,7 @@ async def get_conversation_endpoint_handler(
         ).model_dump()
         raise HTTPException(**response) from e
 
-    except (NotFoundError, BadRequestError) as e:
+    except APIStatusError as e:
         logger.error("Conversation not found: %s", e)
         response = NotFoundResponse(
             resource="conversation", resource_id=normalized_conv_id
@@ -361,7 +378,9 @@ async def get_conversation_endpoint_handler(
 
 
 @router.delete(
-    "/conversations/{conversation_id}", responses=conversation_delete_responses
+    "/conversations/{conversation_id}",
+    responses=conversation_delete_responses,
+    summary="Conversation Delete Endpoint Handler V1",
 )
 @authorize(Action.DELETE_CONVERSATION)
 async def delete_conversation_endpoint_handler(
@@ -420,16 +439,15 @@ async def delete_conversation_endpoint_handler(
 
     # If reached this, user is authorized to delete this conversation
     try:
-        conversation = retrieve_conversation(normalized_conv_id)
-        if conversation is None:
-            response = NotFoundResponse(
-                resource="conversation", resource_id=normalized_conv_id
-            ).model_dump()
-            raise HTTPException(**response)
-
+        local_deleted = delete_conversation(normalized_conv_id)
+        if not local_deleted:
+            logger.info(
+                "Conversation %s not found locally when deleting.",
+                normalized_conv_id,
+            )
     except SQLAlchemyError as e:
         logger.error(
-            "Database error occurred while retrieving conversation %s.",
+            "Database error while deleting conversation %s",
             normalized_conv_id,
         )
         response = InternalServerErrorResponse.database_error()
@@ -437,7 +455,6 @@ async def delete_conversation_endpoint_handler(
 
     logger.info("Deleting conversation %s using Conversations API", normalized_conv_id)
 
-    delete_response: CDR | None = None
     try:
         # Get Llama Stack client
         client = AsyncLlamaStackClientHolder().get_client()
@@ -446,17 +463,13 @@ async def delete_conversation_endpoint_handler(
         llama_stack_conv_id = to_llama_stack_conversation_id(normalized_conv_id)
 
         # Use Conversations API to delete the conversation
-        delete_response = cast(
-            CDR, await client.conversations.delete(conversation_id=llama_stack_conv_id)
+        delete_response = await client.conversations.delete(
+            conversation_id=llama_stack_conv_id
         )
-
-        logger.info("Successfully deleted conversation %s", normalized_conv_id)
-
-        deleted = delete_conversation(normalized_conv_id)
-
-        return ConversationDeleteResponse(
-            conversation_id=normalized_conv_id,
-            deleted=deleted and delete_response.deleted if delete_response else False,
+        logger.info(
+            "Remote deletion of %s successful (remote_deleted=%s)",
+            normalized_conv_id,
+            delete_response.deleted,
         )
 
     except APIConnectionError as e:
@@ -467,28 +480,23 @@ async def delete_conversation_endpoint_handler(
             ).model_dump(),
         ) from e
 
-    except (NotFoundError, BadRequestError):
-        # If not found in LlamaStack, still try to delete from local DB
+    except APIStatusError:
         logger.warning(
-            "Conversation %s not found in LlamaStack, cleaning up local DB",
+            "Conversation %s in LlamaStack not found. Treating as already deleted.",
             normalized_conv_id,
         )
-        deleted = delete_conversation(normalized_conv_id)
-        return ConversationDeleteResponse(
-            conversation_id=normalized_conv_id,
-            deleted=deleted,
-        )
 
-    except SQLAlchemyError as e:
-        logger.error(
-            "Database error occurred while deleting conversation %s.",
-            normalized_conv_id,
-        )
-        response = InternalServerErrorResponse.database_error()
-        raise HTTPException(**response.model_dump()) from e
+    return ConversationDeleteResponse(
+        conversation_id=normalized_conv_id,
+        deleted=local_deleted,
+    )
 
 
-@router.put("/conversations/{conversation_id}", responses=conversation_update_responses)
+@router.put(
+    "/conversations/{conversation_id}",
+    responses=conversation_update_responses,
+    summary="Conversation Update Endpoint Handler V1",
+)
 @authorize(Action.UPDATE_CONVERSATION)
 async def update_conversation_endpoint_handler(
     request: Request,
@@ -609,7 +617,7 @@ async def update_conversation_endpoint_handler(
         ).model_dump()
         raise HTTPException(**response) from e
 
-    except (NotFoundError, BadRequestError) as e:
+    except APIStatusError as e:
         logger.error("Conversation not found: %s", e)
         response = NotFoundResponse(
             resource="conversation", resource_id=normalized_conv_id
