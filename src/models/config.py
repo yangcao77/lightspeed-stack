@@ -637,7 +637,7 @@ class JwtRoleRule(ConfigurationBase):
 class Action(str, Enum):
     """Available actions in the system.
 
-    Note: this is not a real model, just enumeration of all action names.
+    Note: this is not a real model, just an enumeration of all action names.
     """
 
     # Special action to allow unrestricted access to all actions
