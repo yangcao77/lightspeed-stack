@@ -3876,14 +3876,16 @@ Rule defining what actions a role can perform.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| role | string |  |
-| actions | array |  |
+| role | string | Name of the role |
+| actions | array | Allowed actions for this role |
 
 
 ## Action
 
 
 Available actions in the system.
+
+Note: this is not a real model, just an enumeration of all action names.
 
 
 
@@ -3940,7 +3942,7 @@ Authorization configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| access_rules | array |  |
+| access_rules | array | Rules for role-based access control |
 
 
 ## AuthorizedResponse
@@ -3976,17 +3978,17 @@ Attributes:
 ## ByokRag
 
 
-BYOK RAG configuration.
+BYOK (Bring Your Own Knowledge) RAG configuration.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| rag_id | string |  |
-| rag_type | string |  |
-| embedding_model | string |  |
-| embedding_dimension | integer |  |
-| vector_db_id | string |  |
-| db_path | string |  |
+| rag_id | string | Unique RAG ID |
+| rag_type | string | Type of RAG database. |
+| embedding_model | string | Embedding model identification |
+| embedding_dimension | integer | Dimensionality of embedding vectors. |
+| vector_db_id | string | Vector DB identification. |
+| db_path | string | Path to RAG database. |
 
 
 ## CORSConfiguration
@@ -4117,10 +4119,10 @@ Conversation history configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| type |  |  |
-| memory |  |  |
-| sqlite |  |  |
-| postgres |  |  |
+| type |  | Type of database where the conversation history is to be stored. |
+| memory |  | In-memory cache configuration |
+| sqlite |  | SQLite database configuration |
+| postgres |  | PostgreSQL database configuration |
 
 
 ## ConversationResponse
@@ -4214,8 +4216,8 @@ Custom profile customization for prompts and validation.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| path | string |  |
-| prompts | object |  |
+| path | string | Path to Python modules containing custom profile. |
+| prompts | object | Dictionary containing map of system prompts |
 
 
 ## Customization
@@ -4394,8 +4396,8 @@ Inference configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| default_model |  |  |
-| default_provider |  |  |
+| default_model |  | Identification of default model used when no other model is specified. |
+| default_provider |  | Identification of default provider used when no other model is specified. |
 
 
 ## InfoResponse
@@ -4433,32 +4435,56 @@ Attributes:
 
 Supported operators for JSONPath evaluation.
 
+Note: this is not a real model, just an enumeration of all supported JSONPath operators.
+
 
 
 
 ## JwkConfiguration
 
 
-JWK configuration.
+JWK (JSON Web Key) configuration.
+
+A JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data structure
+that represents a cryptographic key.
+
+Useful resources:
+
+  - [JSON Web Key](https://openid.net/specs/draft-jones-json-web-key-03.html)
+  - [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517)
 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| url | string |  |
-| jwt_configuration |  |  |
+| url | string | HTTPS URL of the JWK (JSON Web Key) set used to validate JWTs. |
+| jwt_configuration |  | JWT (JSON Web Token) configuration |
 
 
 ## JwtConfiguration
 
 
-JWT configuration.
+JWT (JSON Web Token) configuration.
+
+JSON Web Token (JWT) is a compact, URL-safe means of representing
+claims to be transferred between two parties.  The claims in a JWT
+are encoded as a JSON object that is used as the payload of a JSON
+Web Signature (JWS) structure or as the plaintext of a JSON Web
+Encryption (JWE) structure, enabling the claims to be digitally
+signed or integrity protected with a Message Authentication Code
+(MAC) and/or encrypted.
+
+Useful resources:
+
+  - [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token)
+  - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519)
+  - [JSON Web Tokens](https://auth0.com/docs/secure/tokens/json-web-tokens)
 
 
 | Field | Type | Description |
 |-------|------|-------------|
-| user_id_claim | string |  |
-| username_claim | string |  |
-| role_rules | array |  |
+| user_id_claim | string | JWT claim name that uniquely identifies the user (subject ID). |
+| username_claim | string | JWT claim name that provides the human-readable username. |
+| role_rules | array | Rules for extracting roles from JWT claims |
 
 
 ## JwtRoleRule
@@ -4827,7 +4853,7 @@ Red Hat Identity authentication configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| required_entitlements |  |  |
+| required_entitlements |  | List of all required entitlements. |
 
 
 ## ReadinessResponse
@@ -5018,10 +5044,10 @@ User data collection configuration.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| feedback_enabled | boolean |  |
-| feedback_storage |  |  |
-| transcripts_enabled | boolean |  |
-| transcripts_storage |  |  |
+| feedback_enabled | boolean | When set to true the user feedback is stored and later sent for analysis. |
+| feedback_storage |  | Path to directory where feedback will be saved for further processing. |
+| transcripts_enabled | boolean | When set to true the conversation history is stored and later sent for analysis. |
+| transcripts_storage |  | Path to directory where conversation history will be saved for further processing. |
 
 
 ## ValidationError
