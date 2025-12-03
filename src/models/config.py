@@ -15,7 +15,6 @@ from pydantic import (
     ConfigDict,
     Field,
     model_validator,
-    constr,
     FilePath,
     AnyHttpUrl,
     PositiveInt,
@@ -483,14 +482,35 @@ class LlamaStackConfiguration(ConfigurationBase):
 class UserDataCollection(ConfigurationBase):
     """User data collection configuration."""
 
-    feedback_enabled: bool = False
-    feedback_storage: Optional[str] = None
-    transcripts_enabled: bool = False
-    transcripts_storage: Optional[str] = None
+    feedback_enabled: bool = Field(
+        False,
+        title="Feedback enabled",
+        description="When set to true the user feedback is stored and later sent for analysis.",
+    )
+
+    feedback_storage: Optional[str] = Field(
+        None,
+        title="Feedback storage directory",
+        description="Path to directory where feedback will be saved for further processing.",
+    )
+
+    transcripts_enabled: bool = Field(
+        False,
+        title="Transcripts enabled",
+        description="When set to true the conversation history is stored and later sent for "
+        "analysis.",
+    )
+
+    transcripts_storage: Optional[str] = Field(
+        None,
+        title="Transcripts storage directory",
+        description="Path to directory where conversation history will be saved for further "
+        "processing.",
+    )
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
-        """Check that storage_location is set when enabled."""
+        """Ensure storage directories are set when feedback or transcripts are enabled."""
         if self.feedback_enabled:
             if self.feedback_storage is None:
                 raise ValueError(
@@ -517,7 +537,10 @@ class UserDataCollection(ConfigurationBase):
 
 
 class JsonPathOperator(str, Enum):
-    """Supported operators for JSONPath evaluation."""
+    """Supported operators for JSONPath evaluation.
+
+    Note: this is not a real model, just an enumeration of all supported JSONPath operators.
+    """
 
     EQUALS = "equals"
     CONTAINS = "contains"
@@ -612,7 +635,10 @@ class JwtRoleRule(ConfigurationBase):
 
 
 class Action(str, Enum):
-    """Available actions in the system."""
+    """Available actions in the system.
+
+    Note: this is not a real model, just an enumeration of all action names.
+    """
 
     # Special action to allow unrestricted access to all actions
     ADMIN = "admin"
@@ -665,39 +691,102 @@ class Action(str, Enum):
 class AccessRule(ConfigurationBase):
     """Rule defining what actions a role can perform."""
 
-    role: str  # Role name
-    actions: list[Action]  # Allowed actions for this role
+    role: str = Field(
+        ...,
+        title="Role name",
+        description="Name of the role",
+    )
+
+    actions: list[Action] = Field(
+        ...,
+        title="Allowed actions",
+        description="Allowed actions for this role",
+    )
 
 
 class AuthorizationConfiguration(ConfigurationBase):
     """Authorization configuration."""
 
     access_rules: list[AccessRule] = Field(
-        default_factory=list
-    )  # Rules for role-based access control
+        default_factory=list,
+        title="Access rules",
+        description="Rules for role-based access control",
+    )
 
 
 class JwtConfiguration(ConfigurationBase):
-    """JWT configuration."""
+    """JWT (JSON Web Token) configuration.
 
-    user_id_claim: str = constants.DEFAULT_JWT_UID_CLAIM
-    username_claim: str = constants.DEFAULT_JWT_USER_NAME_CLAIM
+    JSON Web Token (JWT) is a compact, URL-safe means of representing
+    claims to be transferred between two parties.  The claims in a JWT
+    are encoded as a JSON object that is used as the payload of a JSON
+    Web Signature (JWS) structure or as the plaintext of a JSON Web
+    Encryption (JWE) structure, enabling the claims to be digitally
+    signed or integrity protected with a Message Authentication Code
+    (MAC) and/or encrypted.
+
+    Useful resources:
+
+      - [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token)
+      - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519)
+      - [JSON Web Tokens](https://auth0.com/docs/secure/tokens/json-web-tokens)
+    """
+
+    user_id_claim: str = Field(
+        constants.DEFAULT_JWT_UID_CLAIM,
+        title="User ID claim",
+        description="JWT claim name that uniquely identifies the user (subject ID).",
+    )
+
+    username_claim: str = Field(
+        constants.DEFAULT_JWT_USER_NAME_CLAIM,
+        title="Username claim",
+        description="JWT claim name that provides the human-readable username.",
+    )
+
     role_rules: list[JwtRoleRule] = Field(
-        default_factory=list
-    )  # Rules for extracting roles from JWT claims
+        default_factory=list,
+        title="Role rules",
+        description="Rules for extracting roles from JWT claims",
+    )
 
 
 class JwkConfiguration(ConfigurationBase):
-    """JWK configuration."""
+    """JWK (JSON Web Key) configuration.
 
-    url: AnyHttpUrl
-    jwt_configuration: JwtConfiguration = Field(default_factory=JwtConfiguration)
+    A JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data structure
+    that represents a cryptographic key.
+
+    Useful resources:
+
+      - [JSON Web Key](https://openid.net/specs/draft-jones-json-web-key-03.html)
+      - [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517)
+    """
+
+    url: AnyHttpUrl = Field(
+        ...,
+        title="URL",
+        description="HTTPS URL of the JWK (JSON Web Key) set used to validate JWTs.",
+    )
+
+    jwt_configuration: JwtConfiguration = Field(
+        default_factory=lambda: JwtConfiguration(
+            user_id_claim=constants.DEFAULT_JWT_UID_CLAIM,
+            username_claim=constants.DEFAULT_JWT_USER_NAME_CLAIM,
+        ),
+        title="JWT configuration",
+        description="JWT (JSON Web Token) configuration",
+    )
 
 
 class RHIdentityConfiguration(ConfigurationBase):
     """Red Hat Identity authentication configuration."""
 
-    required_entitlements: Optional[list[str]] = None
+    required_entitlements: Optional[list[str]] = Field(
+        None,
+        title="Required entitlements",
+        description="List of all required entitlements.",
+    )
 
 
 class AuthenticationConfiguration(ConfigurationBase):
@@ -762,8 +851,18 @@ class AuthenticationConfiguration(ConfigurationBase):
 class CustomProfile:
     """Custom profile customization for prompts and validation."""
 
-    path: str
-    prompts: dict[str, str] = Field(default={}, init=False)
+    path: str = Field(
+        ...,
+        title="Path to custom profile",
+        description="Path to Python modules containing custom profile.",
+    )
+
+    prompts: dict[str, str] = Field(
+        default={},
+        init=False,
+        title="System prompts",
+        description="Dictionary containing map of system prompts",
+    )
 
     def __post_init__(self) -> None:
         """Validate and load profile."""
@@ -806,8 +905,17 @@ class Customization(ConfigurationBase):
 class InferenceConfiguration(ConfigurationBase):
     """Inference configuration."""
 
-    default_model: Optional[str] = None
-    default_provider: Optional[str] = None
+    default_model: Optional[str] = Field(
+        None,
+        title="Default model",
+        description="Identification of default model used when no other model is specified.",
+    )
+
+    default_provider: Optional[str] = Field(
+        None,
+        title="Default provider",
+        description="Identification of default provider used when no other model is specified.",
+    )
 
     @model_validator(mode="after")
     def check_default_model_and_provider(self) -> Self:
@@ -826,10 +934,29 @@ class InferenceConfiguration(ConfigurationBase):
 class ConversationHistoryConfiguration(ConfigurationBase):
     """Conversation history configuration."""
 
-    type: Literal["noop", "memory", "sqlite", "postgres"] | None = None
-    memory: Optional[InMemoryCacheConfig] = None
-    sqlite: Optional[SQLiteDatabaseConfiguration] = None
-    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
+    type: Literal["noop", "memory", "sqlite", "postgres"] | None = Field(
+        None,
+        title="Conversation history database type",
+        description="Type of database where the conversation history is to be stored.",
+    )
+
+    memory: Optional[InMemoryCacheConfig] = Field(
+        None,
+        title="In-memory cache configuration",
+        description="In-memory cache configuration",
+    )
+
+    sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
+        None,
+        title="SQLite configuration",
+        description="SQLite database configuration",
+    )
+
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = Field(
+        None,
+        title="PostgreSQL configuration",
+        description="PostgreSQL database configuration",
+    )
 
     @model_validator(mode="after")
     def check_cache_configuration(self) -> Self:
@@ -865,16 +992,47 @@ class ConversationHistoryConfiguration(ConfigurationBase):
 
 
 class ByokRag(ConfigurationBase):
-    """BYOK RAG configuration."""
+    """BYOK (Bring Your Own Knowledge) RAG configuration."""
 
-    rag_id: constr(min_length=1)  # type:ignore
-    rag_type: constr(min_length=1) = constants.DEFAULT_RAG_TYPE  # type:ignore
-    embedding_model: constr(min_length=1) = (  # type:ignore
-        constants.DEFAULT_EMBEDDING_MODEL
+    rag_id: str = Field(
+        ...,
+        min_length=1,
+        title="RAG ID",
+        description="Unique RAG ID",
     )
-    embedding_dimension: PositiveInt = constants.DEFAULT_EMBEDDING_DIMENSION
-    vector_db_id: constr(min_length=1)  # type:ignore
-    db_path: FilePath
+
+    rag_type: str = Field(
+        constants.DEFAULT_RAG_TYPE,
+        min_length=1,
+        title="RAG type",
+        description="Type of RAG database.",
+    )
+
+    embedding_model: str = Field(
+        constants.DEFAULT_EMBEDDING_MODEL,
+        min_length=1,
+        title="Embedding model",
+        description="Embedding model identification",
+    )
+
+    embedding_dimension: PositiveInt = Field(
+        constants.DEFAULT_EMBEDDING_DIMENSION,
+        title="Embedding dimension",
+        description="Dimensionality of embedding vectors.",
+    )
+
+    vector_db_id: str = Field(
+        ...,
+        min_length=1,
+        title="Vector DB ID",
+        description="Vector DB identification.",
+    )
+
+    db_path: FilePath = Field(
+        ...,
+        title="DB path",
+        description="Path to RAG database.",
+    )
 
 
 class QuotaLimiterConfiguration(ConfigurationBase):
@@ -1050,7 +1208,9 @@ class Configuration(ConfigurationBase):
     )
 
     inference: InferenceConfiguration = Field(
-        default_factory=InferenceConfiguration,
+        default_factory=lambda: InferenceConfiguration(
+            default_model=None, default_provider=None
+        ),
         title="Inference configuration",
         description="One LLM provider and one its model might be selected as "
         "default ones. When no provider+model pair is specified in REST API "
@@ -1058,7 +1218,9 @@ class Configuration(ConfigurationBase):
     )
 
     conversation_cache: ConversationHistoryConfiguration = Field(
-        default_factory=ConversationHistoryConfiguration,
+        default_factory=lambda: ConversationHistoryConfiguration(
+            type=None, memory=None, sqlite=None, postgres=None
+        ),
         title="Conversation history configuration",
         description="Conversation history configuration.",
     )
