@@ -483,10 +483,31 @@ class LlamaStackConfiguration(ConfigurationBase):
 class UserDataCollection(ConfigurationBase):
     """User data collection configuration."""
 
-    feedback_enabled: bool = False
-    feedback_storage: Optional[str] = None
-    transcripts_enabled: bool = False
-    transcripts_storage: Optional[str] = None
+    feedback_enabled: bool = Field(
+        False,
+        title="Feedback enabled",
+        description="When set to true the user feedback is stored and later send for analysis.",
+    )
+
+    feedback_storage: Optional[str] = Field(
+        None,
+        title="Feedback storage directory",
+        description="Path to directory where feedbacks will be saved for further processing.",
+    )
+
+    transcripts_enabled: bool = Field(
+        False,
+        title="Transcripts enables",
+        description="When set to true the conversation history is stored and later send for "
+        "analysis.",
+    )
+
+    transcripts_storage: Optional[str] = Field(
+        None,
+        title="Transcripts storage directory",
+        description="Path to directory where conversation history will be saved for further "
+        "processing.",
+    )
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
