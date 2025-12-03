@@ -497,7 +497,7 @@ class UserDataCollection(ConfigurationBase):
 
     transcripts_enabled: bool = Field(
         False,
-        title="Transcripts enables",
+        title="Transcripts enabled",
         description="When set to true the conversation history is stored and later send for "
         "analysis.",
     )
@@ -686,8 +686,17 @@ class Action(str, Enum):
 class AccessRule(ConfigurationBase):
     """Rule defining what actions a role can perform."""
 
-    role: str  # Role name
-    actions: list[Action]  # Allowed actions for this role
+    role: str = Field(
+        ...,
+        title="Role name",
+        description="Name of the role",
+    )
+
+    actions: list[Action] = Field(
+        ...,
+        title="Allowed actions",
+        description="Allowed actions for this role",
+    )
 
 
 class AuthorizationConfiguration(ConfigurationBase):
