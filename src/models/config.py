@@ -845,8 +845,18 @@ class AuthenticationConfiguration(ConfigurationBase):
 class CustomProfile:
     """Custom profile customization for prompts and validation."""
 
-    path: str
-    prompts: dict[str, str] = Field(default={}, init=False)
+    path: str = Field(
+        ...,
+        title="Path to custom profile",
+        description="Path to Python modules containing custom profile.",
+    )
+
+    prompts: dict[str, str] = Field(
+        default={},
+        init=False,
+        title="System prompts",
+        description="Dictionary containing map of system prompts",
+    )
 
     def __post_init__(self) -> None:
         """Validate and load profile."""
