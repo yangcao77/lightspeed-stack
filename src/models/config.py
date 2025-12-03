@@ -539,7 +539,7 @@ class UserDataCollection(ConfigurationBase):
 class JsonPathOperator(str, Enum):
     """Supported operators for JSONPath evaluation.
 
-    Note: this is not a real model, just enumeration of all action names.
+    Note: this is not a real model, just an enumeration of all supported JSONPath operators.
     """
 
     EQUALS = "equals"
@@ -934,10 +934,29 @@ class InferenceConfiguration(ConfigurationBase):
 class ConversationHistoryConfiguration(ConfigurationBase):
     """Conversation history configuration."""
 
-    type: Literal["noop", "memory", "sqlite", "postgres"] | None = None
-    memory: Optional[InMemoryCacheConfig] = None
-    sqlite: Optional[SQLiteDatabaseConfiguration] = None
-    postgres: Optional[PostgreSQLDatabaseConfiguration] = None
+    type: Literal["noop", "memory", "sqlite", "postgres"] | None = Field(
+        None,
+        title="Conversation history database type",
+        description="Type of database where the conversation history is to be stored.",
+    )
+
+    memory: Optional[InMemoryCacheConfig] = Field(
+        None,
+        title="In-memory cache configuration",
+        description="In-memory cache configuration",
+    )
+
+    sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
+        None,
+        title="SQLite configuration",
+        description="SQLite database configuration",
+    )
+
+    postgres: Optional[PostgreSQLDatabaseConfiguration] = Field(
+        None,
+        title="PostgreSQL configuration",
+        description="PostgreSQL database configuration",
+    )
 
     @model_validator(mode="after")
     def check_cache_configuration(self) -> Self:
@@ -1199,7 +1218,9 @@ class Configuration(ConfigurationBase):
     )
 
     conversation_cache: ConversationHistoryConfiguration = Field(
-        default_factory=ConversationHistoryConfiguration,
+        default_factory=lambda: ConversationHistoryConfiguration(
+            type=None, memory=None, sqlite=None, postgres=None
+        ),
         title="Conversation history configuration",
         description="Conversation history configuration.",
     )
