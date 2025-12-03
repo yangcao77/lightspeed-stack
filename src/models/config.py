@@ -760,7 +760,7 @@ class JwkConfiguration(ConfigurationBase):
     url: AnyHttpUrl = Field(
         ...,
         title="URL",
-        description="URL",
+        description="HTTPS URL of the JWK (JSON Web Key) set used to validate JWTs.",
     )
 
     jwt_configuration: JwtConfiguration = Field(
@@ -776,7 +776,11 @@ class JwkConfiguration(ConfigurationBase):
 class RHIdentityConfiguration(ConfigurationBase):
     """Red Hat Identity authentication configuration."""
 
-    required_entitlements: Optional[list[str]] = None
+    required_entitlements: Optional[list[str]] = Field(
+        None,
+        title="Required entitlements",
+        description="List of all required entitlements.",
+    )
 
 
 class AuthenticationConfiguration(ConfigurationBase):
