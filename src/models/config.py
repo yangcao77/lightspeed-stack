@@ -899,8 +899,17 @@ class Customization(ConfigurationBase):
 class InferenceConfiguration(ConfigurationBase):
     """Inference configuration."""
 
-    default_model: Optional[str] = None
-    default_provider: Optional[str] = None
+    default_model: Optional[str] = Field(
+        None,
+        title="Default model",
+        description="Identification of default model used when no other model is specified.",
+    )
+
+    default_provider: Optional[str] = Field(
+        None,
+        title="Default provider",
+        description="Identification of default provider used when no other model is specified.",
+    )
 
     @model_validator(mode="after")
     def check_default_model_and_provider(self) -> Self:
