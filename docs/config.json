@@ -11,14 +11,16 @@
         "description": "Rule defining what actions a role can perform.",
         "properties": {
           "role": {
-            "title": "Role",
+            "description": "Name of the role",
+            "title": "Role name",
             "type": "string"
           },
           "actions": {
+            "description": "Allowed actions for this role",
             "items": {
               "$ref": "#/components/schemas/Action"
             },
-            "title": "Actions",
+            "title": "Allowed actions",
             "type": "array"
           }
         },
@@ -30,7 +32,7 @@
         "type": "object"
       },
       "Action": {
-        "description": "Available actions in the system.",
+        "description": "Available actions in the system.\n\nNote: this is not a real model, just an enumeration of all action names.",
         "enum": [
           "admin",
           "list_other_conversations",
@@ -116,10 +118,11 @@
         "description": "Authorization configuration.",
         "properties": {
           "access_rules": {
+            "description": "Rules for role-based access control",
             "items": {
               "$ref": "#/components/schemas/AccessRule"
             },
-            "title": "Access Rules",
+            "title": "Access rules",
             "type": "array"
           }
         },
@@ -128,39 +131,45 @@
       },
       "ByokRag": {
         "additionalProperties": false,
-        "description": "BYOK RAG configuration.",
+        "description": "BYOK (Bring Your Own Knowledge) RAG configuration.",
         "properties": {
           "rag_id": {
+            "description": "Unique RAG ID",
             "minLength": 1,
-            "title": "Rag Id",
+            "title": "RAG ID",
             "type": "string"
           },
           "rag_type": {
             "default": "inline::faiss",
+            "description": "Type of RAG database.",
             "minLength": 1,
-            "title": "Rag Type",
+            "title": "RAG type",
             "type": "string"
           },
           "embedding_model": {
             "default": "sentence-transformers/all-mpnet-base-v2",
+            "description": "Embedding model identification",
             "minLength": 1,
-            "title": "Embedding Model",
+            "title": "Embedding model",
             "type": "string"
           },
           "embedding_dimension": {
             "default": 768,
+            "description": "Dimensionality of embedding vectors.",
             "minimum": 0,
-            "title": "Embedding Dimension",
+            "title": "Embedding dimension",
             "type": "integer"
           },
           "vector_db_id": {
+            "description": "Vector DB identification.",
             "minLength": 1,
-            "title": "Vector Db Id",
+            "title": "Vector DB ID",
             "type": "string"
           },
           "db_path": {
+            "description": "Path to RAG database.",
             "format": "file-path",
-            "title": "Db Path",
+            "title": "DB path",
             "type": "string"
           }
         },
@@ -327,7 +336,8 @@
             "type": "string",
             "nullable": true,
             "default": null,
-            "title": "Type"
+            "description": "Type of database where the conversation history is to be stored.",
+            "title": "Conversation history database type"
           },
           "memory": {
             "anyOf": [
@@ -338,7 +348,9 @@
                 "type": "null"
               }
             ],
-            "default": null
+            "default": null,
+            "description": "In-memory cache configuration",
+            "title": "In-memory cache configuration"
           },
           "sqlite": {
             "anyOf": [
@@ -349,7 +361,9 @@
                 "type": "null"
               }
             ],
-            "default": null
+            "default": null,
+            "description": "SQLite database configuration",
+            "title": "SQLite configuration"
           },
           "postgres": {
             "anyOf": [
@@ -360,7 +374,9 @@
                 "type": "null"
               }
             ],
-            "default": null
+            "default": null,
+            "description": "PostgreSQL database configuration",
+            "title": "PostgreSQL configuration"
           }
         },
         "title": "ConversationHistoryConfiguration",
@@ -370,7 +386,8 @@
         "description": "Custom profile customization for prompts and validation.",
         "properties": {
           "path": {
-            "title": "Path",
+            "description": "Path to Python modules containing custom profile.",
+            "title": "Path to custom profile",
             "type": "string"
           },
           "prompts": {
@@ -378,7 +395,8 @@
               "type": "string"
             },
             "default": {},
-            "title": "Prompts",
+            "description": "Dictionary containing map of system prompts",
+            "title": "System prompts",
             "type": "object"
           }
         },
@@ -489,20 +507,22 @@
             "type": "string",
             "nullable": true,
             "default": null,
-            "title": "Default Model"
+            "description": "Identification of default model used when no other model is specified.",
+            "title": "Default model"
           },
           "default_provider": {
             "type": "string",
             "nullable": true,
             "default": null,
-            "title": "Default Provider"
+            "description": "Identification of default provider used when no other model is specified.",
+            "title": "Default provider"
           }
         },
         "title": "InferenceConfiguration",
         "type": "object"
       },
       "JsonPathOperator": {
-        "description": "Supported operators for JSONPath evaluation.",
+        "description": "Supported operators for JSONPath evaluation.\n\nNote: this is not a real model, just an enumeration of all supported JSONPath operators.",
         "enum": [
           "equals",
           "contains",
@@ -514,16 +534,19 @@
       },
       "JwkConfiguration": {
         "additionalProperties": false,
-        "description": "JWK configuration.",
+        "description": "JWK (JSON Web Key) configuration.\n\nA JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data structure\nthat represents a cryptographic key.\n\nUseful resources:\n\n  - [JSON Web Key](https://openid.net/specs/draft-jones-json-web-key-03.html)\n  - [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517)",
         "properties": {
           "url": {
+            "description": "HTTPS URL of the JWK (JSON Web Key) set used to validate JWTs.",
             "format": "uri",
             "minLength": 1,
-            "title": "Url",
+            "title": "URL",
             "type": "string"
           },
           "jwt_configuration": {
-            "$ref": "#/components/schemas/JwtConfiguration"
+            "$ref": "#/components/schemas/JwtConfiguration",
+            "description": "JWT (JSON Web Token) configuration",
+            "title": "JWT configuration"
           }
         },
         "required": [
@@ -534,23 +557,26 @@
       },
       "JwtConfiguration": {
         "additionalProperties": false,
-        "description": "JWT configuration.",
+        "description": "JWT (JSON Web Token) configuration.\n\nJSON Web Token (JWT) is a compact, URL-safe means of representing\nclaims to be transferred between two parties.  The claims in a JWT\nare encoded as a JSON object that is used as the payload of a JSON\nWeb Signature (JWS) structure or as the plaintext of a JSON Web\nEncryption (JWE) structure, enabling the claims to be digitally\nsigned or integrity protected with a Message Authentication Code\n(MAC) and/or encrypted.\n\nUseful resources:\n\n  - [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token)\n  - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519)\n  - [JSON Web Tokens](https://auth0.com/docs/secure/tokens/json-web-tokens)",
         "properties": {
           "user_id_claim": {
             "default": "user_id",
-            "title": "User Id Claim",
+            "description": "JWT claim name that uniquely identifies the user (subject ID).",
+            "title": "User ID claim",
             "type": "string"
           },
           "username_claim": {
             "default": "username",
-            "title": "Username Claim",
+            "description": "JWT claim name that provides the human-readable username.",
+            "title": "Username claim",
             "type": "string"
           },
           "role_rules": {
+            "description": "Rules for extracting roles from JWT claims",
             "items": {
               "$ref": "#/components/schemas/JwtRoleRule"
             },
-            "title": "Role Rules",
+            "title": "Role rules",
             "type": "array"
           }
         },
@@ -854,7 +880,8 @@
             "type": "array",
             "nullable": true,
             "default": null,
-            "title": "Required Entitlements"
+            "description": "List of all required entitlements.",
+            "title": "Required entitlements"
           }
         },
         "title": "RHIdentityConfiguration",
@@ -967,25 +994,29 @@
         "properties": {
           "feedback_enabled": {
             "default": false,
-            "title": "Feedback Enabled",
+            "description": "When set to true the user feedback is stored and later sent for analysis.",
+            "title": "Feedback enabled",
             "type": "boolean"
           },
           "feedback_storage": {
             "type": "string",
             "nullable": true,
             "default": null,
-            "title": "Feedback Storage"
+            "description": "Path to directory where feedback will be saved for further processing.",
+            "title": "Feedback storage directory"
           },
           "transcripts_enabled": {
             "default": false,
-            "title": "Transcripts Enabled",
+            "description": "When set to true the conversation history is stored and later sent for analysis.",
+            "title": "Transcripts enabled",
             "type": "boolean"
           },
           "transcripts_storage": {
             "type": "string",
             "nullable": true,
             "default": null,
-            "title": "Transcripts Storage"
+            "description": "Path to directory where conversation history will be saved for further processing.",
+            "title": "Transcripts storage directory"
           }
         },
         "title": "UserDataCollection",

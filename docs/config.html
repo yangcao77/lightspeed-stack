@@ -60,6 +60,10 @@
     img {
       max-width: 100%;
     }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
     h1, h2, h3, h4, h5, h6 {
       margin-top: 1.4em;
     }
@@ -163,9 +167,6 @@
     }
     .display.math{display: block; text-align: center; margin: 0.5rem auto;}
   </style>
-  <!--[if lt IE 9]>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
-  <![endif]-->
 </head>
 <body>
 <header id="title-block-header">
@@ -173,7 +174,7 @@
 </header>
 <h1 id="lightspeed-core-stack">Lightspeed Core Stack</h1>
 <hr />
-<h1 id="components">📋 Components</h1>
+<h1 id="configuration-schema">📋 Configuration schema</h1>
 <h2 id="accessrule">AccessRule</h2>
 <p>Rule defining what actions a role can perform.</p>
 <table>
@@ -188,17 +189,19 @@
 <tr class="odd">
 <td>role</td>
 <td>string</td>
-<td></td>
+<td>Name of the role</td>
 </tr>
 <tr class="even">
 <td>actions</td>
 <td>array</td>
-<td></td>
+<td>Allowed actions for this role</td>
 </tr>
 </tbody>
 </table>
 <h2 id="action">Action</h2>
 <p>Available actions in the system.</p>
+<p>Note: this is not a real model, just an enumeration of all action
+names.</p>
 <h2 id="authenticationconfiguration">AuthenticationConfiguration</h2>
 <p>Authentication configuration.</p>
 <table>
@@ -256,12 +259,12 @@
 <tr class="odd">
 <td>access_rules</td>
 <td>array</td>
-<td></td>
+<td>Rules for role-based access control</td>
 </tr>
 </tbody>
 </table>
 <h2 id="byokrag">ByokRag</h2>
-<p>BYOK RAG configuration.</p>
+<p>BYOK (Bring Your Own Knowledge) RAG configuration.</p>
 <table>
 <thead>
 <tr class="header">
@@ -274,32 +277,32 @@
 <tr class="odd">
 <td>rag_id</td>
 <td>string</td>
-<td></td>
+<td>Unique RAG ID</td>
 </tr>
 <tr class="even">
 <td>rag_type</td>
 <td>string</td>
-<td></td>
+<td>Type of RAG database.</td>
 </tr>
 <tr class="odd">
 <td>embedding_model</td>
 <td>string</td>
-<td></td>
+<td>Embedding model identification</td>
 </tr>
 <tr class="even">
 <td>embedding_dimension</td>
 <td>integer</td>
-<td></td>
+<td>Dimensionality of embedding vectors.</td>
 </tr>
 <tr class="odd">
 <td>vector_db_id</td>
 <td>string</td>
-<td></td>
+<td>Vector DB identification.</td>
 </tr>
 <tr class="even">
 <td>db_path</td>
 <td>string</td>
-<td></td>
+<td>Path to RAG database.</td>
 </tr>
 </tbody>
 </table>
@@ -470,6 +473,11 @@ reconfigure Llama Stack through its run.yaml configuration file</td>
 id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <p>Conversation history configuration.</p>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -481,22 +489,23 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>type</td>
 <td>string</td>
-<td></td>
+<td>Type of database where the conversation history is to be
+stored.</td>
 </tr>
 <tr class="even">
 <td>memory</td>
 <td></td>
-<td></td>
+<td>In-memory cache configuration</td>
 </tr>
 <tr class="odd">
 <td>sqlite</td>
 <td></td>
-<td></td>
+<td>SQLite database configuration</td>
 </tr>
 <tr class="even">
 <td>postgres</td>
 <td></td>
-<td></td>
+<td>PostgreSQL database configuration</td>
 </tr>
 </tbody>
 </table>
@@ -514,12 +523,12 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>path</td>
 <td>string</td>
-<td></td>
+<td>Path to Python modules containing custom profile.</td>
 </tr>
 <tr class="even">
 <td>prompts</td>
 <td>object</td>
-<td></td>
+<td>Dictionary containing map of system prompts</td>
 </tr>
 </tbody>
 </table>
@@ -610,6 +619,11 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <h2 id="inferenceconfiguration">InferenceConfiguration</h2>
 <p>Inference configuration.</p>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -621,20 +635,38 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>default_model</td>
 <td>string</td>
-<td></td>
+<td>Identification of default model used when no other model is
+specified.</td>
 </tr>
 <tr class="even">
 <td>default_provider</td>
 <td>string</td>
-<td></td>
+<td>Identification of default provider used when no other model is
+specified.</td>
 </tr>
 </tbody>
 </table>
 <h2 id="jsonpathoperator">JsonPathOperator</h2>
 <p>Supported operators for JSONPath evaluation.</p>
+<p>Note: this is not a real model, just an enumeration of all supported
+JSONPath operators.</p>
 <h2 id="jwkconfiguration">JwkConfiguration</h2>
-<p>JWK configuration.</p>
+<p>JWK (JSON Web Key) configuration.</p>
+<p>A JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data
+structure that represents a cryptographic key.</p>
+<p>Useful resources:</p>
+<ul>
+<li><a
+href="https://openid.net/specs/draft-jones-json-web-key-03.html">JSON
+Web Key</a></li>
+<li><a href="https://www.rfc-editor.org/rfc/rfc7517">RFC 7517</a></li>
+</ul>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -646,18 +678,38 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>url</td>
 <td>string</td>
-<td></td>
+<td>HTTPS URL of the JWK (JSON Web Key) set used to validate JWTs.</td>
 </tr>
 <tr class="even">
 <td>jwt_configuration</td>
 <td></td>
-<td></td>
+<td>JWT (JSON Web Token) configuration</td>
 </tr>
 </tbody>
 </table>
 <h2 id="jwtconfiguration">JwtConfiguration</h2>
-<p>JWT configuration.</p>
+<p>JWT (JSON Web Token) configuration.</p>
+<p>JSON Web Token (JWT) is a compact, URL-safe means of representing
+claims to be transferred between two parties. The claims in a JWT are
+encoded as a JSON object that is used as the payload of a JSON Web
+Signature (JWS) structure or as the plaintext of a JSON Web Encryption
+(JWE) structure, enabling the claims to be digitally signed or integrity
+protected with a Message Authentication Code (MAC) and/or encrypted.</p>
+<p>Useful resources:</p>
+<ul>
+<li><a href="https://en.wikipedia.org/wiki/JSON_Web_Token">JSON Web
+Token</a></li>
+<li><a href="https://datatracker.ietf.org/doc/html/rfc7519">RFC
+7519</a></li>
+<li><a href="https://auth0.com/docs/secure/tokens/json-web-tokens">JSON
+Web Tokens</a></li>
+</ul>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -669,17 +721,17 @@ id="conversationhistoryconfiguration">ConversationHistoryConfiguration</h2>
 <tr class="odd">
 <td>user_id_claim</td>
 <td>string</td>
-<td></td>
+<td>JWT claim name that uniquely identifies the user (subject ID).</td>
 </tr>
 <tr class="even">
 <td>username_claim</td>
 <td>string</td>
-<td></td>
+<td>JWT claim name that provides the human-readable username.</td>
 </tr>
 <tr class="odd">
 <td>role_rules</td>
 <td>array</td>
-<td></td>
+<td>Rules for extracting roles from JWT claims</td>
 </tr>
 </tbody>
 </table>
@@ -1045,7 +1097,7 @@ periodically (for example on a daily basis), set
 <tr class="odd">
 <td>required_entitlements</td>
 <td>array</td>
-<td></td>
+<td>List of all required entitlements.</td>
 </tr>
 </tbody>
 </table>
@@ -1183,6 +1235,11 @@ key.</td>
 <h2 id="userdatacollection">UserDataCollection</h2>
 <p>User data collection configuration.</p>
 <table>
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 23%" />
+<col style="width: 50%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>Field</th>
@@ -1194,22 +1251,26 @@ key.</td>
 <tr class="odd">
 <td>feedback_enabled</td>
 <td>boolean</td>
-<td></td>
+<td>When set to true the user feedback is stored and later sent for
+analysis.</td>
 </tr>
 <tr class="even">
 <td>feedback_storage</td>
 <td>string</td>
-<td></td>
+<td>Path to directory where feedback will be saved for further
+processing.</td>
 </tr>
 <tr class="odd">
 <td>transcripts_enabled</td>
 <td>boolean</td>
-<td></td>
+<td>When set to true the conversation history is stored and later sent
+for analysis.</td>
 </tr>
 <tr class="even">
 <td>transcripts_storage</td>
 <td>string</td>
-<td></td>
+<td>Path to directory where conversation history will be saved for
+further processing.</td>
 </tr>
 </tbody>
 </table>
