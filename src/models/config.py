@@ -15,7 +15,6 @@ from pydantic import (
     ConfigDict,
     Field,
     model_validator,
-    constr,
     FilePath,
     AnyHttpUrl,
     PositiveInt,
@@ -945,16 +944,47 @@ class ConversationHistoryConfiguration(ConfigurationBase):
 
 
 class ByokRag(ConfigurationBase):
-    """BYOK RAG configuration."""
+    """BYOK (Bring Your Own Knowledge) RAG configuration."""
 
-    rag_id: constr(min_length=1)  # type:ignore
-    rag_type: constr(min_length=1) = constants.DEFAULT_RAG_TYPE  # type:ignore
-    embedding_model: constr(min_length=1) = (  # type:ignore
-        constants.DEFAULT_EMBEDDING_MODEL
+    rag_id: str = Field(
+        ...,
+        min_length=1,
+        title="RAG ID",
+        description="Unique RAG ID",
     )
-    embedding_dimension: PositiveInt = constants.DEFAULT_EMBEDDING_DIMENSION
-    vector_db_id: constr(min_length=1)  # type:ignore
-    db_path: FilePath
+
+    rag_type: str = Field(
+        constants.DEFAULT_RAG_TYPE,
+        min_length=1,
+        title="RAG type",
+        description="Type of RAG database.",
+    )
+
+    embedding_model: str = Field(
+        constants.DEFAULT_EMBEDDING_MODEL,
+        min_length=1,
+        title="Embedding model",
+        description="Embedding model identification",
+    )
+
+    embedding_dimension: PositiveInt = Field(
+        constants.DEFAULT_EMBEDDING_DIMENSION,
+        title="Embedding dimension",
+        description="Dimensionality of embedding vectors.",
+    )
+
+    vector_db_id: str = Field(
+        ...,
+        min_length=1,
+        title="Vector DB ID",
+        description="Vector DB identification.",
+    )
+
+    db_path: FilePath = Field(
+        ...,
+        title="DB path",
+        description="Path to RAG database.",
+    )
 
 
 class QuotaLimiterConfiguration(ConfigurationBase):
