@@ -511,7 +511,7 @@ class UserDataCollection(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
-        """Check that storage_location is set when enabled."""
+        """Ensure storage directories are set when feedback or transcripts are enabled."""
         if self.feedback_enabled:
             if self.feedback_storage is None:
                 raise ValueError(
@@ -730,13 +730,13 @@ class JwtConfiguration(ConfigurationBase):
     user_id_claim: str = Field(
         constants.DEFAULT_JWT_UID_CLAIM,
         title="User ID claim",
-        description="Identifies the subject of the JWT",
+        description="JWT claim name that uniquely identifies the user (subject ID).",
     )
 
     username_claim: str = Field(
         constants.DEFAULT_JWT_USER_NAME_CLAIM,
         title="Username claim",
-        description="Identifies the subject of the JWT",
+        description="JWT claim name that provides the human-readable username.",
     )
 
     role_rules: list[JwtRoleRule] = Field(
@@ -747,10 +747,31 @@ class JwtConfiguration(ConfigurationBase):
 
 
 class JwkConfiguration(ConfigurationBase):
-    """JWK configuration."""
+    """JWK (JSON Web Key) configuration.
 
-    url: AnyHttpUrl
-    jwt_configuration: JwtConfiguration = Field(default_factory=JwtConfiguration)
+    A JSON Web Key (JWK) is a JavaScript Object Notation (JSON) data structure
+    that represents a cryptographic key.
+
+    Useful resources:
+
+      - [JSON Web Key](https://openid.net/specs/draft-jones-json-web-key-03.html)
+      - [RFC 7517](https://www.rfc-editor.org/rfc/rfc7517)
+    """
+
+    url: AnyHttpUrl = Field(
+        ...,
+        title="URL",
+        description="URL",
+    )
+
+    jwt_configuration: JwtConfiguration = Field(
+        default_factory=lambda: JwtConfiguration(
+            user_id_claim=constants.DEFAULT_JWT_UID_CLAIM,
+            username_claim=constants.DEFAULT_JWT_USER_NAME_CLAIM,
+        ),
+        title="JWT configuration",
+        description="JWT (JSON Web Token) configuration",
+    )
 
 
 class RHIdentityConfiguration(ConfigurationBase):
