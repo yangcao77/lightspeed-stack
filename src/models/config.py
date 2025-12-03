@@ -486,19 +486,19 @@ class UserDataCollection(ConfigurationBase):
     feedback_enabled: bool = Field(
         False,
         title="Feedback enabled",
-        description="When set to true the user feedback is stored and later send for analysis.",
+        description="When set to true the user feedback is stored and later sent for analysis.",
     )
 
     feedback_storage: Optional[str] = Field(
         None,
         title="Feedback storage directory",
-        description="Path to directory where feedbacks will be saved for further processing.",
+        description="Path to directory where feedback will be saved for further processing.",
     )
 
     transcripts_enabled: bool = Field(
         False,
         title="Transcripts enabled",
-        description="When set to true the conversation history is stored and later send for "
+        description="When set to true the conversation history is stored and later sent for "
         "analysis.",
     )
 
@@ -703,8 +703,10 @@ class AuthorizationConfiguration(ConfigurationBase):
     """Authorization configuration."""
 
     access_rules: list[AccessRule] = Field(
-        default_factory=list
-    )  # Rules for role-based access control
+        default_factory=list,
+        title="Access rules",
+        description="Rules for role-based access control",
+    )
 
 
 class JwtConfiguration(ConfigurationBase):
