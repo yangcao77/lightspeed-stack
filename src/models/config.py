@@ -710,13 +710,40 @@ class AuthorizationConfiguration(ConfigurationBase):
 
 
 class JwtConfiguration(ConfigurationBase):
-    """JWT configuration."""
+    """JWT (JSON Web Token) configuration.
 
-    user_id_claim: str = constants.DEFAULT_JWT_UID_CLAIM
-    username_claim: str = constants.DEFAULT_JWT_USER_NAME_CLAIM
+    JSON Web Token (JWT) is a compact, URL-safe means of representing
+    claims to be transferred between two parties.  The claims in a JWT
+    are encoded as a JSON object that is used as the payload of a JSON
+    Web Signature (JWS) structure or as the plaintext of a JSON Web
+    Encryption (JWE) structure, enabling the claims to be digitally
+    signed or integrity protected with a Message Authentication Code
+    (MAC) and/or encrypted.
+
+    Useful resources:
+
+      - [JSON Web Token](https://en.wikipedia.org/wiki/JSON_Web_Token)
+      - [RFC 7519](https://datatracker.ietf.org/doc/html/rfc7519)
+      - [JSON Web Tokens](https://auth0.com/docs/secure/tokens/json-web-tokens)
+    """
+
+    user_id_claim: str = Field(
+        constants.DEFAULT_JWT_UID_CLAIM,
+        title="User ID claim",
+        description="Identifies the subject of the JWT",
+    )
+
+    username_claim: str = Field(
+        constants.DEFAULT_JWT_USER_NAME_CLAIM,
+        title="Username claim",
+        description="Identifies the subject of the JWT",
+    )
+
     role_rules: list[JwtRoleRule] = Field(
-        default_factory=list
-    )  # Rules for extracting roles from JWT claims
+        default_factory=list,
+        title="Role rules",
+        description="Rules for extracting roles from JWT claims",
+    )
 
 
 class JwkConfiguration(ConfigurationBase):
