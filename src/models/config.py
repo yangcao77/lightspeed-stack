@@ -537,7 +537,10 @@ class UserDataCollection(ConfigurationBase):
 
 
 class JsonPathOperator(str, Enum):
-    """Supported operators for JSONPath evaluation."""
+    """Supported operators for JSONPath evaluation.
+
+    Note: this is not a real model, just enumeration of all action names.
+    """
 
     EQUALS = "equals"
     CONTAINS = "contains"
@@ -632,7 +635,10 @@ class JwtRoleRule(ConfigurationBase):
 
 
 class Action(str, Enum):
-    """Available actions in the system."""
+    """Available actions in the system.
+
+    Note: this is not a real model, just enumeration of all action names.
+    """
 
     # Special action to allow unrestricted access to all actions
     ADMIN = "admin"
@@ -1183,7 +1189,9 @@ class Configuration(ConfigurationBase):
     )
 
     inference: InferenceConfiguration = Field(
-        default_factory=InferenceConfiguration,
+        default_factory=lambda: InferenceConfiguration(
+            default_model=None, default_provider=None
+        ),
         title="Inference configuration",
         description="One LLM provider and one its model might be selected as "
         "default ones. When no provider+model pair is specified in REST API "
