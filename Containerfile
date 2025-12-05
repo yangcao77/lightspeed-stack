@@ -11,10 +11,11 @@ ENV UV_COMPILE_BYTECODE=0 \
 
 WORKDIR /app-root
 
+USER root
+
 # Install gcc - required by polyleven python package on aarch64
 # (dependency of autoevals, no pre-built binary wheels for linux on aarch64)
-USER root
-RUN dnf --disablerepo="*" --enablerepo="ubi-9-appstream-rpms" --enablerepo="ubi-9-baseos-rpms" install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs gcc
+RUN dnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs gcc
 
 # Install uv package manager
 RUN pip3.12 install "uv==0.8.15"
