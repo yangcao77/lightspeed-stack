@@ -85,7 +85,7 @@ def _check_server_section_present(spec: dict[str, Any]) -> None:
 
 
 def _check_paths_and_responses_exist(
-    spec: dict, path: str, method: str, expected_codes: set[str]
+    spec: dict[str, Any], path: str, method: str, expected_codes: set[str]
 ) -> None:
     """Checks if the specified paths and responses exist in the API specification.
 
