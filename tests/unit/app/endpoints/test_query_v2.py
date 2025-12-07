@@ -474,6 +474,18 @@ async def test_query_endpoint_handler_v2_api_connection_error(
     mocker.patch("app.endpoints.query_v2.configuration", mock_config)
 
     def _raise(*_args: Any, **_kwargs: Any) -> Exception:
+        """Raises a custom APIConnectionError exception.
+
+        Args:
+            *_args: Variable length argument list.
+            **_kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            None
+
+        Raises:
+            APIConnectionError: Always raises this exception with a Request object.
+        """
         request = Request(scope={"type": "http"})
         raise APIConnectionError(request=request)  # type: ignore
 

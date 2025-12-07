@@ -75,6 +75,16 @@ async def test_check_llama_stack_version_too_small_version(
 
 
 async def _check_version_must_fail(mock_client: Any, bigger_version: Version) -> None:
+    """Check if the Llama Stack version is supported and must fail if not.
+
+    Args:
+        mock_client: A mock client used for testing.
+        bigger_version: A version object representing a version higher than the supported version.
+
+    Raises:
+        InvalidLlamaStackVersionException: If the Llama Stack version is greater than the
+        maximal supported version.
+    """
     mock_client.inspect.version.return_value = VersionInfo(version=str(bigger_version))
 
     expected_exception_msg = (

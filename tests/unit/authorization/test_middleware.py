@@ -276,6 +276,13 @@ class TestAuthorizeDecorator:
 
         @authorize(Action.QUERY)
         async def mock_endpoint(**_: Any) -> str:
+            """An asynchronous function that mocks an endpoint.
+
+            Args:
+                **_: Any additional keyword arguments are ignored.
+
+            Returns:
+                A string indicating the mock operation was successful."""
             return "success"
 
         mocker.patch(
@@ -292,6 +299,13 @@ class TestAuthorizeDecorator:
 
         @authorize(Action.ADMIN)
         async def mock_endpoint(**_: Any) -> str:
+            """An asynchronous function that simulates an endpoint.
+
+            Args:
+                **_: Arbitrary keyword arguments.
+
+            Returns:
+                A string indicating the success of the operation."""
             return "success"
 
         mocker.patch(
