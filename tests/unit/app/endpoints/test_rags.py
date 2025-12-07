@@ -190,6 +190,17 @@ async def test_rag_info_endpoint_success(
         """RagInfo mock."""
 
         def __init__(self) -> None:
+            """This function initializes an instance with predefined attributes.
+
+            Attributes:
+                id (str): Identifier for the instance, set to "xyzzy".
+                name (str): Name of the instance, set to "rag_name".
+                created_at (int): Creation timestamp, set to 123456.
+                last_active_at (int): Last active timestamp, set to 1234567.
+                expires_at (int): Expiry timestamp, set to 12345678.
+                object (str): Type of object, set to "faiss".
+                status (str): Status of the instance, set to "completed".
+                usage_bytes (int): Usage in bytes, set to 100."""
             self.id = "xyzzy"
             self.name = "rag_name"
             self.created_at = 123456
