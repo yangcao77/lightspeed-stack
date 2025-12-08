@@ -744,11 +744,15 @@ class ConversationDeleteResponse(AbstractSuccessfulResponse):
     )
 
     def __init__(self, *, deleted: bool, conversation_id: str) -> None:
-        """Initialize a ConversationDeleteResponse.
+        """
+        Initialize a ConversationDeleteResponse and populate its public fields.
 
-        Args:
-            deleted: Whether the conversation was successfully deleted.
-            conversation_id: The ID of the conversation that was deleted.
+        If `deleted` is True the response message is "Conversation deleted
+        successfully"; otherwise it is "Conversation cannot be deleted".
+
+        Parameters:
+            deleted (bool): Whether the conversation was successfully deleted.
+            conversation_id (str): The ID of the conversation.
         """
         response_msg = (
             "Conversation deleted successfully"
@@ -786,7 +790,22 @@ class ConversationDeleteResponse(AbstractSuccessfulResponse):
 
     @classmethod
     def openapi_response(cls) -> dict[str, Any]:
-        """Generate FastAPI response dict, using examples from model_config."""
+        """
+        Build an OpenAPI-compatible FastAPI response dict using the model's examples.
+
+        Extracts labeled examples from the model's JSON schema `examples` and
+        places them under `application/json` -> `examples`. The returned
+        mapping includes a `description` ("Successful response"), the `model`
+        (the class itself), and `content` containing the assembled examples.
+
+        Returns:
+            response (dict[str, Any]): A dict with keys `description`, `model`,
+            and `content` suitable for FastAPI/OpenAPI response registration.
+
+        Raises:
+            SchemaError: If any example in the model's JSON schema is missing a
+                         required `label` or `value`.
+        """
         schema = cls.model_json_schema()
         model_examples = schema.get("examples", [])
 
@@ -1097,12 +1116,13 @@ class AbstractErrorResponse(BaseModel):
     detail: DetailModel
 
     def __init__(self, *, response: str, cause: str, status_code: int):
-        """Initialize an AbstractErrorResponse.
+        """
+        Create an error response model with an HTTP status code and detailed message.
 
-        Args:
-            response: Short summary of the error.
-            cause: Detailed explanation of what caused the error.
-            status_code: HTTP status code for the error response.
+        Parameters:
+            response (str): A short, user-facing summary of the error.
+            cause (str): A more detailed explanation of the error cause.
+            status_code (int): The HTTP status code to associate with this error response.
         """
         super().__init__(
             status_code=status_code, detail=DetailModel(response=response, cause=cause)
@@ -1110,12 +1130,40 @@ class AbstractErrorResponse(BaseModel):
 
     @classmethod
     def get_description(cls) -> str:
-        """Get the description from the class attribute or docstring."""
+        """
+        Retrieve the class description.
+
+        Returns:
+            str: The class `description` attribute if present; otherwise the
+                 class docstring; if neither is present, an empty string.
+        """
         return getattr(cls, "description", cls.__doc__ or "")
 
     @classmethod
     def openapi_response(cls, examples: Optional[list[str]] = None) -> dict[str, Any]:
-        """Generate FastAPI response dict with examples from model_config."""
+        """
+        Build an OpenAPI/FastAPI response dictionary that exposes the model's labeled examples.
+
+        Extracts examples from the model's JSON schema and includes them as
+        named application/json examples in the returned response mapping. If
+        the optional `examples` list is provided, only examples whose labels
+        appear in that list are included. Each included example is exposed
+        under its label with a `value` containing a `detail` payload.
+
+        Parameters:
+            examples (Optional[list[str]]): If provided, restricts which
+                                            labeled examples to include by label.
+
+        Returns:
+            dict[str, Any]: A response mapping with keys:
+                - "description": the response description,
+                - "model": the model class,
+                - "content": a mapping for "application/json" to the examples
+                             object (or None if no examples).
+
+        Raises:
+            SchemaError: If any example in the model schema lacks a `label`.
+        """
         schema = cls.model_json_schema()
         model_examples = schema.get("examples", [])
 
@@ -1162,11 +1210,12 @@ class BadRequestResponse(AbstractErrorResponse):
     }
 
     def __init__(self, *, resource: str, resource_id: str):
-        """Initialize a BadRequestResponse for invalid resource ID format.
+        """
+        Create a 400 Bad Request response for an invalid resource ID format.
 
-        Args:
-            resource: The type of resource (e.g., "conversation", "provider").
-            resource_id: The invalid resource ID.
+        Parameters:
+            resource (str): Type of the resource (for message), e.g., "conversation" or "provider".
+            resource_id (str): The invalid resource identifier used in the error message.
         """
         response = f"Invalid {resource} ID format"
         cause = f"The {resource} ID {resource_id} has invalid format."
@@ -1243,7 +1292,16 @@ class UnauthorizedResponse(AbstractErrorResponse):
     }
 
     def __init__(self, *, cause: str):
-        """Initialize UnauthorizedResponse."""
+        """
+        Create an UnauthorizedResponse describing missing or invalid client credentials.
+
+        Initializes the error with a standardized response message and the
+        provided cause, and sets the HTTP status to 401 Unauthorized.
+
+        Parameters:
+                cause (str): Human-readable explanation of why the request is
+                             unauthorized (e.g. "missing token", "token expired").
+        """
         response_msg = "Missing or invalid credentials provided by client"
         super().__init__(
             response=response_msg, cause=cause, status_code=status.HTTP_401_UNAUTHORIZED
@@ -1313,7 +1371,19 @@ class ForbiddenResponse(AbstractErrorResponse):
     def conversation(
         cls, action: str, resource_id: str, user_id: str
     ) -> "ForbiddenResponse":
-        """Create a ForbiddenResponse for conversation access denied."""
+        """
+        Create a ForbiddenResponse for a denied conversation action.
+
+        Parameters:
+            action (str): The attempted action (e.g., "read", "delete", "update").
+            resource_id (str): The conversation identifier targeted by the action.
+            user_id (str): The identifier of the user who attempted the action.
+
+        Returns:
+            ForbiddenResponse: Error response indicating the user is not
+            permitted to perform the specified action on the conversation, with
+            `response` and `cause` fields populated.
+        """
         response = "User does not have permission to perform this action"
         cause = (
             f"User {user_id} does not have permission to "
@@ -1323,14 +1393,30 @@ class ForbiddenResponse(AbstractErrorResponse):
 
     @classmethod
     def endpoint(cls, user_id: str) -> "ForbiddenResponse":
-        """Create a ForbiddenResponse for endpoint access denied."""
+        """
+        Create a ForbiddenResponse indicating the specified user is denied access to the endpoint.
+
+        Parameters:
+            user_id (str): Identifier of the user denied access.
+
+        Returns:
+            ForbiddenResponse: Error response with a message and a cause
+            referencing the given `user_id`.
+        """
         response = "User does not have permission to access this endpoint"
         cause = f"User {user_id} is not authorized to access this endpoint."
         return cls(response=response, cause=cause)
 
     @classmethod
     def feedback_disabled(cls) -> "ForbiddenResponse":
-        """Create a ForbiddenResponse for disabled feedback."""
+        """
+        Create a ForbiddenResponse indicating that storing feedback is disabled.
+
+        Returns:
+            ForbiddenResponse: Error response with `response` set to "Storing
+            feedback is disabled" and `cause` set to "Storing feedback is
+            disabled."
+        """
         return cls(
             response="Storing feedback is disabled",
             cause="Storing feedback is disabled.",
@@ -1338,7 +1424,14 @@ class ForbiddenResponse(AbstractErrorResponse):
 
     @classmethod
     def model_override(cls) -> "ForbiddenResponse":
-        """Create a ForbiddenResponse for model/provider override denied."""
+        """
+        Create a ForbiddenResponse indicating that overriding the model or provider is disallowed.
+
+        Returns:
+            ForbiddenResponse: An error response with a user-facing message
+            instructing removal of model/provider fields and a cause stating
+            the missing `MODEL_OVERRIDE` permission.
+        """
         return cls(
             response=(
                 "This instance does not permit overriding model/provider in the "
@@ -1352,7 +1445,14 @@ class ForbiddenResponse(AbstractErrorResponse):
         )
 
     def __init__(self, *, response: str, cause: str):
-        """Initialize a ForbiddenResponse."""
+        """
+        Construct a ForbiddenResponse with a public response message and an internal cause.
+
+        Parameters:
+                response (str): Human-facing error message describing the forbidden action.
+                cause (str): Detailed cause or reason for the denial intended
+                for logs or diagnostics.
+        """
         super().__init__(
             response=response, cause=cause, status_code=status.HTTP_403_FORBIDDEN
         )
@@ -1403,11 +1503,12 @@ class NotFoundResponse(AbstractErrorResponse):
     }
 
     def __init__(self, *, resource: str, resource_id: str):
-        """Initialize a NotFoundResponse for a missing resource.
+        """
+        Create a NotFoundResponse for a missing resource and set the HTTP status to 404.
 
-        Args:
-            resource: The type of resource that was not found (e.g., "conversation", "model").
-            resource_id: The ID of the resource that was not found.
+        Parameters:
+            resource (str): Resource type that was not found (e.g., "conversation", "model").
+            resource_id (str): Identifier of the missing resource.
         """
         response = f"{resource.title()} not found"
         cause = f"{resource.title()} with ID {resource_id} does not exist"
@@ -1450,7 +1551,13 @@ class UnprocessableEntityResponse(AbstractErrorResponse):
     }
 
     def __init__(self, *, response: str, cause: str):
-        """Initialize UnprocessableEntityResponse."""
+        """
+        Create a 422 Unprocessable Entity error response.
+
+        Parameters:
+            response (str): Human-readable error message describing what was unprocessable.
+            cause (str): Specific cause or diagnostic information explaining the error.
+        """
         super().__init__(
             response=response,
             cause=cause,
@@ -1520,20 +1627,49 @@ class QuotaExceededResponse(AbstractErrorResponse):
 
     @classmethod
     def model(cls, model_name: str) -> "QuotaExceededResponse":
-        """Create a QuotaExceededResponse for model quota exceeded."""
+        """
+        Create a QuotaExceededResponse for a specific model.
+
+        Parameters:
+            model_name (str): The model identifier whose token quota was exceeded.
+
+        Returns:
+            QuotaExceededResponse: Response with a standard response message
+            and a cause that includes the model name.
+        """
         response = "The model quota has been exceeded"
         cause = f"The token quota for model {model_name} has been exceeded."
         return cls(response=response, cause=cause)
 
     @classmethod
     def from_exception(cls, exc: QuotaExceedError) -> "QuotaExceededResponse":
-        """Create a QuotaExceededResponse from a QuotaExceedError exception."""
+        """
+        Construct a QuotaExceededResponse representing the provided QuotaExceedError.
+
+        Parameters:
+            exc: The QuotaExceedError instance whose message will be used as
+                 the cause.
+
+        Returns:
+            QuotaExceededResponse initialized with a standard quota-exceeded
+            message and the exception's text as the cause.
+        """
         response = "The quota has been exceeded"
         cause = str(exc)
         return cls(response=response, cause=cause)
 
     def __init__(self, *, response: str, cause: str) -> None:
-        """Initialize a QuotaExceededResponse."""
+        """
+        Create a QuotaExceededResponse with a public message and an explanatory cause.
+
+        Parameters:
+            response (str): Public-facing error message describing the quota condition.
+            cause (str): Detailed cause or internal explanation for the quota
+                         exceedance; stored in the error detail.
+
+        Notes:
+            Sets the response's HTTP status code to 429 (Too Many Requests).
+        """
         super().__init__(
             response=response,
             cause=cause,
@@ -1597,7 +1733,13 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def generic(cls) -> "InternalServerErrorResponse":
-        """Create a generic InternalServerErrorResponse."""
+        """
+        Create an InternalServerErrorResponse representing a generic internal server error.
+
+        @returns InternalServerErrorResponse: instance with a standard response
+        message ("Internal server error") and a cause explaining an unexpected
+        processing error.
+        """
         return cls(
             response="Internal server error",
             cause="An unexpected error occurred while processing the request.",
@@ -1605,7 +1747,13 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def configuration_not_loaded(cls) -> "InternalServerErrorResponse":
-        """Create an InternalServerErrorResponse for configuration not loaded."""
+        """
+        Create an InternalServerErrorResponse indicating the service config was not initialized.
+
+        @returns InternalServerErrorResponse with response "Configuration is
+        not loaded" and cause "Lightspeed Stack configuration has not been
+        initialized."
+        """
         return cls(
             response="Configuration is not loaded",
             cause="Lightspeed Stack configuration has not been initialized.",
@@ -1613,7 +1761,17 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def feedback_path_invalid(cls, path: str) -> "InternalServerErrorResponse":
-        """Create an InternalServerErrorResponse for invalid feedback path."""
+        """
+        Create an InternalServerErrorResponse describing a failure to store feedback.
+
+        Parameters:
+            path (str): Filesystem directory where feedback storage was attempted.
+
+        Returns:
+            InternalServerErrorResponse: Error response with a response message
+            "Failed to store feedback" and a cause indicating the failed
+            directory.
+        """
         return cls(
             response="Failed to store feedback",
             cause=f"Failed to store feedback at directory: {path}",
@@ -1621,7 +1779,17 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def query_failed(cls, backend_url: str) -> "InternalServerErrorResponse":
-        """Create an InternalServerErrorResponse for query failure."""
+        """
+        Create an InternalServerErrorResponse representing a failed query to an external backend.
+
+        Parameters:
+            backend_url (str): The backend URL included in the error cause message.
+
+        Returns:
+            InternalServerErrorResponse: An error response with response "Error
+            while processing query" and cause "Failed to call backend:
+            {backend_url}".
+        """
         return cls(
             response="Error while processing query",
             cause=f"Failed to call backend: {backend_url}",
@@ -1629,7 +1797,13 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def cache_unavailable(cls) -> "InternalServerErrorResponse":
-        """Create an InternalServerErrorResponse for cache unavailable."""
+        """
+        Create an InternalServerErrorResponse indicating the conversation cache is unavailable.
+
+        Returns:
+            InternalServerErrorResponse: Error response with a message that the
+            conversation cache is not configured and a corresponding cause.
+        """
         return cls(
             response="Conversation cache not configured",
             cause="Conversation cache is not configured or unavailable.",
@@ -1637,14 +1811,26 @@ class InternalServerErrorResponse(AbstractErrorResponse):
 
     @classmethod
     def database_error(cls) -> "InternalServerErrorResponse":
-        """Create an InternalServerErrorResponse for database error."""
+        """
+        Create an InternalServerErrorResponse representing a database query failure.
+
+        Returns:
+            InternalServerErrorResponse: Instance with response "Database query
+            failed" and cause "Failed to query the database".
+        """
         return cls(
             response="Database query failed",
             cause="Failed to query the database",
         )
 
     def __init__(self, *, response: str, cause: str) -> None:
-        """Initialize an InternalServerErrorResponse."""
+        """
+        Initialize the error response for internal server errors and set the HTTP status code.
+
+        Parameters:
+            response (str): Public-facing error message.
+            cause (str): Internal explanation of the error cause.
+        """
         super().__init__(
             response=response,
             cause=cause,
@@ -1671,11 +1857,12 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
     }
 
     def __init__(self, *, backend_name: str, cause: str):
-        """Initialize a ServiceUnavailableResponse.
+        """
+        Construct a ServiceUnavailableResponse indicating the specified backend cannot be reached.
 
-        Args:
-            backend_name: The name of the backend service that is unavailable.
-            cause: Detailed explanation of why the service is unavailable.
+        Parameters:
+            backend_name (str): Name of the backend service that could not be contacted.
+            cause (str): Detailed explanation of why the service is unavailable.
         """
         response = f"Unable to connect to {backend_name}"
         super().__init__(

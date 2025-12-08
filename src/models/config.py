@@ -72,7 +72,14 @@ class TLSConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_tls_configuration(self) -> Self:
-        """Check TLS configuration."""
+        """
+        Perform post-validation checks for the TLS configuration.
+
+        Currently a no-op that returns the model unchanged.
+
+        Returns:
+            Self: The validated model instance.
+        """
         return self
 
 
@@ -125,7 +132,16 @@ class CORSConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_cors_configuration(self) -> Self:
-        """Check CORS configuration."""
+        """
+        Validate CORS settings and enforce that credentials are not allowed.
+
+        Raises:
+            ValueError: If `allow_credentials` is true while
+            `allow_origins` contains the "*" wildcard.
+
+        Returns:
+            Self: The validated configuration instance.
+        """
         # credentials are not allowed with wildcard origins per CORS/Fetch spec.
         # see https://fastapi.tiangolo.com/tutorial/cors/
         if self.allow_credentials and "*" in self.allow_origins:
@@ -160,9 +176,9 @@ class InMemoryCacheConfig(ConfigurationBase):
 class PostgreSQLDatabaseConfiguration(ConfigurationBase):
     """PostgreSQL database configuration.
 
-    PostgreSQL database is used by Lightspeed Core Stack service for storing information about
-    conversation IDs. It can also be leveraged to store conversation history and information
-    about quota usage.
+    PostgreSQL database is used by Lightspeed Core Stack service for storing
+    information about conversation IDs. It can also be leveraged to store
+    conversation history and information about quota usage.
 
     Useful resources:
 
@@ -228,7 +244,17 @@ class PostgreSQLDatabaseConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_postgres_configuration(self) -> Self:
-        """Check PostgreSQL configuration."""
+        """
+        Validate PostgreSQL configuration constraints.
+
+        Ensures the configured port is within the valid TCP port range.
+
+        Returns:
+            self: The validated configuration instance.
+
+        Raises:
+            ValueError: If `port` is greater than 65535.
+        """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
         return self
@@ -251,7 +277,17 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_database_configuration(self) -> Self:
-        """Check that exactly one database type is configured."""
+        """
+        Ensure exactly one database backend is configured, defaulting to a temporary SQLite one.
+
+        If neither `sqlite` nor `postgres` is set, assigns a default SQLite
+        configuration using the file path "/tmp/lightspeed-stack.db". If both
+        backends are configured, raises a `ValueError`.
+
+        Returns:
+            self: The configuration instance with exactly one
+            database backend set.
+        """
         total_configured_dbs = sum([self.sqlite is not None, self.postgres is not None])
 
         if total_configured_dbs == 0:
@@ -267,7 +303,17 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @property
     def db_type(self) -> Literal["sqlite", "postgres"]:
-        """Return the configured database type."""
+        """
+        Determine which database backend is configured.
+
+        Returns:
+            The string "sqlite" if a SQLite configuration is
+            present, "postgres" if a PostgreSQL configuration is
+            present.
+
+        Raises:
+            ValueError: If neither SQLite nor PostgreSQL configuration is set.
+        """
         if self.sqlite is not None:
             return "sqlite"
         if self.postgres is not None:
@@ -276,7 +322,18 @@ class DatabaseConfiguration(ConfigurationBase):
 
     @property
     def config(self) -> SQLiteDatabaseConfiguration | PostgreSQLDatabaseConfiguration:
-        """Return the active database configuration."""
+        """
+        Get the active database backend configuration.
+
+        Returns:
+            SQLiteDatabaseConfiguration or PostgreSQLDatabaseConfiguration: The
+            configured SQLite configuration if `sqlite` is set, otherwise the
+            configured PostgreSQL configuration if `postgres` is set.
+
+        Raises:
+            ValueError: If neither `sqlite` nor `postgres` is
+            configured.
+        """
         if self.sqlite is not None:
             return self.sqlite
         if self.postgres is not None:
@@ -287,10 +344,10 @@ class DatabaseConfiguration(ConfigurationBase):
 class ServiceConfiguration(ConfigurationBase):
     """Service configuration.
 
-    Lightspeed Core Stack is a REST API service that accepts requests
-    on a specified hostname and port. It is also possible to enable
-    authentication and specify the number of Uvicorn workers. When more
-    workers are specified, the service can handle requests concurrently.
+    Lightspeed Core Stack is a REST API service that accepts requests on a
+    specified hostname and port. It is also possible to enable authentication
+    and specify the number of Uvicorn workers. When more workers are specified,
+    the service can handle requests concurrently.
     """
 
     host: str = Field(
@@ -350,7 +407,15 @@ class ServiceConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_service_configuration(self) -> Self:
-        """Check service configuration."""
+        """
+        Validate service configuration and enforce allowed port range.
+
+        Raises:
+            ValueError: If `port` is greater than 65535.
+
+        Returns:
+            self: The validated model instance.
+        """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
         return self
@@ -359,11 +424,11 @@ class ServiceConfiguration(ConfigurationBase):
 class ModelContextProtocolServer(ConfigurationBase):
     """Model context protocol server configuration.
 
-    MCP (Model Context Protocol) servers provide tools and
-    capabilities to the AI agents. These are configured by this structure.
-    Only MCP servers defined in the lightspeed-stack.yaml configuration are
-    available to the agents. Tools configured in the llama-stack run.yaml
-    are not accessible to lightspeed-core agents.
+    MCP (Model Context Protocol) servers provide tools and capabilities to the
+    AI agents. These are configured by this structure. Only MCP servers
+    defined in the lightspeed-stack.yaml configuration are available to the
+    agents. Tools configured in the llama-stack run.yaml are not accessible to
+    lightspeed-core agents.
 
     Useful resources:
 
@@ -434,16 +499,22 @@ class LlamaStackConfiguration(ConfigurationBase):
     @model_validator(mode="after")
     def check_llama_stack_model(self) -> Self:
         """
-        Validate the Llama stack configuration after model initialization.
+        Validate the Llama Stack configuration and enforce mode-specific requirements.
 
-        Ensures that either a URL is provided for server mode or library client
-        mode is explicitly enabled. If library client mode is enabled, verifies
-        that a configuration file path is specified and points to an existing,
-        readable file. Raises a ValueError if any required condition is not
-        met.
+        If no URL is provided, requires explicit library-client mode selection.
+        When library-client mode is enabled, requires a non-empty
+        `library_client_config_path` that points to a regular, readable YAML
+        file (checked via checks.file_check). Also normalizes a None
+        `use_as_library_client` to False.
 
         Returns:
             Self: The validated LlamaStackConfiguration instance.
+
+        Raises:
+            ValueError: If the configuration is invalid, e.g. no
+            URL and library-client mode is unspecified or
+            disabled, or library-client mode is enabled but
+            `library_client_config_path` is not provided.
         """
         if self.url is None:
             # when URL is not set, it is supposed that Llama Stack should be run in library mode
@@ -510,7 +581,18 @@ class UserDataCollection(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_storage_location_is_set_when_needed(self) -> Self:
-        """Ensure storage directories are set when feedback or transcripts are enabled."""
+        """
+        Ensure storage locations are configured and writable when feedback is enabled.
+
+        If feedback collection is enabled, `feedback_storage` must be provided
+        and refer to a directory that exists or can be created and is writable.
+        If transcript collection is enabled, `transcripts_storage` must be
+        provided and refer to a directory that exists or can be created and is
+        writable.
+
+        Returns:
+            self: The validated UserDataCollection instance.
+        """
         if self.feedback_enabled:
             if self.feedback_storage is None:
                 raise ValueError(
@@ -583,7 +665,18 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_jsonpath(self) -> Self:
-        """Verify that the JSONPath expression is valid."""
+        """
+        Validate that the `jsonpath` expression parses as a JSONPath.
+
+        Returns:
+            self: The same model instance when the JSONPath
+            expression is valid.
+
+        Raises:
+            ValueError: If the `jsonpath` cannot be parsed; the
+            message includes the offending expression and parser
+            error.
+        """
         try:
             # try to parse the JSONPath
             jsonpath_ng.parse(self.jsonpath)
@@ -595,7 +688,16 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_roles(self) -> Self:
-        """Ensure that at least one role is specified."""
+        """
+        Validate the rule's roles list and enforce required constraints.
+
+        Performs three checks: ensures at least one role is present, enforces
+        that all roles are unique, and prohibits the wildcard role `"*"`.
+
+        Returns:
+            self: The same `JwtRoleRule` instance when validation
+            succeeds.
+        """
         if not self.roles:
             raise ValueError("At least one role must be specified in the rule")
 
@@ -612,7 +714,16 @@ class JwtRoleRule(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_regex_pattern(self) -> Self:
-        """Verify that regex patterns are valid for MATCH operator."""
+        """
+        Validate that when the operator is MATCH, the rule is a valid regular expression string.
+
+        Raises:
+            ValueError: If the operator is MATCH and `value` is
+            not a string or is not a valid regular expression.
+
+        Returns:
+            Self: The same JwtRoleRule instance.
+        """
         if self.operator == JsonPathOperator.MATCH:
             if not isinstance(self.value, str):
                 raise ValueError(
@@ -628,7 +739,14 @@ class JwtRoleRule(ConfigurationBase):
 
     @cached_property
     def compiled_regex(self) -> Optional[Pattern[str]]:
-        """Return compiled regex pattern for MATCH operator, None otherwise."""
+        """
+        Provide a compiled regex when the rule uses the MATCH operator and the value is a string.
+
+        Returns:
+            Optional[Pattern[str]]: Compiled `re.Pattern` of `value` if
+            `operator` is `JsonPathOperator.MATCH` and `value` is a `str`,
+            `None` otherwise.
+        """
         if self.operator == JsonPathOperator.MATCH and isinstance(self.value, str):
             return re.compile(self.value)
         return None
@@ -817,7 +935,20 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_authentication_model(self) -> Self:
-        """Validate YAML containing authentication configuration section."""
+        """
+        Validate authentication configuration and enforce module-specific requirements.
+
+        Checks that the selected authentication module is supported and that any module-specific
+        configuration (JWK or RH Identity) is present when required.
+
+        Returns:
+            self: The validated AuthenticationConfiguration instance.
+
+        Raises:
+            ValueError: If the module is unsupported, or if a required module-specific
+                configuration (jwk_config for JWK token or rh_identity_config for RH Identity)
+                is missing.
+        """
         if self.module not in constants.SUPPORTED_AUTHENTICATION_MODULES:
             supported_modules = ", ".join(constants.SUPPORTED_AUTHENTICATION_MODULES)
             raise ValueError(
@@ -853,7 +984,16 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     @property
     def jwk_configuration(self) -> JwkConfiguration:
-        """Return JWK configuration if the module is JWK token."""
+        """
+        Return the active JWK configuration for JWK-token authentication.
+
+        Raises:
+            ValueError: If the authentication module is not the JWK token
+            module or if the JWK configuration is not set.
+
+        Returns:
+            JwkConfiguration: The configured JWK settings.
+        """
         if self.module != constants.AUTH_MOD_JWK_TOKEN:
             raise ValueError(
                 "JWK configuration is only available for JWK token authentication module"
@@ -864,7 +1004,16 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     @property
     def rh_identity_configuration(self) -> RHIdentityConfiguration:
-        """Return RH Identity configuration if the module is RH Identity."""
+        """
+        Access the RH Identity configuration for RH Identity authentication.
+
+        Returns:
+            RHIdentityConfiguration: The configured RH Identity configuration object.
+
+        Raises:
+            ValueError: If the active authentication module is not RH Identity.
+            ValueError: If the RH Identity configuration is missing when the module is RH Identity.
+        """
         if self.module != constants.AUTH_MOD_RH_IDENTITY:
             raise ValueError(
                 "RH Identity configuration is only available for RH Identity authentication module"
@@ -914,7 +1063,12 @@ class CustomProfile:
             self.prompts = profile_module.PROFILE_CONFIG.get("system_prompts", {})
 
     def get_prompts(self) -> dict[str, str]:
-        """Retrieve prompt attribute."""
+        """
+        Get the loaded prompt mappings for the custom profile.
+
+        Returns:
+            dict[str, str]: Mapping from prompt names to prompt text.
+        """
         return self.prompts
 
 
@@ -929,7 +1083,17 @@ class Customization(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_customization_model(self) -> Self:
-        """Load customizations."""
+        """
+        Load and apply service customization sources to the model.
+
+        If `profile_path` is set, constructs a CustomProfile from that path and
+        assigns it to `custom_profile`.  Otherwise, if `system_prompt_path` is
+        provided, validates the file and reads `system_prompt` from it.
+
+        Returns:
+            self: The model instance, potentially with `custom_profile` or
+                  `system_prompt` populated.
+        """
         if self.profile_path:
             self.custom_profile = CustomProfile(path=self.profile_path)
         elif self.system_prompt_path is not None:
@@ -957,7 +1121,15 @@ class InferenceConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_default_model_and_provider(self) -> Self:
-        """Check default model and provider."""
+        """
+        Validate that default_model and default_provider are configured together: both set or unset.
+
+        Raises:
+            ValueError: If one is set while the other is not.
+
+        Returns:
+            self (Self): The validated configuration instance.
+        """
         if self.default_model is None and self.default_provider is not None:
             raise ValueError(
                 "Default model must be specified when default provider is set"
@@ -998,7 +1170,21 @@ class ConversationHistoryConfiguration(ConfigurationBase):
 
     @model_validator(mode="after")
     def check_cache_configuration(self) -> Self:
-        """Check conversation cache configuration."""
+        """
+        Validate the conversation cache configuration and enforce the selected cache type backend.
+
+        Raises:
+            ValueError: If a backend is provided but `type` is None.
+            ValueError: If `type` is "memory" but `memory` config is missing,
+                        or if other backend configs are present.
+            ValueError: If `type` is "sqlite" but `sqlite` config is missing,
+                        or if other backend configs are present.
+            ValueError: If `type` is "postgres" but `postgres` config is
+                        missing, or if other backend configs are present.
+
+        Returns:
+            The validated model instance.
+        """
         # if any backend config is provided, type must be explicitly selected
         if self.type is None:
             if any([self.memory, self.sqlite, self.postgres]):
@@ -1279,6 +1465,15 @@ class Configuration(ConfigurationBase):
     )
 
     def dump(self, filename: str = "configuration.json") -> None:
-        """Dump actual configuration into JSON file."""
+        """
+        Write the current Configuration model to a JSON file.
+
+        The configuration is serialized with an indentation of 4 spaces using
+        the model's JSON representation and written with UTF-8 encoding. If the
+        file exists it will be overwritten.
+
+        Parameters:
+            filename (str): Path to the output file (defaults to "configuration.json").
+        """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))
