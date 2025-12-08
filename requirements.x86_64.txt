@@ -601,7 +601,6 @@ cryptography==46.0.3 \
     # via
     #   authlib
     #   pyjwt
-    #   python-jose
 cycler==0.12.1 \
     --hash=sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30 \
     --hash=sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c
@@ -632,10 +631,6 @@ durationpy==0.10 \
     --hash=sha256:1fa6893409a6e739c9c72334fc65cca1f355dbdd93405d30f726deb5bde42fba \
     --hash=sha256:3b41e1b601234296b4fb368338fdcd3e13e0b4fb5b67345948f4f2bf9868b286
     # via kubernetes
-ecdsa==0.19.1 \
-    --hash=sha256:30638e27cf77b7e15c4c4cc1973720149e1033827cfd00661ca5c8cc0cdb24c3 \
-    --hash=sha256:478cba7b62555866fcb3bb3fe985e06decbdb68ef55713c4e5ab98c57d508e61
-    # via python-jose
 email-validator==2.3.0 \
     --hash=sha256:80f13f623413e6b197ae73bb10bf4eb0908faf509ad8362c5edeb0be7fd450b4 \
     --hash=sha256:9fc05c37f2f6cf439ff414f8fc46d917929974a82244c20eb10231ba60c54426
@@ -1130,7 +1125,6 @@ huggingface-hub==0.36.0 \
     # via
     #   accelerate
     #   datasets
-    #   llama-stack
     #   peft
     #   sentence-transformers
     #   tokenizers
@@ -1399,13 +1393,13 @@ litellm==1.80.8 \
     --hash=sha256:8b04de6661d2c9646ad6c4e57a61a6cf549f52e72e6a41d8adbd5691f2f95b3b \
     --hash=sha256:8cdf0f08ae9c977cd99f78257550c02910c064ce6d29ae794ac22d16a5a99980
     # via lightspeed-stack (pyproject.toml)
-llama-stack==0.2.22 \
-    --hash=sha256:576752dedc9e9f0fb9da69f373d677d8b4f2ae4203428f676fa039b6813d8450 \
-    --hash=sha256:c6bbda6b5a4417b9a73ed36b9d581fd7ec689090ceefd084d9a078e7acbdc670
+llama-stack==0.3.0 \
+    --hash=sha256:8277c54cf4a283077143a0804128f2c76f1ec9660116353176c77b659206d315 \
+    --hash=sha256:c2b999dced8970f3590ecd7eca50bef1bc0c052eec15b8aba78a5c17a0a4051d
     # via lightspeed-stack (pyproject.toml)
-llama-stack-client==0.2.22 \
-    --hash=sha256:9a0bc756b91ebd539858eeaf1f231c5e5c6900e1ea4fcced726c6717f3d27ca7 \
-    --hash=sha256:b260d73aec56fcfd8fa601b3b34c2f83c4fbcfb7261a246b02bbdf6c2da184fe
+llama-stack-client==0.3.0 \
+    --hash=sha256:1e974a74d0da285e18ba7df30b9a324e250782b130253bcef3e695830c5bb03d \
+    --hash=sha256:9f85d84d508ef7da44b96ca8555d7783da717cfc9135bab6a5530fe8c852690d
     # via
     #   lightspeed-stack (pyproject.toml)
     #   llama-stack
@@ -2567,7 +2561,6 @@ pyasn1==0.6.1 \
     --hash=sha256:6f580d2bdd84365380830acf45550f2511469f673cb4a5ae3857a3170128b034
     # via
     #   pyasn1-modules
-    #   python-jose
     #   rsa
 pyasn1-modules==0.4.2 \
     --hash=sha256:29253a9207ce32b64c3ac6600edc75368f98473906e8fd1043bd6b5b1de2c14a \
@@ -2765,7 +2758,9 @@ pygments==2.19.2 \
 pyjwt==2.10.1 \
     --hash=sha256:3cc5772eb20009233caf06e9d8a0577824723b44e6648ee0a2aedb6cf9381953 \
     --hash=sha256:dcdd193e30abefd5debf142f9adfcdd2b58004e644f25406ffaebd50bd98dacb
-    # via mcp
+    # via
+    #   llama-stack
+    #   mcp
 pyparsing==3.2.5 \
     --hash=sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6 \
     --hash=sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e
@@ -2788,10 +2783,6 @@ python-dotenv==1.2.1 \
     #   litellm
     #   llama-stack
     #   pydantic-settings
-python-jose==3.5.0 \
-    --hash=sha256:abd1202f23d34dfad2c3d28cb8617b90acf34132c7afd60abd0b0b7d3cb55771 \
-    --hash=sha256:fb4eaa44dbeb1c26dcc69e4bd7ec54a1cb8dd64d3b4d81ef08d90ff453f2b01b
-    # via llama-stack
 python-multipart==0.0.20 \
     --hash=sha256:8a62d3a8335e06589fe01f2a3e178cdcc632f3fbe0d492ad9ee0ec35aab1f104 \
     --hash=sha256:8dd0cab45b8e23064ae09147625994d090fa46f5b0d1e13af944c331a7fa9d13
@@ -3158,9 +3149,7 @@ rpds-py==0.30.0 \
 rsa==4.9.1 \
     --hash=sha256:68635866661c6836b8d39430f97a996acbd61bfa49406748ea243539fe239762 \
     --hash=sha256:e7bdbfdb5497da4c07dfd35530e1a902659db6ff241e39d9953cad06ebd0ae75
-    # via
-    #   google-auth
-    #   python-jose
+    # via google-auth
 safetensors==0.7.0 \
     --hash=sha256:0071bffba4150c2f46cae1432d31995d77acfd9f8db598b5d1a2ce67e8440ad2 \
     --hash=sha256:07663963b67e8bd9f0b8ad15bb9163606cd27cc5a1b96235a50d8369803b96b0 \
@@ -3305,7 +3294,6 @@ six==1.17.0 \
     --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274 \
     --hash=sha256:ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81
     # via
-    #   ecdsa
     #   kubernetes
     #   langdetect
     #   python-dateutil
@@ -3373,7 +3361,9 @@ sqlalchemy==2.0.44 \
     --hash=sha256:f7027414f2b88992877573ab780c19ecb54d3a536bef3397933573d6b5068be4 \
     --hash=sha256:f9480c0740aabd8cb29c329b422fb65358049840b34aba0adf63162371d2a96e \
     --hash=sha256:ff486e183d151e51b1d694c7aa1695747599bb00b9f5f604092b54b74c64a8e1
-    # via lightspeed-stack (pyproject.toml)
+    # via
+    #   lightspeed-stack (pyproject.toml)
+    #   llama-stack
 sse-starlette==3.0.3 \
     --hash=sha256:88cfb08747e16200ea990c8ca876b03910a23b547ab3bd764c0d8eb81019b971 \
     --hash=sha256:af5bf5a6f3933df1d9c7f8539633dc8444ca6a97ab2e2a7cd3b6e431ac03a431
