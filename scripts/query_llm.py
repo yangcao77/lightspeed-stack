@@ -13,7 +13,21 @@ DEFAULT_URL = os.getenv("LLM_URL", "http://localhost:8080/v1/query/")
 
 
 def main() -> int:
-    """Entry point to this tool."""
+    """
+    CLI entry point that sends a query to a local LLM endpoint and prints the model response.
+
+    Parses command-line arguments (--query, --system-prompt, --url, --timeout),
+    POSTs a JSON payload with the query and system prompt to the configured
+    endpoint, and prints the returned "response" value followed by the request
+    elapsed time. Error diagnostics are printed to stderr.
+
+    Returns:
+        int: Exit code where
+            `0` indicates success,
+            `1` indicates an HTTP/request failure,
+            `2` indicates the server response was not valid JSON,
+            `3` indicates the JSON response did not contain a `"response"` field.
+    """
     parser = argparse.ArgumentParser(
         description="Send a query to a local LLM endpoint."
     )
