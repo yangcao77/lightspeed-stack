@@ -420,31 +420,32 @@ class QueryResponse(AbstractSuccessfulResponse):
                 {
                     "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
                     "response": "Operator Lifecycle Manager (OLM) helps users install...",
-                    "rag_chunks": [
-                        {
-                            "content": "OLM is a component of the Operator Framework toolkit...",
-                            "source": "kubernetes-docs/operators.md",
-                            "score": 0.95,
-                        }
-                    ],
-                    "tool_calls": [
-                        {
-                            "tool_name": "knowledge_search",
-                            "arguments": {"query": "operator lifecycle manager"},
-                            "result": {"chunks_found": 5},
-                        }
-                    ],
                     "referenced_documents": [
                         {
-                            "doc_url": "https://docs.openshift.com/"
-                            "container-platform/4.15/operators/olm/index.html",
-                            "doc_title": "Operator Lifecycle Manager (OLM)",
-                        }
+                            "doc_url": "https://docs.openshift.com/container-platform/4.15/"
+                            "operators/understanding/olm/olm-understanding-olm.html",
+                            "doc_title": "Operator Lifecycle Manager concepts and resources",
+                        },
                     ],
                     "truncated": False,
-                    "input_tokens": 150,
-                    "output_tokens": 75,
-                    "available_quotas": {"daily": 1000, "monthly": 50000},
+                    "input_tokens": 123,
+                    "output_tokens": 456,
+                    "available_quotas": {
+                        "UserQuotaLimiter": 998911,
+                        "ClusterQuotaLimiter": 998911,
+                    },
+                    "tool_calls": [
+                        {"name": "tool1", "args": {}, "id": "1", "type": "tool_call"}
+                    ],
+                    "tool_results": [
+                        {
+                            "id": "1",
+                            "status": "success",
+                            "content": "bla",
+                            "type": "tool_result",
+                            "round": 1,
+                        }
+                    ],
                 }
             ]
         }
@@ -510,9 +511,9 @@ class StreamingQueryResponse(AbstractSuccessfulResponse):
                     'data: {"event": "turn_complete", "data": {'
                     '"token": "Hello! How can I assist you today?"}}\n\n'
                     'data: {"event": "end", "data": {'
-                    '"rag_chunks": [], "referenced_documents": [], '
-                    '"truncated": null, "input_tokens": 11, "output_tokens": 19, '
-                    '"available_quotas": {}}}\n\n'
+                    '"referenced_documents": [], '
+                    '"truncated": null, "input_tokens": 11, "output_tokens": 19}, '
+                    '"available_quotas": {}}\n\n'
                 ),
             ]
         }

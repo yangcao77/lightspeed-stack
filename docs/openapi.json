@@ -1211,35 +1211,34 @@
                                 },
                                 "example": {
                                     "available_quotas": {
-                                        "daily": 1000,
-                                        "monthly": 50000
+                                        "ClusterQuotaLimiter": 998911,
+                                        "UserQuotaLimiter": 998911
                                     },
                                     "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-                                    "input_tokens": 150,
-                                    "output_tokens": 75,
-                                    "rag_chunks": [
-                                        {
-                                            "content": "OLM is a component of the Operator Framework toolkit...",
-                                            "score": 0.95,
-                                            "source": "kubernetes-docs/operators.md"
-                                        }
-                                    ],
+                                    "input_tokens": 123,
+                                    "output_tokens": 456,
                                     "referenced_documents": [
                                         {
-                                            "doc_title": "Operator Lifecycle Manager (OLM)",
-                                            "doc_url": "https://docs.openshift.com/container-platform/4.15/operators/olm/index.html"
+                                            "doc_title": "Operator Lifecycle Manager concepts and resources",
+                                            "doc_url": "https://docs.openshift.com/container-platform/4.15/operators/understanding/olm/olm-understanding-olm.html"
                                         }
                                     ],
                                     "response": "Operator Lifecycle Manager (OLM) helps users install...",
                                     "tool_calls": [
                                         {
-                                            "arguments": {
-                                                "query": "operator lifecycle manager"
-                                            },
-                                            "result": {
-                                                "chunks_found": 5
-                                            },
-                                            "tool_name": "knowledge_search"
+                                            "args": {},
+                                            "id": "1",
+                                            "name": "tool1",
+                                            "type": "tool_call"
+                                        }
+                                    ],
+                                    "tool_results": [
+                                        {
+                                            "content": "bla",
+                                            "id": "1",
+                                            "round": 1,
+                                            "status": "success",
+                                            "type": "tool_result"
                                         }
                                     ],
                                     "truncated": false
@@ -1521,7 +1520,7 @@
                                     "type": "string",
                                     "format": "text/event-stream"
                                 },
-                                "example": "data: {\"event\": \"start\", \"data\": {\"conversation_id\": \"123e4567-e89b-12d3-a456-426614174000\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 0, \"token\": \"No Violation\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 1, \"token\": \"\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 2, \"token\": \"Hello\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 3, \"token\": \"!\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 4, \"token\": \" How\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 5, \"token\": \" can\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 6, \"token\": \" I\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 7, \"token\": \" assist\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 8, \"token\": \" you\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 9, \"token\": \" today\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 10, \"token\": \"?\"}}\n\ndata: {\"event\": \"turn_complete\", \"data\": {\"token\": \"Hello! How can I assist you today?\"}}\n\ndata: {\"event\": \"end\", \"data\": {\"rag_chunks\": [], \"referenced_documents\": [], \"truncated\": null, \"input_tokens\": 11, \"output_tokens\": 19, \"available_quotas\": {}}}\n\n"
+                                "example": "data: {\"event\": \"start\", \"data\": {\"conversation_id\": \"123e4567-e89b-12d3-a456-426614174000\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 0, \"token\": \"No Violation\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 1, \"token\": \"\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 2, \"token\": \"Hello\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 3, \"token\": \"!\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 4, \"token\": \" How\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 5, \"token\": \" can\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 6, \"token\": \" I\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 7, \"token\": \" assist\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 8, \"token\": \" you\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 9, \"token\": \" today\"}}\n\ndata: {\"event\": \"token\", \"data\": {\"id\": 10, \"token\": \"?\"}}\n\ndata: {\"event\": \"turn_complete\", \"data\": {\"token\": \"Hello! How can I assist you today?\"}}\n\ndata: {\"event\": \"end\", \"data\": {\"referenced_documents\": [], \"truncated\": null, \"input_tokens\": 11, \"output_tokens\": 19}, \"available_quotas\": {}}\n\n"
                             }
                         }
                     },
@@ -3920,12 +3919,20 @@
                 "properties": {
                     "api_key": {
                         "type": "string",
-                        "title": "Api Key",
-                        "default": "some-api-key"
+                        "minLength": 1,
+                        "format": "password",
+                        "title": "API key",
+                        "writeOnly": true,
+                        "examples": [
+                            "some-api-key"
+                        ]
                     }
                 },
                 "additionalProperties": false,
                 "type": "object",
+                "required": [
+                    "api_key"
+                ],
                 "title": "APIKeyTokenConfiguration",
                 "description": "API Key Token configuration."
             },
@@ -5699,7 +5706,7 @@
                     "url"
                 ],
                 "title": "ModelContextProtocolServer",
-                "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and\ncapabilities to the AI agents. These are configured by this structure.\nOnly MCP servers defined in the lightspeed-stack.yaml configuration are\navailable to the agents. Tools configured in the llama-stack run.yaml\nare not accessible to lightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)"
+                "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and capabilities to the\nAI agents. These are configured by this structure. Only MCP servers\ndefined in the lightspeed-stack.yaml configuration are available to the\nagents. Tools configured in the llama-stack run.yaml are not accessible to\nlightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)"
             },
             "ModelsResponse": {
                 "properties": {
@@ -5862,7 +5869,7 @@
                     "password"
                 ],
                 "title": "PostgreSQLDatabaseConfiguration",
-                "description": "PostgreSQL database configuration.\n\nPostgreSQL database is used by Lightspeed Core Stack service for storing information about\nconversation IDs. It can also be leveraged to store conversation history and information\nabout quota usage.\n\nUseful resources:\n\n- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)\n- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)\n- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)"
+                "description": "PostgreSQL database configuration.\n\nPostgreSQL database is used by Lightspeed Core Stack service for storing\ninformation about conversation IDs. It can also be leveraged to store\nconversation history and information about quota usage.\n\nUseful resources:\n\n- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)\n- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)\n- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)"
             },
             "ProviderHealthStatus": {
                 "properties": {
@@ -6363,35 +6370,34 @@
                 "examples": [
                     {
                         "available_quotas": {
-                            "daily": 1000,
-                            "monthly": 50000
+                            "ClusterQuotaLimiter": 998911,
+                            "UserQuotaLimiter": 998911
                         },
                         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-                        "input_tokens": 150,
-                        "output_tokens": 75,
-                        "rag_chunks": [
-                            {
-                                "content": "OLM is a component of the Operator Framework toolkit...",
-                                "score": 0.95,
-                                "source": "kubernetes-docs/operators.md"
-                            }
-                        ],
+                        "input_tokens": 123,
+                        "output_tokens": 456,
                         "referenced_documents": [
                             {
-                                "doc_title": "Operator Lifecycle Manager (OLM)",
-                                "doc_url": "https://docs.openshift.com/container-platform/4.15/operators/olm/index.html"
+                                "doc_title": "Operator Lifecycle Manager concepts and resources",
+                                "doc_url": "https://docs.openshift.com/container-platform/4.15/operators/understanding/olm/olm-understanding-olm.html"
                             }
                         ],
                         "response": "Operator Lifecycle Manager (OLM) helps users install...",
                         "tool_calls": [
                             {
-                                "arguments": {
-                                    "query": "operator lifecycle manager"
-                                },
-                                "result": {
-                                    "chunks_found": 5
-                                },
-                                "tool_name": "knowledge_search"
+                                "args": {},
+                                "id": "1",
+                                "name": "tool1",
+                                "type": "tool_call"
+                            }
+                        ],
+                        "tool_results": [
+                            {
+                                "content": "bla",
+                                "id": "1",
+                                "round": 1,
+                                "status": "success",
+                                "type": "tool_result"
                             }
                         ],
                         "truncated": false
@@ -6891,7 +6897,7 @@
                 "additionalProperties": false,
                 "type": "object",
                 "title": "ServiceConfiguration",
-                "description": "Service configuration.\n\nLightspeed Core Stack is a REST API service that accepts requests\non a specified hostname and port. It is also possible to enable\nauthentication and specify the number of Uvicorn workers. When more\nworkers are specified, the service can handle requests concurrently."
+                "description": "Service configuration.\n\nLightspeed Core Stack is a REST API service that accepts requests on a\nspecified hostname and port. It is also possible to enable authentication\nand specify the number of Uvicorn workers. When more workers are specified,\nthe service can handle requests concurrently."
             },
             "ServiceUnavailableResponse": {
                 "properties": {
