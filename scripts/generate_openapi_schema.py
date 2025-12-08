@@ -24,7 +24,12 @@ from app.main import app  # noqa: E402  pylint: disable=C0413
 
 
 def read_version_from_openapi(filename: str) -> str:
-    """Read version from OpenAPI.json file."""
+    """
+    Extract the OpenAPI document's version from a generated OpenAPI JSON file.
+
+    Returns:
+        str: The value of the OpenAPI document's `info.version`.
+    """
     # retrieve pre-generated OpenAPI schema
     with open(filename, encoding="utf-8") as fin:
         pre_generated_schema = json.load(fin)
@@ -36,7 +41,12 @@ def read_version_from_openapi(filename: str) -> str:
 
 
 def read_version_from_pyproject():
-    """Read version from pyproject.toml file."""
+    """
+    Obtain the project's version using PDM (`pdm show --version`), which supports dynamic versions.
+
+    Returns:
+        str: The project version string.
+    """
     # it is not safe to just try to read version from pyproject.toml file directly
     # the PDM tool itself is able to retrieve the version, even if the version
     # is generated dynamically
