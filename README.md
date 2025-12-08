@@ -163,7 +163,8 @@ To quickly get hands on LCS, we can run it using the default configurations prov
 
 ## LLM Compatibility
 
-Lightspeed Core Stack (LCS) supports the large language models from the providers listed below.
+Lightspeed Core Stack (LCS) provides support for Large Language Model providers. The models listed in the table below represent specific examples that have been tested within LCS.
+__Note__: Support for individual models is dependent on the specific inference provider's implementation within the currently supported version of Llama Stack.
 
 | Provider | Model                                          | Tool Calling | provider_type  | Example                                                                    |
 | -------- | ---------------------------------------------- | ------------ | -------------- | -------------------------------------------------------------------------- |
