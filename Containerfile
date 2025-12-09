@@ -18,7 +18,7 @@ USER root
 RUN dnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs gcc
 
 # Install uv package manager
-RUN pip3.12 install "uv==0.8.15"
+RUN pip3.12 install "uv>=0.8.15"
 
 # Add explicit files and directories
 # (avoid accidental inclusion of local directories or env files or credentials)
