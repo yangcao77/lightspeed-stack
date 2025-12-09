@@ -10,7 +10,12 @@ def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Format a tool dictionary to include only required fields.
 
-    Args:
+    If the input description contains structured metadata (e.g.,
+    lines starting with `TOOL_NAME=` or `DISPLAY_NAME=`), the
+    description will be replaced with a cleaned, human-readable
+    version extracted by `extract_clean_description`.
+
+    Parameters:
         tool_dict: Raw tool dictionary from Llama Stack
 
     Returns:
@@ -41,7 +46,19 @@ def extract_clean_description(description: str) -> str:
     """
     Extract a clean description from structured metadata format.
 
-    Args:
+    Parses a raw description that may contain structured metadata
+    (e.g., lines or sections starting with TOOL_NAME=,
+    DISPLAY_NAME=, USECASE=, INSTRUCTIONS=, INPUT_DESCRIPTION=,
+    OUTPUT_DESCRIPTION=, EXAMPLES=, PREREQUISITES=,
+    AGENT_DECISION_CRITERIA=) and returns a cleaned, user-facing
+    description.  The function prefers the first paragraph that
+    does not start with a known metadata prefix and is longer than
+    20 characters. If no such paragraph exists, it returns the
+    value of a `USECASE=` line if present. If neither is found, it
+    returns the first 200 characters of the input, appending "..."
+    when truncation occurs.
+
+    Parameters:
         description: Raw description with structured metadata
 
     Returns:
