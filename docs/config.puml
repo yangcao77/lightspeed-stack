@@ -1,5 +1,8 @@
 @startuml classes
 set namespaceSeparator none
+class "APIKeyTokenConfiguration" as src.models.config.APIKeyTokenConfiguration {
+  api_key
+}
 class "AccessRule" as src.models.config.AccessRule {
   actions : list[Action]
   role : str
@@ -8,6 +11,8 @@ class "Action" as src.models.config.Action {
   name
 }
 class "AuthenticationConfiguration" as src.models.config.AuthenticationConfiguration {
+  api_key_config : Optional[APIKeyTokenConfiguration]
+  api_key_configuration
   jwk_config : Optional[JwkConfiguration]
   jwk_configuration
   k8s_ca_cert_path : Optional[FilePath]
@@ -184,6 +189,7 @@ class "UserDataCollection" as src.models.config.UserDataCollection {
   transcripts_storage : Optional[str]
   check_storage_location_is_set_when_needed() -> Self
 }
+src.models.config.APIKeyTokenConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.AccessRule --|> src.models.config.ConfigurationBase
 src.models.config.AuthenticationConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.AuthorizationConfiguration --|> src.models.config.ConfigurationBase
