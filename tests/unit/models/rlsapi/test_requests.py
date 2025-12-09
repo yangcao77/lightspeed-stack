@@ -306,3 +306,158 @@ class TestRlsapiV1InferRequest:
         assert restored.question == sample_request.question
         assert restored.skip_rag == sample_request.skip_rag
         assert restored.context.systeminfo.os == sample_request.context.systeminfo.os
+
+
+# ---------------------------------------------------------------------------
+# get_input_source() tests
+# ---------------------------------------------------------------------------
+
+
+class TestGetInputSource:
+    """Test cases for RlsapiV1InferRequest.get_input_source() method."""
+
+    @pytest.fixture(name="make_request")
+    def make_request_fixture(self) -> Any:
+        """Factory fixture to build requests with specific context values."""
+
+        class _RequestBuilder:  # pylint: disable=too-few-public-methods
+            """Helper to construct requests with variable context."""
+
+            @staticmethod
+            def build(
+                question: str = "q",
+                stdin: str = "",
+                attachment: str = "",
+                terminal: str = "",
+            ) -> RlsapiV1InferRequest:
+                """Build an RlsapiV1InferRequest with specified context values."""
+                return RlsapiV1InferRequest(
+                    question=question,
+                    context=RlsapiV1Context(
+                        stdin=stdin,
+                        attachments=RlsapiV1Attachment(contents=attachment),
+                        terminal=RlsapiV1Terminal(output=terminal),
+                    ),
+                )
+
+        return _RequestBuilder
+
+    # -------------------------------------------------------------------------
+    # Parameterized tests for input combinations
+    # -------------------------------------------------------------------------
+
+    @pytest.mark.parametrize(
+        ("question", "stdin", "attachment", "terminal", "expected"),
+        [
+            # All four sources present
+            pytest.param(
+                "question",
+                "stdin",
+                "attachment",
+                "terminal",
+                "question\n\nstdin\n\nattachment\n\nterminal",
+                id="all_four_sources",
+            ),
+            # Three sources
+            pytest.param(
+                "question",
+                "stdin",
+                "attachment",
+                "",
+                "question\n\nstdin\n\nattachment",
+                id="question_stdin_attachment",
+            ),
+            pytest.param(
+                "question",
+                "",
+                "attachment",
+                "terminal",
+                "question\n\nattachment\n\nterminal",
+                id="question_attachment_terminal",
+            ),
+            # Two sources
+            pytest.param(
+                "question",
+                "stdin",
+                "",
+                "",
+                "question\n\nstdin",
+                id="question_stdin",
+            ),
+            pytest.param(
+                "question",
+                "",
+                "attachment",
+                "",
+                "question\n\nattachment",
+                id="question_attachment",
+            ),
+            pytest.param(
+                "question",
+                "",
+                "",
+                "terminal",
+                "question\n\nterminal",
+                id="question_terminal",
+            ),
+            # Question only
+            pytest.param(
+                "question",
+                "",
+                "",
+                "",
+                "question",
+                id="question_only",
+            ),
+        ],
+    )
+    # pylint: disable=too-many-arguments,too-many-positional-arguments
+    def test_input_combinations(
+        self,
+        make_request: Any,
+        question: str,
+        stdin: str,
+        attachment: str,
+        terminal: str,
+        expected: str,
+    ) -> None:
+        """Test get_input_source() joins non-empty sources with double newlines."""
+        request = make_request.build(
+            question=question,
+            stdin=stdin,
+            attachment=attachment,
+            terminal=terminal,
+        )
+        assert request.get_input_source() == expected
+
+    # -------------------------------------------------------------------------
+    # Edge cases
+    # -------------------------------------------------------------------------
+
+    def test_preserves_content_formatting(self, make_request: Any) -> None:
+        """Test that content formatting (newlines, special chars) is preserved."""
+        multiline_attachment = "line1\nline2\nline3"
+        request = make_request.build(
+            question="Explain this config",
+            attachment=multiline_attachment,
+        )
+        result = request.get_input_source()
+        assert "line1\nline2\nline3" in result
+
+    def test_priority_order(self, make_request: Any) -> None:
+        """Test that sources appear in priority order: question, stdin, attachment, terminal."""
+        request = make_request.build(
+            question="Q",
+            stdin="S",
+            attachment="A",
+            terminal="T",
+        )
+        result = request.get_input_source()
+        assert result == "Q\n\nS\n\nA\n\nT"
+        # Verify order by checking positions
+        assert (
+            result.index("Q")
+            < result.index("S")
+            < result.index("A")
+            < result.index("T")
+        )

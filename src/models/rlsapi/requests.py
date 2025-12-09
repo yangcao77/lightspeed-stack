@@ -174,3 +174,27 @@ class RlsapiV1InferRequest(ConfigurationBase):
         if not stripped:
             raise ValueError("Question cannot be empty or whitespace-only")
         return stripped
+
+    def get_input_source(self) -> str:
+        """Combine all non-empty input sources into a single string.
+
+        Joins question, stdin, attachment contents, and terminal output with double
+        newlines, in priority order. Empty sources are omitted.
+
+        Priority order:
+            1. question
+            2. stdin
+            3. attachment contents
+            4. terminal output
+
+        Returns:
+            The combined input string with sources separated by double newlines.
+        """
+        # pylint: disable=no-member  # Pydantic fields are dynamic
+        parts = [
+            self.question,
+            self.context.stdin,
+            self.context.attachments.contents,
+            self.context.terminal.output,
+        ]
+        return "\n\n".join(part for part in parts if part)
