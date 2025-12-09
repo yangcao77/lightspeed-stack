@@ -88,7 +88,18 @@ def directory_check(
 
 
 def import_python_module(profile_name: str, profile_path: str) -> ModuleType | None:
-    """Import a Python module from a file path."""
+    """
+    Import a Python module from a filesystem path and return the loaded module.
+
+    Parameters:
+        profile_name (str): Name to assign to the imported module.
+        profile_path (str): Filesystem path to the Python source file; must end with `.py`.
+
+    Returns:
+        ModuleType | None: The loaded module on success; `None` if
+        `profile_path` does not end with `.py`, if a module spec or loader
+        cannot be created, or if importing/executing the module fails.
+    """
     if not profile_path.endswith(".py"):
         return None
     spec = importlib.util.spec_from_file_location(profile_name, profile_path)
@@ -111,7 +122,17 @@ def import_python_module(profile_name: str, profile_path: str) -> ModuleType | N
 
 
 def is_valid_profile(profile_module: ModuleType) -> bool:
-    """Validate that a profile module has the required PROFILE_CONFIG structure."""
+    """
+    Check whether a module exposes a valid PROFILE_CONFIG with required structure.
+
+    The module must define a `PROFILE_CONFIG` attribute that is a dict and contains a non-empty
+    `system_prompts` entry. This function returns `True` only when `system_prompts` exists
+    and is itself a dict.
+
+    Returns:
+        True if the module provides a dict `PROFILE_CONFIG` containing a
+        `system_prompts` dict, False otherwise.
+    """
     if not hasattr(profile_module, "PROFILE_CONFIG"):
         return False
 
