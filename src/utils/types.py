@@ -174,7 +174,21 @@ class TurnSummary(BaseModel):
                 self._extract_rag_chunks_from_response(response_content)
 
     def _extract_rag_chunks_from_response(self, response_content: str) -> None:
-        """Extract RAG chunks from tool response content."""
+        """
+        Parse a tool response string and append extracted RAG chunks to this  rag_chunks list.
+
+        Attempts to parse `response_content` as JSON and extract chunks in either of two formats:
+        - A dict containing a "chunks" list: each item's "content", "source", and "score" are used.
+        - A top-level list of chunk objects: for dict items, "content",
+          "source", and "score" are used; non-dict items are stringified into
+          the chunk content.
+
+        If JSON parsing fails or an unexpected structure/error occurs and
+        `response_content` contains non-whitespace characters, the entire
+        `response_content` is appended as a single RAGChunk with
+        `source=DEFAULT_RAG_TOOL` and `score=None`. Empty or whitespace-only
+        `response_content` is ignored.
+        """
         try:
             # Parse the response to get chunks
             # Try JSON first

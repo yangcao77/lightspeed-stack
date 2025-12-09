@@ -5,7 +5,7 @@ from typing import Any, Callable
 
 def connection(f: Callable) -> Callable:
     """
-    Decorator that ensures a connectable object is connected before invoking the wrapped function.
+    Ensure a connectable object is connected before invoking the wrapped function.
 
     The returned wrapper calls `connectable.connected()` and, if that returns
     `False`, calls `connectable.connect()` prior to delegating to the original
