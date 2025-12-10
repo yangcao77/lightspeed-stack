@@ -196,6 +196,10 @@ def test_dump_configuration(tmp_path: Path) -> None:
                 },
                 "enable_token_history": False,
             },
+            "a2a_state": {
+                "sqlite": None,
+                "postgres": None,
+            },
         }
 
 
@@ -726,6 +730,10 @@ def test_dump_configuration_with_quota_limiters_different_values(
                 },
                 "enable_token_history": True,
             },
+            "a2a_state": {
+                "sqlite": None,
+                "postgres": None,
+            },
         }
 
 
@@ -1080,5 +1088,9 @@ def test_dump_configuration_pg_namespace(tmp_path: Path) -> None:
                     "database_reconnection_delay": 1,
                 },
                 "enable_token_history": False,
+            },
+            "a2a_state": {
+                "sqlite": None,
+                "postgres": None,
             },
         }
