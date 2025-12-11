@@ -9,96 +9,80 @@ apis:
 - inference
 - safety
 - scoring
-- telemetry
 - tool_runtime
 - vector_io
       
 benchmarks: []
 conversations_store:
-  db_path: /tmp/conversations.db
+  db_path: ~/.llama/storage/conversations.db
   type: sqlite
 datasets: []
 image_name: starter
-external_providers_dir: /opt/app-root/src/.llama/providers.d
+# external_providers_dir: /opt/app-root/src/.llama/providers.d
 inference_store:
-  db_path: /tmp/inference_store.db
+  db_path: ~/.llama/storage/inference-store.db
   type: sqlite
 metadata_store:
-  db_path: /tmp/registry.db
+  db_path: ~/.llama/storage/registry.db
   type: sqlite
-
-models: 
-- model_id: sentence-transformers/all-mpnet-base-v2
-  model_type: embedding
-  provider_id: sentence-transformers
-  provider_model_id: sentence-transformers/all-mpnet-base-v2
-  metadata:
-    embedding_dimension: 768
-- model_id: gpt-4o-mini
-  provider_id: azure
-  model_type: llm
-  provider_model_id: gpt-4o-mini
 
 providers:
   agents:
   - config:
-      persistence_store:
-        db_path: /tmp/agents_store.db
-        type: sqlite
-      responses_store:
-        db_path: /tmp/responses_store.db
-        type: sqlite
+      persistence:
+        agent_state:
+          namespace: agents_state
+          backend: kv_default
+        responses:
+          table_name: agents_responses
+          backend: sql_default
     provider_id: meta-reference
     provider_type: inline::meta-reference
   batches:
   - config:
       kvstore:
-        db_path: /tmp/batches.db
-        type: sqlite
+        namespace: batches_store
+        backend: kv_default
     provider_id: reference
     provider_type: inline::reference
   datasetio:
   - config:
       kvstore:
-        db_path: /tmp/huggingface_datasetio.db
-        type: sqlite
+        namespace: huggingface_datasetio
+        backend: kv_default
     provider_id: huggingface
     provider_type: remote::huggingface
   - config:
       kvstore:
-        db_path: /tmp/localfs_datasetio.db
-        type: sqlite
+        namespace: localfs_datasetio
+        backend: kv_default
     provider_id: localfs
     provider_type: inline::localfs
   eval:
   - config:
       kvstore:
-        db_path: /tmp/meta_reference_eval.db
-        type: sqlite
+        namespace: eval_store
+        backend: kv_default
     provider_id: meta-reference
     provider_type: inline::meta-reference
   files:
   - config:
       metadata_store:
-        db_path: /tmp/files_metadata.db
-        type: sqlite
-      storage_dir: /tmp/files
+        table_name: files_metadata
+        backend: sql_default
+      storage_dir: ~/.llama/storage
     provider_id: meta-reference-files
     provider_type: inline::localfs
   inference:
-  - provider_id: openai
-    provider_type: remote::openai
-    config:
-      api_key: ${env.OPENAI_API_KEY}
-  - config: {}
-    provider_id: sentence-transformers
-    provider_type: inline::sentence-transformers
   - provider_id: azure
     provider_type: remote::azure
     config: 
       api_key: ${env.AZURE_API_KEY}
       api_base: https://ols-test.openai.azure.com/
       api_version: 2024-02-15-preview
+  - config: {}
+    provider_id: sentence-transformers
+    provider_type: inline::sentence-transformers
   safety:
   - config:
       excluded_categories: []
@@ -111,27 +95,54 @@ providers:
   - config: {}
     provider_id: llm-as-judge
     provider_type: inline::llm-as-judge
-  telemetry:
-  - config:
-      service_name: "\u200B"
-    provider_id: meta-reference
-    provider_type: inline::meta-reference
   tool_runtime:
   - config: {}
     provider_id: rag-runtime
     provider_type: inline::rag-runtime
   vector_io:
   - config:
-      kvstore:
-        db_path: /tmp/faiss_store.db
-        type: sqlite
+      persistence:
+        namespace: faiss_store
+        backend: kv_default
     provider_id: faiss
     provider_type: inline::faiss
 scoring_fns: []
 server:
   port: 8321
-shields: []
-tool_groups:
-- provider_id: rag-runtime
-  toolgroup_id: builtin::rag
-vector_dbs: []
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ~/.llama/storage/kv_store.db
+    sql_default:
+      type: sql_sqlite
+      db_path: ~/.llama/storage/sql_store.db
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+registered_resources:
+  models: 
+  - model_id: gpt-4o-mini
+    provider_id: azure
+    model_type: llm
+    provider_model_id: gpt-4o-mini
+  shields: []
+  vector_dbs: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::rag
+    provider_id: rag-runtime

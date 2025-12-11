@@ -1393,11 +1393,11 @@ litellm==1.80.9 \
     --hash=sha256:768b62f26086efbaed40f4dfd353ff66302474bbfb0adf5862066acdb0727df6 \
     --hash=sha256:bad02b96ee3d83702639553ffc5961c605f4f937be8167181bc4c80394a1cdd1
     # via lightspeed-stack (pyproject.toml)
-llama-stack==0.3.0 \
+llama-stack==0.3.4 \
     --hash=sha256:8277c54cf4a283077143a0804128f2c76f1ec9660116353176c77b659206d315 \
     --hash=sha256:c2b999dced8970f3590ecd7eca50bef1bc0c052eec15b8aba78a5c17a0a4051d
     # via lightspeed-stack (pyproject.toml)
-llama-stack-client==0.3.0 \
+llama-stack-client==0.3.4 \
     --hash=sha256:1e974a74d0da285e18ba7df30b9a324e250782b130253bcef3e695830c5bb03d \
     --hash=sha256:9f85d84d508ef7da44b96ca8555d7783da717cfc9135bab6a5530fe8c852690d
     # via

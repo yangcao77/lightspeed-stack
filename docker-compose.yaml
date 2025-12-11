@@ -23,6 +23,9 @@ services:
       - RHEL_AI_PORT=${RHEL_AI_PORT}
       - RHEL_AI_API_KEY=${RHEL_AI_API_KEY}
       - RHEL_AI_MODEL=${RHEL_AI_MODEL}
+      # Enable debug logging if needed
+      - LLAMA_STACK_LOGGING=${LLAMA_STACK_LOGGING:-}
+
     networks:
       - lightspeednet
     healthcheck:
