@@ -10,7 +10,19 @@ logger = get_logger(__name__)
 
 
 def connect_sqlite(config: SQLiteDatabaseConfiguration) -> Any:
-    """Initialize connection to database."""
+    """
+    Create and return a SQLite database connection using the provided configuration.
+
+    Parameters:
+        config (SQLiteDatabaseConfiguration): Configuration containing the
+        `db_path` used to open the SQLite database.
+
+    Returns:
+        sqlite3.Connection: The open SQLite connection with autocommit enabled.
+
+    Raises:
+        sqlite3.Error: If establishing the connection fails.
+    """
     logger.info("Connecting to SQLite storage")
     # make sure the connection will have known state
     # even if SQLite is not alive
