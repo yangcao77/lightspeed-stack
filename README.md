@@ -623,6 +623,9 @@ The repository includes production-ready container configurations that support t
 
 ### Llama-Stack as Separate Service (Server Mode)
 
+> [!IMPORTANT]
+> To pull the downstream llama-stack image, you will need access to the `aipcc` organization in quay.io.
+
 When using llama-stack as a separate service, the existing `docker-compose.yaml` provides the complete setup. This builds two containers for lightspeed core and llama stack.
 
 **Configuration** (`lightspeed-stack.yaml`):
@@ -638,6 +641,9 @@ In the root of this project simply run:
 ```bash
 # Set your OpenAI API key
 export OPENAI_API_KEY="your-api-key-here"
+
+# Login to quay.io to access the downstream llama-stack image
+# podman login quay.io
 
 # Start both services
 podman compose up --build

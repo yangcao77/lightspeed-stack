@@ -75,7 +75,7 @@ USER root
 RUN microdnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs jq patch
 
 # Create llama-stack directories for library mode
-RUN mkdir -p /opt/app-root/src/.llama/distributions/ollama /opt/app-root/src/.llama/providers.d && \
+RUN mkdir -p /opt/app-root/src/.llama/storage /opt/app-root/src/.llama/providers.d && \
     chown -R 1001:1001 /opt/app-root/src/.llama
 
 # Add executables from .venv to system PATH

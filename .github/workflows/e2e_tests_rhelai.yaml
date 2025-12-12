@@ -123,6 +123,13 @@ jobs:
           echo $RHEL_AI_MODEL
           curl -f ${RHEL_AI_URL}:${RHEL_AI_PORT}/v1/models   -H "Authorization: Bearer ${RHEL_AI_API_KEY}"  
 
+      - name: Docker Login for quay access
+        env:
+          QUAY_ROBOT_USERNAME: ${{ secrets.QUAY_ROBOT_USERNAME }}
+          QUAY_ROBOT_TOKEN: ${{ secrets.QUAY_ROBOT_TOKEN }}
+        run: |
+          echo $QUAY_ROBOT_TOKEN | docker login quay.io -u=$QUAY_ROBOT_USERNAME --password-stdin
+
       - name: Run service manually
         run: |         
           docker compose version
