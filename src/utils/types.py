@@ -20,11 +20,12 @@ from constants import DEFAULT_RAG_TOOL
 def content_to_str(content: Any) -> str:
     """Convert content (str, TextContentItem, ImageContentItem, or list) to string.
 
-    Args:
-        content: Content to convert to string.
+    Parameters:
+        content: Value to normalize into a string (may be None,
+                 str, content item, list, or any other object).
 
     Returns:
-        str: String representation of the content.
+        str: The normalized string representation of the content.
     """
     if content is None:
         return ""
@@ -141,7 +142,27 @@ class TurnSummary(BaseModel):
     rag_chunks: list[RAGChunk]
 
     def append_tool_calls_from_llama(self, tec: ToolExecutionStep) -> None:
-        """Append the tool calls from a llama tool execution step."""
+        """
+        Append the tool calls from a llama tool execution step.
+
+        For each tool call in `tec.tool_calls` the method appends a
+        ToolCallSummary to `self.tool_calls` and a corresponding
+        ToolResultSummary to `self.tool_results`. Arguments are preserved if
+        already a dict; otherwise they are converted to {"args":
+        str(arguments)}.
+
+        A result's `status` is "success" when a matching response (by call_id)
+        exists in `tec.tool_responses`, and "failure" when no response is
+        found.
+
+        If a call's tool name equals DEFAULT_RAG_TOOL and its response has
+        content, the method extracts and appends RAG chunks to
+        `self.rag_chunks` by calling _extract_rag_chunks_from_response.
+
+        Parameters:
+            tec (ToolExecutionStep): The execution step containing tool_calls
+                                     and tool_responses to summarize.
+        """
         calls_by_id = {tc.call_id: tc for tc in tec.tool_calls}
         responses_by_id = {tc.call_id: tc for tc in tec.tool_responses}
         for call_id, tc in calls_by_id.items():
