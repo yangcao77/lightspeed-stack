@@ -19,7 +19,14 @@ def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
         tool_dict: Raw tool dictionary from Llama Stack
 
     Returns:
-        Formatted tool dictionary with only required fields
+        dict[str, Any]: Formatted tool dictionary containing the following keys:
+            - identifier: tool identifier string (defaults to "").
+            - description: cleaned or original description string.
+            - parameters: list of parameter definitions (defaults to empty list).
+            - provider_id: provider identifier string (defaults to "").
+            - toolgroup_id: tool group identifier string (defaults to "").
+            - server_source: server source string (defaults to "").
+            - type: tool type string (defaults to "").
     """
     # Clean up description if it contains structured metadata
     description = tool_dict.get("description", "")
@@ -116,10 +123,11 @@ def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Format a list of tools with structured description parsing.
 
-    Args:
-        tools: List of raw tool dictionaries
+    Parameters:
+        tools: (list[dict[str, Any]]): List of raw tool dictionaries
 
     Returns:
-        List of formatted tool dictionaries
+        list[dict[str, Any]]: Formatted tool dictionaries with normalized
+                              fields and cleaned descriptions.
     """
     return [format_tool_response(tool) for tool in tools]
