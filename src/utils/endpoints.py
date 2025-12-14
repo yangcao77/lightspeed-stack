@@ -205,7 +205,17 @@ def get_system_prompt(query_request: QueryRequest, config: AppConfig) -> str:
 
 
 def get_topic_summary_system_prompt(config: AppConfig) -> str:
-    """Get the topic summary system prompt."""
+    """
+    Get the topic summary system prompt.
+
+    Parameters:
+        config (AppConfig): Application configuration from which to read
+                            customization/profile settings.
+
+    Returns:
+        str: The topic summary system prompt from the active custom profile if
+             set, otherwise the default prompt.
+    """
     # profile takes precedence for setting prompt
     if (
         config.customization is not None
@@ -223,8 +233,9 @@ def validate_model_provider_override(
 ) -> None:
     """Validate whether model/provider overrides are allowed by RBAC.
 
-    Raises HTTP 403 if the request includes model or provider and the caller
-    lacks Action.MODEL_OVERRIDE permission.
+    Raises:
+        HTTP 403 if the request includes model or provider and the caller
+        lacks Action.MODEL_OVERRIDE permission.
     """
     if (query_request.model is not None or query_request.provider is not None) and (
         Action.MODEL_OVERRIDE not in authorized_actions
@@ -242,7 +253,24 @@ def store_conversation_into_cache(
     _skip_userid_check: bool,
     topic_summary: str | None,
 ) -> None:
-    """Store one part of conversation into conversation history cache."""
+    """
+    Store one part of conversation into conversation history cache.
+
+    If a conversation cache type is configured but the cache instance is not
+    initialized, the function logs a warning and returns without persisting
+    anything.
+
+    Parameters:
+        config (AppConfig): Application configuration that may contain
+                            conversation cache settings and instance.
+        user_id (str): Owner identifier used as the cache key.
+        conversation_id (str): Conversation identifier used as the cache key.
+        cache_entry (CacheEntry): Entry to insert or append to the conversation history.
+        _skip_userid_check (bool): When true, bypasses enforcing that the cache
+                                   operation must match the user id.
+        topic_summary (str | None): Optional topic summary to store alongside
+                                    the conversation; ignored if None or empty.
+    """
     if config.conversation_cache_configuration.type is not None:
         cache = config.conversation_cache
         if cache is None:
@@ -366,10 +394,12 @@ async def get_temp_agent(
     This function creates a new agent without persistence, shields, or tools.
     Useful for temporary operations or one-off queries, such as validating a
     question or generating a summary.
-    Args:
+
+    Parameters:
         client: The AsyncLlamaStackClient to use for the request.
         model_id: The ID of the model to use.
         system_prompt: The system prompt/instructions for the agent.
+
     Returns:
         tuple[AsyncAgent, str]: A tuple containing the agent and session_id.
     """
@@ -412,7 +442,23 @@ def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
 def _process_http_source(
     src: str, doc_urls: set[str]
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process HTTP source and return (doc_url, doc_title) tuple."""
+    """
+    Process HTTP source and return (doc_url, doc_title) tuple.
+
+    Parameters:
+        src (str): The source URL string to process.
+        doc_urls (set[str]): Set of already-seen source strings; the function
+                             will add `src` to this set when it is new.
+
+    Returns:
+        tuple[AnyUrl | None, str] | None: A tuple (validated_url, doc_title)
+               when `src` was not previously seen:
+            - `validated_url`: an `AnyUrl` instance if `src` is a valid URL, or
+              `None` if validation failed.
+            - `doc_title`: the last path segment of the URL or `src` if no path
+               segment is present.
+        Returns `None` if `src` was already present in `doc_urls`.
+    """
     if src not in doc_urls:
         doc_urls.add(src)
         try:
@@ -433,7 +479,29 @@ def _process_document_id(
     metas_by_id: dict[str, dict[str, Any]],
     metadata_map: dict[str, Any] | None,
 ) -> tuple[AnyUrl | None, str] | None:
-    """Process document ID and return (doc_url, doc_title) tuple."""
+    """
+    Process document ID and return (doc_url, doc_title) tuple.
+
+    Parameters:
+        src (str): Document identifier to process.
+        doc_ids (set[str]): Set of already-seen document IDs; the function adds `src` to this set.
+        doc_urls (set[str]): Set of already-seen document URLs; the function
+                             adds discovered URLs to this set to avoid duplicates.
+        metas_by_id (dict[str, dict[str, Any]]): Mapping of document IDs to
+                                                 metadata dicts that may
+                                                 contain `docs_url` and
+                                                 `title`.
+        metadata_map (dict[str, Any] | None): If provided (truthy), indicates
+                                              metadata is available and enables
+                                              metadata lookup; when falsy,
+                                              metadata lookup is skipped.
+
+    Returns:
+        tuple[AnyUrl | None, str] | None: `(validated_url, doc_title)` where
+        `validated_url` is a validated `AnyUrl` or `None` and `doc_title` is
+        the chosen title string; returns `None` if the `src` or its URL was
+        already processed.
+    """
     if src in doc_ids:
         return None
     doc_ids.add(src)
@@ -500,6 +568,17 @@ def _process_rag_chunks_for_documents(
     Process RAG chunks and return a list of (doc_url, doc_title) tuples.
 
     This is the core logic shared between both return formats.
+
+    Parameters:
+        rag_chunks (list): Iterable of RAG chunk objects; each chunk must
+        provide a `source` attribute (e.g., an HTTP URL or a document ID).
+        metadata_map (dict[str, Any] | None): Optional mapping of document IDs
+        to metadata dictionaries used to resolve titles and document URLs.
+
+    Returns:
+        list[tuple[AnyUrl | None, str]]: Ordered list of tuples where the first
+        element is a validated URL object or `None` (if no URL is available)
+        and the second element is the document title.
     """
     doc_urls: set[str] = set()
     doc_ids: set[str] = set()
@@ -547,7 +626,7 @@ def create_referenced_documents(
     optional metadata enrichment, deduplication, and proper URL handling. It can return
     either ReferencedDocument objects (for query endpoint) or dictionaries (for streaming).
 
-    Args:
+    Parameters:
         rag_chunks: List of RAG chunks with source information
         metadata_map: Optional mapping containing metadata about referenced documents
         return_dict_format: If True, returns list of dicts; if False, returns list of
@@ -580,6 +659,16 @@ def create_referenced_documents_with_metadata(
     Create referenced documents from RAG chunks with metadata enrichment for streaming.
 
     This function now returns ReferencedDocument objects for consistency with the query endpoint.
+
+    Parameters:
+        summary (TurnSummary): Summary object containing `rag_chunks` to be processed.
+        metadata_map (dict[str, Any]): Metadata keyed by document id used to
+                                       derive or enrich document `doc_url` and `doc_title`.
+
+    Returns:
+        list[ReferencedDocument]: ReferencedDocument objects with `doc_url` and
+        `doc_title` populated; `doc_url` may be `None` if no valid URL could be
+        determined.
     """
     document_entries = _process_rag_chunks_for_documents(
         summary.rag_chunks, metadata_map
@@ -598,6 +687,14 @@ def create_referenced_documents_from_chunks(
 
     This is a backward compatibility wrapper around the unified
     create_referenced_documents function.
+
+    Parameters:
+        rag_chunks (list): List of RAG chunk entries containing source and metadata information.
+
+    Returns:
+        list[ReferencedDocument]: ReferencedDocument instances created from the
+        chunks; each contains `doc_url` (validated URL or `None`) and
+        `doc_title`.
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks)
     return [

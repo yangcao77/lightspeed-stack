@@ -69,6 +69,14 @@ async def _register_mcp_toolgroups_async(
     This function performs network calls against the provided async client and does not
     catch exceptions raised by those calls — any exceptions from the client (e.g., RPC
     or HTTP errors) will propagate to the caller.
+
+    Parameters:
+        client (AsyncLlamaStackClient): The LlamaStack async client used to
+                                        query and register toolgroups.
+        mcp_servers (List[ModelContextProtocolServer]): MCP server descriptors
+                                                        to ensure are registered.
+        logger (Logger): Logger used for debug messages about registration
+                         progress.
     """
     # Get registered tools
     registered_toolgroups = await client.toolgroups.list()
@@ -101,6 +109,10 @@ def run_once_async(func: Callable) -> Callable:
     Later invocations return/await the same Task, receiving the same result or
     propagated exception. Requires an active running event loop when the
     wrapped function is first called.
+
+    Returns:
+        Any: The result produced by the wrapped coroutine, or the exception it
+             raised propagated to callers.
     """
     task = None
 
@@ -114,6 +126,9 @@ def run_once_async(func: Callable) -> Callable:
         Subsequent calls return the same awaited task result. Exceptions raised
         by the task propagate to callers. Requires an active running event loop
         when first called.
+
+        Returns:
+            The awaited result of the wrapped coroutine.
         """
         nonlocal task
         if task is None:
