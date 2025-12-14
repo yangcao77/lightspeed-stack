@@ -11,7 +11,7 @@ def extract_text_from_response_output_item(output_item: Any) -> str:
     formats including string content, content arrays with text parts, and refusal
     messages.
 
-    Args:
+    Parameters:
         output_item: A Responses API output item (typically from response.output array).
             Expected to have attributes like type, role, and content.
 

@@ -19,7 +19,7 @@ def consume_tokens(
 ) -> None:
     """Consume tokens from cluster and/or user quotas.
 
-    Args:
+    Parameters:
         quota_limiters: List of quota limiter instances to consume tokens from.
         user_id: Identifier of the user consuming tokens.
         input_tokens: Number of input tokens to consume.
@@ -40,7 +40,7 @@ def consume_tokens(
 def check_tokens_available(quota_limiters: list[QuotaLimiter], user_id: str) -> None:
     """Check if tokens are available for user.
 
-    Args:
+    Parameters:
         quota_limiters: List of quota limiter instances to check.
         user_id: Identifier of the user to check quota for.
 
