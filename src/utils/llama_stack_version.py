@@ -31,6 +31,10 @@ async def check_llama_stack_version(
     and maximal supported versions. Raises
     InvalidLlamaStackVersionException if the detected version is
     outside the supported range.
+
+    Raises:
+        InvalidLlamaStackVersionException: If the detected version is outside
+        the supported range or cannot be parsed.
     """
     version_info = await client.inspect.version()
     compare_versions(

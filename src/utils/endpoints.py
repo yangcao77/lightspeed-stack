@@ -234,8 +234,8 @@ def validate_model_provider_override(
     """Validate whether model/provider overrides are allowed by RBAC.
 
     Raises:
-        HTTP 403 if the request includes model or provider and the caller
-        lacks Action.MODEL_OVERRIDE permission.
+        HTTPException: HTTP 403 if the request includes model or provider and
+        the caller lacks Action.MODEL_OVERRIDE permission.
     """
     if (query_request.model is not None or query_request.provider is not None) and (
         Action.MODEL_OVERRIDE not in authorized_actions
