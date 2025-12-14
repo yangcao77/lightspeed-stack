@@ -31,7 +31,13 @@ class TokenCounter:
     llm_calls: int = 0
 
     def __str__(self) -> str:
-        """Textual representation of TokenCounter instance."""
+        """
+        Return a human-readable summary of the token usage stored in this TokenCounter.
+
+        Returns:
+            summary (str): A formatted string containing `input_tokens`,
+                           `output_tokens`, `input_tokens_counted`, and `llm_calls`.
+        """
         return (
             f"{self.__class__.__name__}: "
             + f"input_tokens: {self.input_tokens} "
@@ -47,9 +53,9 @@ def extract_token_usage_from_turn(turn: Turn, system_prompt: str = "") -> TokenC
     This function uses the same tokenizer and logic as the metrics system
     to ensure consistency between API responses and Prometheus metrics.
 
-    Args:
-        turn: The turn object containing token usage information
-        system_prompt: The system prompt used for the turn
+    Parameters:
+        turn (Turn): The turn object containing token usage information
+        system_prompt (str): The system prompt used for the turn
 
     Returns:
         TokenCounter: Token usage information
@@ -102,7 +108,7 @@ def extract_and_update_token_metrics(
     This function combines the token counting logic with the metrics system
     to ensure both API responses and Prometheus metrics are updated consistently.
 
-    Args:
+    Parameters:
         turn: The turn object containing token usage information
         model: The model identifier for metrics labeling
         provider: The provider identifier for metrics labeling

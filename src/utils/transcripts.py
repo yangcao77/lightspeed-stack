@@ -25,7 +25,23 @@ def _hash_user_id(user_id: str) -> str:
 
 
 def construct_transcripts_path(user_id: str, conversation_id: str) -> Path:
-    """Construct path to transcripts."""
+    """
+    Construct the filesystem path where transcripts for a given user and conversation are stored.
+
+    The returned path is built from the configured transcripts storage base
+    directory, a filesystem-safe directory derived from a hash of `user_id`,
+    and a filesystem-safe form of `conversation_id`.
+
+    Parameters:
+        user_id (str): The identifier for the user; a hashed form of this value
+                       is used as a path component.
+        conversation_id (str): The conversation identifier; this value is
+                               normalized for use as a path component.
+
+    Returns:
+        Path: A Path pointing to the directory where transcripts for the
+        specified user and conversation should be stored.
+    """
     # these two normalizations are required by Snyk as it detects
     # this Path sanitization pattern
     hashed_user_id = _hash_user_id(user_id)
@@ -52,9 +68,11 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
 ) -> None:
     """Store transcript in the local filesystem.
 
-    Args:
+    Parameters:
         user_id: The user ID (UUID).
         conversation_id: The conversation ID (UUID).
+        model_id: Identifier of the model used to generate the LLM response.
+        provider_id: Optional provider identifier for the model.
         query_is_valid: The result of the query validation.
         query: The query (without attachments).
         query_request: The request containing a query.
@@ -62,6 +80,9 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
         rag_chunks: The list of serialized `RAGChunk` dictionaries.
         truncated: The flag indicating if the history was truncated.
         attachments: The list of `Attachment` objects.
+
+    Raises:
+        IOError, OSError: If writing the transcript file to disk fails.
     """
     transcripts_path = construct_transcripts_path(user_id, conversation_id)
     transcripts_path.mkdir(parents=True, exist_ok=True)

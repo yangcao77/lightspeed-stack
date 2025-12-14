@@ -14,11 +14,11 @@ async def get_available_shields(client: AsyncLlamaStackClient) -> list[str]:
     """
     Discover and return available shield identifiers.
 
-    Args:
+    Parameters:
         client: The Llama Stack client to query for available shields.
 
     Returns:
-        List of shield identifiers that are available.
+        list[str]: List of available shield identifiers; empty if no shields are available.
     """
     available_shields = [shield.identifier for shield in await client.shields.list()]
     if not available_shields:
@@ -36,11 +36,11 @@ def detect_shield_violations(output_items: list[Any]) -> bool:
     attributes. If a refusal is found, increments the validation error
     metric and logs a warning.
 
-    Args:
+    Parameters:
         output_items: List of output items from the LLM response to check.
 
     Returns:
-        True if a shield violation was detected, False otherwise.
+        bool: True if a shield violation was detected, False otherwise.
     """
     for output_item in output_items:
         item_type = getattr(output_item, "type", None)
