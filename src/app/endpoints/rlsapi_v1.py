@@ -93,6 +93,7 @@ async def retrieve_simple_response(question: str) -> str:
 
     Raises:
         APIConnectionError: If the Llama Stack service is unreachable.
+        HTTPException: 503 if no model is configured.
     """
     client = AsyncLlamaStackClientHolder().get_client()
     model_id = _get_default_model_id()

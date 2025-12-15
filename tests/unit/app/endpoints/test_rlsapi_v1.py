@@ -58,7 +58,9 @@ def mock_llm_response_fixture(
     mock_turn = mocker.Mock()
     mock_turn.output_message = mock_output_message
     mock_turn.steps = []
-    mock_agent.create_turn.return_value = mock_turn
+
+    # Use AsyncMock for async method
+    mock_agent.create_turn = mocker.AsyncMock(return_value=mock_turn)
 
     # Mock get_temp_agent to return our mock agent
     mocker.patch(
@@ -86,7 +88,9 @@ def mock_empty_llm_response_fixture(
     mock_turn = mocker.Mock()
     mock_turn.output_message = None
     mock_turn.steps = []
-    mock_agent.create_turn.return_value = mock_turn
+
+    # Use AsyncMock for async method
+    mock_agent.create_turn = mocker.AsyncMock(return_value=mock_turn)
 
     # Mock get_temp_agent to return our mock agent
     mocker.patch(
