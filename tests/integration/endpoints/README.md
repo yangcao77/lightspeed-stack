@@ -12,3 +12,6 @@ Integration tests for the /health endpoint.
 ## [test_info_integration.py](test_info_integration.py)
 Integration tests for the /info endpoint.
 
+## [test_query_v2_integration.py](test_query_v2_integration.py)
+Integration tests for the /query endpoint (v2 with Responses API).
+
