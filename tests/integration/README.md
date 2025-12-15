@@ -9,6 +9,9 @@ Shared fixtures for integration tests.
 ## [test_configuration.py](test_configuration.py)
 Integration tests for configuration loading and handling.
 
+## [test_middleware_integration.py](test_middleware_integration.py)
+Integration tests for the global exception middleware.
+
 ## [test_openapi_json.py](test_openapi_json.py)
 Tests the OpenAPI specification that is to be stored in docs/openapi.json.
 

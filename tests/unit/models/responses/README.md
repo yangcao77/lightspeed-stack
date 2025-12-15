@@ -6,15 +6,15 @@ Unit tests for models defined in responses.py.
 ## [test_authorized_response.py](test_authorized_response.py)
 Unit tests for AuthorizedResponse model.
 
+## [test_error_responses.py](test_error_responses.py)
+Unit tests for all error response models.
+
 ## [test_query_response.py](test_query_response.py)
 Unit tests for QueryResponse model.
 
 ## [test_rag_chunk.py](test_rag_chunk.py)
 Unit tests for RAGChunk model.
 
-## [test_status_response.py](test_status_response.py)
-Unit tests for StatusResponse model.
-
-## [test_unauthorized_response.py](test_unauthorized_response.py)
-Unit tests for UnauthorizedResponse model.
+## [test_successful_responses.py](test_successful_responses.py)
+Unit tests for all successful response models.
 
