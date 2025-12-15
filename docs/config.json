@@ -726,7 +726,7 @@
           "namespace": {
             "type": "string",
             "nullable": true,
-            "default": "lightspeed-stack",
+            "default": "public",
             "description": "Database namespace",
             "title": "Name space"
           },

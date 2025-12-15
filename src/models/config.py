@@ -218,7 +218,7 @@ class PostgreSQLDatabaseConfiguration(ConfigurationBase):
     )
 
     namespace: Optional[str] = Field(
-        "lightspeed-stack",
+        "public",
         title="Name space",
         description="Database namespace",
     )

@@ -1,6 +1,6 @@
 """User and cluster quota scheduler runner."""
 
-from typing import Any
+from typing import Any, Optional
 from threading import Thread
 from time import sleep
 
@@ -60,13 +60,15 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         logger.warning("Can not connect to database, skipping")
         return False
 
-    create_quota_table: str = None
+    create_quota_table: Optional[str] = None
     if config.postgres is not None:
         create_quota_table = CREATE_QUOTA_TABLE_PG
     elif config.sqlite is not None:
         create_quota_table = CREATE_QUOTA_TABLE_SQLITE
 
-    init_tables(connection, create_quota_table)
+    if create_quota_table is not None:
+        init_tables(connection, create_quota_table)
+
     period = config.scheduler.period
 
     increase_quota_statement = get_increase_quota_statement(config)
