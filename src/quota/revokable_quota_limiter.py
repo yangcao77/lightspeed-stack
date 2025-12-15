@@ -8,7 +8,8 @@ from utils.connection_decorator import connection
 from quota.quota_exceed_error import QuotaExceedError
 from quota.quota_limiter import QuotaLimiter
 from quota.sql import (
-    CREATE_QUOTA_TABLE,
+    CREATE_QUOTA_TABLE_PG,
+    CREATE_QUOTA_TABLE_SQLITE,
     UPDATE_AVAILABLE_QUOTA_PG,
     UPDATE_AVAILABLE_QUOTA_SQLITE,
     SELECT_QUOTA_PG,
@@ -185,7 +186,10 @@ class RevokableQuotaLimiter(QuotaLimiter):
         """Initialize tables used by quota limiter."""
         logger.info("Initializing tables for quota limiter")
         cursor = self.connection.cursor()
-        cursor.execute(CREATE_QUOTA_TABLE)
+        if self.sqlite_connection_config is not None:
+            cursor.execute(CREATE_QUOTA_TABLE_SQLITE)
+        elif self.postgres_connection_config is not None:
+            cursor.execute(CREATE_QUOTA_TABLE_PG)
         cursor.close()
         self.connection.commit()
 

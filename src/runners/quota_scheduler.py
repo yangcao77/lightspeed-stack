@@ -1,6 +1,6 @@
 """User and cluster quota scheduler runner."""
 
-from typing import Any
+from typing import Any, Optional
 from threading import Thread
 from time import sleep
 
@@ -17,7 +17,8 @@ from quota.connect_pg import connect_pg
 from quota.connect_sqlite import connect_sqlite
 
 from quota.sql import (
-    CREATE_QUOTA_TABLE,
+    CREATE_QUOTA_TABLE_PG,
+    CREATE_QUOTA_TABLE_SQLITE,
     INCREASE_QUOTA_STATEMENT_PG,
     INCREASE_QUOTA_STATEMENT_SQLITE,
     RESET_QUOTA_STATEMENT_PG,
@@ -59,7 +60,15 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         logger.warning("Can not connect to database, skipping")
         return False
 
-    init_tables(connection)
+    create_quota_table: Optional[str] = None
+    if config.postgres is not None:
+        create_quota_table = CREATE_QUOTA_TABLE_PG
+    elif config.sqlite is not None:
+        create_quota_table = CREATE_QUOTA_TABLE_SQLITE
+
+    if create_quota_table is not None:
+        init_tables(connection, create_quota_table)
+
     period = config.scheduler.period
 
     increase_quota_statement = get_increase_quota_statement(config)
@@ -296,17 +305,18 @@ def connect(config: QuotaHandlersConfiguration) -> Any:
     return None
 
 
-def init_tables(connection: Any) -> None:
+def init_tables(connection: Any, create_quota_table: str) -> None:
     """
     Create the quota table required by the quota limiter on the provided database connection.
 
     Parameters:
         connection (Any): A DB-API compatible connection on which the quota
                           table(s) will be created; changes are committed before returning.
+        create_quota_table (str): Command used to create table with quota.
     """
     logger.info("Initializing tables for quota limiter")
     cursor = connection.cursor()
-    cursor.execute(CREATE_QUOTA_TABLE)
+    cursor.execute(create_quota_table)
     cursor.close()
     connection.commit()
 

@@ -28,7 +28,10 @@ def test_quota_limiters_no_limiters_pg_storage() -> None:
     """Test the quota limiters creating when no limiters are specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = None
     limiters = QuotaLimiterFactory.quota_limiters(configuration)
@@ -50,7 +53,10 @@ def test_quota_limiters_empty_limiters_pg_storage() -> None:
     """Test the quota limiters creating when no limiters are specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = []
     limiters = QuotaLimiterFactory.quota_limiters(configuration)
@@ -74,7 +80,10 @@ def test_quota_limiters_user_quota_limiter_postgres_storage(
     """Test the quota limiters creating when one limiter is specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = [
         QuotaLimiterConfiguration(
@@ -118,7 +127,10 @@ def test_quota_limiters_cluster_quota_limiter_postgres_storage(
     """Test the quota limiters creating when one limiter is specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = [
         QuotaLimiterConfiguration(
@@ -160,7 +172,10 @@ def test_quota_limiters_two_limiters(mocker: MockerFixture) -> None:
     """Test the quota limiters creating when two limiters are specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = [
         QuotaLimiterConfiguration(
@@ -190,7 +205,10 @@ def test_quota_limiters_invalid_limiter_type(mocker: MockerFixture) -> None:
     """Test the quota limiters creating when invalid limiter type is specified."""
     configuration = QuotaHandlersConfiguration()
     configuration.postgres = PostgreSQLDatabaseConfiguration(
-        db="test", user="user", password="password"
+        db="test",
+        user="user",
+        password="password",
+        namespace="foo",
     )
     configuration.limiters = [
         QuotaLimiterConfiguration(

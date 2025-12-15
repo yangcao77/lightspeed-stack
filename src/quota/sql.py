@@ -1,6 +1,19 @@
 """SQL commands used by quota management package."""
 
-CREATE_QUOTA_TABLE = """
+CREATE_QUOTA_TABLE_PG = """
+    CREATE TABLE IF NOT EXISTS quota_limits (
+        id              text NOT NULL,
+        subject         char(1) NOT NULL,
+        quota_limit     int NOT NULL,
+        available       int,
+        updated_at      timestamp with time zone,
+        revoked_at      timestamp with time zone,
+        PRIMARY KEY(id, subject)
+    );
+    """
+
+
+CREATE_QUOTA_TABLE_SQLITE = """
     CREATE TABLE IF NOT EXISTS quota_limits (
         id              text NOT NULL,
         subject         char(1) NOT NULL,

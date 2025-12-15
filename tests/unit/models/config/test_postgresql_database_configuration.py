@@ -27,7 +27,25 @@ def test_postgresql_database_configuration() -> None:
     assert c.password.get_secret_value() == "password"
     assert c.ssl_mode == POSTGRES_DEFAULT_SSL_MODE
     assert c.gss_encmode == POSTGRES_DEFAULT_GSS_ENCMODE
-    assert c.namespace == "lightspeed-stack"
+    assert c.namespace == "public"
+    assert c.ca_cert_path is None
+
+
+def test_postgresql_database_configuration_namespace_specification() -> None:
+    """Test the PostgreSQLDatabaseConfiguration model."""
+    # pylint: disable=no-member
+    c = PostgreSQLDatabaseConfiguration(
+        db="db", user="user", password="password", namespace="foo"
+    )
+    assert c is not None
+    assert c.host == "localhost"
+    assert c.port == 5432
+    assert c.db == "db"
+    assert c.user == "user"
+    assert c.password.get_secret_value() == "password"
+    assert c.ssl_mode == POSTGRES_DEFAULT_SSL_MODE
+    assert c.gss_encmode == POSTGRES_DEFAULT_GSS_ENCMODE
+    assert c.namespace == "foo"
     assert c.ca_cert_path is None
 
 

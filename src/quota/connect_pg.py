@@ -25,6 +25,10 @@ def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
         psycopg2.Error: If establishing the database connection fails.
     """
     logger.info("Connecting to PostgreSQL storage")
+    namespace = "public"
+    if config.namespace is not None:
+        namespace = config.namespace
+
     try:
         connection = psycopg2.connect(
             host=config.host,
@@ -35,6 +39,7 @@ def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
             sslmode=config.ssl_mode,
             # sslrootcert=config.ca_cert_path,
             gssencmode=config.gss_encmode,
+            options=f"-c search_path={namespace}",
         )
         if connection is not None:
             connection.autocommit = True
