@@ -15,6 +15,9 @@ Handler for REST API calls to manage conversation history.
 ## [conversations_v2.py](conversations_v2.py)
 Handler for REST API calls to manage conversation history.
 
+## [conversations_v3.py](conversations_v3.py)
+Handler for REST API calls to manage conversation history using Conversations API.
+
 ## [feedback.py](feedback.py)
 Handler for REST API endpoint for user feedback.
 
