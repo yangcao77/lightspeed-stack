@@ -13,7 +13,10 @@ def test_connect_pg_when_connection_established(mocker: MockerFixture) -> None:
     """Test the connection to PostgreSQL database."""
     # any correct PostgreSQL configuration can be used
     configuration = PostgreSQLDatabaseConfiguration(
-        db="db", user="user", password="password"
+        db="db",
+        user="user",
+        password="password",
+        namespace="foo",
     )
 
     # do not use connection to real PostgreSQL instance
@@ -28,7 +31,11 @@ def test_connect_pg_when_connection_error(mocker: MockerFixture) -> None:
     """Test the connection to PostgreSQL database."""
     # any correct PostgreSQL configuration can be used
     configuration = PostgreSQLDatabaseConfiguration(
-        host="foo", db="db", user="user", password="password"
+        host="foo",
+        db="db",
+        user="user",
+        password="password",
+        namespace="foo",
     )
 
     # do not use connection to real PostgreSQL instance

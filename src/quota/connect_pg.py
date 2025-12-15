@@ -39,7 +39,7 @@ def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
             sslmode=config.ssl_mode,
             # sslrootcert=config.ca_cert_path,
             gssencmode=config.gss_encmode,
-            options=f"-c search_path=dbo,{namespace}",
+            options=f"-c search_path={namespace}",
         )
         if connection is not None:
             connection.autocommit = True
