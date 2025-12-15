@@ -54,7 +54,7 @@ The tables below summarize each provider category, containing the following atri
 | sambanova | remote | `litellm` | ❌ |
 | tgi | remote | `huggingface_hub`, `aiohttp` | ❌ |
 | together | remote | `together` | ❌ |
-| vertexai | remote | `litellm`, `google-cloud-aiplatform` | ❌ |
+| vertexai | remote | `google-auth` | ✅ |
 | watsonx | remote | `ibm_watsonx_ai` | ❌ |
 
 Red Hat providers:

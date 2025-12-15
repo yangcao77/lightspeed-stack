@@ -55,9 +55,9 @@ def before_all(context: Context) -> None:
     context.deployment_mode = os.getenv("E2E_DEPLOYMENT_MODE", "server").lower()
     context.is_library_mode = context.deployment_mode == "library"
 
+    # Get first LLM model from running service
     print(f"Running tests in {context.deployment_mode} mode")
 
-    # Get first LLM model from running service
     llm_model = _fetch_models_from_service()
 
     if llm_model:
@@ -68,9 +68,11 @@ def before_all(context: Context) -> None:
         )
     else:
         # Fallback for development
-        context.default_model = "gpt-4-turbo"
+        context.default_model = "gpt-4o-mini"
         context.default_provider = "openai"
-        print("⚠ Could not detect models, using fallback: gpt-4-turbo/openai")
+        print(
+            f"⚠ Could not detect models, using fallback: {context.default_provider}/{context.default_model}"
+        )
 
 
 def before_scenario(context: Context, scenario: Scenario) -> None:
