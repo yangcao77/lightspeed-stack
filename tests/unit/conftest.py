@@ -29,7 +29,8 @@ def prepare_agent_mocks_fixture(
     with proper agent_id setup to avoid initialization errors.
 
     Yields:
-        tuple: (mock_client, mock_agent)
+        tuple: (mock_client, mock_agent) — two AsyncMock objects
+        representing the client and the agent.
     """
     mock_client = mocker.AsyncMock()
     mock_agent = mocker.AsyncMock()

@@ -47,7 +47,13 @@ class CursorMock:
         """Construct the mock cursor class."""
 
     def execute(self, command: Any) -> None:
-        """Execute any SQL command."""
+        """Execute any SQL command.
+
+        Execute the provided SQL command on this cursor.
+
+        Raises:
+            sqlite3.Error: Always raised with message "can not SELECT".
+        """
         raise sqlite3.Error("can not SELECT")
 
 
@@ -56,15 +62,39 @@ class ConnectionMock:
     """Mock class for connection."""
 
     def __init__(self) -> None:
-        """Construct the connection mock class."""
+        """Construct the connection mock class.
+
+        Create a mock database connection whose cursor simulates execution errors.
+
+        The mock's cursor() method returns a CursorMock whose execute() raises
+        sqlite3.Error, used to simulate a faulty connection in tests.
+        """
 
     def cursor(self) -> Any:
-        """Getter for mock cursor."""
+        """Getter for mock cursor.
+
+        Provide a mock database cursor for testing.
+
+        Returns:
+            CursorMock: A mock cursor instance that simulates a DB cursor; its
+            `execute` raises `sqlite3.Error` to emulate select-related errors.
+        """
         return CursorMock()
 
 
 def create_cache(path: Path) -> SQLiteCache:
-    """Create the cache instance."""
+    """Create the cache instance.
+
+    Create a SQLiteCache configured to use a test.sqlite file
+    inside the given directory.
+
+    Parameters:
+        path (Path): Directory in which the `test.sqlite` database file will be created.
+
+    Returns:
+        SQLiteCache: Cache instance configured to use the `test.sqlite`
+        database at the provided path.
+    """
     db_path = str(path / "test.sqlite")
     cc = SQLiteDatabaseConfiguration(db_path=db_path)
     return SQLiteCache(cc)
@@ -78,7 +108,14 @@ def test_cache_initialization(tmpdir: Path) -> None:
 
 
 def test_cache_initialization_wrong_connection() -> None:
-    """Test the get operation when DB can not be connected."""
+    """Test the get operation when DB can not be connected.
+
+    Verify that creating a cache with an invalid database path fails to open the database.
+
+    Asserts that attempting to create a SQLiteCache with a non-existent or
+    inaccessible path raises an exception containing the text "unable to open
+    database file".
+    """
     with pytest.raises(Exception, match="unable to open database file"):
         _ = create_cache(Path("/foo/bar/baz"))
 
@@ -116,7 +153,13 @@ def test_initialize_cache_when_connected(tmpdir: Path) -> None:
 
 
 def test_initialize_cache_when_disconnected(tmpdir: Path) -> None:
-    """Test the initialize_cache()."""
+    """Test the initialize_cache().
+
+    Verify that initialize_cache raises a CacheError when the cache is disconnected.
+
+    Raises:
+        CacheError: If the cache connection is None with message "cache is disconnected".
+    """
     cache = create_cache(tmpdir)
     cache.connection = None
 
@@ -125,7 +168,14 @@ def test_initialize_cache_when_disconnected(tmpdir: Path) -> None:
 
 
 def test_get_operation_when_disconnected(tmpdir: Path) -> None:
-    """Test the get() method."""
+    """Test the get() method.
+
+    Verify that retrieving entries raises CacheError when the cache is disconnected.
+
+    Sets the cache connection to None and asserts that calling `get` for a user
+    and conversation raises a `CacheError` with the message "cache is
+    disconnected".
+    """
     cache = create_cache(tmpdir)
     cache.connection = None
     # no operation for @connection decorator
@@ -197,7 +247,13 @@ def test_list_operation_when_disconnected(tmpdir: Path) -> None:
 
 
 def test_list_operation_when_connected(tmpdir: Path) -> None:
-    """Test the list() method."""
+    """Test the list() method.
+
+    Verify that listing conversations on a newly created, connected cache returns an empty list.
+
+    Asserts that cache.list(USER_ID_1, False) produces a falsy result and that
+    the returned value is a list.
+    """
     cache = create_cache(tmpdir)
 
     # should not fail

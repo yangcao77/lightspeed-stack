@@ -78,7 +78,17 @@ async def test_setup_model_metrics(mocker: MockerFixture) -> None:
 
 
 def test_update_llm_token_count_from_turn(mocker: MockerFixture) -> None:
-    """Test the update_llm_token_count_from_turn function."""
+    """Test the update_llm_token_count_from_turn function.
+
+    Verifies that update_llm_token_count_from_turn increments LLM token metrics
+    for received and sent tokens using the token counts produced by the
+    formatter.
+
+    Sets up a mock formatter that returns 3 tokens for the output and 2 tokens
+    for the input, then asserts that:
+    - llm_token_received_total is labeled with the provider and model and incremented by 3.
+    - llm_token_sent_total is labeled with the provider and model and incremented by 2.
+    """
     mocker.patch("metrics.utils.Tokenizer.get_instance")
     mock_formatter_class = mocker.patch("metrics.utils.ChatFormat")
     mock_formatter = mocker.Mock()
