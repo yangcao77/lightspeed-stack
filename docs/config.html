@@ -1116,6 +1116,11 @@ periodically (for example on a daily basis), set
     <h2 id="quotaschedulerconfiguration">QuotaSchedulerConfiguration</h2>
     <p>Quota scheduler configuration.</p>
     <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
       <thead>
         <tr class="header">
           <th>Field</th>
@@ -1128,6 +1133,20 @@ periodically (for example on a daily basis), set
           <td>period</td>
           <td>integer</td>
           <td>Quota scheduler period specified in seconds</td>
+        </tr>
+        <tr class="even">
+          <td>database_reconnection_count</td>
+          <td>integer</td>
+          <td>Database reconnection count on startup. When database for quota is
+not available on startup, the service tries to reconnect N times with
+specified delay.</td>
+        </tr>
+        <tr class="odd">
+          <td>database_reconnection_delay</td>
+          <td>integer</td>
+          <td>Database reconnection delay specified in seconds. When database for
+quota is not available on startup, the service tries to reconnect N
+times with specified delay.</td>
         </tr>
       </tbody>
     </table>

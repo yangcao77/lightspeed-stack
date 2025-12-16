@@ -6,6 +6,27 @@
   },
   "components": {
     "schemas": {
+      "APIKeyTokenConfiguration": {
+        "additionalProperties": false,
+        "description": "API Key Token configuration.",
+        "properties": {
+          "api_key": {
+            "examples": [
+              "some-api-key"
+            ],
+            "format": "password",
+            "minLength": 1,
+            "title": "API key",
+            "type": "string",
+            "writeOnly": true
+          }
+        },
+        "required": [
+          "api_key"
+        ],
+        "title": "APIKeyTokenConfiguration",
+        "type": "object"
+      },
       "AccessRule": {
         "additionalProperties": false,
         "description": "Rule defining what actions a role can perform.",
@@ -56,7 +77,8 @@
           "get_metrics",
           "get_config",
           "info",
-          "model_override"
+          "model_override",
+          "rlsapi_v1_infer"
         ],
         "title": "Action",
         "type": "string"
@@ -91,6 +113,17 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/JwkConfiguration"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "api_key_config": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/APIKeyTokenConfiguration"
               },
               {
                 "type": "null"
@@ -663,7 +696,7 @@
       },
       "ModelContextProtocolServer": {
         "additionalProperties": false,
-        "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and\ncapabilities to the AI agents. These are configured by this structure.\nOnly MCP servers defined in the lightspeed-stack.yaml configuration are\navailable to the agents. Tools configured in the llama-stack run.yaml\nare not accessible to lightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)",
+        "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and capabilities to the\nAI agents. These are configured by this structure. Only MCP servers\ndefined in the lightspeed-stack.yaml configuration are available to the\nagents. Tools configured in the llama-stack run.yaml are not accessible to\nlightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)",
         "properties": {
           "name": {
             "description": "MCP server name that must be unique",
@@ -691,7 +724,7 @@
       },
       "PostgreSQLDatabaseConfiguration": {
         "additionalProperties": false,
-        "description": "PostgreSQL database configuration.\n\nPostgreSQL database is used by Lightspeed Core Stack service for storing information about\nconversation IDs. It can also be leveraged to store conversation history and information\nabout quota usage.\n\nUseful resources:\n\n- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)\n- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)\n- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)",
+        "description": "PostgreSQL database configuration.\n\nPostgreSQL database is used by Lightspeed Core Stack service for storing\ninformation about conversation IDs. It can also be leveraged to store\nconversation history and information about quota usage.\n\nUseful resources:\n\n- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)\n- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)\n- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)",
         "properties": {
           "host": {
             "default": "localhost",
@@ -905,7 +938,7 @@
       },
       "ServiceConfiguration": {
         "additionalProperties": false,
-        "description": "Service configuration.\n\nLightspeed Core Stack is a REST API service that accepts requests\non a specified hostname and port. It is also possible to enable\nauthentication and specify the number of Uvicorn workers. When more\nworkers are specified, the service can handle requests concurrently.",
+        "description": "Service configuration.\n\nLightspeed Core Stack is a REST API service that accepts requests on a\nspecified hostname and port. It is also possible to enable authentication\nand specify the number of Uvicorn workers. When more workers are specified,\nthe service can handle requests concurrently.",
         "properties": {
           "host": {
             "default": "localhost",

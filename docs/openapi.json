@@ -6603,6 +6603,20 @@
                         "title": "Period",
                         "description": "Quota scheduler period specified in seconds",
                         "default": 1
+                    },
+                    "database_reconnection_count": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Database reconnection count on startup",
+                        "description": "Database reconnection count on startup. When database for quota is not available on startup, the service tries to reconnect N times with specified delay.",
+                        "default": 10
+                    },
+                    "database_reconnection_delay": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Database reconnection delay",
+                        "description": "Database reconnection delay specified in seconds. When database for quota is not available on startup, the service tries to reconnect N times with specified delay.",
+                        "default": 1
                     }
                 },
                 "additionalProperties": false,

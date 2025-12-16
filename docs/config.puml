@@ -157,6 +157,8 @@ class "QuotaLimiterConfiguration" as src.models.config.QuotaLimiterConfiguration
   type : Literal['user_limiter', 'cluster_limiter']
 }
 class "QuotaSchedulerConfiguration" as src.models.config.QuotaSchedulerConfiguration {
+  database_reconnection_count
+  database_reconnection_delay
   period
 }
 class "RHIdentityConfiguration" as src.models.config.RHIdentityConfiguration {
