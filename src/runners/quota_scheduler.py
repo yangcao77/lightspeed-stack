@@ -83,6 +83,11 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         logger.info("Quota scheduler sync started")
         for limiter in config.limiters:
             try:
+                if not connected(connection):
+                    connection = connect(config)
+                    if connection is None:
+                        logger.warning("Can not connect to database, skipping")
+                        continue
                 quota_revocation(
                     connection, limiter, increase_quota_statement, reset_quota_statement
                 )
@@ -93,6 +98,21 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
     # unreachable code
     connection.close()
     return True
+
+
+def connected(connection: Any) -> bool:
+    """Check if DB is still connected."""
+    if connection is None:
+        logger.warning("Not connected, need to reconnect later")
+        return False
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        logger.info("Connection to storage is ok")
+        return True
+    except Exception as e:
+        logger.error("Disconnected from storage: %s", e)
+        return False
 
 
 def get_increase_quota_statement(config: QuotaHandlersConfiguration) -> str:
