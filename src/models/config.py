@@ -1368,7 +1368,9 @@ class QuotaHandlersConfiguration(ConfigurationBase):
     )
 
     scheduler: QuotaSchedulerConfiguration = Field(
-        default_factory=lambda: QuotaSchedulerConfiguration(period=1),
+        default_factory=lambda: QuotaSchedulerConfiguration(
+            period=1, database_reconnection_count=10, database_reconnection_delay=1
+        ),
         title="Quota scheduler",
         description="Quota scheduler configuration",
     )
