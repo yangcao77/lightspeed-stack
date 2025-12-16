@@ -95,6 +95,11 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         for limiter in config.limiters:
             try:
                 if not connected(connection):
+                    # the old connection might be closed to avoid resource leaks
+                    try:
+                        connection.close()
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        pass  # Connection already dead
                     connection = connect(config)
                     if connection is None:
                         logger.warning("Can not connect to database, skipping")
@@ -112,7 +117,14 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
 
 
 def connected(connection: Any) -> bool:
-    """Check if DB is still connected."""
+    """Check if DB is still connected.
+
+    Parameters:
+        connection: Database connection object to verify.
+
+    Returns:
+        bool: True if connection is active, False otherwise.
+    """
     if connection is None:
         logger.warning("Not connected, need to reconnect later")
         return False
