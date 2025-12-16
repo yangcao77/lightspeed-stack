@@ -27,10 +27,11 @@ from quota.sql import (
 
 logger = get_logger(__name__)
 
-DATABASE_RECONNECTION_COUNT = 10
-RECONNECTION_DELAY = 1
+DATABASE_RECONNECTION_COUNT: int = 10
+RECONNECTION_DELAY: int = 1
 
 
+# pylint: disable=R0912
 def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
     """
     Run the quota scheduler loop that applies configured quota limiters periodically.
@@ -63,7 +64,7 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
             connection = connect(config)
             if connection is not None:
                 break
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             logger.warning("Can not connect to database, will try later: %s", e)
         sleep(RECONNECTION_DELAY)
     else:
@@ -116,11 +117,13 @@ def connected(connection: Any) -> bool:
         logger.warning("Not connected, need to reconnect later")
         return False
     try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT 1")
+        # for compatibility with SQLite it is not possible to use context manager there
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
         logger.info("Connection to storage is ok")
         return True
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         logger.error("Disconnected from storage: %s", e)
         return False
 
