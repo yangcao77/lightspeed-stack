@@ -26,7 +26,14 @@ from models.config import AccessRule, Action, JsonPathOperator, JwtRoleRule
 
 @pytest.fixture(name="dummy_auth_tuple")
 def fixture_dummy_auth_tuple() -> AuthTuple:
-    """Standard auth tuple for testing."""
+    """
+    Provide a standard AuthTuple used by tests.
+
+    Returns:
+        AuthTuple: A tuple of (user_id, username, is_admin_flag, token) where
+        `user_id` and `username` are strings, `is_admin_flag` is a boolean, and
+        `token` is a mock token string.
+    """
     return ("user_id", "username", False, "mock_token")
 
 
@@ -35,7 +42,17 @@ class TestGetAuthorizationResolvers:
 
     @pytest.fixture
     def mock_configuration(self, mocker: MockerFixture) -> MockType:
-        """Mock configuration object."""
+        """
+        Create a mock configuration with empty authorization access rules and empty JWT role rules.
+
+        Parameters:
+            mocker (pytest_mock.MockerFixture): Fixture used to create the MagicMock.
+
+        Returns:
+            Mock: A MagicMock whose `authorization_configuration.access_rules` and
+            `authentication_configuration.jwk_configuration.jwt_configuration.role_rules`
+            are set to empty lists.
+        """
         config = mocker.MagicMock()
         config.authorization_configuration.access_rules = []
         config.authentication_configuration.jwk_configuration.jwt_configuration.role_rules = (
@@ -45,12 +62,24 @@ class TestGetAuthorizationResolvers:
 
     @pytest.fixture
     def sample_access_rule(self) -> AccessRule:
-        """Sample access rule for testing."""
+        """
+        Create a sample AccessRule with role "test" and the Query action for use in tests.
+
+        Returns:
+            AccessRule: An AccessRule configured with role "test" and actions
+                        containing `Action.QUERY`.
+        """
         return AccessRule(role="test", actions=[Action.QUERY])
 
     @pytest.fixture
     def sample_role_rule(self) -> JwtRoleRule:
-        """Sample role rule for testing."""
+        """
+        Create a sample role rule of type JwtRoleRule.
+
+        Returns:
+            JwtRoleRule: Configured with jsonpath "$.test", operator
+                         `JsonPathOperator.EQUALS`, value "test", and roles ["test"].
+        """
         return JwtRoleRule(
             jsonpath="$.test",
             operator=JsonPathOperator.EQUALS,
@@ -170,7 +199,18 @@ class TestPerformAuthorizationCheck:
 
     @pytest.fixture
     def mock_resolvers(self, mocker: MockerFixture) -> tuple[MockType, MockType]:
-        """Mock role and access resolvers."""
+        """
+        Create paired mock role and access resolvers for tests.
+
+        Parameters:
+            mocker (MockerFixture): Pytest mocker fixture used to create mock objects.
+
+        Returns:
+            tuple: (role_resolver, access_resolver)
+                - role_resolver: an AsyncMock whose `resolve_roles` returns `{"employee"}`.
+                - access_resolver: a MagicMock with `check_access` returning
+                                   `True` and `get_actions` returning `{Action.QUERY}`.
+        """
         role_resolver = mocker.AsyncMock()
         access_resolver = mocker.MagicMock()
         role_resolver.resolve_roles.return_value = {"employee"}
@@ -191,7 +231,15 @@ class TestPerformAuthorizationCheck:
         dummy_auth_tuple: AuthTuple,
         mock_resolvers: tuple[MockType, MockType],
     ) -> None:
-        """Test HTTPException when access is denied."""
+        """
+        Verify that auth.check raises an HTTP 403 with expected details when access is denied.
+
+        Patches the authorization resolvers to deny access, invokes
+        _perform_authorization_check for Action.ADMIN, and asserts the raised
+        HTTPException has status 403 and a detail payload containing a
+        `response` message about lack of permission and a `cause` that mentions
+        the user is not authorized to access the endpoint.
+        """
         role_resolver, access_resolver = mock_resolvers
         access_resolver.check_access.return_value = False  # Override to deny access
 
