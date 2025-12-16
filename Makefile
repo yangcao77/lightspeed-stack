@@ -109,11 +109,11 @@ upload-distribution-archives:	## Upload distribution archives into Python regist
 	uv run python -m twine upload --repository ${PYTHON_REGISTRY} dist/*
 
 konflux-requirements:	## generate hermetic requirements.*.txt file for konflux build
-	uv pip compile pyproject.toml -o requirements.x86_64.txt --generate-hashes --group llslibdev --python-platform x86_64-unknown-linux-gnu --torch-backend cpu  --python-version 3.12
-	uv pip compile pyproject.toml -o requirements.aarch64.txt --generate-hashes --group llslibdev --python-platform aarch64-unknown-linux-gnu --torch-backend cpu --python-version 3.12
+	uv pip compile pyproject.toml -o requirements.x86_64.txt --generate-hashes --group llslibdev --python-platform x86_64-unknown-linux-gnu --torch-backend cpu --python-version 3.12 --refresh
+	uv pip compile pyproject.toml -o requirements.aarch64.txt --generate-hashes --group llslibdev --python-platform aarch64-unknown-linux-gnu --torch-backend cpu --python-version 3.12 --refresh
 	./scripts/remove_torch_deps.sh requirements.x86_64.txt
 	./scripts/remove_torch_deps.sh requirements.aarch64.txt
-	echo "torch==${TORCH_VERSION}" | uv pip compile  - -o requirements.torch.txt --generate-hashes  --python-version 3.12 --torch-backend cpu --emit-index-url  --no-deps --index-url https://download.pytorch.org/whl/cpu
+	echo "torch==${TORCH_VERSION}" | uv pip compile - -o requirements.torch.txt --generate-hashes --python-version 3.12 --torch-backend cpu --emit-index-url --no-deps --index-url https://download.pytorch.org/whl/cpu --refresh
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
