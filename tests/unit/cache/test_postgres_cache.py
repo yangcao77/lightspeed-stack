@@ -47,10 +47,24 @@ class CursorMock:
     """Mock class for simulating DB cursor exceptions."""
 
     def __init__(self) -> None:
-        """Construct the mock cursor class."""
+        """Construct the mock cursor class.
+
+        Initialize the mock database cursor used in tests.
+
+        Sets up internal state so the cursor simulates a DatabaseError when `execute` is called.
+        """
 
     def execute(self, command: Any) -> None:
-        """Execute any SQL command."""
+        """Execute any SQL command.
+
+        Execute the given SQL command using the database cursor.
+
+        Parameters:
+                command (Any): SQL statement or command object to execute.
+
+        Raises:
+                psycopg2.DatabaseError: Always raised with the message "can not INSERT".
+        """
         raise psycopg2.DatabaseError("can not INSERT")
 
 
@@ -62,13 +76,28 @@ class ConnectionMock:
         """Construct the connection mock class."""
 
     def cursor(self) -> None:
-        """Getter for mock cursor."""
+        """Getter for mock cursor.
+
+        Simulate obtaining a database cursor and raise an OperationalError to
+        represent a failed connection.
+
+        Raises:
+            psycopg2.OperationalError: Always raised to simulate inability to acquire a cursor.
+        """
         raise psycopg2.OperationalError("can not SELECT")
 
 
 @pytest.fixture(scope="module", name="postgres_cache_config_fixture")
 def postgres_cache_config() -> PostgreSQLDatabaseConfiguration:
-    """Fixture containing initialized instance of PostgreSQL cache."""
+    """Fixture containing initialized instance of PostgreSQL cache.
+
+    Create a PostgreSQLDatabaseConfiguration with placeholder connection values for use in tests.
+
+    Returns:
+        PostgreSQLDatabaseConfiguration: A configuration object with host,
+        port, db, user, and a SecretStr password. Values are placeholders and
+        not intended for real database connections.
+    """
     # can be any configuration, becuase tests won't really try to
     # connect to database
     return PostgreSQLDatabaseConfiguration(
@@ -84,7 +113,13 @@ def test_cache_initialization(
     postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Test the get operation when DB is connected."""
+    """Test the get operation when DB is connected.
+
+    Verifies that PostgresCache constructs successfully and exposes a non-None
+    connection when psycopg2.connect is available.
+
+    Asserts the created cache object is not None and that its `connection` attribute is set.
+    """
     # prevent real connection to PG instance
     mocker.patch("psycopg2.connect")
     cache = PostgresCache(postgres_cache_config_fixture)
@@ -111,7 +146,14 @@ def test_cache_initialization_connect_finalizer(
     postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Test the get operation when DB is not connected."""
+    """Test the get operation when DB is not connected.
+
+    Ensure PostgresCache propagates exceptions raised during its initialization.
+
+    Patches psycopg2.connect to avoid real DB access and makes
+    PostgresCache.initialize_cache raise an exception; constructing
+    PostgresCache must raise that exception.
+    """
     # prevent real connection to PG instance
     mocker.patch("psycopg2.connect")
 
@@ -213,7 +255,11 @@ def test_get_operation_when_disconnected(
     postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Test the get() method."""
+    """Test the get() method.
+
+    Verify that get() raises a CacheError with message "cache is disconnected"
+    when the cache has no active database connection.
+    """
     # prevent real connection to PG instance
     mocker.patch("psycopg2.connect")
     cache = PostgresCache(postgres_cache_config_fixture)
@@ -335,7 +381,15 @@ def test_delete_operation_operation_error(
     postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Test the delete() method."""
+    """Test the delete() method.
+
+    Verifies that PostgresCache.delete raises a CacheError when the database
+    connection fails during a delete operation.
+
+    The test patches psycopg2.connect, injects a ConnectionMock that simulates
+    a connection error, and asserts that calling delete(...) raises a
+    CacheError containing the substring "delete".
+    """
     # prevent real connection to PG instance
     mocker.patch("psycopg2.connect")
     cache = PostgresCache(postgres_cache_config_fixture)
@@ -417,7 +471,10 @@ def test_topic_summary_after_conversation_delete(
     postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
     mocker: MockerFixture,
 ) -> None:
-    """Test that topic summary is deleted when conversation is deleted."""
+    """Test that topic summary is deleted when conversation is deleted.
+
+    Verify that deleting a conversation also removes its topic summary from the cache.
+    """
     # prevent real connection to PG instance
     mock_connect = mocker.patch("psycopg2.connect")
     cache = PostgresCache(postgres_cache_config_fixture)
