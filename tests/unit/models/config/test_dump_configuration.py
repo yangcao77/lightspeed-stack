@@ -183,7 +183,11 @@ def test_dump_configuration(tmp_path: Path) -> None:
                 "sqlite": None,
                 "postgres": None,
                 "limiters": [],
-                "scheduler": {"period": 1},
+                "scheduler": {
+                    "period": 1,
+                    "database_reconnection_count": 10,
+                    "database_reconnection_delay": 1,
+                },
                 "enable_token_history": False,
             },
         }
@@ -498,7 +502,11 @@ def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
                         "type": "cluster_limiter",
                     },
                 ],
-                "scheduler": {"period": 10},
+                "scheduler": {
+                    "period": 10,
+                    "database_reconnection_count": 10,
+                    "database_reconnection_delay": 1,
+                },
                 "enable_token_history": True,
             },
         }
@@ -678,7 +686,11 @@ def test_dump_configuration_byok(tmp_path: Path) -> None:
                 "sqlite": None,
                 "postgres": None,
                 "limiters": [],
-                "scheduler": {"period": 1},
+                "scheduler": {
+                    "period": 1,
+                    "database_reconnection_count": 10,
+                    "database_reconnection_delay": 1,
+                },
                 "enable_token_history": False,
             },
         }
@@ -844,7 +856,11 @@ def test_dump_configuration_pg_namespace(tmp_path: Path) -> None:
                 "sqlite": None,
                 "postgres": None,
                 "limiters": [],
-                "scheduler": {"period": 1},
+                "scheduler": {
+                    "period": 1,
+                    "database_reconnection_count": 10,
+                    "database_reconnection_delay": 1,
+                },
                 "enable_token_history": False,
             },
         }

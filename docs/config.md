@@ -420,6 +420,8 @@ Quota scheduler configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | period | integer | Quota scheduler period specified in seconds |
+| database_reconnection_count | integer | Database reconnection count on startup. When database for quota is not available on startup, the service tries to reconnect N times with specified delay. |
+| database_reconnection_delay | integer | Database reconnection delay specified in seconds. When database for quota is not available on startup, the service tries to reconnect N times with specified delay. |
 
 
 ## RHIdentityConfiguration
