@@ -1323,6 +1323,22 @@ class QuotaSchedulerConfiguration(ConfigurationBase):
         description="Quota scheduler period specified in seconds",
     )
 
+    database_reconnection_count: PositiveInt = Field(
+        10,
+        title="Database reconnection count on startup",
+        description="Database reconnection count on startup. When database for "
+        "quota is not available on startup, the service tries to reconnect N "
+        "times with specified delay.",
+    )
+
+    database_reconnection_delay: PositiveInt = Field(
+        1,
+        title="Database reconnection delay",
+        description="Database reconnection delay specified in seconds. When database for "
+        "quota is not available on startup, the service tries to reconnect N "
+        "times with specified delay.",
+    )
+
 
 class QuotaHandlersConfiguration(ConfigurationBase):
     """Quota limiter configuration.
