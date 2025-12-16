@@ -27,7 +27,11 @@ from quota.sql import (
 
 logger = get_logger(__name__)
 
+DATABASE_RECONNECTION_COUNT: int = 10
+RECONNECTION_DELAY: int = 1
 
+
+# pylint: disable=R0912
 def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
     """
     Run the quota scheduler loop that applies configured quota limiters periodically.
@@ -55,8 +59,15 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         logger.warning("No limiters are setup, skipping")
         return False
 
-    connection = connect(config)
-    if connection is None:
+    for _ in range(DATABASE_RECONNECTION_COUNT):
+        try:
+            connection = connect(config)
+            if connection is not None:
+                break
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            logger.warning("Can not connect to database, will try later: %s", e)
+        sleep(RECONNECTION_DELAY)
+    else:
         logger.warning("Can not connect to database, skipping")
         return False
 
@@ -83,6 +94,16 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         logger.info("Quota scheduler sync started")
         for limiter in config.limiters:
             try:
+                if not connected(connection):
+                    # the old connection might be closed to avoid resource leaks
+                    try:
+                        connection.close()
+                    except Exception:  # pylint: disable=broad-exception-caught
+                        pass  # Connection already dead
+                    connection = connect(config)
+                    if connection is None:
+                        logger.warning("Can not connect to database, skipping")
+                        continue
                 quota_revocation(
                     connection, limiter, increase_quota_statement, reset_quota_statement
                 )
@@ -93,6 +114,30 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
     # unreachable code
     connection.close()
     return True
+
+
+def connected(connection: Any) -> bool:
+    """Check if DB is still connected.
+
+    Parameters:
+        connection: Database connection object to verify.
+
+    Returns:
+        bool: True if connection is active, False otherwise.
+    """
+    if connection is None:
+        logger.warning("Not connected, need to reconnect later")
+        return False
+    try:
+        # for compatibility with SQLite it is not possible to use context manager there
+        cursor = connection.cursor()
+        cursor.execute("SELECT 1")
+        cursor.close()
+        logger.info("Connection to storage is ok")
+        return True
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        logger.error("Disconnected from storage: %s", e)
+        return False
 
 
 def get_increase_quota_statement(config: QuotaHandlersConfiguration) -> str:
