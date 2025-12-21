@@ -7,9 +7,9 @@ provider, model). This triple is also used as a primary key to this table.
 
 import sqlite3
 from datetime import datetime
-import psycopg2
-
 from typing import Any
+
+import psycopg2
 
 from log import get_logger
 
