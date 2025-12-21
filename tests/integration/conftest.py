@@ -60,7 +60,7 @@ def current_config_fixture() -> Generator:
     This fixture loads the actual configuration file from project root (current configuration),
     demonstrating integration with the configuration system.
 
-    Returns:
+    Yields:
         configuration: The loaded configuration object.
     """
     config_path = Path(__file__).parent.parent.parent / "lightspeed-stack.yaml"
@@ -80,7 +80,7 @@ def test_db_engine_fixture() -> Generator:
     This provides a real database (not mocked) for integration tests.
     Each test gets a fresh database.
 
-    Returns:
+    Yields:
         engine (Engine): A SQLAlchemy Engine connected to a new in-memory SQLite database.
     """
     # Create in-memory SQLite database
@@ -106,7 +106,7 @@ def test_db_session_fixture(test_db_engine: Engine) -> Generator[Session, None, 
 
     Provides a real database session connected to the in-memory test database.
 
-    Returns:
+    Yields:
         session (Session): A database session bound to the test engine; the
         fixture closes the session after the test.
     """
