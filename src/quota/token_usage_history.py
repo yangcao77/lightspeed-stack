@@ -9,6 +9,8 @@ import sqlite3
 from datetime import datetime
 import psycopg2
 
+from typing import Any
+
 from log import get_logger
 
 from quota.connect_pg import connect_pg
@@ -19,7 +21,11 @@ from quota.sql import (
     CONSUME_TOKENS_FOR_USER_SQLITE,
 )
 
-from models.config import QuotaHandlersConfiguration
+from models.config import (
+    QuotaHandlersConfiguration,
+    SQLiteDatabaseConfiguration,
+    PostgreSQLDatabaseConfiguration,
+)
 from utils.connection_decorator import connection
 
 logger = get_logger(__name__)
@@ -44,9 +50,13 @@ class TokenUsageHistory:
         """
         # store the configuration, it will be used
         # by reconnection logic later, if needed
-        self.sqlite_connection_config = configuration.sqlite
-        self.postgres_connection_config = configuration.postgres
-        self.connection = None
+        self.sqlite_connection_config: SQLiteDatabaseConfiguration | None = (
+            configuration.sqlite
+        )
+        self.postgres_connection_config: PostgreSQLDatabaseConfiguration | None = (
+            configuration.postgres
+        )
+        self.connection: Any | None = None
 
         # initialize connection to DB
         self.connect()
@@ -106,7 +116,7 @@ class TokenUsageHistory:
             ValueError: If no database backend configuration (Postgres or SQLite) is available.
         """
         logger.info(
-            "Token usage for user %s, provider %s and model %s changed by %d, %d tokens",
+            "Token usage for user %s, provider %s and mode %s changed by %d, %d tokens",
             user_id,
             provider,
             model,
