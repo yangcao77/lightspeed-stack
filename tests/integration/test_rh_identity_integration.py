@@ -20,7 +20,7 @@ def client() -> Generator[TestClient, None, None]:
     Provides a TestClient for the FastAPI application configured with the RH
     Identity test configuration.
 
-    Returns:
+    Yields:
         TestClient: A test client instance for the FastAPI app.
     """
     # Save original env var if it exists
