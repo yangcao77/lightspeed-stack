@@ -605,9 +605,9 @@ cycler==0.12.1 \
     --hash=sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30 \
     --hash=sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c
     # via matplotlib
-datasets==4.4.1 \
-    --hash=sha256:80322699aa8c0bbbdb7caa87906da689c3c2e29523cff698775c67f28fdab1fc \
-    --hash=sha256:c1163de5211e42546079ab355cc0250c7e6db16eb209ac5ac6252f801f596c44
+datasets==4.4.2 \
+    --hash=sha256:6f5ef3417504d9cd663c71c1b90b9a494ff4c2076a2cd6a6e40ceee6ad95befc \
+    --hash=sha256:9de16e415c4ba4713eac0493f7c7dc74f3aa21599297f00cc6ddab409cb7b24b
     # via
     #   lightspeed-stack (pyproject.toml:llslibdev)
     #   trl
@@ -656,9 +656,9 @@ faiss-cpu==1.13.1 \
     --hash=sha256:ff5bdbf392081659e6b0f98f03b602bf08d1b5a790e28aa1185ae925decff6b2 \
     --hash=sha256:ffc58173e24026ee4dc08c50dd3506ad553d4b2103892500b0d4ae9344027d57
     # via lightspeed-stack (pyproject.toml:llslibdev)
-fastapi==0.124.4 \
-    --hash=sha256:0e9422e8d6b797515f33f500309f6e1c98ee4e85563ba0f2debb282df6343763 \
-    --hash=sha256:6d1e703698443ccb89e50abe4893f3c84d9d6689c0cf1ca4fad6d3c15cf69f15
+fastapi==0.126.0 \
+    --hash=sha256:c9330b9731e3bd2caae0a00e76353f86adbf592c5a25649a1682f3a92aeaff41 \
+    --hash=sha256:f099fceb2a6d56dd21c59c4543d00be123dedacff869e76ae31ba3c0f963e2cd
     # via
     #   lightspeed-stack (pyproject.toml)
     #   llama-stack
@@ -1697,9 +1697,9 @@ matplotlib==3.10.8 \
     --hash=sha256:f9b587c9c7274c1613a30afabf65a272114cd6cdbe67b3406f818c79d7ab2e2a \
     --hash=sha256:fb061f596dad3a0f52b60dc6a5dec4a0c300dec41e058a7efe09256188d170b7
     # via lightspeed-stack (pyproject.toml:llslibdev)
-mcp==1.24.0 \
-    --hash=sha256:aeaad134664ce56f2721d1abf300666a1e8348563f4d3baff361c3b652448efc \
-    --hash=sha256:db130e103cc50ddc3dffc928382f33ba3eaef0b711f7a87c05e7ded65b1ca062
+mcp==1.25.0 \
+    --hash=sha256:56310361ebf0364e2d438e5b45f7668cbb124e158bb358333cd06e49e83a6802 \
+    --hash=sha256:b37c38144a666add0862614cc79ec276e97d72aa8ca26d622818d4e278b9721a
     # via lightspeed-stack (pyproject.toml:llslibdev)
 mdurl==0.1.2 \
     --hash=sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8 \
@@ -1953,6 +1953,7 @@ numpy==2.2.6 \
     #   matplotlib
     #   pandas
     #   peft
+    #   pythainlp
     #   scikit-learn
     #   scipy
     #   transformers
@@ -1962,9 +1963,9 @@ oauthlib==3.3.1 \
     # via
     #   kubernetes
     #   requests-oauthlib
-openai==2.12.0 \
-    --hash=sha256:7177998ce49ba3f90bcce8b5769a6666d90b1f328f0518d913aaec701271485a \
-    --hash=sha256:cc6dcbcb8bccf05976d983f6516c5c1f447b71c747720f1530b61e8f858bcbc9
+openai==2.14.0 \
+    --hash=sha256:419357bedde9402d23bf8f2ee372fca1985a73348debba94bddff06f19459952 \
+    --hash=sha256:7ea40aca4ffc4c4a776e77679021b47eec1160e341f42ae086ba949c9dcc9183
     # via
     #   lightspeed-stack (pyproject.toml)
     #   litellm
@@ -2095,6 +2096,7 @@ pandas==2.3.3 \
     #   lightspeed-stack (pyproject.toml:llslibdev)
     #   datasets
     #   llama-stack-client
+    #   pythainlp
 peft==0.18.0 \
     --hash=sha256:624f69ca6393b765ccc6734adda7ca57d80b238f0900a42c357d8b67a03d62ff \
     --hash=sha256:c81c80b2056ab40c23d58ef25f74daab417ac653970718589a11a8af28218588
@@ -2766,9 +2768,9 @@ pyparsing==3.2.5 \
     --hash=sha256:2df8d5b7b2802ef88e8d016a2eb9c7aeaa923529cd251ed0fe4608275d4105b6 \
     --hash=sha256:e38a4f02064cf41fe6593d328d0512495ad1f3d8a91c4f73fc401b3079a59a5e
     # via matplotlib
-pythainlp==5.1.2 \
-    --hash=sha256:035f158007c9c6289cb5afe9b254ecd8177b3b3ea9b184ad842e0e96dd32d3d1 \
-    --hash=sha256:73cd6b20c0499d11ae8b056dcb65f909867cc80cdc2520b80d449899657de2b1
+pythainlp==5.2.0 \
+    --hash=sha256:04c6e4bdd806204be742f139b1f2e666411c4509c270dfff1a8b5afa69d36d2b \
+    --hash=sha256:fd64d6b3d33973782390822e74b8e2c9b867760eeed19d0d218945165b431e35
     # via lightspeed-stack (pyproject.toml:llslibdev)
 python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
@@ -2784,9 +2786,9 @@ python-dotenv==1.2.1 \
     #   litellm
     #   llama-stack
     #   pydantic-settings
-python-multipart==0.0.20 \
-    --hash=sha256:8a62d3a8335e06589fe01f2a3e178cdcc632f3fbe0d492ad9ee0ec35aab1f104 \
-    --hash=sha256:8dd0cab45b8e23064ae09147625994d090fa46f5b0d1e13af944c331a7fa9d13
+python-multipart==0.0.21 \
+    --hash=sha256:7137ebd4d3bbf70ea1622998f902b97a29434a9e8dc40eb203bbcf7c2a2cba92 \
+    --hash=sha256:cf7a6713e01c87aa35387f4774e812c4361150938d20d232800f75ffcf266090
     # via
     #   llama-stack
     #   mcp
@@ -2876,6 +2878,7 @@ pyyaml==6.0.3 \
     #   kubernetes
     #   peft
     #   pyaml
+    #   pythainlp
     #   transformers
 referencing==0.37.0 \
     --hash=sha256:381329a9f99628c9069361716891d34ad94af76e461dcb0335825aecc7692231 \
@@ -3532,9 +3535,9 @@ tree-sitter==0.25.2 \
     --hash=sha256:fbb1706407c0e451c4f8cc016fec27d72d4b211fdd3173320b1ada7a6c74c3ac \
     --hash=sha256:fe43c158555da46723b28b52e058ad444195afd1db3ca7720c59a254544e9c20
     # via lightspeed-stack (pyproject.toml:llslibdev)
-trl==0.26.1 \
-    --hash=sha256:8a6f41c9a2098164dd731d6a4befe1a7e50974de94e5d55fd846023826c23de7 \
-    --hash=sha256:acadfdfa9da58345f3ff23407b9acaea62378eeb335967034b961b091cdd7d9f
+trl==0.26.2 \
+    --hash=sha256:532a6d221201b5fef4b961fbaae4c67ca5d9f35c33d35c73ac4ea2cbb35e8d0d \
+    --hash=sha256:89c5a81847e74d05f53686bc98ae966d0314ff0644d821a8abb05e0ad94adc47
     # via lightspeed-stack (pyproject.toml:llslibdev)
 typing-extensions==4.15.0 \
     --hash=sha256:0cea48d173cc12fa28ecabc3b837ea3cf6f38c6d1136f85cbaaf598984861466 \
