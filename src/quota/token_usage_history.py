@@ -106,7 +106,7 @@ class TokenUsageHistory:
             ValueError: If no database backend configuration (Postgres or SQLite) is available.
         """
         logger.info(
-            "Token usage for user %s, provider %s and mode %s changed by %d, %d tokens",
+            "Token usage for user %s, provider %s and model %s changed by %d, %d tokens",
             user_id,
             provider,
             model,

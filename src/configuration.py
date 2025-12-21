@@ -27,6 +27,7 @@ from cache.cache import Cache
 from cache.cache_factory import CacheFactory
 
 from quota.quota_limiter import QuotaLimiter
+from quota.token_usage_history import TokenUsageHistory
 from quota.quota_limiter_factory import QuotaLimiterFactory
 
 logger = logging.getLogger(__name__)
@@ -52,6 +53,7 @@ class AppConfig:
         self._configuration: Optional[Configuration] = None
         self._conversation_cache: Optional[Cache] = None
         self._quota_limiters: list[QuotaLimiter] = []
+        self._token_usage_history: Optional[TokenUsageHistory] = None
 
     def load_configuration(self, filename: str) -> None:
         """Load configuration from YAML file."""
@@ -179,6 +181,33 @@ class AppConfig:
                 self._configuration.quota_handlers
             )
         return self._quota_limiters
+
+    @property
+    def token_usage_history(self) -> Optional[TokenUsageHistory]:
+        """
+        Provide the token usage history object for the application.
+
+        If token history is enabled in the loaded quota handlers configuration,
+        creates and caches a TokenUsageHistory instance and returns it. If
+        token history is disabled, returns None.
+
+        Returns:
+            TokenUsageHistory | None: The cached TokenUsageHistory instance
+            when enabled, otherwise `None`.
+
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        if (
+            self._token_usage_history is None
+            and self._configuration.quota_handlers.enable_token_history
+        ):
+            self._token_usage_history = TokenUsageHistory(
+                self._configuration.quota_handlers
+            )
+        return self._token_usage_history
 
 
 configuration: AppConfig = AppConfig()
