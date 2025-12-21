@@ -102,7 +102,7 @@ class QuotaLimiter(ABC):
         self.connection.autocommit = True
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """Check if connection to quota limiter database is alive."""
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
             return False
