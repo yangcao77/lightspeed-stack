@@ -37,14 +37,20 @@ class MockK8sResponseStatus:
     ) -> None:
         """Init function.
 
-        Initialize a mock Kubernetes response status representing authentication and authorization results.
-        
+        Initialize a mock Kubernetes response status representing
+        authentication and authorization results.
+
         Parameters:
-            authenticated (Optional[bool]): Whether the token was authenticated; when True, `user` is populated.
-            allowed (Optional[bool]): Whether the action is authorized (subject access review result).
-            username (Optional[str]): Username to set on the created `MockK8sUser` when `authenticated` is True.
-            uid (Optional[str]): User UID to set on the created `MockK8sUser` when `authenticated` is True.
-            groups (Optional[list[str]]): Group list to set on the created `MockK8sUser` when `authenticated` is True.
+            authenticated (Optional[bool]): Whether the token was
+            authenticated; when True, `user` is populated.
+            allowed (Optional[bool]): Whether the action is authorized (subject
+            access review result).
+            username (Optional[str]): Username to set on the created
+            `MockK8sUser` when `authenticated` is True.
+            uid (Optional[str]): User UID to set on the created `MockK8sUser`
+            when `authenticated` is True.
+            groups (Optional[list[str]]): Group list to set on the created
+            `MockK8sUser` when `authenticated` is True.
         """
         self.authenticated = authenticated
         self.allowed = allowed
@@ -70,11 +76,12 @@ class MockK8sUser:
         """Init function.
 
         Create a mock Kubernetes user holding identity attributes.
-        
+
         Parameters:
-        	username (Optional[str]): The user's username, or None if not provided.
-        	uid (Optional[str]): The user's unique identifier, or None if not provided.
-        	groups (Optional[list[str]]): List of groups the user belongs to, or None if not provided.
+                username (Optional[str]): The user's username, or None if not provided.
+                uid (Optional[str]): The user's unique identifier, or None if not provided.
+                groups (Optional[list[str]]): List of groups the user belongs
+                to, or None if not provided.
         """
         self.username = username
         self.uid = uid
@@ -98,7 +105,7 @@ class MockK8sResponse:
         """Init function.
 
         Initialize a mock Kubernetes API response wrapper containing a status object.
-        
+
         Parameters:
             authenticated (Optional[bool]): Whether the token was authenticated; use None to omit.
             allowed (Optional[bool]): Whether the action is authorized; use None to omit.
