@@ -26,7 +26,8 @@ def mock_llama_stack_client_fixture(
     as it represents an external service call.
 
     Returns:
-        mock_client: An AsyncMock representing the Llama Stack client whose `inspect.version` returns an empty list.
+        mock_client: An AsyncMock representing the Llama Stack client whose
+        `inspect.version` returns an empty list.
     """
     mock_holder_class = mocker.patch("app.endpoints.health.AsyncLlamaStackClientHolder")
 
