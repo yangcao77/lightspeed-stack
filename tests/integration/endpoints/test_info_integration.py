@@ -96,7 +96,7 @@ async def test_info_endpoint_handles_connection_error(
     - HTTPException is raised with correct status code
     - Error response includes proper error details
 
-    Args:
+    Parameters:
         test_config: Loads real configuration (required for endpoint to access config)
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -135,7 +135,7 @@ async def test_info_endpoint_uses_configuration_values(
     - Endpoint reads configuration values correctly
     - Service name from config appears in response
 
-    Args:
+    Parameters:
         test_config: Loads real configuration (required for endpoint to access config)
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: Real FastAPI request

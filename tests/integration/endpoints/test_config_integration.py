@@ -48,9 +48,9 @@ async def test_config_endpoint_returns_current_config(
     - Response structure matches expected format
 
     Parameters:
-        current_config: Loads root configuration
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
+        current_config (AppConfig): Loads root configuration
+        test_request (Request): FastAPI request
+        test_auth (AuthTuple): noop authentication tuple
     """
     response = await config_endpoint_handler(auth=test_auth, request=test_request)
 

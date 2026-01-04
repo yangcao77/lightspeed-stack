@@ -83,7 +83,7 @@ async def test_health_readiness_provider_statuses(
     - Provider health status, ID, and error messages are correctly mapped
     - Multiple providers with different health states are handled correctly
 
-    Args:
+    Parameters:
         mock_llama_stack_client_health: Mocked Llama Stack client
         mocker: pytest-mock fixture for creating mock objects
     """
@@ -137,7 +137,7 @@ async def test_health_readiness_client_error(
     - Error propagates from the endpoint handler (desired behavior)
     - The endpoint does not catch RuntimeError, only APIConnectionError
 
-    Args:
+    Parameters:
         test_response: FastAPI response object
         test_auth: noop authentication tuple
     """

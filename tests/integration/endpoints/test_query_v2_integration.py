@@ -152,7 +152,7 @@ async def test_query_v2_endpoint_successful_response(
     - Response is correctly formatted
     - Conversation ID is returned
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -287,7 +287,7 @@ async def test_query_v2_endpoint_with_attachments(
     - Attachment content is included in request
     - Response handles attachments correctly
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -341,7 +341,7 @@ async def test_query_v2_endpoint_with_tool_calls(
     - RAG tool responses are included
     - Referenced documents are returned
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -407,7 +407,7 @@ async def test_query_v2_endpoint_with_mcp_list_tools(
     - Tool names list is captured
     - Server label is included
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -471,7 +471,7 @@ async def test_query_v2_endpoint_with_multiple_tool_types(
     - All tool summaries are included
     - Response text combines with tool results
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -660,7 +660,7 @@ async def test_query_v2_endpoint_persists_conversation_to_database(
     - User ID, model, provider are stored correctly
     - Topic summary is generated and stored
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -711,7 +711,7 @@ async def test_query_v2_endpoint_updates_existing_conversation(
     - Last message timestamp updates
     - Topic summary is NOT regenerated
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -772,7 +772,7 @@ async def test_query_v2_endpoint_conversation_ownership_validation(
     - User can access their own conversation
     - Conversation must exist in database
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -888,7 +888,7 @@ async def test_query_v2_endpoint_conversation_not_found_returns_404(
     - Status code is 404 NOT FOUND
     - Error message indicates conversation not found
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -944,7 +944,7 @@ async def test_query_v2_endpoint_with_shield_violation(
     Note: Shields are advisory - violations are logged but don't block requests.
     This matches query V1 behavior.
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -1006,7 +1006,7 @@ async def test_query_v2_endpoint_without_shields(
     - extra_body.guardrails is not included when no shields
     - Response succeeds without shields
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -1056,7 +1056,7 @@ async def test_query_v2_endpoint_handles_empty_llm_response(
     - Response contains empty/minimal content
     - Conversation is still persisted
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -1115,7 +1115,7 @@ async def test_query_v2_endpoint_quota_integration(
     - Token usage from Llama Stack flows through quota system
     - Complete integration between query handler and quota management
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -1239,7 +1239,7 @@ async def test_query_v2_endpoint_transcript_behavior(
     - Conversation is persisted regardless of transcript setting
     - Integration between query handler and transcript configuration
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -1329,7 +1329,7 @@ async def test_query_v2_endpoint_uses_conversation_history_model(
     - Message count increments properly
     - Integration between query handler and conversation persistence
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
