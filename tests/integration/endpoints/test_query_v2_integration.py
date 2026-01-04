@@ -40,6 +40,12 @@ def mock_llama_stack_client_fixture(
 
     This is the only external dependency we mock for integration tests,
     as it represents an external service call.
+
+    Parameters:
+        mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
+
+    Returns:
+        mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.query where it's actually used by query_endpoint_handler_base
     mock_holder_class = mocker.patch("app.endpoints.query.AsyncLlamaStackClientHolder")
@@ -107,6 +113,9 @@ def patch_db_session_fixture(
     This sets up the global session_local in app.database to use the test database.
     Uses an in-memory SQLite database, isolating tests from production data.
     This fixture is autouse=True, so it applies to all tests in this module automatically.
+
+    Returns:
+        The test database Session instance to be used by the test.
     """
     # Store original values to restore later
     original_engine = app.database.engine
@@ -188,12 +197,15 @@ async def test_query_v2_endpoint_handles_connection_error(
     - HTTPException is raised with correct status code
     - Error response includes proper error details
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
         mocker: pytest-mock fixture
+
+    Returns:
+        None
     """
     _ = test_config
 
@@ -232,11 +244,14 @@ async def test_query_v2_endpoint_empty_query(
     - Validation works correctly
     - Error response is returned if needed
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
+
+    Returns:
+        None
     """
     _ = test_config
     _ = mock_llama_stack_client
@@ -527,13 +542,16 @@ async def test_query_v2_endpoint_bypasses_tools_when_no_tools_true(
     - Response succeeds without tools
     - Integration between query handler and tool preparation
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
         patch_db_session: Test database session
         mocker: pytest-mock fixture
+
+    Returns:
+        None
     """
     _ = test_config
     _ = patch_db_session
@@ -580,13 +598,16 @@ async def test_query_v2_endpoint_uses_tools_when_available(
     - Response succeeds with tools enabled
     - Integration between query handler, vector stores, and tool preparation
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
         patch_db_session: Test database session
         mocker: pytest-mock fixture
+
+    Returns:
+        None
     """
     _ = test_config
     _ = patch_db_session
@@ -805,13 +826,16 @@ async def test_query_v2_endpoint_creates_valid_cache_entry(
 
     Note: We spy on cache storage to verify integration, not to mock it.
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
         patch_db_session: Test database session
         mocker: pytest-mock fixture
+
+    Returns:
+        None
     """
     _ = test_config
     _ = mock_llama_stack_client
@@ -1151,13 +1175,16 @@ async def test_query_v2_endpoint_rejects_query_when_quota_exceeded(
     - Error response contains appropriate message
     - LLM is not called when quota is exceeded
 
-    Args:
+    Parameters:
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
         patch_db_session: Test database session
         mocker: pytest-mock fixture (to simulate quota exceeded)
+
+    Returns:
+        None
     """
     _ = test_config
     _ = mock_llama_stack_client
