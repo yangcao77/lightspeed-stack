@@ -22,6 +22,12 @@ def mock_llama_stack_client_fixture(
 
     This is the only external dependency we mock for integration tests,
     as it represents an external service call.
+
+    Parameters:
+        mocker (pytest_mock.MockerFixture): The pytest-mock fixture used to apply the patch.
+
+    Yields:
+        AsyncMock: A mocked Llama Stack client configured for tests.
     """
     mock_holder_class = mocker.patch("app.endpoints.info.AsyncLlamaStackClientHolder")
 
@@ -52,11 +58,14 @@ async def test_info_endpoint_returns_service_information(
     - Real noop authentication is used
     - Response structure matches expected format
 
-    Args:
+    Parameters:
         test_config: Loads real configuration (required for endpoint to access config)
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
         test_auth: noop authentication tuple
+
+    Returns:
+        None
     """
     # Fixtures with side effects (needed but not directly used)
     _ = test_config
