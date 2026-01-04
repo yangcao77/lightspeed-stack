@@ -24,6 +24,9 @@ def mock_llama_stack_client_fixture(
 
     This is the only external dependency we mock for integration tests,
     as it represents an external service call.
+
+    Returns:
+        mock_client: An AsyncMock representing the Llama Stack client whose `inspect.version` returns an empty list.
     """
     mock_holder_class = mocker.patch("app.endpoints.health.AsyncLlamaStackClientHolder")
 
@@ -50,9 +53,12 @@ async def test_health_liveness(
     - Real noop authentication is used
     - Response structure matches expected format
 
-    Args:
+    Parameters:
         test_config: Loads test configuration
         test_auth: noop authentication tuple
+
+    Returns:
+        None
     """
     _ = test_config
 
@@ -157,10 +163,13 @@ async def test_health_readiness(
     - Real noop authentication is used
     - Response structure matches expected format
 
-    Args:
+    Parameters:
         mock_llama_stack_client_health: Mocked Llama Stack client
         test_response: FastAPI response object
         test_auth: noop authentication tuple
+
+    Returns:
+        None
     """
     _ = mock_llama_stack_client_health
 
