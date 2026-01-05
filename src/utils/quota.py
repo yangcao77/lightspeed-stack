@@ -1,5 +1,7 @@
 """Quota handling helper functions."""
 
+from typing import Optional
+
 import psycopg2
 from fastapi import HTTPException
 
@@ -7,15 +9,19 @@ from log import get_logger
 from models.responses import InternalServerErrorResponse, QuotaExceededResponse
 from quota.quota_exceed_error import QuotaExceedError
 from quota.quota_limiter import QuotaLimiter
+from quota.token_usage_history import TokenUsageHistory
 
 logger = get_logger(__name__)
 
 
 def consume_tokens(
     quota_limiters: list[QuotaLimiter],
+    token_usage_history: Optional[TokenUsageHistory],
     user_id: str,
     input_tokens: int,
     output_tokens: int,
+    model_id: str,
+    provider_id: str,
 ) -> None:
     """Consume tokens from cluster and/or user quotas.
 
@@ -24,10 +30,21 @@ def consume_tokens(
         user_id: Identifier of the user consuming tokens.
         input_tokens: Number of input tokens to consume.
         output_tokens: Number of output tokens to consume.
+        model_id: Model identification
+        provider_id: Provider identification
 
     Returns:
         None
     """
+    # record token usage history
+    if token_usage_history is not None:
+        token_usage_history.consume_tokens(
+            user_id=user_id,
+            provider=provider_id,
+            model=model_id,
+            input_tokens=input_tokens,
+            output_tokens=output_tokens,
+        )
     # consume tokens all configured quota limiters
     for quota_limiter in quota_limiters:
         quota_limiter.consume_tokens(
