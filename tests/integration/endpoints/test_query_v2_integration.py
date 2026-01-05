@@ -1150,7 +1150,9 @@ async def test_query_v2_endpoint_quota_integration(
     mock_consume.assert_called_once()
     consume_args = mock_consume.call_args
     user_id, _, _, _ = test_auth
-    assert consume_args.args[1] == user_id
+    assert consume_args.args[2] == user_id
+    assert consume_args.kwargs["model_id"] == "test-model"
+    assert consume_args.kwargs["provider_id"] == "test-provider"
     assert consume_args.kwargs["input_tokens"] == 100
     assert consume_args.kwargs["output_tokens"] == 50
 
