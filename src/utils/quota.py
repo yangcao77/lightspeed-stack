@@ -14,6 +14,7 @@ from quota.token_usage_history import TokenUsageHistory
 logger = get_logger(__name__)
 
 
+# pylint: disable=R0913,R0917
 def consume_tokens(
     quota_limiters: list[QuotaLimiter],
     token_usage_history: Optional[TokenUsageHistory],
@@ -27,6 +28,7 @@ def consume_tokens(
 
     Parameters:
         quota_limiters: List of quota limiter instances to consume tokens from.
+        token_usage_history: Optional instance of TokenUsageHistory class that records used tokens
         user_id: Identifier of the user consuming tokens.
         input_tokens: Number of input tokens to consume.
         output_tokens: Number of output tokens to consume.
