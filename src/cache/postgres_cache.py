@@ -141,6 +141,15 @@ class PostgresCache(Cache):
         namespace = "public"
         if config.namespace is not None:
             namespace = config.namespace
+            # LCORE-1158 need to be implemented too!
+            # validate namespace contains only valid PostgreSQL identifier characters
+            if not namespace.replace("_", "").replace("$", "").isalnum():
+                raise ValueError(f"Invalid namespace: {namespace}")
+            if len(namespace) > 63:
+                raise ValueError(
+                    f"Invalid namespace: {namespace}. "
+                    "Maximum length is 63 characters."
+                )
         try:
             self.connection = psycopg2.connect(
                 host=config.host,
@@ -176,7 +185,15 @@ class PostgresCache(Cache):
             return False
 
     def initialize_cache(self, namespace: str) -> None:
-        """Initialize cache - clean it up etc."""
+        """Initialize cache and create schema if needed.
+
+        Parameters:
+            namespace: PostgreSQL schema namespace to use for cache tables.
+                      If not "public", the schema will be created if it doesn't exist.
+
+        Raises:
+            CacheError: If the cache is disconnected.
+        """
         if self.connection is None:
             logger.error("Cache is disconnected")
             raise CacheError("Initialize_cache: cache is disconnected")
