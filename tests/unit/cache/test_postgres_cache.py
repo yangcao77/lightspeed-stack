@@ -220,7 +220,7 @@ def test_initialize_cache_when_connected(
     mocker.patch("psycopg2.connect")
     cache = PostgresCache(postgres_cache_config_fixture)
     # should not fail
-    cache.initialize_cache()
+    cache.initialize_cache("public")
 
 
 def test_initialize_cache_when_disconnected(
@@ -234,7 +234,7 @@ def test_initialize_cache_when_disconnected(
     cache.connection = None
 
     with pytest.raises(CacheError, match="cache is disconnected"):
-        cache.initialize_cache()
+        cache.initialize_cache("public")
 
 
 def test_ready_method(
