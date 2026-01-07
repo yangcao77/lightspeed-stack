@@ -129,11 +129,12 @@ llslibdev = [
     #    $ uv run llama stack list-providers
     #
     # API agents: inline::meta-reference
-    "matplotlib>=3.10.0",
-    "pillow>=11.1.0",
-    "pandas>=2.2.3",
-    "scikit-learn>=1.5.2",
-    "psycopg2-binary>=2.9.10",
+    # commented out because they are not used in the project
+    # "matplotlib>=3.10.0",
+    # "pillow>=11.1.0",
+    # "pandas>=2.2.3",
+    # "scikit-learn>=1.5.2",
+    # "psycopg2-binary>=2.9.10",
     # API eval: inline::meta-reference
     "tree_sitter>=0.24.0",
     "pythainlp>=3.0.10",
