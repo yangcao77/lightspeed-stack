@@ -245,7 +245,7 @@ def test_conversation_type_postgres() -> None:
 
 
 def test_conversation_type_postgres_wrong_config() -> None:
-    """Test the SQLite conversation cache configuration.
+    """Test the PostgreSQL conversation cache configuration.
 
     Ensure a ValidationError is raised when PostgreSQL configuration is missing required fields.
 
