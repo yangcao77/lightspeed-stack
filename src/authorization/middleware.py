@@ -64,6 +64,17 @@ def get_authorization_resolvers() -> Tuple[RolesResolver, AccessResolver]:
                 GenericAccessResolver(authorization_cfg.access_rules),
             )
 
+        case constants.AUTH_MOD_RH_IDENTITY:
+            # rh-identity uses access rules for authorization, but doesn't extract
+            # roles from the identity header - all authenticated users get the "*" role
+            if len(authorization_cfg.access_rules) == 0:
+                return NoopRolesResolver(), NoopAccessResolver()
+
+            return (
+                NoopRolesResolver(),
+                GenericAccessResolver(authorization_cfg.access_rules),
+            )
+
         case _:
             response = InternalServerErrorResponse.generic()
             raise HTTPException(**response.model_dump())
