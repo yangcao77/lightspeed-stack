@@ -1,3 +1,5 @@
+SHELL := /bin/bash
+
 ARTIFACT_DIR := $(if $(ARTIFACT_DIR),$(ARTIFACT_DIR),tests/test_results)
 PATH_TO_PLANTUML := ~/bin
 
@@ -114,6 +116,9 @@ konflux-requirements:	## generate hermetic requirements.*.txt file for konflux b
 	./scripts/remove_torch_deps.sh requirements.x86_64.txt
 	./scripts/remove_torch_deps.sh requirements.aarch64.txt
 	echo "torch==${TORCH_VERSION}" | uv pip compile - -o requirements.torch.txt --generate-hashes --python-version 3.12 --torch-backend cpu --emit-index-url --no-deps --index-url https://download.pytorch.org/whl/cpu --refresh
+	uv run pybuild-deps compile --output-file=requirements-build.txt \
+	<(grep -v "^faiss-cpu" requirements.hermetic.txt) \
+	<(grep -v "^faiss-cpu" requirements.x86_64.txt)
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
