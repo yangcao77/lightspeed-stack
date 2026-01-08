@@ -8,7 +8,11 @@ from tests.e2e.utils.utils import normalize_endpoint
 
 @given("I set the Authorization header to {header_value}")
 def set_authorization_header_custom(context: Context, header_value: str) -> None:
-    """Set a custom Authorization header value."""
+    """Set a custom Authorization header value.
+
+    Parameters:
+        header_value (str): The value to set for the `Authorization` header.
+    """
     if not hasattr(context, "auth_headers"):
         context.auth_headers = {}
     context.auth_headers["Authorization"] = header_value
@@ -29,6 +33,10 @@ def access_rest_api_endpoint_post(
     """Send POST HTTP request with payload in the endpoint as parameter to tested service.
 
     The response is stored in `context.response` attribute.
+
+    Parameters:
+        endpoint (str): Endpoint path to call; will be normalized.
+        user_id (str): Value used for the `user_id` query parameter (surrounding quotes are removed).
     """
     endpoint = normalize_endpoint(endpoint)
     user_id = user_id.replace('"', "")
