@@ -17,6 +17,7 @@ from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from log import get_logger
 from models.responses import InternalServerErrorResponse
+from a2a_storage import A2AStorageFactory
 from utils.common import register_mcp_servers_async
 from utils.llama_stack_version import check_llama_stack_version
 
@@ -52,6 +53,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     create_tables()
 
     yield
+
+    # Cleanup resources on shutdown
+    await A2AStorageFactory.cleanup()
+    logger.info("App shutdown complete")
 
 
 app = FastAPI(

@@ -307,6 +307,7 @@ class A2AAgentExecutor(AgentExecutor):
             no_tools=False,
             generate_topic_summary=True,
             media_type=None,
+            vector_store_ids=None,
         )
 
         # Get LLM client and select model
