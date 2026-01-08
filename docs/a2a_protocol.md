@@ -523,6 +523,67 @@ curl -X POST http://localhost:8090/a2a \
 
 > **Important:** The `contextId` must be placed inside the `message` object, not at the `params` level. This is required by the A2A protocol specification for the server to correctly identify and continue the conversation.
 
+### Message Metadata
+
+A2A messages support an optional `metadata` field that can be used to pass additional parameters to control request routing and behavior. The following metadata fields are supported:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `model` | `string` | Specify the LLM model to use for this request (e.g., `"gpt-4"`, `"llama3.1"`) |
+| `provider` | `string` | Specify the LLM provider to use (e.g., `"openai"`, `"watsonx"`) |
+| `vector_store_ids` | `list[string]` | Specify which vector stores to query for RAG. If not provided, all available vector stores are queried |
+
+#### Example: Using Metadata
+
+```bash
+curl -X POST http://localhost:8090/a2a \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "message/send",
+    "params": {
+      "message": {
+        "messageId": "msg-001",
+        "role": "user",
+        "parts": [
+          {"type": "text", "text": "What is a deployment in OpenShift?"}
+        ],
+        "metadata": {
+          "model": "llama3.1",
+          "provider": "together",
+          "vector_store_ids": ["ocp_docs", "knowledge_base"]
+        }
+      }
+    }
+  }'
+```
+
+#### Python Example with Metadata
+
+```python
+payload = {
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "message/send",
+    "params": {
+        "message": {
+            "messageId": "msg-001",
+            "role": "user",
+            "parts": [{"type": "text", "text": "Explain pods"}],
+            "metadata": {
+                "model": "gpt-4",
+                "provider": "openai",
+                "vector_store_ids": ["kubernetes_docs"]
+            }
+        }
+    }
+}
+```
+
+> **Note:** If `model` and `provider` are not specified in metadata, the default model and provider configured in the service will be used. If `vector_store_ids` is not specified, all available vector stores will be queried for RAG.
+
 ### Example: Python Client
 
 ```python

@@ -281,10 +281,15 @@ class A2AAgentExecutor(AgentExecutor):
         preview = user_input[:200] + ("..." if len(user_input) > 200 else "")
         logger.info("Processing A2A request: %s", preview)
 
-        # Extract routing metadata from context
+        # Extract routing metadata from A2A message context.
+        # Supported metadata fields (see docs/a2a_protocol.md for details):
+        #   - model: LLM model to use (e.g., "gpt-4", "llama3.1")
+        #   - provider: LLM provider to use (e.g., "openai", "watsonx")
+        #   - vector_store_ids: list of vector store IDs for RAG queries
         metadata = context.message.metadata if context.message else {}
         model = metadata.get("model") if metadata else None
         provider = metadata.get("provider") if metadata else None
+        vector_store_ids = metadata.get("vector_store_ids") if metadata else None
 
         # Resolve conversation_id from A2A contextId for multi-turn
         a2a_context_id = context_id
@@ -307,7 +312,7 @@ class A2AAgentExecutor(AgentExecutor):
             no_tools=False,
             generate_topic_summary=True,
             media_type=None,
-            vector_store_ids=None,
+            vector_store_ids=vector_store_ids,
         )
 
         # Get LLM client and select model
