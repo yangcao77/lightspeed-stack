@@ -34,7 +34,35 @@ spec:
   - name: build-source-image
     value: 'true'
   - name: prefetch-input
-    value: '[{"type": "rpm", "path": "."}, {"type": "pip", "path": ".", "allow_binary": "true", "requirements_files": ["requirements.x86_64.txt", "requirements.aarch64.txt", "requirements.hermetic.txt", "requirements.torch.txt"]}]'
+    # no source available: torch, faiss-cpu
+    # hermeto prefetch problems: uv, pip, jiter, tiktoken,
+    # to accelerate build:numpy, scipy, pandas, pillow, scikit_learn
+    # those need cmake to build: pyarrow
+    # those need cargo to build: jiter, tiktoken, cryptography, fastuuid, hf_xet, maturin, pydantic_core, rpds_py, safetensors, tokenizers
+    value: |
+     [
+        {
+          "type": "rpm",
+          "path": "."
+        },
+        {
+          "type": "pip",
+          "path": ".",
+          "requirements_files": [
+            "requirements.x86_64.txt",
+            "requirements.aarch64.txt",
+            "requirements.hermetic.txt",
+            "requirements.torch.txt"
+          ],
+          "requirements_build_files": ["requirements-build.txt"],
+          "binary": {
+            "packages": "torch,faiss-cpu,uv,pip,jiter,tiktoken,numpy,scipy,pandas,pillow,scikit_learn,pyarrow,cryptography,fastuuid,hf_xet,maturin,pydantic_core,rpds_py,safetensors,tokenizers",
+            "os": "linux",
+            "arch": "x86_64,aarch64",
+            "py_version": "312"
+          }
+        }
+      ]
   - name: hermetic
     value: 'true'
   - name: dockerfile
