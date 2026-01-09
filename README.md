@@ -64,6 +64,7 @@ The service includes comprehensive user data collection capabilities for various
     * [OpenAPI specification](#openapi-specification)
     * [Readiness Endpoint](#readiness-endpoint)
     * [Liveness Endpoint](#liveness-endpoint)
+* [Database structure](#database-structure)
 * [Publish the service as Python package on PyPI](#publish-the-service-as-python-package-on-pypi)
     * [Generate distribution archives to be uploaded into Python registry](#generate-distribution-archives-to-be-uploaded-into-python-registry)
     * [Upload distribution archives into selected Python registry](#upload-distribution-archives-into-selected-python-registry)
@@ -835,6 +836,10 @@ The liveness endpoint performs a basic health check to verify the service is ali
   "alive": true
 }
 ```
+
+# Database structure
+
+Database structure is described on [this page](https://lightspeed-core.github.io/lightspeed-stack/DB/index.html)
 
 # Publish the service as Python package on PyPI
 
