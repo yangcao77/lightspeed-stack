@@ -14,8 +14,8 @@ def resolve_authorization_headers(
 
     Parameters:
         authorization_headers: Map of header names to secret locations or special keywords.
-            - If value is "kubernetes": live is unchanged. We substitute it during request.
-            - If value is "client": live it unchanged. . We substitute it during request.
+            - If value is "kubernetes": leave is unchanged. We substitute it during request.
+            - If value is "client": leave it unchanged. . We substitute it during request.
             - Otherwise: Treat as file path and read the secret from that file
 
     Returns:
@@ -37,6 +37,7 @@ def resolve_authorization_headers(
     resolved: dict[str, str] = {}
 
     for header_name, value in authorization_headers.items():
+        value = value.strip()
         try:
             if value == "kubernetes":
                 # Special case: Keep kubernetes keyword for later substitution
@@ -54,10 +55,16 @@ def resolve_authorization_headers(
                 )
             else:
                 # Regular case: Read secret from file path
-                secret_path = Path(value)
+                secret_path = Path(value).expanduser()
                 if secret_path.exists() and secret_path.is_file():
-                    with open(secret_path, "r", encoding="utf-8") as secret_file:
-                        secret_value = secret_file.read().strip()
+                    secret_value = secret_path.read_text(encoding="utf-8").strip()
+                    if not secret_value:
+                        logger.warning(
+                            "Secret file %s for header %s is empty",
+                            secret_path,
+                            header_name,
+                        )
+                    else:
                         resolved[header_name] = secret_value
                         logger.debug(
                             "Resolved header %s from secret file %s",
@@ -70,12 +77,11 @@ def resolve_authorization_headers(
                         secret_path,
                         header_name,
                     )
-        except Exception as e:  # pylint: disable=broad-except
-            logger.error(
-                "Failed to resolve authorization header %s with value %s: %s",
+        except Exception:  # pylint: disable=broad-except
+            # Don't log value: it might be a literal token.
+            logger.exception(
+                "Failed to resolve authorization header %s (value treated as path)",
                 header_name,
-                value,
-                e,
             )
 
     return resolved

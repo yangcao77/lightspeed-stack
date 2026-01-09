@@ -21,6 +21,7 @@ from pydantic import (
     PositiveInt,
     NonNegativeInt,
     SecretStr,
+    PrivateAttr,
 )
 
 from pydantic.dataclasses import dataclass
@@ -478,18 +479,14 @@ class ModelContextProtocolServer(ConfigurationBase):
         ),
     )
 
-    resolved_authorization_headers: dict[str, str] = Field(
-        default_factory=dict,
-        init=False,
-        title="Resolved authorization headers",
-        description=(
-            "Resolved authorization headers with file paths converted to actual values. "
-            "This field is automatically populated from authorization_headers. "
-            "Special values 'kubernetes' and 'client' are preserved for runtime substitution."
-        ),
-    )
+    _resolved_authorization_headers: dict[str, str] = PrivateAttr(default_factory=dict)
 
-    timeout: int | None = Field(
+    @property
+    def resolved_authorization_headers(self) -> dict[str, str]:
+        """Resolved authorization headers (computed from authorization_headers)."""
+        return self._resolved_authorization_headers
+
+    timeout: Optional[PositiveInt] = Field(
         default=None,
         title="Request timeout",
         description=(
@@ -512,7 +509,7 @@ class ModelContextProtocolServer(ConfigurationBase):
             Self: The model instance with resolved_authorization_headers populated.
         """
         if self.authorization_headers:
-            self.resolved_authorization_headers = resolve_authorization_headers(
+            self._resolved_authorization_headers = resolve_authorization_headers(
                 self.authorization_headers
             )
         return self
@@ -1644,7 +1641,7 @@ class Configuration(ConfigurationBase):
         description="Quota handlers configuration",
     )
 
-    def dump(self, filename: str = "configuration.json") -> None:
+    def dump(self, filename: str | Path = "configuration.json") -> None:
         """
         Write the current Configuration model to a JSON file.
 
@@ -1653,7 +1650,7 @@ class Configuration(ConfigurationBase):
         file exists it will be overwritten.
 
         Parameters:
-            filename (str): Path to the output file (defaults to "configuration.json").
+            filename (str | Path): Path to the output file (defaults to "configuration.json").
         """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))
