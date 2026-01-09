@@ -24,26 +24,32 @@ src/
 │   ├── sqlite_context_store.py     # SQLite implementation
 │   ├── postgres_context_store.py   # PostgreSQL implementation
 │   └── storage_factory.py          # Factory for creating stores
-├── auth/                 # Authentication modules (k8s, jwk, noop)
+├── authentication/       # Authentication modules (k8s, jwk, noop, rh-identity)
 ├── authorization/        # Authorization middleware & resolvers
 ├── cache/                # Conversation cache implementations
+├── quota/                # Quota limiter and token usage tracking
+├── metrics/              # Prometheus metrics
+├── runners/              # Agent runners
 ├── models/               # Pydantic models
 │   ├── config.py         # Configuration classes
 │   ├── requests.py       # Request models
-│   └── responses.py      # Response models
+│   ├── responses.py      # Response models
+│   └── database/         # Database models
 ├── utils/                # Utility functions
-├── client.py             # Llama Stack client wrapper
-└── configuration.py      # Config management
+├── client.py             # Llama Stack client wrapper (Singleton)
+├── configuration.py      # Config management (Singleton)
+└── constants.py          # Shared constants
 ```
 
 ### Coding Standards
 
 #### Imports & Dependencies
-- Use absolute imports for internal modules: `from auth import get_auth_dependency`
+- Use absolute imports for internal modules: `from authentication import get_auth_dependency`
 - FastAPI dependencies: `from fastapi import APIRouter, HTTPException, Request, status, Depends`
 - Llama Stack imports: `from llama_stack_client import AsyncLlamaStackClient`
 - **ALWAYS** check `pyproject.toml` for existing dependencies before adding new ones
 - **ALWAYS** verify current library versions in `pyproject.toml` rather than assuming versions
+- Check `constants.py` for shared constants before defining new ones
 
 #### Module Standards
 - All modules start with descriptive docstrings explaining purpose
@@ -167,7 +173,7 @@ uv run make test-e2e         # End-to-end tests
 ### Linting Tools
 - **black**: Code formatting
 - **pylint**: Static analysis (`source-roots = "src"`)
-- **pyright**: Type checking (excludes `src/auth/k8s.py`)
+- **pyright**: Type checking (excludes `src/authentication/k8s.py`)
 - **ruff**: Fast linter
 - **pydocstyle**: Docstring style
 - **mypy**: Additional type checking
