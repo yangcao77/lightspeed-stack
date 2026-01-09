@@ -11,10 +11,10 @@ from typing import Annotated, Any, AsyncGenerator, AsyncIterator, Iterator, cast
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
-from litellm.exceptions import RateLimitError
 from llama_stack_client import (
     APIConnectionError,
-    AsyncLlamaStackClient,  # type: ignore
+    AsyncLlamaStackClient,
+    RateLimitError,  # type: ignore
 )
 from llama_stack_client.types import UserMessage  # type: ignore
 from llama_stack_client.types.alpha.agents.agent_turn_response_stream_chunk import (

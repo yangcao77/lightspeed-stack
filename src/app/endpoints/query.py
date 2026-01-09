@@ -8,11 +8,11 @@ from datetime import UTC, datetime
 from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from litellm.exceptions import RateLimitError
 from llama_stack_client import (
     APIConnectionError,
     APIStatusError,
-    AsyncLlamaStackClient,  # type: ignore
+    AsyncLlamaStackClient,
+    RateLimitError,  # type: ignore
 )
 from llama_stack_client.types import Shield, UserMessage  # type: ignore
 from llama_stack_client.types.alpha.agents.turn import Turn

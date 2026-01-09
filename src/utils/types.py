@@ -100,6 +100,14 @@ class GraniteToolParser(ToolParser):
         return None
 
 
+class ShieldModerationResult(BaseModel):
+    """Result of shield moderation check."""
+
+    blocked: bool
+    message: str | None = None
+    shield_model: str | None = None
+
+
 class ToolCallSummary(BaseModel):
     """Model representing a tool call made during response generation (for tool_calls list)."""
 

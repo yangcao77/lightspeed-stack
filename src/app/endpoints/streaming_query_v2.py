@@ -6,8 +6,14 @@ from typing import Annotated, Any, AsyncIterator, cast
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from llama_stack.apis.agents.openai_responses import (
+    OpenAIResponseContentPartOutputText,
+    OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
+    OpenAIResponseObjectStreamResponseCompleted,
+    OpenAIResponseObjectStreamResponseContentPartAdded,
+    OpenAIResponseObjectStreamResponseOutputTextDelta,
+    OpenAIResponseOutputMessageContentOutputText,
 )
 from llama_stack_client import AsyncLlamaStackClient
 
@@ -53,7 +59,10 @@ from utils.endpoints import (
 from utils.quota import consume_tokens, get_available_quotas
 from utils.suid import normalize_conversation_id, to_llama_stack_conversation_id
 from utils.mcp_headers import mcp_headers_dependency
-from utils.shields import detect_shield_violations, get_available_shields
+from utils.shields import (
+    append_turn_to_conversation,
+    run_shield_moderation,
+)
 from utils.token_counter import TokenCounter
 from utils.transcripts import store_transcript
 from utils.types import ToolCallSummary, TurnSummary
@@ -234,12 +243,6 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
                 # Capture the response object for token usage extraction
                 latest_response_object = getattr(chunk, "response", None)
 
-                # Check for shield violations in the completed response
-                if latest_response_object:
-                    output = getattr(latest_response_object, "output", None)
-                    if output is not None:
-                        detect_shield_violations(output)
-
                 if not emitted_turn_complete:
                     final_message = summary.llm_response or "".join(text_parts)
                     if not final_message:
@@ -394,9 +397,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals
         tuple: A tuple containing the streaming response object
         and the conversation ID.
     """
-    # List available shields for Responses API
-    available_shields = await get_available_shields(client)
-
     # use system prompt from request or default one
     system_prompt = get_system_prompt(query_request, configuration)
     logger.debug("Using system prompt: %s", system_prompt)
@@ -441,6 +441,18 @@ async def retrieve_response(  # pylint: disable=too-many-locals
             conversation_id,
         )
 
+    # Run shield moderation before calling LLM
+    moderation_result = await run_shield_moderation(client, input_text)
+    if moderation_result.blocked:
+        violation_message = moderation_result.message or ""
+        await append_turn_to_conversation(
+            client, llama_stack_conv_id, input_text, violation_message
+        )
+        return (
+            create_violation_stream(violation_message, moderation_result.shield_model),
+            normalize_conversation_id(conversation_id),
+        )
+
     create_params: dict[str, Any] = {
         "input": input_text,
         "model": model_id,
@@ -451,14 +463,58 @@ async def retrieve_response(  # pylint: disable=too-many-locals
         "conversation": llama_stack_conv_id,
     }
 
-    # Add shields to extra_body if available
-    if available_shields:
-        create_params["extra_body"] = {"guardrails": available_shields}
-
     response = await client.responses.create(**create_params)
     response_stream = cast(AsyncIterator[OpenAIResponseObjectStream], response)
-    # async for chunk in response_stream:
-    #     logger.error("Chunk: %s", chunk.model_dump_json())
-    # Return the normalized conversation_id
-    # The response_generator will emit it in the start event
+
     return response_stream, normalize_conversation_id(conversation_id)
+
+
+async def create_violation_stream(
+    message: str,
+    shield_model: str | None = None,
+) -> AsyncIterator[OpenAIResponseObjectStream]:
+    """Generate a minimal streaming response for cases where input is blocked by a shield.
+
+    This yields only the essential streaming events to indicate that the input was rejected.
+    Dummy item identifiers are used solely for protocol compliance and are not used later.
+    """
+    response_id = "resp_shield_violation"
+
+    # Content part added (triggers empty initial token)
+    yield OpenAIResponseObjectStreamResponseContentPartAdded(
+        content_index=0,
+        response_id=response_id,
+        item_id="msg_shield_violation_1",
+        output_index=0,
+        part=OpenAIResponseContentPartOutputText(text=""),
+        sequence_number=0,
+    )
+
+    # Text delta
+    yield OpenAIResponseObjectStreamResponseOutputTextDelta(
+        content_index=1,
+        delta=message,
+        item_id="msg_shield_violation_2",
+        output_index=1,
+        sequence_number=1,
+    )
+
+    # Completed response
+    yield OpenAIResponseObjectStreamResponseCompleted(
+        response=OpenAIResponseObject(
+            id=response_id,
+            created_at=0,  # not used
+            model=shield_model or "shield",
+            output=[
+                OpenAIResponseMessage(
+                    id="msg_shield_violation_3",
+                    content=[
+                        OpenAIResponseOutputMessageContentOutputText(text=message)
+                    ],
+                    role="assistant",
+                    status="completed",
+                )
+            ],
+            status="completed",
+        )
+    )

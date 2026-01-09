@@ -106,6 +106,7 @@ def check_shield_structure(context: Context) -> None:
     assert found_shield is not None, "No shield found in response"
 
     expected_model = context.default_model
+    expected_provider = context.default_provider
 
     # Validate structure and values
     assert found_shield["type"] == "shield", "type should be 'shield'"
@@ -113,11 +114,14 @@ def check_shield_structure(context: Context) -> None:
         found_shield["provider_id"] == "llama-guard"
     ), "provider_id should be 'llama-guard'"
     assert (
-        found_shield["provider_resource_id"] == expected_model
-    ), f"provider_resource_id should be '{expected_model}', but is '{found_shield["provider_resource_id"]}'"
+        found_shield["provider_resource_id"] == f"{expected_provider}/{expected_model}"
+    ), (
+        f"provider_resource_id should be '{expected_provider}/{expected_model}', "
+        f"but is '{found_shield['provider_resource_id']}'"
+    )
     assert (
-        found_shield["identifier"] == "llama-guard-shield"
-    ), f"identifier should be 'llama-guard-shield', but is '{found_shield["identifier"]}'"
+        found_shield["identifier"] == "llama-guard"
+    ), f"identifier should be 'llama-guard', but is '{found_shield["identifier"]}'"
 
 
 @then("The response contains {count:d} tools listed for provider {provider_name}")

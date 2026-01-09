@@ -79,6 +79,10 @@ providers:
     config:
       project: ${env.VERTEX_AI_PROJECT}
       location: ${env.VERTEX_AI_LOCATION}
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY}
   - config: {}
     provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
@@ -133,7 +137,10 @@ storage:
       backend: kv_default
 registered_resources:
   models: []
-  shields: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: llama-guard
+    provider_shield_id: openai/gpt-4o-mini
   vector_dbs: []
   datasets: []
   scoring_fns: []

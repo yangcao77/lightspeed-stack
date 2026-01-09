@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, Request
 from llama_stack.apis.agents.openai_responses import (
     OpenAIResponseObject,
 )
-from llama_stack_client import AsyncLlamaStackClient  # type: ignore
+from llama_stack_client import AsyncLlamaStackClient
 
 import metrics
 from app.endpoints.query import (
@@ -42,7 +42,10 @@ from utils.endpoints import (
 )
 from utils.mcp_headers import mcp_headers_dependency
 from utils.responses import extract_text_from_response_output_item
-from utils.shields import detect_shield_violations, get_available_shields
+from utils.shields import (
+    append_turn_to_conversation,
+    run_shield_moderation,
+)
 from utils.suid import normalize_conversation_id, to_llama_stack_conversation_id
 from utils.token_counter import TokenCounter
 from utils.types import RAGChunk, ToolCallSummary, ToolResultSummary, TurnSummary
@@ -322,9 +325,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         and the conversation ID, the list of parsed referenced documents,
         and token usage information.
     """
-    # List available shields for Responses API
-    available_shields = await get_available_shields(client)
-
     # use system prompt from request or default one
     system_prompt = get_system_prompt(query_request, configuration)
     logger.debug("Using system prompt: %s", system_prompt)
@@ -370,6 +370,26 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
             conversation_id,
         )
 
+    # Run shield moderation before calling LLM
+    moderation_result = await run_shield_moderation(client, input_text)
+    if moderation_result.blocked:
+        violation_message = moderation_result.message or ""
+        await append_turn_to_conversation(
+            client, llama_stack_conv_id, input_text, violation_message
+        )
+        summary = TurnSummary(
+            llm_response=violation_message,
+            tool_calls=[],
+            tool_results=[],
+            rag_chunks=[],
+        )
+        return (
+            summary,
+            normalize_conversation_id(conversation_id),
+            [],
+            TokenCounter(),
+        )
+
     # Create OpenAI response using responses API
     create_kwargs: dict[str, Any] = {
         "input": input_text,
@@ -380,10 +400,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         "store": True,
         "conversation": llama_stack_conv_id,
     }
-
-    # Add shields to extra_body if available
-    if available_shields:
-        create_kwargs["extra_body"] = {"guardrails": available_shields}
 
     response = await client.responses.create(**create_kwargs)
     response = cast(OpenAIResponseObject, response)
@@ -409,9 +425,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
             tool_calls.append(tool_call)
         if tool_result:
             tool_results.append(tool_result)
-
-    # Check for shield violations across all output items
-    detect_shield_violations(response.output)
 
     logger.info(
         "Response processing complete - Tool calls: %d, Response length: %d chars",

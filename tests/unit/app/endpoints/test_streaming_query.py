@@ -8,8 +8,8 @@ from typing import Any, cast
 import pytest
 from fastapi import HTTPException, Request, status
 from fastapi.responses import StreamingResponse
-from litellm.exceptions import RateLimitError
-from llama_stack_client import APIConnectionError
+import httpx
+from llama_stack_client import APIConnectionError, RateLimitError
 from llama_stack_client.types import UserMessage  # type: ignore
 from llama_stack_client.types.alpha.agents.turn import Turn
 from llama_stack_client.types.alpha.shield_call_step import ShieldCallStep
@@ -2075,7 +2075,7 @@ async def test_query_endpoint_quota_exceeded(mocker: MockerFixture) -> None:
     query_request = QueryRequest(
         query="What is OpenStack?",
         provider="openai",
-        model="gpt-4-turbo",
+        model="gpt-4o-mini",
     )  # type: ignore
     request = Request(scope={"type": "http"})
     request.state.authorized_actions = set()
@@ -2084,8 +2084,11 @@ async def test_query_endpoint_quota_exceeded(mocker: MockerFixture) -> None:
     mock_client.shields.list = mocker.AsyncMock(return_value=[])
     mock_client.vector_stores.list = mocker.AsyncMock(return_value=mocker.Mock(data=[]))
     mock_agent = mocker.AsyncMock()
+    mock_response = httpx.Response(429, request=httpx.Request("POST", "http://test"))
     mock_agent.create_turn.side_effect = RateLimitError(
-        model="gpt-4-turbo", llm_provider="openai", message=""
+        "Rate limit exceeded for model gpt-4o-mini",
+        response=mock_response,
+        body=None,
     )
     mocker.patch(
         "app.endpoints.streaming_query.get_agent",
@@ -2093,7 +2096,7 @@ async def test_query_endpoint_quota_exceeded(mocker: MockerFixture) -> None:
     )
     mocker.patch(
         "app.endpoints.streaming_query.select_model_and_provider_id",
-        return_value=("openai/gpt-4-turbo", "gpt-4-turbo", "openai"),
+        return_value=("openai/gpt-4o-mini", "gpt-4o-mini", "openai"),
     )
     mocker.patch("app.endpoints.streaming_query.validate_model_provider_override")
     mocker.patch(
@@ -2136,8 +2139,8 @@ async def test_query_endpoint_quota_exceeded(mocker: MockerFixture) -> None:
     content_str = content.decode()
     # The error is formatted as SSE: data: {"event":"error","response":"...","cause":"..."}\n\n
     # Check for the error message in the content
-    assert "The model quota has been exceeded" in content_str
-    assert "gpt-4-turbo" in content_str
+    assert "The quota has been exceeded" in content_str
+    assert "gpt-4o-mini" in content_str
 
 
 # ============================================================================
