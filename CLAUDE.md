@@ -69,7 +69,7 @@ src/
 - **Type Annotations**: Complete type annotations for parameters and return types
   - Use `typing_extensions.Self` for model validators
   - Union types: `str | int` (modern syntax)
-  - Optional: `Optional[Type]` or `Type | None`
+  - Optional: `Optional[Type]`
 - **Naming**: Use snake_case with descriptive, action-oriented names (get_, validate_, check_)
 - **Return Values**: **CRITICAL** - Avoid in-place parameter modification anti-patterns:
   ```python
