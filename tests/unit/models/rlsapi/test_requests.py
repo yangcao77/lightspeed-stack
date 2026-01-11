@@ -1,7 +1,7 @@
 # pylint: disable=no-member
 """Unit tests for rlsapi v1 request models."""
 
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -269,7 +269,9 @@ class TestRlsapiV1InferRequest:
             ),
         ],
     )
-    def test_question_validation(self, question: str | None, error_match: str) -> None:
+    def test_question_validation(
+        self, question: Optional[str], error_match: str
+    ) -> None:
         """Test question field validation for various invalid inputs."""
         with pytest.raises(ValidationError, match=error_match):
             if question is None:

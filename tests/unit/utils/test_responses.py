@@ -1,7 +1,7 @@
 """Unit tests for utils/responses.py functions."""
 
 from types import SimpleNamespace
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 
@@ -9,7 +9,7 @@ from utils.responses import extract_text_from_response_output_item
 
 
 def make_output_item(
-    item_type: str | None = None, role: str | None = None, content: Any = None
+    item_type: Optional[str] = None, role: Optional[str] = None, content: Any = None
 ) -> SimpleNamespace:
     """Create a mock Responses API output item.
 
@@ -25,7 +25,7 @@ def make_output_item(
 
 
 def make_content_part(
-    text: str | None = None, refusal: str | None = None
+    text: Optional[str] = None, refusal: Optional[str] = None
 ) -> SimpleNamespace:
     """Create a mock content part for message content.
 

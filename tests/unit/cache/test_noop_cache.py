@@ -1,5 +1,7 @@
 """Unit tests for NoopCache class."""
 
+from typing import Optional
+
 import pytest
 
 from models.cache_entry import CacheEntry
@@ -198,21 +200,21 @@ improper_user_uuids = [
 
 
 @pytest.mark.parametrize("uuid", improper_user_uuids)
-def test_list_improper_user_id(cache_fixture: NoopCache, uuid: str | None) -> None:
+def test_list_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> None:
     """Test list with invalid user ID."""
     with pytest.raises(ValueError, match=f"Invalid user ID {uuid}"):
         cache_fixture.list(uuid)
 
 
 @pytest.mark.parametrize("uuid", improper_user_uuids)
-def test_delete_improper_user_id(cache_fixture: NoopCache, uuid: str | None) -> None:
+def test_delete_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> None:
     """Test delete with invalid user ID."""
     with pytest.raises(ValueError, match=f"Invalid user ID {uuid}"):
         cache_fixture.delete(uuid, CONVERSATION_ID)
 
 
 @pytest.mark.parametrize("uuid", improper_user_uuids)
-def test_get_improper_user_id(cache_fixture: NoopCache, uuid: str | None) -> None:
+def test_get_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> None:
     """Test how improper user ID is handled."""
     with pytest.raises(ValueError, match=f"Invalid user ID {uuid}"):
         cache_fixture.get(uuid, CONVERSATION_ID)
