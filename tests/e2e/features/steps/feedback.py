@@ -1,5 +1,7 @@
 """Implementation of common test steps for the feedback API."""
 
+from typing import Optional
+
 from behave import given, when, step  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 import requests
@@ -71,7 +73,7 @@ def submit_feedback_without_conversation(context: Context) -> None:
 
 
 def access_feedback_post_endpoint(
-    context: Context, conversation_id: str | None
+    context: Context, conversation_id: Optional[str]
 ) -> None:
     """Send POST HTTP request with JSON payload to tested service."""
     endpoint = "feedback"
