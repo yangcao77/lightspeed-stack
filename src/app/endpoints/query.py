@@ -363,7 +363,7 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
                 truncated=False,  # TODO(lucasagomes): implement truncation as part of quota work
                 attachments=query_request.attachments or [],
             )
-
+    
         logger.info("Persisting conversation details...")
         persist_user_conversation_details(
             user_id=user_id,
@@ -374,7 +374,6 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
         )
 
         completed_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-
         cache_entry = CacheEntry(
             query=query_request.query,
             response=summary.llm_response,
@@ -383,6 +382,8 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
             started_at=started_at,
             completed_at=completed_at,
             referenced_documents=referenced_documents if referenced_documents else None,
+            tool_calls=summary.tool_calls if summary.tool_calls else None,
+            tool_results=summary.tool_results if summary.tool_results else None,
         )
 
         consume_tokens(
