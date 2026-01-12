@@ -68,7 +68,7 @@ class GraniteToolParser(ToolParser):
         Return the `tool_calls` list from a CompletionMessage, or an empty list if none are present.
 
         Parameters:
-            output_message (AgentCompletionMessage | None): Completion
+            output_message (Optional[AgentCompletionMessage]): Completion
             message potentially containing `tool_calls`.
 
         Returns:
@@ -129,8 +129,8 @@ class RAGChunk(BaseModel):
     """Model representing a RAG chunk used in the response."""
 
     content: str = Field(description="The content of the chunk")
-    source: str | None = Field(None, description="Source document or URL")
-    score: float | None = Field(None, description="Relevance score")
+    source: Optional[str] = Field(None, description="Source document or URL")
+    score: Optional[float] = Field(None, description="Relevance score")
 
 
 class TurnSummary(BaseModel):
