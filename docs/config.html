@@ -176,6 +176,43 @@
     <h1 id="lightspeed-core-stack">Lightspeed Core Stack</h1>
     <hr/>
     <h1 id="configuration-schema">&#x1F4CB; Configuration schema</h1>
+    <h2 id="a2astateconfiguration">A2AStateConfiguration</h2>
+    <p>A2A protocol persistent state configuration.</p>
+    <p>Configures how A2A task state and context-to-conversation mappings
+are stored. For multi-worker deployments, use SQLite or PostgreSQL to
+ensure state is shared across all workers.</p>
+    <p>If no configuration is provided, in-memory storage is used (default).
+This is suitable for single-worker deployments but state will be lost on
+restarts and not shared across workers.</p>
+    <p>Attributes: sqlite: SQLite database configuration for A2A state
+storage. postgres: PostgreSQL database configuration for A2A state
+storage.</p>
+    <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
+      <thead>
+        <tr class="header">
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td>sqlite</td>
+          <td/>
+          <td>SQLite database configuration for A2A state storage.</td>
+        </tr>
+        <tr class="even">
+          <td>postgres</td>
+          <td/>
+          <td>PostgreSQL database configuration for A2A state storage.</td>
+        </tr>
+      </tbody>
+    </table>
     <h2 id="apikeytokenconfiguration">APIKeyTokenConfiguration</h2>
     <p>API Key Token configuration.</p>
     <table>
@@ -491,6 +528,11 @@ endpoints), the default provider and model are used.</td>
 reconfigure Llama Stack through its run.yaml configuration file</td>
         </tr>
         <tr class="odd">
+          <td>a2a_state</td>
+          <td/>
+          <td>Configuration for A2A protocol persistent state storage.</td>
+        </tr>
+        <tr class="even">
           <td>quota_handlers</td>
           <td/>
           <td>Quota handlers configuration</td>
@@ -588,6 +630,16 @@ stored.</td>
         <tr class="even">
           <td>system_prompt</td>
           <td>string</td>
+          <td/>
+        </tr>
+        <tr class="odd">
+          <td>agent_card_path</td>
+          <td>string</td>
+          <td/>
+        </tr>
+        <tr class="even">
+          <td>agent_card_config</td>
+          <td>object</td>
           <td/>
         </tr>
         <tr class="odd">
@@ -1217,31 +1269,37 @@ workers are specified, the service can handle requests concurrently.</p>
           <td>Service port</td>
         </tr>
         <tr class="odd">
+          <td>base_url</td>
+          <td>string</td>
+          <td>Externally reachable base URL for the service; needed for A2A
+support.</td>
+        </tr>
+        <tr class="even">
           <td>auth_enabled</td>
           <td>boolean</td>
           <td>Enables the authentication subsystem</td>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>workers</td>
           <td>integer</td>
           <td>Number of Uvicorn worker processes to start</td>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>color_log</td>
           <td>boolean</td>
           <td>Enables colorized logging</td>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>access_log</td>
           <td>boolean</td>
           <td>Enables logging of all access information</td>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>tls_config</td>
           <td/>
           <td>Transport Layer Security configuration for HTTPS support</td>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>cors</td>
           <td/>
           <td>Cross-Origin Resource Sharing configuration for cross-domain
