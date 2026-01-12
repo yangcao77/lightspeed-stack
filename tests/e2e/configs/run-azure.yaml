@@ -80,6 +80,10 @@ providers:
       api_key: ${env.AZURE_API_KEY}
       api_base: https://ols-test.openai.azure.com/
       api_version: 2024-02-15-preview
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY}
   - config: {}
     provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
@@ -138,7 +142,10 @@ registered_resources:
     provider_id: azure
     model_type: llm
     provider_model_id: gpt-4o-mini
-  shields: []
+  shields:
+  - shield_id: llama-guard
+    provider_id: llama-guard
+    provider_shield_id: openai/gpt-4o-mini
   vector_dbs: []
   datasets: []
   scoring_fns: []

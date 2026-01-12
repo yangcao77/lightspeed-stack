@@ -131,8 +131,15 @@ storage:
       namespace: prompts
       backend: kv_default
 registered_resources:
-  models: []
-  shields: []
+  models:
+  - model_id: gpt-4o-mini
+    provider_id: openai
+    model_type: llm
+    provider_model_id: gpt-4o-mini
+  shields:
+  - shield_id: llama-guard
+    provider_id: llama-guard
+    provider_shield_id: openai/gpt-4o-mini
   vector_dbs: []
   datasets: []
   scoring_fns: []

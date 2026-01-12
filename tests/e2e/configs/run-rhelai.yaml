@@ -24,6 +24,10 @@ providers:
   - provider_id: sentence-transformers
     provider_type: inline::sentence-transformers
     config: {}
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY}
   vector_io:
   - provider_id: documentation_faiss
     provider_type: inline::faiss
@@ -130,14 +134,10 @@ registered_resources:
     provider_id: vllm
     model_type: llm
     provider_model_id: ${env.RHEL_AI_MODEL}
-
   shields:
   - shield_id: llama-guard
-    provider_id: ${env.SAFETY_MODEL:+llama-guard}
-    provider_shield_id: ${env.SAFETY_MODEL:=}
-  - shield_id: code-scanner
-    provider_id: ${env.CODE_SCANNER_MODEL:+code-scanner}
-    provider_shield_id: ${env.CODE_SCANNER_MODEL:=}
+    provider_id: llama-guard
+    provider_shield_id: openai/gpt-4o-mini
   datasets: []
   scoring_fns: []
   benchmarks: []

@@ -9,8 +9,8 @@ from typing import Any
 
 import pytest
 from fastapi import HTTPException, Request, status
-from litellm.exceptions import RateLimitError
-from llama_stack_client import APIConnectionError
+import httpx
+from llama_stack_client import APIConnectionError, RateLimitError
 from llama_stack_client.types import UserMessage  # type: ignore
 from llama_stack_client.types.alpha.agents.turn import Turn
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
@@ -2415,13 +2415,16 @@ async def test_query_endpoint_quota_exceeded(
     query_request = QueryRequest(
         query="What is OpenStack?",
         provider="openai",
-        model="gpt-4-turbo",
+        model="gpt-4o-mini",
     )  # type: ignore
     mock_client = mocker.AsyncMock()
     mock_client.models.list = mocker.AsyncMock(return_value=[])
     mock_agent = mocker.AsyncMock()
+    mock_response = httpx.Response(429, request=httpx.Request("POST", "http://test"))
     mock_agent.create_turn.side_effect = RateLimitError(
-        model="gpt-4-turbo", llm_provider="openai", message=""
+        "Rate limit exceeded for model gpt-4o-mini",
+        response=mock_response,
+        body=None,
     )
     mocker.patch(
         "app.endpoints.query.get_agent",
@@ -2429,7 +2432,7 @@ async def test_query_endpoint_quota_exceeded(
     )
     mocker.patch(
         "app.endpoints.query.select_model_and_provider_id",
-        return_value=("openai/gpt-4-turbo", "gpt-4-turbo", "openai"),
+        return_value=("openai/gpt-4o-mini", "gpt-4o-mini", "openai"),
     )
     mocker.patch("app.endpoints.query.validate_model_provider_override")
     mocker.patch(
@@ -2450,8 +2453,8 @@ async def test_query_endpoint_quota_exceeded(
     assert exc_info.value.status_code == status.HTTP_429_TOO_MANY_REQUESTS
     detail = exc_info.value.detail
     assert isinstance(detail, dict)
-    assert detail["response"] == "The model quota has been exceeded"  # type: ignore
-    assert "gpt-4-turbo" in detail["cause"]  # type: ignore
+    assert detail["response"] == "The quota has been exceeded"  # type: ignore
+    assert "gpt-4o-mini" in detail["cause"]  # type: ignore
 
 
 async def test_query_endpoint_generate_topic_summary_default_true(
