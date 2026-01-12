@@ -9,9 +9,9 @@ from cache.cache_error import CacheError
 from models.cache_entry import CacheEntry
 from models.config import PostgreSQLDatabaseConfiguration
 from models.responses import ConversationData, ReferencedDocument
+from utils.connection_decorator import connection
 from utils.types import ToolCallSummary, ToolResultSummary
 from log import get_logger
-from utils.connection_decorator import connection
 
 logger = get_logger("cache.postgres_cache")
 
@@ -227,7 +227,7 @@ class PostgresCache(Cache):
         self.connection.commit()
 
     @connection
-    def get(
+    def get(  # pylint: disable=R0914
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> list[CacheEntry]:
         """Get the value associated with the given key.
@@ -363,7 +363,8 @@ class PostgresCache(Cache):
                     tool_calls_json = json.dumps(tool_calls_as_dicts)
                 except (TypeError, ValueError) as e:
                     logger.warning(
-                        "Failed to serialize tool_calls for " "conversation %s: %s",
+                        "Failed to serialize tool_calls for "
+                        "conversation %s: %s",
                         conversation_id,
                         e,
                     )
@@ -377,7 +378,8 @@ class PostgresCache(Cache):
                     tool_results_json = json.dumps(tool_results_as_dicts)
                 except (TypeError, ValueError) as e:
                     logger.warning(
-                        "Failed to serialize tool_results for " "conversation %s: %s",
+                        "Failed to serialize tool_results for "
+                        "conversation %s: %s",
                         conversation_id,
                         e,
                     )
