@@ -1,6 +1,7 @@
 """Abstract base class for A2A context-to-conversation mapping storage."""
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class A2AContextStore(ABC):
@@ -14,7 +15,7 @@ class A2AContextStore(ABC):
     """
 
     @abstractmethod
-    async def get(self, context_id: str) -> str | None:
+    async def get(self, context_id: str) -> Optional[str]:
         """Retrieve the conversation ID for an A2A context.
 
         Args:

@@ -1,6 +1,7 @@
 """SQLite implementation of A2A context store."""
 
 import logging
+from typing import Optional
 
 from sqlalchemy import Column, String, Table, MetaData, select, delete
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker
@@ -65,7 +66,7 @@ class SQLiteA2AContextStore(A2AContextStore):
         if not self._initialized:
             await self.initialize()
 
-    async def get(self, context_id: str) -> str | None:
+    async def get(self, context_id: str) -> Optional[str]:
         """Retrieve the conversation ID for an A2A context.
 
         Args:

@@ -2,6 +2,7 @@
 
 import logging
 from urllib.parse import quote_plus
+from typing import Optional
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine
 
@@ -24,9 +25,9 @@ class A2AStorageFactory:
     creates database-backed stores that share state across workers.
     """
 
-    _engine: AsyncEngine | None = None
-    _task_store: TaskStore | None = None
-    _context_store: A2AContextStore | None = None
+    _engine: Optional[AsyncEngine] = None
+    _task_store: Optional[TaskStore] = None
+    _context_store: Optional[A2AContextStore] = None
 
     @classmethod
     async def create_task_store(cls, config: A2AStateConfiguration) -> TaskStore:
