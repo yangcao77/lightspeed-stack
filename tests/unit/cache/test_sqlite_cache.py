@@ -484,11 +484,17 @@ def test_insert_and_get_with_tool_calls_and_results(tmpdir: Path) -> None:
 
     # Create tool_calls and tool_results
     tool_calls = [
-        ToolCallSummary(id="call_1", name="test_tool", args={"param": "value"}, type="tool_call")
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"param": "value"}, type="tool_call"
+        )
     ]
     tool_results = [
         ToolResultSummary(
-            id="call_1", status="success", content="result data", type="tool_result", round=1
+            id="call_1",
+            status="success",
+            content="result data",
+            type="tool_result",
+            round=1,
         )
     ]
     entry_with_tools = CacheEntry(
@@ -531,7 +537,9 @@ def test_insert_and_get_with_all_fields(tmpdir: Path) -> None:
         ReferencedDocument(doc_title="Test Doc", doc_url=AnyUrl("http://example.com"))
     ]
     tool_calls = [
-        ToolCallSummary(id="call_1", name="test_tool", args={"key": "value"}, type="tool_call")
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"key": "value"}, type="tool_call"
+        )
     ]
     tool_results = [
         ToolResultSummary(

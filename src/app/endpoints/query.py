@@ -363,7 +363,7 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
                 truncated=False,  # TODO(lucasagomes): implement truncation as part of quota work
                 attachments=query_request.attachments or [],
             )
-    
+
         logger.info("Persisting conversation details...")
         persist_user_conversation_details(
             user_id=user_id,

@@ -247,8 +247,7 @@ class SQLiteCache(Cache):
                     ]
                 except (json.JSONDecodeError, ValueError) as e:
                     logger.warning(
-                        "Failed to deserialize tool_calls for "
-                        "conversation %s: %s",
+                        "Failed to deserialize tool_calls for " "conversation %s: %s",
                         conversation_id,
                         e,
                     )
@@ -264,8 +263,7 @@ class SQLiteCache(Cache):
                     ]
                 except (json.JSONDecodeError, ValueError) as e:
                     logger.warning(
-                        "Failed to deserialize tool_results for "
-                        "conversation %s: %s",
+                        "Failed to deserialize tool_results for " "conversation %s: %s",
                         conversation_id,
                         e,
                     )
@@ -334,8 +332,7 @@ class SQLiteCache(Cache):
                 tool_calls_json = json.dumps(tool_calls_as_dicts)
             except (TypeError, ValueError) as e:
                 logger.warning(
-                    "Failed to serialize tool_calls for "
-                    "conversation %s: %s",
+                    "Failed to serialize tool_calls for " "conversation %s: %s",
                     conversation_id,
                     e,
                 )
@@ -349,8 +346,7 @@ class SQLiteCache(Cache):
                 tool_results_json = json.dumps(tool_results_as_dicts)
             except (TypeError, ValueError) as e:
                 logger.warning(
-                    "Failed to serialize tool_results for "
-                    "conversation %s: %s",
+                    "Failed to serialize tool_results for " "conversation %s: %s",
                     conversation_id,
                     e,
                 )

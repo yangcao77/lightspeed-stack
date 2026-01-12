@@ -737,11 +737,17 @@ def test_insert_and_get_with_tool_calls_and_results(
 
     # Create tool_calls and tool_results
     tool_calls = [
-        ToolCallSummary(id="call_1", name="test_tool", args={"param": "value"}, type="tool_call")
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"param": "value"}, type="tool_call"
+        )
     ]
     tool_results = [
         ToolResultSummary(
-            id="call_1", status="success", content="result data", type="tool_result", round=1
+            id="call_1",
+            status="success",
+            content="result data",
+            type="tool_result",
+            round=1,
         )
     ]
     entry_with_tools = CacheEntry(
@@ -770,13 +776,24 @@ def test_insert_and_get_with_tool_calls_and_results(
     # Verify tool_calls JSON
     tool_calls_json = sql_params[-2]
     assert json.loads(tool_calls_json) == [
-        {"id": "call_1", "name": "test_tool", "args": {"param": "value"}, "type": "tool_call"}
+        {
+            "id": "call_1",
+            "name": "test_tool",
+            "args": {"param": "value"},
+            "type": "tool_call",
+        }
     ]
 
     # Verify tool_results JSON
     tool_results_json = sql_params[-1]
     assert json.loads(tool_results_json) == [
-        {"id": "call_1", "status": "success", "content": "result data", "type": "tool_result", "round": 1}
+        {
+            "id": "call_1",
+            "status": "success",
+            "content": "result data",
+            "type": "tool_result",
+            "round": 1,
+        }
     ]
 
     # Simulate the database returning that data
@@ -788,8 +805,23 @@ def test_insert_and_get_with_tool_calls_and_results(
         "start_time",
         "end_time",
         None,  # referenced_documents
-        [{"id": "call_1", "name": "test_tool", "args": {"param": "value"}, "type": "tool_call"}],
-        [{"id": "call_1", "status": "success", "content": "result data", "type": "tool_result", "round": 1}],
+        [
+            {
+                "id": "call_1",
+                "name": "test_tool",
+                "args": {"param": "value"},
+                "type": "tool_call",
+            }
+        ],
+        [
+            {
+                "id": "call_1",
+                "status": "success",
+                "content": "result data",
+                "type": "tool_result",
+                "round": 1,
+            }
+        ],
     )
     mock_cursor.fetchall.return_value = [db_return_value]
 
