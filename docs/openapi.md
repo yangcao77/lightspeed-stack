@@ -3084,6 +3084,144 @@ Examples
 ```
  |
 | 422 | Validation Error | [HTTPValidationError](#httpvalidationerror) |
+## POST `/v1/infer`
+
+> **Infer Endpoint**
+
+Handle rlsapi v1 /infer requests for stateless inference.
+
+This endpoint serves requests from the RHEL Lightspeed Command Line Assistant (CLA).
+
+Accepts a question with optional context (stdin, attachments, terminal output,
+system info) and returns an LLM-generated response.
+
+Args:
+    infer_request: The inference request containing question and context.
+    auth: Authentication tuple from the configured auth provider.
+
+Returns:
+    RlsapiV1InferResponse containing the generated response text and request ID.
+
+Raises:
+    HTTPException: 503 if the LLM service is unavailable.
+
+
+
+
+
+### 📦 Request Body 
+
+[RlsapiV1InferRequest](#rlsapiv1inferrequest)
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful response | [RlsapiV1InferResponse](#rlsapiv1inferresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 422 | Request validation failed | [UnprocessableEntityResponse](#unprocessableentityresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid request format. The request body could not be parsed.",
+    "response": "Invalid request format"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Missing required attributes: ['query', 'model', 'provider']",
+    "response": "Missing required attributes"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+    "response": "Invalid attribute value"
+  }
+}
+```
+ |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
 ## GET `/readiness`
 
 > **Readiness Probe Get Method**
@@ -3399,10 +3537,172 @@ Examples
 ```
 
 [ServiceUnavailableResponse](#serviceunavailableresponse) |
+## GET `/.well-known/agent-card.json`
+
+> **Get Agent Card**
+
+Serve the A2A Agent Card at the well-known location.
+
+This endpoint provides the agent card that describes Lightspeed's
+capabilities according to the A2A protocol specification.
+
+Returns:
+    AgentCard: The agent card describing this agent's capabilities.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | [AgentCard](#agentcard) |
+## GET `/.well-known/agent.json`
+
+> **Get Agent Card**
+
+Serve the A2A Agent Card at the well-known location.
+
+This endpoint provides the agent card that describes Lightspeed's
+capabilities according to the A2A protocol specification.
+
+Returns:
+    AgentCard: The agent card describing this agent's capabilities.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | [AgentCard](#agentcard) |
+## GET `/a2a`
+
+> **Handle A2A Jsonrpc**
+
+Handle A2A JSON-RPC requests following the A2A protocol specification.
+
+This endpoint uses the DefaultRequestHandler from the A2A SDK to handle
+all JSON-RPC requests including message/send, message/stream, etc.
+
+The A2A SDK application is created per-request to include authentication
+context while still leveraging FastAPI's authorization middleware.
+
+Automatically detects streaming requests (message/stream JSON-RPC method)
+and returns a StreamingResponse to enable real-time chunk delivery.
+
+Args:
+    request: FastAPI request object
+    auth: Authentication tuple
+    mcp_headers: MCP headers for context propagation
+
+Returns:
+    JSON-RPC response or streaming response
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | ... |
+## POST `/a2a`
+
+> **Handle A2A Jsonrpc**
+
+Handle A2A JSON-RPC requests following the A2A protocol specification.
+
+This endpoint uses the DefaultRequestHandler from the A2A SDK to handle
+all JSON-RPC requests including message/send, message/stream, etc.
+
+The A2A SDK application is created per-request to include authentication
+context while still leveraging FastAPI's authorization middleware.
+
+Automatically detects streaming requests (message/stream JSON-RPC method)
+and returns a StreamingResponse to enable real-time chunk delivery.
+
+Args:
+    request: FastAPI request object
+    auth: Authentication tuple
+    mcp_headers: MCP headers for context propagation
+
+Returns:
+    JSON-RPC response or streaming response
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | ... |
+## GET `/a2a/health`
+
+> **A2A Health Check**
+
+Health check endpoint for A2A service.
+
+Returns:
+    Dict with health status information.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful Response | object |
 ---
 
 # 📋 Components
 
+
+
+## A2AStateConfiguration
+
+
+A2A protocol persistent state configuration.
+
+Configures how A2A task state and context-to-conversation mappings are
+stored. For multi-worker deployments, use SQLite or PostgreSQL to ensure
+state is shared across all workers.
+
+If no configuration is provided, in-memory storage is used (default).
+This is suitable for single-worker deployments but state will be lost
+on restarts and not shared across workers.
+
+Attributes:
+    sqlite: SQLite database configuration for A2A state storage.
+    postgres: PostgreSQL database configuration for A2A state storage.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| sqlite |  | SQLite database configuration for A2A state storage. |
+| postgres |  | PostgreSQL database configuration for A2A state storage. |
+
+
+## APIKeySecurityScheme
+
+
+Defines a security scheme using an API key.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description |  |  |
+| in |  |  |
+| name | string |  |
+| type | string |  |
 
 
 ## APIKeyTokenConfiguration
@@ -3436,6 +3736,121 @@ Available actions in the system.
 Note: this is not a real model, just an enumeration of all action names.
 
 
+
+
+## AgentCapabilities
+
+
+Defines optional capabilities supported by an agent.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| extensions |  |  |
+| pushNotifications |  |  |
+| stateTransitionHistory |  |  |
+| streaming |  |  |
+
+
+## AgentCard
+
+
+The AgentCard is a self-describing manifest for an agent. It provides essential
+metadata including the agent's identity, capabilities, skills, supported
+communication methods, and security requirements.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| additionalInterfaces |  |  |
+| capabilities |  |  |
+| defaultInputModes | array |  |
+| defaultOutputModes | array |  |
+| description | string |  |
+| documentationUrl |  |  |
+| iconUrl |  |  |
+| name | string |  |
+| preferredTransport |  |  |
+| protocolVersion |  |  |
+| provider |  |  |
+| security |  |  |
+| securitySchemes |  |  |
+| signatures |  |  |
+| skills | array |  |
+| supportsAuthenticatedExtendedCard |  |  |
+| url | string |  |
+| version | string |  |
+
+
+## AgentCardSignature
+
+
+AgentCardSignature represents a JWS signature of an AgentCard.
+This follows the JSON format of an RFC 7515 JSON Web Signature (JWS).
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| header |  |  |
+| protected | string |  |
+| signature | string |  |
+
+
+## AgentExtension
+
+
+A declaration of a protocol extension supported by an Agent.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description |  |  |
+| params |  |  |
+| required |  |  |
+| uri | string |  |
+
+
+## AgentInterface
+
+
+Declares a combination of a target URL and a transport protocol for interacting with the agent.
+This allows agents to expose the same functionality over multiple transport mechanisms.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| transport | string |  |
+| url | string |  |
+
+
+## AgentProvider
+
+
+Represents the service provider of an agent.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| organization | string |  |
+| url | string |  |
+
+
+## AgentSkill
+
+
+Represents a distinct capability or function that an agent can perform.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description | string |  |
+| examples |  |  |
+| id | string |  |
+| inputModes |  |  |
+| name | string |  |
+| outputModes |  |  |
+| security |  |  |
+| tags | array |  |
 
 
 ## Attachment
@@ -3481,6 +3896,20 @@ Authentication configuration.
 | jwk_config |  |  |
 | api_key_config |  |  |
 | rh_identity_config |  |  |
+
+
+## AuthorizationCodeOAuthFlow
+
+
+Defines configuration details for the OAuth 2.0 Authorization Code flow.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| authorizationUrl | string |  |
+| refreshUrl |  |  |
+| scopes | object |  |
+| tokenUrl | string |  |
 
 
 ## AuthorizationConfiguration
@@ -3564,6 +3993,19 @@ Useful resources:
 | allow_headers | array | A list of HTTP request headers that should be supported for cross-origin requests. You can use ['*'] to allow all headers. The Accept, Accept-Language, Content-Language and Content-Type headers are always allowed for simple CORS requests. |
 
 
+## ClientCredentialsOAuthFlow
+
+
+Defines configuration details for the OAuth 2.0 Client Credentials flow.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| refreshUrl |  |  |
+| scopes | object |  |
+| tokenUrl | string |  |
+
+
 ## Configuration
 
 
@@ -3584,6 +4026,7 @@ Global service configuration.
 | inference |  | One LLM provider and one its model might be selected as default ones. When no provider+model pair is specified in REST API calls (query endpoints), the default provider and model are used. |
 | conversation_cache |  |  |
 | byok_rag | array | BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file |
+| a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
 
 
@@ -3781,6 +4224,8 @@ Service customization.
 | disable_query_system_prompt | boolean |  |
 | system_prompt_path |  |  |
 | system_prompt |  |  |
+| agent_card_path |  |  |
+| agent_card_config |  |  |
 | custom_profile |  |  |
 
 
@@ -3917,6 +4362,20 @@ Attributes:
 | detail |  |  |
 
 
+## HTTPAuthSecurityScheme
+
+
+Defines a security scheme using HTTP authentication.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| bearerFormat |  |  |
+| description |  |  |
+| scheme | string |  |
+| type | string |  |
+
+
 ## HTTPValidationError
 
 
@@ -3924,6 +4383,27 @@ Attributes:
 | Field | Type | Description |
 |-------|------|-------------|
 | detail | array |  |
+
+
+## ImplicitOAuthFlow
+
+
+Defines configuration details for the OAuth 2.0 Implicit flow.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| authorizationUrl | string |  |
+| refreshUrl |  |  |
+| scopes | object |  |
+
+
+## In
+
+
+The location of the API key.
+
+
 
 
 ## InMemoryCacheConfig
@@ -4126,6 +4606,18 @@ Model representing a response to models request.
 | models | array | List of models available |
 
 
+## MutualTLSSecurityScheme
+
+
+Defines a security scheme using mTLS authentication.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description |  |  |
+| type | string |  |
+
+
 ## NotFoundResponse
 
 
@@ -4136,6 +4628,60 @@ Model representing a response to models request.
 |-------|------|-------------|
 | status_code | integer |  |
 | detail |  |  |
+
+
+## OAuth2SecurityScheme
+
+
+Defines a security scheme using OAuth 2.0.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description |  |  |
+| flows |  |  |
+| oauth2MetadataUrl |  |  |
+| type | string |  |
+
+
+## OAuthFlows
+
+
+Defines the configuration for the supported OAuth 2.0 flows.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| authorizationCode |  |  |
+| clientCredentials |  |  |
+| implicit |  |  |
+| password |  |  |
+
+
+## OpenIdConnectSecurityScheme
+
+
+Defines a security scheme using OpenID Connect.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| description |  |  |
+| openIdConnectUrl | string |  |
+| type | string |  |
+
+
+## PasswordOAuthFlow
+
+
+Defines configuration details for the OAuth 2.0 Resource Owner Password flow.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| refreshUrl |  |  |
+| scopes | object |  |
+| tokenUrl | string |  |
 
 
 ## PostgreSQLDatabaseConfiguration
@@ -4430,6 +4976,153 @@ Attributes:
 | doc_title |  | Title of the referenced document |
 
 
+## RlsapiV1Attachment
+
+
+Attachment data from rlsapi v1 context.
+
+Attributes:
+    contents: The textual contents of the file read on the client machine.
+    mimetype: The MIME type of the file.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| contents | string | File contents read on client |
+| mimetype | string | MIME type of the file |
+
+
+## RlsapiV1CLA
+
+
+Command Line Assistant information from rlsapi v1 context.
+
+Attributes:
+    nevra: The NEVRA (Name-Epoch-Version-Release-Architecture) of the CLA.
+    version: The version of the command line assistant.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| nevra | string | CLA NEVRA identifier |
+| version | string | Command line assistant version |
+
+
+## RlsapiV1Context
+
+
+Context data for rlsapi v1 /infer request.
+
+Attributes:
+    stdin: Redirect input read by command-line-assistant.
+    attachments: Attachment object received by the client.
+    terminal: Terminal object received by the client.
+    systeminfo: System information object received by the client.
+    cla: Command Line Assistant information.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| stdin | string | Redirect input from stdin |
+| attachments |  | File attachment data |
+| terminal |  | Terminal output context |
+| systeminfo |  | Client system information |
+| cla |  | Command line assistant metadata |
+
+
+## RlsapiV1InferData
+
+
+Response data for rlsapi v1 /infer endpoint.
+
+Attributes:
+    text: The generated response text.
+    request_id: Unique identifier for the request.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| text | string | Generated response text |
+| request_id |  | Unique request identifier |
+
+
+## RlsapiV1InferRequest
+
+
+RHEL Lightspeed rlsapi v1 /infer request.
+
+Attributes:
+    question: User question string.
+    context: Context with system info, terminal output, etc. (defaults provided).
+    skip_rag: Whether to skip RAG retrieval (default False).
+
+Example:
+    ```python
+    request = RlsapiV1InferRequest(
+        question="How do I list files?",
+        context=RlsapiV1Context(
+            systeminfo=RlsapiV1SystemInfo(os="RHEL", version="9.3"),
+            terminal=RlsapiV1Terminal(output="bash: command not found"),
+        ),
+    )
+    ```
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| question | string | User question |
+| context |  | Optional context (system info, terminal output, stdin, attachments) |
+| skip_rag | boolean | Whether to skip RAG retrieval |
+
+
+## RlsapiV1InferResponse
+
+
+RHEL Lightspeed rlsapi v1 /infer response.
+
+Attributes:
+    data: Response data containing text and request_id.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| data |  | Response data containing text and request_id |
+
+
+## RlsapiV1SystemInfo
+
+
+System information from rlsapi v1 context.
+
+Attributes:
+    os: The operating system of the client machine.
+    version: The version of the operating system.
+    arch: The architecture of the client machine.
+    system_id: The id of the client machine.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| os | string | Operating system name |
+| version | string | Operating system version |
+| arch | string | System architecture |
+| id | string | Client machine ID |
+
+
+## RlsapiV1Terminal
+
+
+Terminal output from rlsapi v1 context.
+
+Attributes:
+    output: The textual contents of the terminal read on the client machine.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| output | string | Terminal output from client |
+
+
 ## SQLiteDatabaseConfiguration
 
 
@@ -4439,6 +5132,12 @@ SQLite database configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | db_path | string | Path to file where SQLite database is stored |
+
+
+## SecurityScheme
+
+
+
 
 
 ## ServiceConfiguration
@@ -4456,6 +5155,7 @@ the service can handle requests concurrently.
 |-------|------|-------------|
 | host | string | Service hostname |
 | port | integer | Service port |
+| base_url |  | Externally reachable base URL for the service; needed for A2A support. |
 | auth_enabled | boolean | Enables the authentication subsystem |
 | workers | integer | Number of Uvicorn worker processes to start |
 | color_log | boolean | Enables colorized logging |

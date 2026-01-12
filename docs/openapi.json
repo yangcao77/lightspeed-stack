@@ -3551,6 +3551,148 @@
                 }
             }
         },
+        "/v1/infer": {
+            "post": {
+                "tags": [
+                    "rlsapi-v1"
+                ],
+                "summary": "Infer Endpoint",
+                "description": "Handle rlsapi v1 /infer requests for stateless inference.\n\nThis endpoint serves requests from the RHEL Lightspeed Command Line Assistant (CLA).\n\nAccepts a question with optional context (stdin, attachments, terminal output,\nsystem info) and returns an LLM-generated response.\n\nArgs:\n    infer_request: The inference request containing question and context.\n    auth: Authentication tuple from the configured auth provider.\n\nReturns:\n    RlsapiV1InferResponse containing the generated response text and request ID.\n\nRaises:\n    HTTPException: 503 if the LLM service is unavailable.",
+                "operationId": "infer_endpoint_v1_infer_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RlsapiV1InferRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/RlsapiV1InferResponse"
+                                },
+                                "example": {
+                                    "data": {
+                                        "request_id": "01JDKR8N7QW9ZMXVGK3PB5TQWZ",
+                                        "text": "To list files in Linux, use the `ls` command."
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Request validation failed",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnprocessableEntityResponse"
+                                },
+                                "examples": {
+                                    "invalid format": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid request format. The request body could not be parsed.",
+                                                "response": "Invalid request format"
+                                            }
+                                        }
+                                    },
+                                    "missing attributes": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Missing required attributes: ['query', 'model', 'provider']",
+                                                "response": "Missing required attributes"
+                                            }
+                                        }
+                                    },
+                                    "invalid value": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid attatchment type: must be one of ['text/plain', 'application/json', 'application/yaml', 'application/xml']",
+                                                "response": "Invalid attribute value"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/readiness": {
             "get": {
                 "tags": [
@@ -3911,10 +4053,185 @@
                     }
                 }
             }
+        },
+        "/.well-known/agent-card.json": {
+            "get": {
+                "tags": [
+                    "a2a"
+                ],
+                "summary": "Get Agent Card",
+                "description": "Serve the A2A Agent Card at the well-known location.\n\nThis endpoint provides the agent card that describes Lightspeed's\ncapabilities according to the A2A protocol specification.\n\nReturns:\n    AgentCard: The agent card describing this agent's capabilities.",
+                "operationId": "get_agent_card__well_known_agent_card_json_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentCard"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/.well-known/agent.json": {
+            "get": {
+                "tags": [
+                    "a2a"
+                ],
+                "summary": "Get Agent Card",
+                "description": "Serve the A2A Agent Card at the well-known location.\n\nThis endpoint provides the agent card that describes Lightspeed's\ncapabilities according to the A2A protocol specification.\n\nReturns:\n    AgentCard: The agent card describing this agent's capabilities.",
+                "operationId": "get_agent_card__well_known_agent_json_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/AgentCard"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/a2a": {
+            "get": {
+                "tags": [
+                    "a2a"
+                ],
+                "summary": "Handle A2A Jsonrpc",
+                "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "a2a"
+                ],
+                "summary": "Handle A2A Jsonrpc",
+                "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/a2a/health": {
+            "get": {
+                "tags": [
+                    "a2a"
+                ],
+                "summary": "A2A Health Check",
+                "description": "Health check endpoint for A2A service.\n\nReturns:\n    Dict with health status information.",
+                "operationId": "a2a_health_check_a2a_health_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful Response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "additionalProperties": {
+                                        "type": "string"
+                                    },
+                                    "type": "object",
+                                    "title": "Response A2A Health Check A2A Health Get"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
         "schemas": {
+            "A2AStateConfiguration": {
+                "properties": {
+                    "sqlite": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/SQLiteDatabaseConfiguration"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "SQLite configuration",
+                        "description": "SQLite database configuration for A2A state storage."
+                    },
+                    "postgres": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PostgreSQLDatabaseConfiguration"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "PostgreSQL configuration",
+                        "description": "PostgreSQL database configuration for A2A state storage."
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "A2AStateConfiguration",
+                "description": "A2A protocol persistent state configuration.\n\nConfigures how A2A task state and context-to-conversation mappings are\nstored. For multi-worker deployments, use SQLite or PostgreSQL to ensure\nstate is shared across all workers.\n\nIf no configuration is provided, in-memory storage is used (default).\nThis is suitable for single-worker deployments but state will be lost\non restarts and not shared across workers.\n\nAttributes:\n    sqlite: SQLite database configuration for A2A state storage.\n    postgres: PostgreSQL database configuration for A2A state storage."
+            },
+            "APIKeySecurityScheme": {
+                "properties": {
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "in": {
+                        "$ref": "#/components/schemas/In"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "apiKey",
+                        "title": "Type",
+                        "default": "apiKey"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "in",
+                    "name"
+                ],
+                "title": "APIKeySecurityScheme",
+                "description": "Defines a security scheme using an API key."
+            },
             "APIKeyTokenConfiguration": {
                 "properties": {
                     "api_key": {
@@ -3987,10 +4304,526 @@
                     "get_config",
                     "info",
                     "model_override",
-                    "rlsapi_v1_infer"
+                    "rlsapi_v1_infer",
+                    "a2a_agent_card",
+                    "a2a_task_execution",
+                    "a2a_message",
+                    "a2a_jsonrpc"
                 ],
                 "title": "Action",
                 "description": "Available actions in the system.\n\nNote: this is not a real model, just an enumeration of all action names."
+            },
+            "AgentCapabilities": {
+                "properties": {
+                    "extensions": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/AgentExtension"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Extensions"
+                    },
+                    "pushNotifications": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Pushnotifications"
+                    },
+                    "stateTransitionHistory": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Statetransitionhistory"
+                    },
+                    "streaming": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Streaming"
+                    }
+                },
+                "type": "object",
+                "title": "AgentCapabilities",
+                "description": "Defines optional capabilities supported by an agent."
+            },
+            "AgentCard": {
+                "properties": {
+                    "additionalInterfaces": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/AgentInterface"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Additionalinterfaces"
+                    },
+                    "capabilities": {
+                        "$ref": "#/components/schemas/AgentCapabilities"
+                    },
+                    "defaultInputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Defaultinputmodes"
+                    },
+                    "defaultOutputModes": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Defaultoutputmodes"
+                    },
+                    "description": {
+                        "type": "string",
+                        "title": "Description",
+                        "examples": [
+                            "Agent that helps users with recipes and cooking."
+                        ]
+                    },
+                    "documentationUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Documentationurl"
+                    },
+                    "iconUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Iconurl"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "examples": [
+                            "Recipe Agent"
+                        ]
+                    },
+                    "preferredTransport": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Preferredtransport",
+                        "default": "JSONRPC",
+                        "examples": [
+                            "JSONRPC",
+                            "GRPC",
+                            "HTTP+JSON"
+                        ]
+                    },
+                    "protocolVersion": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Protocolversion",
+                        "default": "0.3.0"
+                    },
+                    "provider": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AgentProvider"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "security": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "additionalProperties": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Security",
+                        "examples": [
+                            [
+                                {
+                                    "oauth": [
+                                        "read"
+                                    ]
+                                },
+                                {
+                                    "api-key": [],
+                                    "mtls": []
+                                }
+                            ]
+                        ]
+                    },
+                    "securitySchemes": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "$ref": "#/components/schemas/SecurityScheme"
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Securityschemes"
+                    },
+                    "signatures": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/AgentCardSignature"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Signatures"
+                    },
+                    "skills": {
+                        "items": {
+                            "$ref": "#/components/schemas/AgentSkill"
+                        },
+                        "type": "array",
+                        "title": "Skills"
+                    },
+                    "supportsAuthenticatedExtendedCard": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Supportsauthenticatedextendedcard"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Url",
+                        "examples": [
+                            "https://api.example.com/a2a/v1"
+                        ]
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "examples": [
+                            "1.0.0"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "capabilities",
+                    "defaultInputModes",
+                    "defaultOutputModes",
+                    "description",
+                    "name",
+                    "skills",
+                    "url",
+                    "version"
+                ],
+                "title": "AgentCard",
+                "description": "The AgentCard is a self-describing manifest for an agent. It provides essential\nmetadata including the agent's identity, capabilities, skills, supported\ncommunication methods, and security requirements."
+            },
+            "AgentCardSignature": {
+                "properties": {
+                    "header": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Header"
+                    },
+                    "protected": {
+                        "type": "string",
+                        "title": "Protected"
+                    },
+                    "signature": {
+                        "type": "string",
+                        "title": "Signature"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "protected",
+                    "signature"
+                ],
+                "title": "AgentCardSignature",
+                "description": "AgentCardSignature represents a JWS signature of an AgentCard.\nThis follows the JSON format of an RFC 7515 JSON Web Signature (JWS)."
+            },
+            "AgentExtension": {
+                "properties": {
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "params": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Params"
+                    },
+                    "required": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Required"
+                    },
+                    "uri": {
+                        "type": "string",
+                        "title": "Uri"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "uri"
+                ],
+                "title": "AgentExtension",
+                "description": "A declaration of a protocol extension supported by an Agent."
+            },
+            "AgentInterface": {
+                "properties": {
+                    "transport": {
+                        "type": "string",
+                        "title": "Transport",
+                        "examples": [
+                            "JSONRPC",
+                            "GRPC",
+                            "HTTP+JSON"
+                        ]
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Url",
+                        "examples": [
+                            "https://api.example.com/a2a/v1",
+                            "https://grpc.example.com/a2a",
+                            "https://rest.example.com/v1"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "transport",
+                    "url"
+                ],
+                "title": "AgentInterface",
+                "description": "Declares a combination of a target URL and a transport protocol for interacting with the agent.\nThis allows agents to expose the same functionality over multiple transport mechanisms."
+            },
+            "AgentProvider": {
+                "properties": {
+                    "organization": {
+                        "type": "string",
+                        "title": "Organization"
+                    },
+                    "url": {
+                        "type": "string",
+                        "title": "Url"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "organization",
+                    "url"
+                ],
+                "title": "AgentProvider",
+                "description": "Represents the service provider of an agent."
+            },
+            "AgentSkill": {
+                "properties": {
+                    "description": {
+                        "type": "string",
+                        "title": "Description"
+                    },
+                    "examples": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Examples",
+                        "examples": [
+                            [
+                                "I need a recipe for bread"
+                            ]
+                        ]
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Id"
+                    },
+                    "inputModes": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Inputmodes"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name"
+                    },
+                    "outputModes": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Outputmodes"
+                    },
+                    "security": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "additionalProperties": {
+                                        "items": {
+                                            "type": "string"
+                                        },
+                                        "type": "array"
+                                    },
+                                    "type": "object"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Security",
+                        "examples": [
+                            [
+                                {
+                                    "google": [
+                                        "oidc"
+                                    ]
+                                }
+                            ]
+                        ]
+                    },
+                    "tags": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Tags",
+                        "examples": [
+                            [
+                                "cooking",
+                                "customer support",
+                                "billing"
+                            ]
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "description",
+                    "id",
+                    "name",
+                    "tags"
+                ],
+                "title": "AgentSkill",
+                "description": "Represents a distinct capability or function that an agent can perform."
             },
             "Attachment": {
                 "properties": {
@@ -4118,6 +4951,44 @@
                 "type": "object",
                 "title": "AuthenticationConfiguration",
                 "description": "Authentication configuration."
+            },
+            "AuthorizationCodeOAuthFlow": {
+                "properties": {
+                    "authorizationUrl": {
+                        "type": "string",
+                        "title": "Authorizationurl"
+                    },
+                    "refreshUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refreshurl"
+                    },
+                    "scopes": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Scopes"
+                    },
+                    "tokenUrl": {
+                        "type": "string",
+                        "title": "Tokenurl"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "authorizationUrl",
+                    "scopes",
+                    "tokenUrl"
+                ],
+                "title": "AuthorizationCodeOAuthFlow",
+                "description": "Defines configuration details for the OAuth 2.0 Authorization Code flow."
             },
             "AuthorizationConfiguration": {
                 "properties": {
@@ -4306,6 +5177,39 @@
                 "title": "CORSConfiguration",
                 "description": "CORS configuration.\n\nCORS or 'Cross-Origin Resource Sharing' refers to the situations when a\nfrontend running in a browser has JavaScript code that communicates with a\nbackend, and the backend is in a different 'origin' than the frontend.\n\nUseful resources:\n\n  - [CORS in FastAPI](https://fastapi.tiangolo.com/tutorial/cors/)\n  - [Wikipedia article](https://en.wikipedia.org/wiki/Cross-origin_resource_sharing)\n  - [What is CORS?](https://dev.to/akshay_chauhan/what-is-cors-explained-8f1)"
             },
+            "ClientCredentialsOAuthFlow": {
+                "properties": {
+                    "refreshUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refreshurl"
+                    },
+                    "scopes": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Scopes"
+                    },
+                    "tokenUrl": {
+                        "type": "string",
+                        "title": "Tokenurl"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "scopes",
+                    "tokenUrl"
+                ],
+                "title": "ClientCredentialsOAuthFlow",
+                "description": "Defines configuration details for the OAuth 2.0 Client Credentials flow."
+            },
             "Configuration": {
                 "properties": {
                     "name": {
@@ -4386,6 +5290,11 @@
                         "type": "array",
                         "title": "BYOK RAG configuration",
                         "description": "BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file"
+                    },
+                    "a2a_state": {
+                        "$ref": "#/components/schemas/A2AStateConfiguration",
+                        "title": "A2A state configuration",
+                        "description": "Configuration for A2A protocol persistent state storage."
                     },
                     "quota_handlers": {
                         "$ref": "#/components/schemas/QuotaHandlersConfiguration",
@@ -5000,6 +5909,30 @@
                         ],
                         "title": "System Prompt"
                     },
+                    "agent_card_path": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "file-path"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Agent Card Path"
+                    },
+                    "agent_card_config": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Agent Card Config"
+                    },
                     "custom_profile": {
                         "anyOf": [
                             {
@@ -5322,6 +6255,48 @@
                     }
                 ]
             },
+            "HTTPAuthSecurityScheme": {
+                "properties": {
+                    "bearerFormat": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Bearerformat"
+                    },
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "scheme": {
+                        "type": "string",
+                        "title": "Scheme"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "http",
+                        "title": "Type",
+                        "default": "http"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "scheme"
+                ],
+                "title": "HTTPAuthSecurityScheme",
+                "description": "Defines a security scheme using HTTP authentication."
+            },
             "HTTPValidationError": {
                 "properties": {
                     "detail": {
@@ -5334,6 +6309,49 @@
                 },
                 "type": "object",
                 "title": "HTTPValidationError"
+            },
+            "ImplicitOAuthFlow": {
+                "properties": {
+                    "authorizationUrl": {
+                        "type": "string",
+                        "title": "Authorizationurl"
+                    },
+                    "refreshUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refreshurl"
+                    },
+                    "scopes": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Scopes"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "authorizationUrl",
+                    "scopes"
+                ],
+                "title": "ImplicitOAuthFlow",
+                "description": "Defines configuration details for the OAuth 2.0 Implicit flow."
+            },
+            "In": {
+                "type": "string",
+                "enum": [
+                    "cookie",
+                    "header",
+                    "query"
+                ],
+                "title": "In",
+                "description": "The location of the API key."
             },
             "InMemoryCacheConfig": {
                 "properties": {
@@ -5743,6 +6761,30 @@
                     }
                 ]
             },
+            "MutualTLSSecurityScheme": {
+                "properties": {
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "mutualTLS",
+                        "title": "Type",
+                        "default": "mutualTLS"
+                    }
+                },
+                "type": "object",
+                "title": "MutualTLSSecurityScheme",
+                "description": "Defines a security scheme using mTLS authentication."
+            },
             "NotFoundResponse": {
                 "properties": {
                     "status_code": {
@@ -5790,6 +6832,158 @@
                         "label": "rag"
                     }
                 ]
+            },
+            "OAuth2SecurityScheme": {
+                "properties": {
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "flows": {
+                        "$ref": "#/components/schemas/OAuthFlows"
+                    },
+                    "oauth2MetadataUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Oauth2Metadataurl"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "oauth2",
+                        "title": "Type",
+                        "default": "oauth2"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "flows"
+                ],
+                "title": "OAuth2SecurityScheme",
+                "description": "Defines a security scheme using OAuth 2.0."
+            },
+            "OAuthFlows": {
+                "properties": {
+                    "authorizationCode": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/AuthorizationCodeOAuthFlow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "clientCredentials": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ClientCredentialsOAuthFlow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "implicit": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/ImplicitOAuthFlow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "password": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/PasswordOAuthFlow"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                "type": "object",
+                "title": "OAuthFlows",
+                "description": "Defines the configuration for the supported OAuth 2.0 flows."
+            },
+            "OpenIdConnectSecurityScheme": {
+                "properties": {
+                    "description": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Description"
+                    },
+                    "openIdConnectUrl": {
+                        "type": "string",
+                        "title": "Openidconnecturl"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "openIdConnect",
+                        "title": "Type",
+                        "default": "openIdConnect"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "openIdConnectUrl"
+                ],
+                "title": "OpenIdConnectSecurityScheme",
+                "description": "Defines a security scheme using OpenID Connect."
+            },
+            "PasswordOAuthFlow": {
+                "properties": {
+                    "refreshUrl": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Refreshurl"
+                    },
+                    "scopes": {
+                        "additionalProperties": {
+                            "type": "string"
+                        },
+                        "type": "object",
+                        "title": "Scopes"
+                    },
+                    "tokenUrl": {
+                        "type": "string",
+                        "title": "Tokenurl"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "scopes",
+                    "tokenUrl"
+                ],
+                "title": "PasswordOAuthFlow",
+                "description": "Defines configuration details for the OAuth 2.0 Resource Owner Password flow."
             },
             "PostgreSQLDatabaseConfiguration": {
                 "properties": {
@@ -6866,6 +8060,248 @@
                 "title": "ReferencedDocument",
                 "description": "Model representing a document referenced in generating a response.\n\nAttributes:\n    doc_url: Url to the referenced doc.\n    doc_title: Title of the referenced doc."
             },
+            "RlsapiV1Attachment": {
+                "properties": {
+                    "contents": {
+                        "type": "string",
+                        "title": "Contents",
+                        "description": "File contents read on client",
+                        "default": "",
+                        "examples": [
+                            "# Configuration file\nkey=value"
+                        ]
+                    },
+                    "mimetype": {
+                        "type": "string",
+                        "title": "Mimetype",
+                        "description": "MIME type of the file",
+                        "default": "",
+                        "examples": [
+                            "text/plain",
+                            "application/json"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RlsapiV1Attachment",
+                "description": "Attachment data from rlsapi v1 context.\n\nAttributes:\n    contents: The textual contents of the file read on the client machine.\n    mimetype: The MIME type of the file."
+            },
+            "RlsapiV1CLA": {
+                "properties": {
+                    "nevra": {
+                        "type": "string",
+                        "title": "Nevra",
+                        "description": "CLA NEVRA identifier",
+                        "default": "",
+                        "examples": [
+                            "command-line-assistant-0:0.2.0-1.el9.noarch"
+                        ]
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "description": "Command line assistant version",
+                        "default": "",
+                        "examples": [
+                            "0.2.0"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RlsapiV1CLA",
+                "description": "Command Line Assistant information from rlsapi v1 context.\n\nAttributes:\n    nevra: The NEVRA (Name-Epoch-Version-Release-Architecture) of the CLA.\n    version: The version of the command line assistant."
+            },
+            "RlsapiV1Context": {
+                "properties": {
+                    "stdin": {
+                        "type": "string",
+                        "title": "Stdin",
+                        "description": "Redirect input from stdin",
+                        "default": "",
+                        "examples": [
+                            "piped input from previous command"
+                        ]
+                    },
+                    "attachments": {
+                        "$ref": "#/components/schemas/RlsapiV1Attachment",
+                        "description": "File attachment data"
+                    },
+                    "terminal": {
+                        "$ref": "#/components/schemas/RlsapiV1Terminal",
+                        "description": "Terminal output context"
+                    },
+                    "systeminfo": {
+                        "$ref": "#/components/schemas/RlsapiV1SystemInfo",
+                        "description": "Client system information"
+                    },
+                    "cla": {
+                        "$ref": "#/components/schemas/RlsapiV1CLA",
+                        "description": "Command line assistant metadata"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RlsapiV1Context",
+                "description": "Context data for rlsapi v1 /infer request.\n\nAttributes:\n    stdin: Redirect input read by command-line-assistant.\n    attachments: Attachment object received by the client.\n    terminal: Terminal object received by the client.\n    systeminfo: System information object received by the client.\n    cla: Command Line Assistant information."
+            },
+            "RlsapiV1InferData": {
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "title": "Text",
+                        "description": "Generated response text",
+                        "examples": [
+                            "To list files in Linux, use the `ls` command."
+                        ]
+                    },
+                    "request_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Request Id",
+                        "description": "Unique request identifier",
+                        "examples": [
+                            "01JDKR8N7QW9ZMXVGK3PB5TQWZ"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "text"
+                ],
+                "title": "RlsapiV1InferData",
+                "description": "Response data for rlsapi v1 /infer endpoint.\n\nAttributes:\n    text: The generated response text.\n    request_id: Unique identifier for the request."
+            },
+            "RlsapiV1InferRequest": {
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Question",
+                        "description": "User question",
+                        "examples": [
+                            "How do I list files?",
+                            "How do I configure SELinux?"
+                        ]
+                    },
+                    "context": {
+                        "$ref": "#/components/schemas/RlsapiV1Context",
+                        "description": "Optional context (system info, terminal output, stdin, attachments)"
+                    },
+                    "skip_rag": {
+                        "type": "boolean",
+                        "title": "Skip Rag",
+                        "description": "Whether to skip RAG retrieval",
+                        "default": false,
+                        "examples": [
+                            false,
+                            true
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "question"
+                ],
+                "title": "RlsapiV1InferRequest",
+                "description": "RHEL Lightspeed rlsapi v1 /infer request.\n\nAttributes:\n    question: User question string.\n    context: Context with system info, terminal output, etc. (defaults provided).\n    skip_rag: Whether to skip RAG retrieval (default False).\n\nExample:\n    ```python\n    request = RlsapiV1InferRequest(\n        question=\"How do I list files?\",\n        context=RlsapiV1Context(\n            systeminfo=RlsapiV1SystemInfo(os=\"RHEL\", version=\"9.3\"),\n            terminal=RlsapiV1Terminal(output=\"bash: command not found\"),\n        ),\n    )\n    ```"
+            },
+            "RlsapiV1InferResponse": {
+                "properties": {
+                    "data": {
+                        "$ref": "#/components/schemas/RlsapiV1InferData",
+                        "description": "Response data containing text and request_id"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "data"
+                ],
+                "title": "RlsapiV1InferResponse",
+                "description": "RHEL Lightspeed rlsapi v1 /infer response.\n\nAttributes:\n    data: Response data containing text and request_id.",
+                "examples": [
+                    {
+                        "data": {
+                            "request_id": "01JDKR8N7QW9ZMXVGK3PB5TQWZ",
+                            "text": "To list files in Linux, use the `ls` command."
+                        }
+                    }
+                ]
+            },
+            "RlsapiV1SystemInfo": {
+                "properties": {
+                    "os": {
+                        "type": "string",
+                        "title": "Os",
+                        "description": "Operating system name",
+                        "default": "",
+                        "examples": [
+                            "RHEL"
+                        ]
+                    },
+                    "version": {
+                        "type": "string",
+                        "title": "Version",
+                        "description": "Operating system version",
+                        "default": "",
+                        "examples": [
+                            "9.3",
+                            "8.10"
+                        ]
+                    },
+                    "arch": {
+                        "type": "string",
+                        "title": "Arch",
+                        "description": "System architecture",
+                        "default": "",
+                        "examples": [
+                            "x86_64",
+                            "aarch64"
+                        ]
+                    },
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "Client machine ID",
+                        "default": "",
+                        "examples": [
+                            "01JDKR8N7QW9ZMXVGK3PB5TQWZ"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RlsapiV1SystemInfo",
+                "description": "System information from rlsapi v1 context.\n\nAttributes:\n    os: The operating system of the client machine.\n    version: The version of the operating system.\n    arch: The architecture of the client machine.\n    system_id: The id of the client machine."
+            },
+            "RlsapiV1Terminal": {
+                "properties": {
+                    "output": {
+                        "type": "string",
+                        "title": "Output",
+                        "description": "Terminal output from client",
+                        "default": "",
+                        "examples": [
+                            "bash: command not found",
+                            "Permission denied"
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "RlsapiV1Terminal",
+                "description": "Terminal output from rlsapi v1 context.\n\nAttributes:\n    output: The textual contents of the terminal read on the client machine."
+            },
             "SQLiteDatabaseConfiguration": {
                 "properties": {
                     "db_path": {
@@ -6882,6 +8318,26 @@
                 "title": "SQLiteDatabaseConfiguration",
                 "description": "SQLite database configuration."
             },
+            "SecurityScheme": {
+                "anyOf": [
+                    {
+                        "$ref": "#/components/schemas/APIKeySecurityScheme"
+                    },
+                    {
+                        "$ref": "#/components/schemas/HTTPAuthSecurityScheme"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OAuth2SecurityScheme"
+                    },
+                    {
+                        "$ref": "#/components/schemas/OpenIdConnectSecurityScheme"
+                    },
+                    {
+                        "$ref": "#/components/schemas/MutualTLSSecurityScheme"
+                    }
+                ],
+                "title": "SecurityScheme"
+            },
             "ServiceConfiguration": {
                 "properties": {
                     "host": {
@@ -6896,6 +8352,18 @@
                         "title": "Port",
                         "description": "Service port",
                         "default": 8080
+                    },
+                    "base_url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Base URL",
+                        "description": "Externally reachable base URL for the service; needed for A2A support."
                     },
                     "auth_enabled": {
                         "type": "boolean",
