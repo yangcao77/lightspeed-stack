@@ -1,5 +1,6 @@
 """Models for rlsapi v1 REST API responses."""
 
+from typing import Optional
 from pydantic import Field
 
 from models.config import ConfigurationBase
@@ -19,7 +20,7 @@ class RlsapiV1InferData(ConfigurationBase):
         description="Generated response text",
         examples=["To list files in Linux, use the `ls` command."],
     )
-    request_id: str | None = Field(
+    request_id: Optional[str] = Field(
         None,
         description="Unique request identifier",
         examples=["01JDKR8N7QW9ZMXVGK3PB5TQWZ"],

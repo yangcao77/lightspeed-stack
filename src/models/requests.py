@@ -205,15 +205,15 @@ class QueryRequest(BaseModel):
 
     @field_validator("conversation_id")
     @classmethod
-    def check_uuid(cls, value: str | None) -> str | None:
+    def check_uuid(cls, value: Optional[str]) -> Optional[str]:
         """
         Validate that a conversation identifier matches the expected SUID format.
 
         Parameters:
-            value (str | None): Conversation identifier to validate; may be None.
+            value (Optional[str]): Conversation identifier to validate; may be None.
 
         Returns:
-            str | None: The original `value` if valid or `None` if not provided.
+            Optional[str]: The original `value` if valid or `None` if not provided.
 
         Raises:
             ValueError: If `value` is provided and does not conform to the

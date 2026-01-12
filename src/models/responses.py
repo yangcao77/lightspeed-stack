@@ -30,7 +30,7 @@ INTERNAL_SERVER_ERROR_DESCRIPTION = "Internal server error"
 
 #     tool_name: str = Field(description="Name of the tool called")
 #     arguments: dict[str, Any] = Field(description="Arguments passed to the tool")
-#     result: dict[str, Any] | None = Field(None, description="Result from the tool")
+#     result: Optional[dict[str, Any]] = Field(None, description="Result from the tool")
 
 
 # class ToolResult(BaseModel):
@@ -321,7 +321,7 @@ class ConversationData(BaseModel):
     """
 
     conversation_id: str
-    topic_summary: str | None
+    topic_summary: Optional[str]
     last_message_timestamp: float
 
 
@@ -333,9 +333,13 @@ class ReferencedDocument(BaseModel):
         doc_title: Title of the referenced doc.
     """
 
-    doc_url: AnyUrl | None = Field(None, description="URL of the referenced document")
+    doc_url: Optional[AnyUrl] = Field(
+        None, description="URL of the referenced document"
+    )
 
-    doc_title: str | None = Field(None, description="Title of the referenced document")
+    doc_title: Optional[str] = Field(
+        None, description="Title of the referenced document"
+    )
 
 
 class QueryResponse(AbstractSuccessfulResponse):
@@ -353,7 +357,7 @@ class QueryResponse(AbstractSuccessfulResponse):
         available_quotas: Quota available as measured by all configured quota limiters.
     """
 
-    conversation_id: str | None = Field(
+    conversation_id: Optional[str] = Field(
         None,
         description="The optional conversation ID (UUID)",
         examples=["c5260aec-4d82-4370-9fdf-05cf908b3f16"],
@@ -404,12 +408,12 @@ class QueryResponse(AbstractSuccessfulResponse):
         examples=[{"daily": 1000, "monthly": 50000}],
     )
 
-    tool_calls: list[ToolCallSummary] | None = Field(
+    tool_calls: Optional[list[ToolCallSummary]] = Field(
         None,
         description="List of tool calls made during response generation",
     )
 
-    tool_results: list[ToolResultSummary] | None = Field(
+    tool_results: Optional[list[ToolResultSummary]] = Field(
         None,
         description="List of tool results",
     )
@@ -573,7 +577,7 @@ class ProviderHealthStatus(BaseModel):
         description="The health status",
         examples=["ok", "unhealthy", "not_implemented"],
     )
-    message: str | None = Field(
+    message: Optional[str] = Field(
         None,
         description="Optional message about the health status",
         examples=["All systems operational", "Llama Stack is unavailable"],
@@ -921,37 +925,37 @@ class ConversationDetails(BaseModel):
         examples=["c5260aec-4d82-4370-9fdf-05cf908b3f16"],
     )
 
-    created_at: str | None = Field(
+    created_at: Optional[str] = Field(
         None,
         description="When the conversation was created",
         examples=["2024-01-01T01:00:00Z"],
     )
 
-    last_message_at: str | None = Field(
+    last_message_at: Optional[str] = Field(
         None,
         description="When the last message was sent",
         examples=["2024-01-01T01:00:00Z"],
     )
 
-    message_count: int | None = Field(
+    message_count: Optional[int] = Field(
         None,
         description="Number of user messages in the conversation",
         examples=[42],
     )
 
-    last_used_model: str | None = Field(
+    last_used_model: Optional[str] = Field(
         None,
         description="Identification of the last model used for the conversation",
         examples=["gpt-4-turbo", "gpt-3.5-turbo-0125"],
     )
 
-    last_used_provider: str | None = Field(
+    last_used_provider: Optional[str] = Field(
         None,
         description="Identification of the last provider used for the conversation",
         examples=["openai", "gemini"],
     )
 
-    topic_summary: str | None = Field(
+    topic_summary: Optional[str] = Field(
         None,
         description="Topic summary for the conversation",
         examples=["Openshift Microservices Deployment Strategies"],

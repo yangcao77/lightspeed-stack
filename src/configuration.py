@@ -324,7 +324,7 @@ class AppConfig:
         token history is disabled, returns None.
 
         Returns:
-            TokenUsageHistory | None: The cached TokenUsageHistory instance
+            Optional[TokenUsageHistory]: The cached TokenUsageHistory instance
             when enabled, otherwise `None`.
 
         Raises:

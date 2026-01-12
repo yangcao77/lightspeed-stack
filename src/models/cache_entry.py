@@ -1,5 +1,6 @@
 """Model for conversation history cache entry."""
 
+from typing import Optional
 from pydantic import BaseModel
 from models.responses import ReferencedDocument
 
@@ -21,4 +22,4 @@ class CacheEntry(BaseModel):
     model: str
     started_at: str
     completed_at: str
-    referenced_documents: list[ReferencedDocument] | None = None
+    referenced_documents: Optional[list[ReferencedDocument]] = None
