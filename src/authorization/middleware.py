@@ -2,7 +2,7 @@
 
 import logging
 from functools import lru_cache, wraps
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Optional, Tuple
 
 from fastapi import HTTPException
 from starlette.requests import Request
@@ -107,7 +107,7 @@ async def _perform_authorization_check(
 
     authorized_actions = access_resolver.get_actions(user_roles)
 
-    req: Request | None = None
+    req: Optional[Request] = None
     if "request" in kwargs and isinstance(kwargs["request"], Request):
         req = kwargs["request"]
     else:

@@ -7,7 +7,7 @@ provider, model). This triple is also used as a primary key to this table.
 
 import sqlite3
 from datetime import datetime
-from typing import Any
+from typing import Any, Optional
 
 import psycopg2
 
@@ -50,13 +50,13 @@ class TokenUsageHistory:
         """
         # store the configuration, it will be used
         # by reconnection logic later, if needed
-        self.sqlite_connection_config: SQLiteDatabaseConfiguration | None = (
+        self.sqlite_connection_config: Optional[SQLiteDatabaseConfiguration] = (
             configuration.sqlite
         )
-        self.postgres_connection_config: PostgreSQLDatabaseConfiguration | None = (
+        self.postgres_connection_config: Optional[PostgreSQLDatabaseConfiguration] = (
             configuration.postgres
         )
-        self.connection: Any | None = None
+        self.connection: Optional[Any] = None
 
         # initialize connection to DB
         self.connect()

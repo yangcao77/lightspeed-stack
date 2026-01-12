@@ -1,7 +1,7 @@
 """Database engine management."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine.base import Engine
@@ -14,8 +14,8 @@ from models.config import SQLiteDatabaseConfiguration, PostgreSQLDatabaseConfigu
 logger = get_logger(__name__)
 
 # pylint: disable=invalid-name
-engine: Engine | None = None
-session_local: sessionmaker | None = None
+engine: Optional[Engine] = None
+session_local: Optional[sessionmaker] = None
 
 
 def get_engine() -> Engine:

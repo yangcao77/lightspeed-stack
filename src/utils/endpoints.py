@@ -535,7 +535,7 @@ def _process_document_id(
 def _add_additional_metadata_docs(
     doc_urls: set[str],
     metas_by_id: dict[str, dict[str, Any]],
-) -> list[Optional[tuple[AnyUrl], str]]:
+) -> list[tuple[Optional[AnyUrl], str]]:
     """Add additional referenced documents from metadata_map."""
     additional_entries: list[tuple[Optional[AnyUrl], str]] = []
     for meta in metas_by_id.values():
