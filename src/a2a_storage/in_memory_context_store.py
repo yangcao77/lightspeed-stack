@@ -2,6 +2,7 @@
 
 import asyncio
 import logging
+from typing import Optional
 
 from a2a_storage.context_store import A2AContextStore
 
@@ -26,7 +27,7 @@ class InMemoryA2AContextStore(A2AContextStore):
         self._lock = asyncio.Lock()
         self._initialized = True
 
-    async def get(self, context_id: str) -> str | None:
+    async def get(self, context_id: str) -> Optional[str]:
         """Retrieve the conversation ID for an A2A context.
 
         Args:

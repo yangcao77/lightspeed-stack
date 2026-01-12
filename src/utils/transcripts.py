@@ -10,6 +10,7 @@ import logging
 import os
 from pathlib import Path
 import hashlib
+from typing import Optional
 
 from configuration import configuration
 from models.requests import Attachment, QueryRequest
@@ -57,7 +58,7 @@ def store_transcript(  # pylint: disable=too-many-arguments,too-many-positional-
     user_id: str,
     conversation_id: str,
     model_id: str,
-    provider_id: str | None,
+    provider_id: Optional[str],
     query_is_valid: bool,
     query: str,
     query_request: QueryRequest,

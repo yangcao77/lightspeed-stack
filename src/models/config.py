@@ -1178,7 +1178,7 @@ class InferenceConfiguration(ConfigurationBase):
 class ConversationHistoryConfiguration(ConfigurationBase):
     """Conversation history configuration."""
 
-    type: Literal["noop", "memory", "sqlite", "postgres"] | None = Field(
+    type: Optional[Literal["noop", "memory", "sqlite", "postgres"]] = Field(
         None,
         title="Conversation history database type",
         description="Type of database where the conversation history is to be stored.",
@@ -1298,7 +1298,7 @@ class A2AStateConfiguration(ConfigurationBase):
     @property
     def config(
         self,
-    ) -> SQLiteDatabaseConfiguration | PostgreSQLDatabaseConfiguration | None:
+    ) -> Optional[SQLiteDatabaseConfiguration | PostgreSQLDatabaseConfiguration]:
         """Return the active storage configuration, or None for memory storage."""
         if self.sqlite is not None:
             return self.sqlite

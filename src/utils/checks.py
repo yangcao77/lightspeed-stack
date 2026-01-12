@@ -87,7 +87,7 @@ def directory_check(
             raise InvalidConfigurationError(f"{desc} '{path}' is not writable")
 
 
-def import_python_module(profile_name: str, profile_path: str) -> ModuleType | None:
+def import_python_module(profile_name: str, profile_path: str) -> Optional[ModuleType]:
     """
     Import a Python module from a filesystem path and return the loaded module.
 
@@ -96,7 +96,7 @@ def import_python_module(profile_name: str, profile_path: str) -> ModuleType | N
         profile_path (str): Filesystem path to the Python source file; must end with `.py`.
 
     Returns:
-        ModuleType | None: The loaded module on success; `None` if
+        Optional[ModuleType]: The loaded module on success; `None` if
         `profile_path` does not end with `.py`, if a module spec or loader
         cannot be created, or if importing/executing the module fails.
     """

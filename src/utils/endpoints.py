@@ -2,7 +2,7 @@
 
 from contextlib import suppress
 from datetime import UTC, datetime
-from typing import Any
+from typing import Any, Optional
 
 from fastapi import HTTPException
 from llama_stack_client._client import AsyncLlamaStackClient
@@ -55,14 +55,14 @@ def delete_conversation(conversation_id: str) -> bool:
         return False
 
 
-def retrieve_conversation(conversation_id: str) -> UserConversation | None:
+def retrieve_conversation(conversation_id: str) -> Optional[UserConversation]:
     """Retrieve a conversation from the database by its ID.
 
     Args:
         conversation_id (str): The unique identifier of the conversation to retrieve.
 
     Returns:
-        UserConversation | None: The conversation object if found, otherwise None.
+        Optional[UserConversation]: The conversation object if found, otherwise None.
     """
     with get_session() as session:
         return session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -70,7 +70,7 @@ def retrieve_conversation(conversation_id: str) -> UserConversation | None:
 
 def validate_conversation_ownership(
     user_id: str, conversation_id: str, others_allowed: bool = False
-) -> UserConversation | None:
+) -> Optional[UserConversation]:
     """Validate that the conversation belongs to the user.
 
     Validates that the conversation with the given ID belongs to the user with the given ID.
@@ -86,7 +86,7 @@ def validate_conversation_ownership(
             else conversation_query.filter_by(id=conversation_id, user_id=user_id)
         )
 
-        conversation: UserConversation | None = filtered_conversation_query.first()
+        conversation: Optional[UserConversation] = filtered_conversation_query.first()
 
         return conversation
 
@@ -251,7 +251,7 @@ def store_conversation_into_cache(
     conversation_id: str,
     cache_entry: CacheEntry,
     _skip_userid_check: bool,
-    topic_summary: str | None,
+    topic_summary: Optional[str],
 ) -> None:
     """
     Store one part of conversation into conversation history cache.
@@ -268,7 +268,7 @@ def store_conversation_into_cache(
         cache_entry (CacheEntry): Entry to insert or append to the conversation history.
         _skip_userid_check (bool): When true, bypasses enforcing that the cache
                                    operation must match the user id.
-        topic_summary (str | None): Optional topic summary to store alongside
+        topic_summary (Optional[str]): Optional topic summary to store alongside
                                     the conversation; ignored if None or empty.
     """
     if config.conversation_cache_configuration.type is not None:
@@ -292,7 +292,7 @@ async def get_agent(
     system_prompt: str,
     available_input_shields: list[str],
     available_output_shields: list[str],
-    conversation_id: str | None,
+    conversation_id: Optional[str],
     no_tools: bool = False,
 ) -> tuple[AsyncAgent, str, str]:
     """
@@ -317,7 +317,7 @@ async def get_agent(
         available_output_shields (list[str]): Output shields to apply to the
         agent; empty list used if None/empty.
 
-        conversation_id (str | None): If provided, attempt to reuse the agent
+        conversation_id (Optional[str]): If provided, attempt to reuse the agent
         for this conversation; otherwise a new conversation_id is created.
 
         no_tools (bool): When True, disables tool parsing for the agent (uses no tool parser).
@@ -441,7 +441,7 @@ def create_rag_chunks_dict(summary: TurnSummary) -> list[dict[str, Any]]:
 
 def _process_http_source(
     src: str, doc_urls: set[str]
-) -> tuple[AnyUrl | None, str] | None:
+) -> Optional[tuple[Optional[AnyUrl], str]]:
     """
     Process HTTP source and return (doc_url, doc_title) tuple.
 
@@ -451,7 +451,7 @@ def _process_http_source(
                              will add `src` to this set when it is new.
 
     Returns:
-        tuple[AnyUrl | None, str] | None: A tuple (validated_url, doc_title)
+        Optional[tuple[Optional[AnyUrl], str]]: A tuple (validated_url, doc_title)
                when `src` was not previously seen:
             - `validated_url`: an `AnyUrl` instance if `src` is a valid URL, or
               `None` if validation failed.
@@ -477,8 +477,8 @@ def _process_document_id(
     doc_ids: set[str],
     doc_urls: set[str],
     metas_by_id: dict[str, dict[str, Any]],
-    metadata_map: dict[str, Any] | None,
-) -> tuple[AnyUrl | None, str] | None:
+    metadata_map: Optional[dict[str, Any]],
+) -> Optional[tuple[Optional[AnyUrl], str]]:
     """
     Process document ID and return (doc_url, doc_title) tuple.
 
@@ -491,13 +491,13 @@ def _process_document_id(
                                                  metadata dicts that may
                                                  contain `docs_url` and
                                                  `title`.
-        metadata_map (dict[str, Any] | None): If provided (truthy), indicates
+        metadata_map (Optional[dict[str, Any]]): If provided (truthy), indicates
                                               metadata is available and enables
                                               metadata lookup; when falsy,
                                               metadata lookup is skipped.
 
     Returns:
-        tuple[AnyUrl | None, str] | None: `(validated_url, doc_title)` where
+        Optional[tuple[Optional[AnyUrl], str]]: `(validated_url, doc_title)` where
         `validated_url` is a validated `AnyUrl` or `None` and `doc_title` is
         the chosen title string; returns `None` if the `src` or its URL was
         already processed.
@@ -535,9 +535,9 @@ def _process_document_id(
 def _add_additional_metadata_docs(
     doc_urls: set[str],
     metas_by_id: dict[str, dict[str, Any]],
-) -> list[tuple[AnyUrl | None, str]]:
+) -> list[tuple[Optional[AnyUrl], str]]:
     """Add additional referenced documents from metadata_map."""
-    additional_entries: list[tuple[AnyUrl | None, str]] = []
+    additional_entries: list[tuple[Optional[AnyUrl], str]] = []
     for meta in metas_by_id.values():
         doc_url = meta.get("docs_url")
         title = meta.get("title")  # Note: must be "title", not "Title"
@@ -562,8 +562,8 @@ def _add_additional_metadata_docs(
 
 def _process_rag_chunks_for_documents(
     rag_chunks: list,
-    metadata_map: dict[str, Any] | None = None,
-) -> list[tuple[AnyUrl | None, str]]:
+    metadata_map: Optional[dict[str, Any]] = None,
+) -> list[tuple[Optional[AnyUrl], str]]:
     """
     Process RAG chunks and return a list of (doc_url, doc_title) tuples.
 
@@ -572,11 +572,11 @@ def _process_rag_chunks_for_documents(
     Parameters:
         rag_chunks (list): Iterable of RAG chunk objects; each chunk must
         provide a `source` attribute (e.g., an HTTP URL or a document ID).
-        metadata_map (dict[str, Any] | None): Optional mapping of document IDs
+        metadata_map (Optional[dict[str, Any]]): Optional mapping of document IDs
         to metadata dictionaries used to resolve titles and document URLs.
 
     Returns:
-        list[tuple[AnyUrl | None, str]]: Ordered list of tuples where the first
+        list[tuple[Optional[AnyUrl], str]]: Ordered list of tuples where the first
         element is a validated URL object or `None` (if no URL is available)
         and the second element is the document title.
     """
@@ -588,7 +588,7 @@ def _process_rag_chunks_for_documents(
     if metadata_map:
         metas_by_id = {k: v for k, v in metadata_map.items() if isinstance(v, dict)}
 
-    document_entries: list[tuple[AnyUrl | None, str]] = []
+    document_entries: list[tuple[Optional[AnyUrl], str]] = []
 
     for chunk in rag_chunks:
         src = chunk.source
@@ -616,9 +616,9 @@ def _process_rag_chunks_for_documents(
 
 def create_referenced_documents(
     rag_chunks: list,
-    metadata_map: dict[str, Any] | None = None,
+    metadata_map: Optional[dict[str, Any]] = None,
     return_dict_format: bool = False,
-) -> list[ReferencedDocument] | list[dict[str, str | None]]:
+) -> list[ReferencedDocument] | list[dict[str, Optional[str]]]:
     """
     Create referenced documents from RAG chunks with optional metadata enrichment.
 
@@ -721,7 +721,7 @@ async def cleanup_after_streaming(
     is_transcripts_enabled_func: Any,
     store_transcript_func: Any,
     persist_user_conversation_details_func: Any,
-    rag_chunks: list[dict[str, Any]] | None = None,
+    rag_chunks: Optional[list[dict[str, Any]]] = None,
 ) -> None:
     """
     Perform cleanup tasks after streaming is complete.
