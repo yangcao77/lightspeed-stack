@@ -5,6 +5,28 @@
 
 # 📋 Configuration schema
 
+## A2AStateConfiguration
+
+
+A2A protocol persistent state configuration.
+
+Configures how A2A task state and context-to-conversation mappings are
+stored. For multi-worker deployments, use SQLite or PostgreSQL to ensure
+state is shared across all workers.
+
+If no configuration is provided, in-memory storage is used (default).
+This is suitable for single-worker deployments but state will be lost
+on restarts and not shared across workers.
+
+Attributes:
+    sqlite: SQLite database configuration for A2A state storage.
+    postgres: PostgreSQL database configuration for A2A state storage.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| sqlite |  | SQLite database configuration for A2A state storage. |
+| postgres |  | PostgreSQL database configuration for A2A state storage. |
 
 
 ## APIKeyTokenConfiguration
@@ -128,6 +150,7 @@ Global service configuration.
 | inference |  | One LLM provider and one its model might be selected as default ones. When no provider+model pair is specified in REST API calls (query endpoints), the default provider and model are used. |
 | conversation_cache |  |  |
 | byok_rag | array | BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file |
+| a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
 
 
@@ -169,6 +192,8 @@ Service customization.
 | disable_query_system_prompt | boolean |  |
 | system_prompt_path | string |  |
 | system_prompt | string |  |
+| agent_card_path | string |  |
+| agent_card_config | object |  |
 | custom_profile |  |  |
 
 
@@ -461,6 +486,7 @@ the service can handle requests concurrently.
 |-------|------|-------------|
 | host | string | Service hostname |
 | port | integer | Service port |
+| base_url | string | Externally reachable base URL for the service; needed for A2A support. |
 | auth_enabled | boolean | Enables the authentication subsystem |
 | workers | integer | Number of Uvicorn worker processes to start |
 | color_log | boolean | Enables colorized logging |
