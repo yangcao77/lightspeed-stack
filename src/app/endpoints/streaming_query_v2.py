@@ -1,7 +1,7 @@
 """Streaming query handler using Responses API (v2)."""
 
 import logging
-from typing import Annotated, Any, AsyncIterator, cast
+from typing import Annotated, Any, AsyncIterator, Optional, cast
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -138,7 +138,7 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
         start_event_emitted = False
 
         # Track the latest response object from response.completed event
-        latest_response_object: Any | None = None
+        latest_response_object: Optional[Any] = None
 
         logger.debug("Starting streaming response (Responses API) processing")
 
@@ -372,7 +372,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals
     model_id: str,
     query_request: QueryRequest,
     token: str,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
 ) -> tuple[AsyncIterator[OpenAIResponseObjectStream], str]:
     """
     Retrieve response from LLMs and agents.
@@ -471,7 +471,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals
 
 async def create_violation_stream(
     message: str,
-    shield_model: str | None = None,
+    shield_model: Optional[str] = None,
 ) -> AsyncIterator[OpenAIResponseObjectStream]:
     """Generate a minimal streaming response for cases where input is blocked by a shield.
 
