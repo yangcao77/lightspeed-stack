@@ -4,6 +4,8 @@ metadata:
   name: llama-stack-service
   namespace: e2e-rhoai-dsc
 spec:
+  imagePullSecrets:
+    - name: quay-lightspeed-pull-secret
   containers:
     - name: llama-stack-container
       env:
@@ -17,7 +19,7 @@ spec:
             secretKeyRef:
               name: vllm-api-key-secret
               key: key
-      image: quay.io/opendatahub/llama-stack:rhoai-v2.25-latest
+      image: ${LLAMA_STACK_IMAGE}
       ports:
         - containerPort: 8321
       volumeMounts:
