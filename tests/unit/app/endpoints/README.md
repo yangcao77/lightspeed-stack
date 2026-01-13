@@ -3,6 +3,9 @@
 ## [__init__.py](__init__.py)
 Unit tests for endpoints implementations.
 
+## [test_a2a.py](test_a2a.py)
+Unit tests for the A2A (Agent-to-Agent) protocol endpoints.
+
 ## [test_authorized.py](test_authorized.py)
 Unit tests for the /authorized REST API endpoint.
 
