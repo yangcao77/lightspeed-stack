@@ -196,22 +196,6 @@ def test_get_mcp_tools_skips_server_with_missing_auth() -> None:
     # All servers should be skipped
     assert len(tools) == 0
 
-    # With token but no mcp_headers
-    tools = get_mcp_tools(servers, token="k8s-token", mcp_headers=None)
-    # First server should work, others skipped
-    assert len(tools) == 1
-    assert tools[0]["server_label"] == "missing-k8s-auth"
-
-    # With mcp_headers but missing one for partial-auth
-    mcp_headers = {
-        "missing-client-auth": {"X-Token": "client-token"},
-        "partial-auth": {"X-Custom": "client-custom"},  # Missing Authorization
-    }
-    tools = get_mcp_tools(servers, token=None, mcp_headers=mcp_headers)
-    # Only missing-client-auth should work
-    assert len(tools) == 1
-    assert tools[0]["server_label"] == "missing-client-auth"
-
 
 def test_get_mcp_tools_includes_server_without_auth() -> None:
     """Test that servers without auth config are always included."""

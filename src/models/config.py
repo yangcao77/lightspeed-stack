@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-lines
 
+import logging
 from pathlib import Path
 from typing import Optional, Any, Pattern
 from enum import Enum
@@ -31,6 +32,8 @@ import constants
 
 from utils import checks
 from utils.mcp_auth_headers import resolve_authorization_headers
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationBase(BaseModel):
@@ -1640,6 +1643,45 @@ class Configuration(ConfigurationBase):
         title="Quota handlers",
         description="Quota handlers configuration",
     )
+
+    @model_validator(mode="after")
+    def validate_mcp_auth_headers(self) -> Self:
+        """
+        Validate MCP server authorization headers against authentication module.
+
+        Removes any MCP server with authorization_headers="kubernetes" when the
+        authentication module is not "k8s". This prevents sending wrong credential
+        types to MCP servers.
+
+        Returns:
+            Self: The model instance after validation.
+        """
+        # Get authentication module value (pyright: ignore attribute access on Field)
+        auth_module = getattr(self.authentication, "module", None)
+
+        # Filter out misconfigured MCP servers
+        valid_mcp_servers = []
+        for mcp_server in self.mcp_servers:
+            is_valid = True
+            if mcp_server.authorization_headers:
+                for value in mcp_server.authorization_headers.values():
+                    if value.strip() == "kubernetes" and auth_module != "k8s":
+                        logger.warning(
+                            "Removing MCP server '%s': has authorization_headers with "
+                            "value 'kubernetes' but authentication module is '%s' "
+                            "(not 'k8s'). Either change authentication.module to 'k8s' "
+                            "or update the MCP server's authorization_headers to use a "
+                            "file path or 'client'.",
+                            mcp_server.name,
+                            auth_module,
+                        )
+                        is_valid = False
+                        break
+            if is_valid:
+                valid_mcp_servers.append(mcp_server)
+
+        self.mcp_servers = valid_mcp_servers
+        return self
 
     def dump(self, filename: str | Path = "configuration.json") -> None:
         """

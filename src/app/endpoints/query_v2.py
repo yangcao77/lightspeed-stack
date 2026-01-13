@@ -22,7 +22,7 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from configuration import AppConfig, configuration
 from constants import DEFAULT_RAG_TOOL
-from models.config import Action
+from models.config import Action, ModelContextProtocolServer
 from models.requests import QueryRequest
 from models.responses import (
     ForbiddenResponse,

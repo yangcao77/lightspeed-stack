@@ -9,11 +9,12 @@ import pytest
 from pydantic import ValidationError
 
 from models.config import (  # type: ignore[import-not-found]
-    ModelContextProtocolServer,
-    LlamaStackConfiguration,
-    UserDataCollection,
+    AuthenticationConfiguration,
     Configuration,
+    LlamaStackConfiguration,
+    ModelContextProtocolServer,
     ServiceConfiguration,
+    UserDataCollection,
 )
 
 
@@ -230,6 +231,7 @@ def test_configuration_mcp_servers_with_mixed_auth_headers(tmp_path: Path) -> No
             feedback_enabled=False, feedback_storage=None
         ),
         mcp_servers=mcp_servers,
+        authentication=AuthenticationConfiguration(module="k8s"),
         customization=None,
     )
     assert cfg is not None

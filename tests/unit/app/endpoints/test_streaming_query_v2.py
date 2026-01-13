@@ -67,6 +67,7 @@ async def test_retrieve_response_builds_rag_and_mcp_tools(
         ),
     ]
     mocker.patch("app.endpoints.streaming_query_v2.configuration", mock_cfg)
+    mocker.patch("app.endpoints.query_v2.configuration", mock_cfg)
 
     qr = QueryRequest(query="hello")
     await retrieve_response(mock_client, "model-z", qr, token="tok")
