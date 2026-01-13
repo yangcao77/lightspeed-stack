@@ -104,8 +104,8 @@ class ShieldModerationResult(BaseModel):
     """Result of shield moderation check."""
 
     blocked: bool
-    message: str | None = None
-    shield_model: str | None = None
+    message: Optional[str] = None
+    shield_model: Optional[str] = None
 
 
 class ToolCallSummary(BaseModel):
