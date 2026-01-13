@@ -2,6 +2,7 @@
 
 # pylint: disable=too-many-lines
 
+import logging
 from pathlib import Path
 from typing import Optional, Any, Pattern
 from enum import Enum
@@ -21,6 +22,7 @@ from pydantic import (
     PositiveInt,
     NonNegativeInt,
     SecretStr,
+    PrivateAttr,
 )
 
 from pydantic.dataclasses import dataclass
@@ -29,6 +31,9 @@ from typing_extensions import Self, Literal
 import constants
 
 from utils import checks
+from utils.mcp_auth_headers import resolve_authorization_headers
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigurationBase(BaseModel):
@@ -461,6 +466,56 @@ class ModelContextProtocolServer(ConfigurationBase):
         title="MCP server URL",
         description="URL of the MCP server",
     )
+
+    authorization_headers: dict[str, str] = Field(
+        default_factory=dict,
+        title="Authorization headers",
+        description=(
+            "Headers to send to the MCP server. "
+            "The map contains the header name and the path to a file containing "
+            "the header value (secret). "
+            "There are 2 special cases: "
+            "1. Usage of the kubernetes token in the header. "
+            "To specify this use a string 'kubernetes' instead of the file path. "
+            "2. Usage of the client provided token in the header. "
+            "To specify this use a string 'client' instead of the file path."
+        ),
+    )
+
+    _resolved_authorization_headers: dict[str, str] = PrivateAttr(default_factory=dict)
+
+    @property
+    def resolved_authorization_headers(self) -> dict[str, str]:
+        """Resolved authorization headers (computed from authorization_headers)."""
+        return self._resolved_authorization_headers
+
+    timeout: Optional[PositiveInt] = Field(
+        default=None,
+        title="Request timeout",
+        description=(
+            "Timeout in seconds for requests to the MCP server. "
+            "If not specified, the default timeout from Llama Stack will be used. "
+            "Note: This field is reserved for future use when Llama Stack adds timeout support."
+        ),
+    )
+
+    @model_validator(mode="after")
+    def resolve_auth_headers(self) -> Self:
+        """
+        Resolve authorization headers by reading secret files.
+
+        Automatically populates resolved_authorization_headers by reading
+        secret files specified in authorization_headers. Special values
+        'kubernetes' and 'client' are preserved for later substitution.
+
+        Returns:
+            Self: The model instance with resolved_authorization_headers populated.
+        """
+        if self.authorization_headers:
+            self._resolved_authorization_headers = resolve_authorization_headers(
+                self.authorization_headers
+            )
+        return self
 
 
 class LlamaStackConfiguration(ConfigurationBase):
@@ -1589,7 +1644,46 @@ class Configuration(ConfigurationBase):
         description="Quota handlers configuration",
     )
 
-    def dump(self, filename: str = "configuration.json") -> None:
+    @model_validator(mode="after")
+    def validate_mcp_auth_headers(self) -> Self:
+        """
+        Validate MCP server authorization headers against authentication module.
+
+        Removes any MCP server with authorization_headers="kubernetes" when the
+        authentication module is not "k8s". This prevents sending wrong credential
+        types to MCP servers.
+
+        Returns:
+            Self: The model instance after validation.
+        """
+        # Get authentication module value (pyright: ignore attribute access on Field)
+        auth_module = getattr(self.authentication, "module", None)
+
+        # Filter out misconfigured MCP servers
+        valid_mcp_servers = []
+        for mcp_server in self.mcp_servers:
+            is_valid = True
+            if mcp_server.authorization_headers:
+                for value in mcp_server.authorization_headers.values():
+                    if value.strip() == "kubernetes" and auth_module != "k8s":
+                        logger.warning(
+                            "Removing MCP server '%s': has authorization_headers with "
+                            "value 'kubernetes' but authentication module is '%s' "
+                            "(not 'k8s'). Either change authentication.module to 'k8s' "
+                            "or update the MCP server's authorization_headers to use a "
+                            "file path or 'client'.",
+                            mcp_server.name,
+                            auth_module,
+                        )
+                        is_valid = False
+                        break
+            if is_valid:
+                valid_mcp_servers.append(mcp_server)
+
+        self.mcp_servers = valid_mcp_servers
+        return self
+
+    def dump(self, filename: str | Path = "configuration.json") -> None:
         """
         Write the current Configuration model to a JSON file.
 
@@ -1598,7 +1692,7 @@ class Configuration(ConfigurationBase):
         file exists it will be overwritten.
 
         Parameters:
-            filename (str): Path to the output file (defaults to "configuration.json").
+            filename (str | Path): Path to the output file (defaults to "configuration.json").
         """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))
