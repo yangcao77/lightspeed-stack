@@ -942,6 +942,13 @@ class AuthenticationConfiguration(ConfigurationBase):
 
     module: str = constants.DEFAULT_AUTHENTICATION_MODULE
     skip_tls_verification: bool = False
+
+    # LCORE-694: Config option to skip authorization for readiness and liveness probe
+    skip_for_readiness_probe: bool = Field(
+        False,
+        title="Skip authentication for probes",
+        description="Skip authentication for readiness and liveness probes",
+    )
     k8s_cluster_api: Optional[AnyHttpUrl] = None
     k8s_ca_cert_path: Optional[FilePath] = None
     jwk_config: Optional[JwkConfiguration] = None
