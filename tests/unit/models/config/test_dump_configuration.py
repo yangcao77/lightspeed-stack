@@ -152,7 +152,7 @@ def test_dump_configuration(tmp_path: Path) -> None:
             "authentication": {
                 "module": "noop",
                 "skip_tls_verification": False,
-                "skip_for_readiness_probe": False,
+                "skip_for_health_probes": False,
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
@@ -462,7 +462,7 @@ def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
             "authentication": {
                 "module": "noop",
                 "skip_tls_verification": False,
-                "skip_for_readiness_probe": False,
+                "skip_for_health_probes": False,
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
@@ -678,7 +678,7 @@ def test_dump_configuration_with_quota_limiters_different_values(
             "authentication": {
                 "module": "noop",
                 "skip_tls_verification": False,
-                "skip_for_readiness_probe": False,
+                "skip_for_health_probes": False,
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
@@ -874,7 +874,7 @@ def test_dump_configuration_byok(tmp_path: Path) -> None:
             "authentication": {
                 "module": "noop",
                 "skip_tls_verification": False,
-                "skip_for_readiness_probe": False,
+                "skip_for_health_probes": False,
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,
@@ -1059,7 +1059,7 @@ def test_dump_configuration_pg_namespace(tmp_path: Path) -> None:
             "authentication": {
                 "module": "noop",
                 "skip_tls_verification": False,
-                "skip_for_readiness_probe": False,
+                "skip_for_health_probes": False,
                 "k8s_ca_cert_path": None,
                 "k8s_cluster_api": None,
                 "jwk_config": None,

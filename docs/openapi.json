@@ -4891,6 +4891,12 @@
                         "title": "Skip Tls Verification",
                         "default": false
                     },
+                    "skip_for_health_probes": {
+                        "type": "boolean",
+                        "title": "Skip authentication for probes",
+                        "description": "Skip authentication for readiness and liveness probes",
+                        "default": false
+                    },
                     "k8s_cluster_api": {
                         "anyOf": [
                             {

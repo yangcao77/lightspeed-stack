@@ -944,10 +944,10 @@ class AuthenticationConfiguration(ConfigurationBase):
     skip_tls_verification: bool = False
 
     # LCORE-694: Config option to skip authorization for readiness and liveness probe
-    skip_for_readiness_probe: bool = Field(
+    skip_for_health_probes: bool = Field(
         False,
-        title="Skip authentication for probes",
-        description="Skip authentication for readiness and liveness probes",
+        title="Skip authorization for probes",
+        description="Skip authorization for readiness and liveness probes",
     )
     k8s_cluster_api: Optional[AnyHttpUrl] = None
     k8s_ca_cert_path: Optional[FilePath] = None
@@ -1525,7 +1525,9 @@ class Configuration(ConfigurationBase):
     )
 
     authentication: AuthenticationConfiguration = Field(
-        default_factory=AuthenticationConfiguration,
+        default_factory=lambda: AuthenticationConfiguration(
+            skip_for_health_probes=False
+        ),
         title="Authentication configuration",
         description="Authentication configuration",
     )

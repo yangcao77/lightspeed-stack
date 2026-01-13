@@ -261,6 +261,11 @@ names.</p>
     <h2 id="authenticationconfiguration">AuthenticationConfiguration</h2>
     <p>Authentication configuration.</p>
     <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
       <thead>
         <tr class="header">
           <th>Field</th>
@@ -280,26 +285,31 @@ names.</p>
           <td/>
         </tr>
         <tr class="odd">
+          <td>skip_for_health_probes</td>
+          <td>boolean</td>
+          <td>Skip authorization for readiness and liveness probes</td>
+        </tr>
+        <tr class="even">
           <td>k8s_cluster_api</td>
           <td>string</td>
           <td/>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>k8s_ca_cert_path</td>
           <td>string</td>
           <td/>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>jwk_config</td>
           <td/>
           <td/>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>api_key_config</td>
           <td/>
           <td/>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>rh_identity_config</td>
           <td/>
           <td/>

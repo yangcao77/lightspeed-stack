@@ -32,14 +32,14 @@ def test_authentication_configuration() -> None:
     auth_config = AuthenticationConfiguration(
         module=AUTH_MOD_NOOP,
         skip_tls_verification=False,
-        skip_for_readiness_probe=False,
+        skip_for_health_probes=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_NOOP
     assert auth_config.skip_tls_verification is False
-    assert auth_config.skip_for_readiness_probe is False
+    assert auth_config.skip_for_health_probes is False
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is None
@@ -314,7 +314,7 @@ def test_authentication_configuration_skip_readiness_probe() -> None:
         authentication=AuthenticationConfiguration(
             module=AUTH_MOD_K8S,
             skip_tls_verification=True,
-            skip_for_readiness_probe=True,
+            skip_for_health_probes=True,
             k8s_ca_cert_path="tests/configuration/server.crt",
             k8s_cluster_api=None,
         ),
@@ -322,7 +322,7 @@ def test_authentication_configuration_skip_readiness_probe() -> None:
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_K8S
     assert cfg.authentication.skip_tls_verification is True
-    assert cfg.authentication.skip_for_readiness_probe is True
+    assert cfg.authentication.skip_for_health_probes is True
     assert cfg.authentication.k8s_ca_cert_path == Path("tests/configuration/server.crt")
     assert cfg.authentication.k8s_cluster_api is None
 
