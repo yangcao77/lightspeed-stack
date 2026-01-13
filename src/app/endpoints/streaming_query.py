@@ -7,7 +7,15 @@ import re
 import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
-from typing import Annotated, Any, AsyncGenerator, AsyncIterator, Iterator, cast
+from typing import (
+    Annotated,
+    Any,
+    AsyncGenerator,
+    AsyncIterator,
+    Iterator,
+    Optional,
+    cast,
+)
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
@@ -231,7 +239,7 @@ def stream_build_event(
     chunk_id: int,
     metadata_map: dict,
     media_type: str = MEDIA_TYPE_JSON,
-    conversation_id: str | None = None,
+    conversation_id: Optional[str] = None,
 ) -> Iterator[str]:
     """Build a streaming event from a chunk response.
 
@@ -384,7 +392,7 @@ async def stream_http_error(error: AbstractErrorResponse) -> AsyncGenerator[str,
 def _handle_turn_start_event(
     _chunk_id: int,
     media_type: str = MEDIA_TYPE_JSON,
-    conversation_id: str | None = None,
+    conversation_id: Optional[str] = None,
 ) -> Iterator[str]:
     """
     Yield turn start event.
@@ -734,7 +742,7 @@ def create_agent_response_generator(  # pylint: disable=too-many-locals
         # Send start event at the beginning of the stream
         yield stream_start_event(context.conversation_id)
 
-        latest_turn: Any | None = None
+        latest_turn: Optional[Any] = None
 
         async for chunk in turn_response:
             if chunk.event is None:
@@ -850,7 +858,7 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
 
     user_id, _user_name, _skip_userid_check, token = auth
 
-    user_conversation: UserConversation | None = None
+    user_conversation: Optional[UserConversation] = None
     if query_request.conversation_id:
         user_conversation = validate_conversation_ownership(
             user_id=user_id, conversation_id=query_request.conversation_id
@@ -1001,7 +1009,7 @@ async def retrieve_response(
     model_id: str,
     query_request: QueryRequest,
     token: str,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
 ) -> tuple[AsyncIterator[AgentTurnResponseStreamChunk], str]:
     """
     Retrieve response from LLMs and agents.

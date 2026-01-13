@@ -5,7 +5,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Annotated, Any, AsyncIterator, MutableMapping
+from typing import Annotated, Any, AsyncIterator, MutableMapping, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from llama_stack.apis.agents.openai_responses import (
@@ -65,8 +65,8 @@ auth_dependency = get_auth_dependency()
 # Task store and context store are created lazily based on configuration.
 # For multi-worker deployments, configure 'a2a_state' with 'sqlite' or 'postgres'
 # to share state across workers.
-_TASK_STORE: TaskStore | None = None
-_CONTEXT_STORE: A2AContextStore | None = None
+_TASK_STORE: Optional[TaskStore] = None
+_CONTEXT_STORE: Optional[A2AContextStore] = None
 
 
 async def _get_task_store() -> TaskStore:
@@ -120,7 +120,7 @@ class TaskResultAggregator:
     def __init__(self) -> None:
         """Initialize the task result aggregator with default state."""
         self._task_state: TaskState = TaskState.working
-        self._task_status_message: Message | None = None
+        self._task_status_message: Optional[Message] = None
 
     def process_event(
         self, event: TaskStatusUpdateEvent | TaskArtifactUpdateEvent | Any
@@ -169,7 +169,7 @@ class TaskResultAggregator:
         return self._task_state
 
     @property
-    def task_status_message(self) -> Message | None:
+    def task_status_message(self) -> Optional[Message]:
         """Return the current task status message."""
         return self._task_status_message
 
@@ -185,7 +185,7 @@ class A2AAgentExecutor(AgentExecutor):
     """
 
     def __init__(
-        self, auth_token: str, mcp_headers: dict[str, dict[str, str]] | None = None
+        self, auth_token: str, mcp_headers: Optional[dict[str, dict[str, str]]] = None
     ):
         """Initialize the A2A agent executor.
 
@@ -413,7 +413,7 @@ class A2AAgentExecutor(AgentExecutor):
         stream: AsyncIterator[OpenAIResponseObjectStream],
         task_id: str,
         context_id: str,
-        conversation_id: str | None,
+        conversation_id: Optional[str],
     ) -> AsyncIterator[Any]:
         """Convert Responses API stream chunks to A2A events.
 

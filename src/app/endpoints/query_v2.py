@@ -4,7 +4,7 @@
 
 import json
 import logging
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, Depends, Request
 from llama_stack.apis.agents.openai_responses import (
@@ -74,7 +74,7 @@ query_v2_response: dict[int | str, dict[str, Any]] = {
 
 def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches
     output_item: Any,
-) -> tuple[ToolCallSummary | None, ToolResultSummary | None]:
+) -> tuple[Optional[ToolCallSummary], Optional[ToolResultSummary]]:
     """Translate applicable Responses API tool outputs into ``ToolCallSummary`` records.
 
     The OpenAI ``response.output`` array may contain any ``OpenAIResponseOutput`` variant:
@@ -110,7 +110,7 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
             "status": getattr(output_item, "status", None),
         }
         results = getattr(output_item, "results", None)
-        response_payload: Any | None = None
+        response_payload: Optional[Any] = None
         if results is not None:
             # Store only the essential result metadata to avoid large payloads
             response_payload = {
@@ -294,7 +294,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     model_id: str,
     query_request: QueryRequest,
     token: str,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
     *,
     provider_id: str = "",
 ) -> tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]:
@@ -505,7 +505,7 @@ def parse_referenced_documents_from_responses_api(
     """
     documents: list[ReferencedDocument] = []
     # Use a set to track unique documents by (doc_url, doc_title) tuple
-    seen_docs: set[tuple[str | None, str | None]] = set()
+    seen_docs: set[tuple[Optional[str], Optional[str]]] = set()
 
     if not response.output:
         return documents
@@ -535,7 +535,7 @@ def parse_referenced_documents_from_responses_api(
 
                 # If we have at least a filename or url
                 if filename or doc_url:
-                    # Treat empty string as None for URL to satisfy AnyUrl | None
+                    # Treat empty string as None for URL to satisfy Optional[AnyUrl]
                     final_url = doc_url if doc_url else None
                     if (final_url, filename) not in seen_docs:
                         documents.append(
@@ -692,7 +692,7 @@ def _increment_llm_call_metric(provider: str, model: str) -> None:
         logger.warning("Failed to update LLM call metric: %s", e)
 
 
-def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
+def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[dict[str, Any]]]:
     """
     Convert vector store IDs to tools format for Responses API.
 
@@ -700,7 +700,7 @@ def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
         vector_store_ids: List of vector store identifiers
 
     Returns:
-        list[dict[str, Any]] | None: List containing file_search tool configuration,
+        Optional[list[dict[str, Any]]]: List containing file_search tool configuration,
         or None if no vector stores provided
     """
     if not vector_store_ids:
@@ -717,8 +717,8 @@ def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
 
 def get_mcp_tools(
     mcp_servers: list,
-    token: str | None = None,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
+    token: Optional[str] = None,
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
 ) -> list[dict[str, Any]]:
     """
     Convert MCP servers to tools format for Responses API.
@@ -762,8 +762,8 @@ async def prepare_tools_for_responses_api(
     query_request: QueryRequest,
     token: str,
     config: AppConfig,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
-) -> list[dict[str, Any]] | None:
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
+) -> Optional[list[dict[str, Any]]]:
     """
     Prepare tools for Responses API including RAG and MCP tools.
 
@@ -778,7 +778,7 @@ async def prepare_tools_for_responses_api(
         mcp_headers: Per-request headers for MCP servers
 
     Returns:
-        list[dict[str, Any]] | None: List of tool configurations for the
+        Optional[list[dict[str, Any]]]: List of tool configurations for the
         Responses API, or None if no_tools is True or no tools are available
     """
     if query_request.no_tools:

@@ -156,12 +156,12 @@ def persist_user_conversation_details(
 
 
 def evaluate_model_hints(
-    user_conversation: UserConversation | None,
+    user_conversation: Optional[UserConversation],
     query_request: QueryRequest,
-) -> tuple[str | None, str | None]:
+) -> tuple[Optional[str], Optional[str]]:
     """Evaluate model hints from user conversation."""
-    model_id: str | None = query_request.model
-    provider_id: str | None = query_request.provider
+    model_id: Optional[str] = query_request.model
+    provider_id: Optional[str] = query_request.provider
 
     if user_conversation is not None:
         if query_request.model is not None:
@@ -271,7 +271,7 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
     user_id, _, _skip_userid_check, token = auth
 
     started_at = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    user_conversation: UserConversation | None = None
+    user_conversation: Optional[UserConversation] = None
     if query_request.conversation_id:
         logger.debug(
             "Conversation ID specified in query: %s", query_request.conversation_id
@@ -483,7 +483,7 @@ async def query_endpoint_handler(
 
 
 def select_model_and_provider_id(
-    models: ModelListResponse, model_id: str | None, provider_id: str | None
+    models: ModelListResponse, model_id: Optional[str], provider_id: Optional[str]
 ) -> tuple[str, str, str]:
     """
     Select the model ID and provider ID based on the request or available models.
@@ -663,7 +663,7 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     model_id: str,
     query_request: QueryRequest,
     token: str,
-    mcp_headers: dict[str, dict[str, str]] | None = None,
+    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
     *,
     provider_id: str = "",
 ) -> tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]:
@@ -859,7 +859,7 @@ def validate_attachments_metadata(attachments: list[Attachment]) -> None:
 
 def get_rag_toolgroups(
     vector_db_ids: list[str],
-) -> list[Toolgroup] | None:
+) -> Optional[list[Toolgroup]]:
     """
     Return a list of RAG Tool groups if the given vector DB list is not empty.
 
@@ -870,7 +870,7 @@ def get_rag_toolgroups(
         vector_db_ids (list[str]): List of vector database identifiers to include in the toolgroup.
 
     Returns:
-        list[Toolgroup] | None: A list with a single RAG toolgroup if
+        Optional[list[Toolgroup]]: A list with a single RAG toolgroup if
         vector_db_ids is non-empty; otherwise, None.
     """
     return (
