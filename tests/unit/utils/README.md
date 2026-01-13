@@ -27,6 +27,9 @@ Unit tests for MCP headers utility functions.
 ## [test_responses.py](test_responses.py)
 Unit tests for utils/responses.py functions.
 
+## [test_shields.py](test_shields.py)
+Unit tests for utils/shields.py functions.
+
 ## [test_suid.py](test_suid.py)
 Unit tests for functions defined in utils.suid module.
 
