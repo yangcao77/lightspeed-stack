@@ -1,13 +1,18 @@
 """Implementation of common test steps for the feedback API."""
 
+import json
 from typing import Optional
 
-from behave import given, when, step  # pyright: ignore[reportAttributeAccessIssue]
-from behave.runner import Context
 import requests
-import json
-from tests.e2e.utils.utils import switch_config, restart_container
+from behave import (  # pyright: ignore[reportAttributeAccessIssue]  # pyright: ignore[reportAttributeAccessIssue]  # pyright: ignore[reportAttributeAccessIssue]
+    given,
+    step,
+    when,
+)
+from behave.runner import Context
+
 from tests.e2e.features.steps.common_http import access_rest_api_endpoint_get
+from tests.e2e.utils.utils import restart_container, switch_config
 
 # default timeout for HTTP operations
 DEFAULT_TIMEOUT = 10
@@ -101,7 +106,12 @@ def initialize_conversation(context: Context) -> None:
     path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
     url = base + path
     headers = context.auth_headers if hasattr(context, "auth_headers") else {}
-    payload = {"query": "Say Hello.", "system_prompt": "You are a helpful assistant"}
+    payload = {
+        "query": "Say Hello.",
+        "system_prompt": "You are a helpful assistant",
+        "model": context.default_model,
+        "provider": context.default_provider,
+    }
 
     response = requests.post(url, headers=headers, json=payload)
     assert (
