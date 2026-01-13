@@ -13,6 +13,7 @@ from models.config import SQLiteDatabaseConfiguration
 from models.cache_entry import CacheEntry
 from models.responses import ConversationData, ReferencedDocument
 from utils import suid
+from utils.types import ToolCallSummary, ToolResultSummary
 
 from cache.cache_error import CacheError
 from cache.sqlite_cache import SQLiteCache
@@ -470,3 +471,103 @@ def test_insert_and_get_without_referenced_documents(tmpdir: Path) -> None:
     assert len(retrieved_entries) == 1
     assert retrieved_entries[0] == entry_without_docs
     assert retrieved_entries[0].referenced_documents is None
+    assert retrieved_entries[0].tool_calls is None
+    assert retrieved_entries[0].tool_results is None
+
+
+def test_insert_and_get_with_tool_calls_and_results(tmpdir: Path) -> None:
+    """
+    Test that a CacheEntry with tool_calls and tool_results is correctly
+    serialized, stored, and retrieved.
+    """
+    cache = create_cache(tmpdir)
+
+    # Create tool_calls and tool_results
+    tool_calls = [
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"param": "value"}, type="tool_call"
+        )
+    ]
+    tool_results = [
+        ToolResultSummary(
+            id="call_1",
+            status="success",
+            content="result data",
+            type="tool_result",
+            round=1,
+        )
+    ]
+    entry_with_tools = CacheEntry(
+        query="user message",
+        response="AI message",
+        provider="foo",
+        model="bar",
+        started_at="start_time",
+        completed_at="end_time",
+        tool_calls=tool_calls,
+        tool_results=tool_results,
+    )
+
+    # Call the insert method
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, entry_with_tools)
+    retrieved_entries = cache.get(USER_ID_1, CONVERSATION_ID_1)
+
+    # Assert that the retrieved entry matches the original
+    assert len(retrieved_entries) == 1
+    assert retrieved_entries[0] == entry_with_tools
+    assert retrieved_entries[0].tool_calls is not None
+    assert len(retrieved_entries[0].tool_calls) == 1
+    assert retrieved_entries[0].tool_calls[0].name == "test_tool"
+    assert retrieved_entries[0].tool_calls[0].args == {"param": "value"}
+    assert retrieved_entries[0].tool_results is not None
+    assert len(retrieved_entries[0].tool_results) == 1
+    assert retrieved_entries[0].tool_results[0].status == "success"
+    assert retrieved_entries[0].tool_results[0].content == "result data"
+
+
+def test_insert_and_get_with_all_fields(tmpdir: Path) -> None:
+    """
+    Test that a CacheEntry with all fields (referenced_documents, tool_calls,
+    tool_results) is correctly serialized, stored, and retrieved.
+    """
+    cache = create_cache(tmpdir)
+
+    # Create all fields
+    docs = [
+        ReferencedDocument(doc_title="Test Doc", doc_url=AnyUrl("http://example.com"))
+    ]
+    tool_calls = [
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"key": "value"}, type="tool_call"
+        )
+    ]
+    tool_results = [
+        ToolResultSummary(
+            id="call_1", status="success", content="output", type="tool_result", round=1
+        )
+    ]
+    entry_with_all = CacheEntry(
+        query="user query",
+        response="AI response",
+        provider="provider",
+        model="model",
+        started_at="start",
+        completed_at="end",
+        referenced_documents=docs,
+        tool_calls=tool_calls,
+        tool_results=tool_results,
+    )
+
+    # Call the insert method
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, entry_with_all)
+    retrieved_entries = cache.get(USER_ID_1, CONVERSATION_ID_1)
+
+    # Assert that the retrieved entry matches the original
+    assert len(retrieved_entries) == 1
+    assert retrieved_entries[0] == entry_with_all
+    assert retrieved_entries[0].referenced_documents is not None
+    assert retrieved_entries[0].referenced_documents[0].doc_title == "Test Doc"
+    assert retrieved_entries[0].tool_calls is not None
+    assert retrieved_entries[0].tool_calls[0].name == "test_tool"
+    assert retrieved_entries[0].tool_results is not None
+    assert retrieved_entries[0].tool_results[0].status == "success"

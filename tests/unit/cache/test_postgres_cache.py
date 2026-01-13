@@ -14,6 +14,7 @@ from models.config import PostgreSQLDatabaseConfiguration
 from models.cache_entry import CacheEntry
 from models.responses import ConversationData, ReferencedDocument
 from utils import suid
+from utils.types import ToolCallSummary, ToolResultSummary
 from cache.cache_error import CacheError
 from cache.postgres_cache import PostgresCache
 
@@ -597,7 +598,8 @@ def test_insert_and_get_with_referenced_documents(
     ]
     assert insert_calls, "INSERT call not found"
     sql_params = insert_calls[-1][0][1]
-    inserted_json_str = sql_params[-1]
+    # referenced_documents is now at index -3 (before tool_calls and tool_results)
+    inserted_json_str = sql_params[-3]
 
     assert json.loads(inserted_json_str) == [
         {"doc_url": "http://example.com/", "doc_title": "Test Doc"}
@@ -612,6 +614,8 @@ def test_insert_and_get_with_referenced_documents(
         "start_time",
         "end_time",
         [{"doc_url": "http://example.com/", "doc_title": "Test Doc"}],
+        None,  # tool_calls
+        None,  # tool_results
     )
     mock_cursor.fetchall.return_value = [db_return_value]
 
@@ -648,7 +652,10 @@ def test_insert_and_get_without_referenced_documents(
     ]
     assert insert_calls, "INSERT call not found"
     sql_params = insert_calls[-1][0][1]
-    assert sql_params[-1] is None
+    # Last 3 params are referenced_documents, tool_calls, tool_results - all should be None
+    assert sql_params[-3] is None  # referenced_documents
+    assert sql_params[-2] is None  # tool_calls
+    assert sql_params[-1] is None  # tool_results
 
     # Simulate the database returning a row with None
     db_return_value = (
@@ -659,6 +666,8 @@ def test_insert_and_get_without_referenced_documents(
         entry_without_docs.started_at,
         entry_without_docs.completed_at,
         None,  # referenced_documents is None in the DB
+        None,  # tool_calls
+        None,  # tool_results
     )
     mock_cursor.fetchall.return_value = [db_return_value]
 
@@ -669,6 +678,8 @@ def test_insert_and_get_without_referenced_documents(
     assert len(retrieved_entries) == 1
     assert retrieved_entries[0] == entry_without_docs
     assert retrieved_entries[0].referenced_documents is None
+    assert retrieved_entries[0].tool_calls is None
+    assert retrieved_entries[0].tool_results is None
 
 
 def test_initialize_cache_with_custom_namespace(
@@ -710,3 +721,119 @@ def test_connect_to_cache_with_too_long_namespace(
     # should fail due to invalid namespace containing spaces
     with pytest.raises(ValueError, match="Invalid namespace: too long namespace"):
         PostgresCache(postgres_cache_config_fixture_too_long_namespace)
+
+
+def test_insert_and_get_with_tool_calls_and_results(
+    postgres_cache_config_fixture: PostgreSQLDatabaseConfiguration,
+    mocker: MockerFixture,
+) -> None:
+    """Test that a CacheEntry with tool_calls and tool_results is stored and retrieved correctly."""
+    # prevent real connection to PG instance
+    mock_connect = mocker.patch("psycopg2.connect")
+    cache = PostgresCache(postgres_cache_config_fixture)
+
+    mock_connection = mock_connect.return_value
+    mock_cursor = mock_connection.cursor.return_value.__enter__.return_value
+
+    # Create tool_calls and tool_results
+    tool_calls = [
+        ToolCallSummary(
+            id="call_1", name="test_tool", args={"param": "value"}, type="tool_call"
+        )
+    ]
+    tool_results = [
+        ToolResultSummary(
+            id="call_1",
+            status="success",
+            content="result data",
+            type="tool_result",
+            round=1,
+        )
+    ]
+    entry_with_tools = CacheEntry(
+        query="user message",
+        response="AI message",
+        provider="foo",
+        model="bar",
+        started_at="start_time",
+        completed_at="end_time",
+        tool_calls=tool_calls,
+        tool_results=tool_results,
+    )
+
+    # Call the insert method
+    cache.insert_or_append(USER_ID_1, CONVERSATION_ID_1, entry_with_tools)
+
+    # Find the INSERT INTO cache(...) call
+    insert_calls = [
+        c
+        for c in mock_cursor.execute.call_args_list
+        if isinstance(c[0][0], str) and "INSERT INTO cache(" in c[0][0]
+    ]
+    assert insert_calls, "INSERT call not found"
+    sql_params = insert_calls[-1][0][1]
+
+    # Verify tool_calls JSON
+    tool_calls_json = sql_params[-2]
+    assert json.loads(tool_calls_json) == [
+        {
+            "id": "call_1",
+            "name": "test_tool",
+            "args": {"param": "value"},
+            "type": "tool_call",
+        }
+    ]
+
+    # Verify tool_results JSON
+    tool_results_json = sql_params[-1]
+    assert json.loads(tool_results_json) == [
+        {
+            "id": "call_1",
+            "status": "success",
+            "content": "result data",
+            "type": "tool_result",
+            "round": 1,
+        }
+    ]
+
+    # Simulate the database returning that data
+    db_return_value = (
+        "user message",
+        "AI message",
+        "foo",
+        "bar",
+        "start_time",
+        "end_time",
+        None,  # referenced_documents
+        [
+            {
+                "id": "call_1",
+                "name": "test_tool",
+                "args": {"param": "value"},
+                "type": "tool_call",
+            }
+        ],
+        [
+            {
+                "id": "call_1",
+                "status": "success",
+                "content": "result data",
+                "type": "tool_result",
+                "round": 1,
+            }
+        ],
+    )
+    mock_cursor.fetchall.return_value = [db_return_value]
+
+    # Call the get method
+    retrieved_entries = cache.get(USER_ID_1, CONVERSATION_ID_1)
+
+    # Assert that the retrieved entry matches the original
+    assert len(retrieved_entries) == 1
+    assert retrieved_entries[0] == entry_with_tools
+    assert retrieved_entries[0].tool_calls is not None
+    assert len(retrieved_entries[0].tool_calls) == 1
+    assert retrieved_entries[0].tool_calls[0].name == "test_tool"
+    assert retrieved_entries[0].tool_results is not None
+    assert len(retrieved_entries[0].tool_results) == 1
+    assert retrieved_entries[0].tool_results[0].status == "success"

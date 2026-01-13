@@ -10,8 +10,9 @@ from cache.cache_error import CacheError
 from models.cache_entry import CacheEntry
 from models.config import SQLiteDatabaseConfiguration
 from models.responses import ConversationData, ReferencedDocument
-from log import get_logger
 from utils.connection_decorator import connection
+from utils.types import ToolCallSummary, ToolResultSummary
+from log import get_logger
 
 logger = get_logger("cache.sqlite_cache")
 
@@ -34,6 +35,8 @@ class SQLiteCache(Cache):
      provider              | text                        |          |
      model                 | text                        |          |
      referenced_documents  | text                        |          |
+     tool_calls            | text                        |          |
+     tool_results          | text                        |          |
     Indexes:
         "cache_pkey" PRIMARY KEY, btree (user_id, conversation_id, created_at)
         "cache_key_key" UNIQUE CONSTRAINT, btree (key)
@@ -54,6 +57,8 @@ class SQLiteCache(Cache):
             provider             text,
             model                text,
             referenced_documents text,
+            tool_calls           text,
+            tool_results         text,
             PRIMARY KEY(user_id, conversation_id, created_at)
         );
         """
@@ -74,7 +79,8 @@ class SQLiteCache(Cache):
         """
 
     SELECT_CONVERSATION_HISTORY_STATEMENT = """
-        SELECT query, response, provider, model, started_at, completed_at, referenced_documents
+        SELECT query, response, provider, model, started_at, completed_at,
+               referenced_documents, tool_calls, tool_results
           FROM cache
          WHERE user_id=? AND conversation_id=?
          ORDER BY created_at
@@ -82,8 +88,9 @@ class SQLiteCache(Cache):
 
     INSERT_CONVERSATION_HISTORY_STATEMENT = """
         INSERT INTO cache(user_id, conversation_id, created_at, started_at, completed_at,
-                          query, response, provider, model, referenced_documents)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                          query, response, provider, model, referenced_documents,
+                          tool_calls, tool_results)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
     QUERY_CACHE_SIZE = """
@@ -187,7 +194,7 @@ class SQLiteCache(Cache):
         self.connection.commit()
 
     @connection
-    def get(
+    def get(  # pylint: disable=R0914
         self, user_id: str, conversation_id: str, skip_user_id_check: bool = False
     ) -> list[CacheEntry]:
         """Get the value associated with the given key.
@@ -228,6 +235,39 @@ class SQLiteCache(Cache):
                         conversation_id,
                         e,
                     )
+
+            # Parse tool_calls back into ToolCallSummary objects
+            tool_calls_json_str = conversation_entry[7]
+            tool_calls_obj = None
+            if tool_calls_json_str:
+                try:
+                    tool_calls_data = json.loads(tool_calls_json_str)
+                    tool_calls_obj = [
+                        ToolCallSummary.model_validate(tc) for tc in tool_calls_data
+                    ]
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.warning(
+                        "Failed to deserialize tool_calls for conversation %s: %s",
+                        conversation_id,
+                        e,
+                    )
+
+            # Parse tool_results back into ToolResultSummary objects
+            tool_results_json_str = conversation_entry[8]
+            tool_results_obj = None
+            if tool_results_json_str:
+                try:
+                    tool_results_data = json.loads(tool_results_json_str)
+                    tool_results_obj = [
+                        ToolResultSummary.model_validate(tr) for tr in tool_results_data
+                    ]
+                except (json.JSONDecodeError, ValueError) as e:
+                    logger.warning(
+                        "Failed to deserialize tool_results for conversation %s: %s",
+                        conversation_id,
+                        e,
+                    )
+
             cache_entry = CacheEntry(
                 query=conversation_entry[0],
                 response=conversation_entry[1],
@@ -236,6 +276,8 @@ class SQLiteCache(Cache):
                 started_at=conversation_entry[4],
                 completed_at=conversation_entry[5],
                 referenced_documents=docs_obj,
+                tool_calls=tool_calls_obj,
+                tool_results=tool_results_obj,
             )
             result.append(cache_entry)
 
@@ -281,6 +323,34 @@ class SQLiteCache(Cache):
                     e,
                 )
 
+        tool_calls_json = None
+        if cache_entry.tool_calls:
+            try:
+                tool_calls_as_dicts = [
+                    tc.model_dump(mode="json") for tc in cache_entry.tool_calls
+                ]
+                tool_calls_json = json.dumps(tool_calls_as_dicts)
+            except (TypeError, ValueError) as e:
+                logger.warning(
+                    "Failed to serialize tool_calls for conversation %s: %s",
+                    conversation_id,
+                    e,
+                )
+
+        tool_results_json = None
+        if cache_entry.tool_results:
+            try:
+                tool_results_as_dicts = [
+                    tr.model_dump(mode="json") for tr in cache_entry.tool_results
+                ]
+                tool_results_json = json.dumps(tool_results_as_dicts)
+            except (TypeError, ValueError) as e:
+                logger.warning(
+                    "Failed to serialize tool_results for conversation %s: %s",
+                    conversation_id,
+                    e,
+                )
+
         cursor.execute(
             self.INSERT_CONVERSATION_HISTORY_STATEMENT,
             (
@@ -294,6 +364,8 @@ class SQLiteCache(Cache):
                 cache_entry.provider,
                 cache_entry.model,
                 referenced_documents_json,
+                tool_calls_json,
+                tool_results_json,
             ),
         )
 

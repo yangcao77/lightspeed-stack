@@ -806,6 +806,8 @@ async def cleanup_after_streaming(
         started_at=started_at,
         completed_at=completed_at,
         referenced_documents=referenced_documents if referenced_documents else None,
+        tool_calls=summary.tool_calls if summary.tool_calls else None,
+        tool_results=summary.tool_results if summary.tool_results else None,
     )
 
     store_conversation_into_cache(

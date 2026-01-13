@@ -3,6 +3,7 @@
 from typing import Optional
 from pydantic import BaseModel
 from models.responses import ReferencedDocument
+from utils.types import ToolCallSummary, ToolResultSummary
 
 
 class CacheEntry(BaseModel):
@@ -14,6 +15,8 @@ class CacheEntry(BaseModel):
         provider: Provider identification
         model: Model identification
         referenced_documents: List of documents referenced by the response
+        tool_calls: List of tool calls made during response generation
+        tool_results: List of tool results from tool calls
     """
 
     query: str
@@ -23,3 +26,5 @@ class CacheEntry(BaseModel):
     started_at: str
     completed_at: str
     referenced_documents: Optional[list[ReferencedDocument]] = None
+    tool_calls: Optional[list[ToolCallSummary]] = None
+    tool_results: Optional[list[ToolResultSummary]] = None

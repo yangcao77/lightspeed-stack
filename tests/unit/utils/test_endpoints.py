@@ -1069,7 +1069,9 @@ async def test_cleanup_after_streaming_generate_topic_summary_default_true(
         provider_id="test_provider",
         llama_stack_model_id="test_llama_model",
         query_request=query_request,
-        summary=mocker.Mock(llm_response="test response", tool_calls=[]),
+        summary=mocker.Mock(
+            llm_response="test response", tool_calls=[], tool_results=[]
+        ),
         metadata_map={},
         started_at="2024-01-01T00:00:00Z",
         client=mock_client,
@@ -1121,7 +1123,9 @@ async def test_cleanup_after_streaming_generate_topic_summary_explicit_false(
         provider_id="test_provider",
         llama_stack_model_id="test_llama_model",
         query_request=query_request,
-        summary=mocker.Mock(llm_response="test response", tool_calls=[]),
+        summary=mocker.Mock(
+            llm_response="test response", tool_calls=[], tool_results=[]
+        ),
         metadata_map={},
         started_at="2024-01-01T00:00:00Z",
         client=mock_client,
