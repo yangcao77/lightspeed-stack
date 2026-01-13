@@ -25,6 +25,7 @@ cython==3.2.4
     #   pyarrow
     #   pyyaml
     #   scikit-learn
+    #   scipy
     #   sqlalchemy
 dunamai==1.25.0
     # via uv-dynamic-versioning
@@ -80,6 +81,7 @@ hatchling==1.26.3
     #   openai
 hatchling==1.28.0
     # via
+    #   a2a-sdk
     #   annotated-types
     #   attrs
     #   dnspython
@@ -118,7 +120,7 @@ jinja2==3.1.6
     # via uv-dynamic-versioning
 markupsafe==3.0.3
     # via jinja2
-maturin==1.11.2
+maturin==1.11.5
     # via
     #   cryptography
     #   fastuuid
@@ -151,7 +153,7 @@ packaging==25.0
     #   meson-python
     #   scikit-build-core
     #   setuptools-scm
-pathspec==1.0.1
+pathspec==1.0.3
     # via
     #   hatchling
     #   scikit-build-core
@@ -211,12 +213,14 @@ setuptools-scm==9.2.2
     #   zipp
 tomlkit==0.13.3
     # via uv-dynamic-versioning
-trove-classifiers==2025.12.1.14
+trove-classifiers==2026.1.12.15
     # via hatchling
 typing-extensions==4.15.0
     # via setuptools-scm
 uv-dynamic-versioning==0.12.0
-    # via mcp
+    # via
+    #   a2a-sdk
+    #   mcp
 versioneer==0.29
     # via pandas
 wheel==0.45.1
@@ -254,6 +258,7 @@ setuptools==80.9.0
     #   emoji
     #   fire
     #   frozenlist
+    #   google-api-core
     #   googleapis-common-protos
     #   greenlet
     #   httpx-sse
@@ -275,6 +280,7 @@ setuptools==80.9.0
     #   prometheus-client
     #   prompt-toolkit
     #   propcache
+    #   proto-plus
     #   psutil
     #   pyarrow
     #   pyasn1

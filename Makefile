@@ -118,7 +118,7 @@ konflux-requirements:	## generate hermetic requirements.*.txt file for konflux b
 	echo "torch==${TORCH_VERSION}" | uv pip compile - -o requirements.torch.txt --generate-hashes --python-version 3.12 --torch-backend cpu --emit-index-url --no-deps --index-url https://download.pytorch.org/whl/cpu --refresh
 	uv run pybuild-deps compile --output-file=requirements-build.txt \
 	<(grep -v "^faiss-cpu" requirements.hermetic.txt) \
-	<(grep -v "^faiss-cpu" requirements.x86_64.txt)
+	<(grep -Eo "^[a-zA-Z0-9][-a-zA-Z0-9._]*==[^ ]+" requirements.x86_64.txt | grep -v "^faiss-cpu")
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
