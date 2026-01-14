@@ -56,11 +56,11 @@ class AzureEntraIDManager(metaclass=Singleton):
         """Return the access token from environment variable as SecretStr."""
         return SecretStr(os.environ.get("AZURE_API_KEY", ""))
 
-    async def refresh_token(self) -> None:
+    def refresh_token(self) -> bool:
         """Refresh the cached Azure access token.
 
-        This is async to enforce proper ordering in the event loop -
-        callers must await this before using the refreshed token.
+        Returns:
+            bool: True if token was successfully refreshed, False otherwise.
 
         Raises:
             ValueError: If Entra ID configuration has not been set.
@@ -72,6 +72,8 @@ class AzureEntraIDManager(metaclass=Singleton):
         token_obj = self._retrieve_access_token()
         if token_obj:
             self._update_access_token(token_obj.token, token_obj.expires_on)
+            return True
+        return False
 
     def _update_access_token(self, token: str, expires_on: int) -> None:
         """Update the token in env var and track expiration time."""
@@ -96,5 +98,5 @@ class AzureEntraIDManager(metaclass=Singleton):
             return credential.get_token(self._entra_id_config.scope)
 
         except (ClientAuthenticationError, CredentialUnavailableError):
-            logger.error("Failed to retrieve Azure access token")
+            logger.warning("Failed to retrieve Azure access token")
             return None

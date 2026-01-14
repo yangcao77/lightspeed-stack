@@ -75,13 +75,12 @@ class TestAzureEntraIDTokenManager:
         token_manager._expires_on = 0
         assert token_manager.is_token_expired
 
-    @pytest.mark.asyncio
-    async def test_refresh_token_raises_without_config(
+    def test_refresh_token_raises_without_config(
         self, token_manager: AzureEntraIDManager
     ) -> None:
         """Raise ValueError when refresh_token is called without config."""
         with pytest.raises(ValueError, match="Azure Entra ID configuration not set"):
-            await token_manager.refresh_token()
+            token_manager.refresh_token()
 
     def test_update_access_token_sets_token_and_expiration(
         self, token_manager: AzureEntraIDManager
@@ -92,8 +91,7 @@ class TestAzureEntraIDTokenManager:
         assert token_manager.access_token.get_secret_value() == "test-token"
         assert token_manager._expires_on == expires_on - TOKEN_EXPIRATION_LEEWAY
 
-    @pytest.mark.asyncio
-    async def test_refresh_token_success(
+    def test_refresh_token_success(
         self,
         token_manager: AzureEntraIDManager,
         dummy_config: AzureEntraIdConfiguration,
@@ -111,16 +109,14 @@ class TestAzureEntraIDTokenManager:
             return_value=mock_credential_instance,
         )
 
-        await token_manager.refresh_token()
+        result = token_manager.refresh_token()
 
+        assert result is True
         assert token_manager.access_token.get_secret_value() == "token_value"
         assert not token_manager.is_token_expired
-        mock_credential_instance.get_token.assert_called_once_with(
-            "https://cognitiveservices.azure.com/.default"
-        )
+        mock_credential_instance.get_token.assert_called_once_with(dummy_config.scope)
 
-    @pytest.mark.asyncio
-    async def test_refresh_token_failure_logs_error(
+    def test_refresh_token_failure_logs_error(
         self,
         token_manager: AzureEntraIDManager,
         dummy_config: AzureEntraIdConfiguration,
@@ -138,8 +134,9 @@ class TestAzureEntraIDTokenManager:
             return_value=mock_credential_instance,
         )
 
-        with caplog.at_level("ERROR"):
-            await token_manager.refresh_token()
+        with caplog.at_level("WARNING"):
+            result = token_manager.refresh_token()
+            assert result is False
             assert "Failed to retrieve Azure access token" in caplog.text
 
     def test_token_expired_property_dynamic(

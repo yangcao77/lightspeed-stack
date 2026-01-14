@@ -13,7 +13,7 @@ RUN pip install faiss-cpu==1.11.0 azure-identity && \
 # Copy enrichment scripts for runtime config enrichment
 COPY src/llama_stack_configuration.py /opt/app-root/llama_stack_configuration.py
 COPY scripts/llama-stack-entrypoint.sh /opt/app-root/enrich-entrypoint.sh
-RUN chmod +x /opt/app-root/enrich-entrypoint.sh /opt/app-root/llama_stack_configuration.py && \
+RUN chmod +x /opt/app-root/enrich-entrypoint.sh && \
     chown 1001:0 /opt/app-root/enrich-entrypoint.sh /opt/app-root/llama_stack_configuration.py
 
 # Switch back to the original user

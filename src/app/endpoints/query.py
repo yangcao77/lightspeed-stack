@@ -307,8 +307,7 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
     try:
         check_tokens_available(configuration.quota_limiters, user_id)
         # try to get Llama Stack client
-        client_holder = AsyncLlamaStackClientHolder()
-        client = client_holder.get_client()
+        client = AsyncLlamaStackClientHolder().get_client()
         llama_stack_model_id, model_id, provider_id = select_model_and_provider_id(
             await client.models.list(),
             *evaluate_model_hints(
@@ -316,27 +315,26 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
             ),
         )
 
-        if provider_id == "azure":
-            if (
-                AzureEntraIDManager().is_entra_id_configured
-                and AzureEntraIDManager().is_token_expired
-            ):
-                await AzureEntraIDManager().refresh_token()
-
-                if client_holder.is_library_client:
-                    client = await client_holder.reload_library_client()
-                else:
-                    azure_config = next(
-                        p.config
-                        for p in await client.providers.list()
-                        if p.provider_type == "remote::azure"
-                    )
-                    client = client_holder.update_provider_data(
-                        {
-                            "azure_api_key": AzureEntraIDManager().access_token.get_secret_value(),
-                            "azure_api_base": str(azure_config.get("api_base")),
-                        }
-                    )
+        if (
+            provider_id == "azure"
+            and AzureEntraIDManager().is_entra_id_configured
+            and AzureEntraIDManager().is_token_expired
+            and AzureEntraIDManager().refresh_token()
+        ):
+            if AsyncLlamaStackClientHolder().is_library_client:
+                client = await AsyncLlamaStackClientHolder().reload_library_client()
+            else:
+                azure_config = next(
+                    p.config
+                    for p in await client.providers.list()
+                    if p.provider_type == "remote::azure"
+                )
+                client = AsyncLlamaStackClientHolder().update_provider_data(
+                    {
+                        "azure_api_key": AzureEntraIDManager().access_token.get_secret_value(),
+                        "azure_api_base": str(azure_config.get("api_base")),
+                    }
+                )
 
         summary, conversation_id, referenced_documents, token_usage = (
             await retrieve_response_func(

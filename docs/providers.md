@@ -84,9 +84,9 @@ Example of LCS config section:
 
 ```yaml
 azure_entra_id:
-  tenant_id: ${env.AZURE_TENANT_ID}
-  client_id: ${env.AZURE_CLIENT_ID}
-  client_secret: ${env.AZURE_CLIENT_SECRET}
+  tenant_id: ${env.TENANT_ID}
+  client_id: ${env.CLIENT_ID}
+  client_secret: ${env.CLIENT_SECRET}
   # scope: "https://cognitiveservices.azure.com/.default"  # optional, this is the default
 ```
 

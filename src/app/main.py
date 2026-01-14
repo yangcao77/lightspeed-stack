@@ -44,14 +44,11 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     azure_config = configuration.configuration.azure_entra_id
     if azure_config is not None:
         AzureEntraIDManager().set_config(azure_config)
-        try:
-            await AzureEntraIDManager().refresh_token()
-            os.environ["AZURE_API_KEY"] = (
-                AzureEntraIDManager().access_token.get_secret_value()
+        if not AzureEntraIDManager().refresh_token():
+            logger.warning(
+                "Failed to refresh Azure token at startup. "
+                "Token refresh will be retried on next Azure request."
             )
-            logger.info("Azure Entra ID token set in environment")
-        except ValueError as e:
-            logger.error("Failed to refresh Azure token: %s", e)
 
     await AsyncLlamaStackClientHolder().load(configuration.configuration.llama_stack)
     client = AsyncLlamaStackClientHolder().get_client()

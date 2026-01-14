@@ -8,6 +8,7 @@ This module can be used in two ways:
 import logging
 import os
 from argparse import ArgumentParser
+from pathlib import Path
 from typing import Any
 
 from azure.core.exceptions import ClientAuthenticationError
@@ -62,6 +63,7 @@ def setup_azure_entra_id_token(
     tenant_id = azure_config.get("tenant_id")
     client_id = azure_config.get("client_id")
     client_secret = azure_config.get("client_secret")
+    scope = azure_config.get("scope", "https://cognitiveservices.azure.com/.default")
 
     if not all([tenant_id, client_id, client_secret]):
         logger.warning(
@@ -69,7 +71,6 @@ def setup_azure_entra_id_token(
         )
         return
 
-    scope = "https://cognitiveservices.azure.com/.default"
     try:
         credential = ClientSecretCredential(
             tenant_id=str(tenant_id),
@@ -80,10 +81,12 @@ def setup_azure_entra_id_token(
         token = credential.get_token(scope)
 
         # Write to .env file
+        # Create file if it doesn't exist
+        Path(env_file).touch()
+
         lines = []
-        if os.path.exists(env_file):
-            with open(env_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
+        with open(env_file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
 
         # Update or add AZURE_API_KEY
         key_found = False
@@ -123,7 +126,7 @@ def construct_vector_dbs_section(
         ls_config (dict[str, Any]): Existing Llama Stack configuration mapping
         used as the base; existing `vector_dbs` entries are preserved if
         present.
-        byok_rag (list[ByokRag]): List of BYOK RAG definitions to be added to
+        byok_rag (list[dict[str, Any]]): List of BYOK RAG definitions to be added to
         the `vector_dbs` section.
 
     Returns:
@@ -143,10 +146,10 @@ def construct_vector_dbs_section(
     for brag in byok_rag:
         output.append(
             {
-                "vector_db_id": brag.get("vector_db_id"),
+                "vector_db_id": brag.get("vector_db_id", ""),
                 "provider_id": "byok_" + brag.get("vector_db_id", ""),
-                "embedding_model": brag.get("embedding_model", "all-MiniLM-L6-v2"),
-                "embedding_dimension": brag.get("embedding_dimension", 384),
+                "embedding_model": brag.get("embedding_model", ""),
+                "embedding_dimension": brag.get("embedding_dimension"),
             }
         )
     logger.info(
@@ -170,7 +173,7 @@ def construct_vector_io_providers_section(
         ls_config (dict[str, Any]): Existing Llama Stack configuration
         dictionary; if it contains providers.vector_io, those entries are used
         as the starting list.
-        byok_rag (list[ByokRag]): List of BYOK RAG specifications to convert
+        byok_rag (list[dict[str, Any]]): List of BYOK RAG specifications to convert
         into provider entries.
 
     Returns:
@@ -303,13 +306,9 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    try:
-        with open(args.config, "r", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-            config = replace_env_vars(config)
-    except FileNotFoundError:
-        logger.error("Config not found: %s", args.config)
-        return
+    with open(args.config, "r", encoding="utf-8") as f:
+        config = yaml.safe_load(f)
+        config = replace_env_vars(config)
 
     generate_configuration(args.input, args.output, config, args.env_file)
 

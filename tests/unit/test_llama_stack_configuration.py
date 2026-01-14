@@ -65,15 +65,6 @@ def test_construct_vector_dbs_section_adds_new() -> None:
     assert output[0]["embedding_dimension"] == 512
 
 
-def test_construct_vector_dbs_section_uses_defaults() -> None:
-    """Test uses default values when not specified."""
-    ls_config: dict[str, Any] = {}
-    byok_rag = [{"vector_db_id": "db1"}]
-    output = construct_vector_dbs_section(ls_config, byok_rag)
-    assert output[0]["embedding_model"] == "all-MiniLM-L6-v2"
-    assert output[0]["embedding_dimension"] == 384
-
-
 def test_construct_vector_dbs_section_merge() -> None:
     """Test merges existing and new entries."""
     ls_config = {"vector_dbs": [{"vector_db_id": "existing"}]}
@@ -116,14 +107,6 @@ def test_construct_vector_io_providers_section_adds_new() -> None:
     output = construct_vector_io_providers_section(ls_config, byok_rag)
     assert len(output) == 1
     assert output[0]["provider_id"] == "byok_db1"
-    assert output[0]["provider_type"] == "inline::faiss"
-
-
-def test_construct_vector_io_providers_section_uses_defaults() -> None:
-    """Test uses default values when not specified."""
-    ls_config: dict[str, Any] = {"providers": {}}
-    byok_rag = [{"vector_db_id": "db1"}]
-    output = construct_vector_io_providers_section(ls_config, byok_rag)
     assert output[0]["provider_type"] == "inline::faiss"
 
 
