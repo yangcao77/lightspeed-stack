@@ -1177,9 +1177,9 @@ langdetect==1.0.9 \
     --hash=sha256:7cbc0746252f19e76f77c0b1690aadf01963be835ef0cd4b56dddf2a8f1dfc2a \
     --hash=sha256:cbc1fef89f8d062739774bd51eda3da3274006b3661d199c2655f6b3f6d605a0
     # via lightspeed-stack (pyproject.toml:llslibdev)
-litellm==1.80.13 \
-    --hash=sha256:43dcdbca010961f17d7a5a6a995a38d1a46101350959b0e8269576cfe913cf0b \
-    --hash=sha256:61ed22dfad633ada3b97dd8a50d8e8d804da0115105006d2f9d77ba3fb247a0b
+litellm==1.80.16 \
+    --hash=sha256:21be641b350561b293b831addb25249676b72ebff973a5a1d73b5d7cf35bcd1d \
+    --hash=sha256:f96233649f99ab097f7d8a3ff9898680207b9eea7d2e23f438074a3dbcf50cca
     # via lightspeed-stack (pyproject.toml)
 llama-stack==0.3.5 \
     --hash=sha256:4a0ce8014b17d14a06858251736f1170f12580fafc519daf75ee1df6c4fbf64b \
@@ -1982,9 +1982,9 @@ polyleven==0.9.0 \
     --hash=sha256:f21e6c050f6f0d259cf9c6367042ba6a69e553b8294143c83bb47f6481486f9c \
     --hash=sha256:ff60e2da0864b3d4bec2826eadbbb0a8967384d53bec9e693aad7b0089e1258c
     # via autoevals
-prometheus-client==0.23.1 \
-    --hash=sha256:6ae8f9081eaaaf153a2e959d2e6c4f4fb57b12ef76c8c7980202f1e57b48b2ce \
-    --hash=sha256:dd1913e6e76b59cfe44e7a4b83e01afc9873c1bdfd2ed8739f1e76aeca115f99
+prometheus-client==0.24.0 \
+    --hash=sha256:4ab6d4fb5a1b25ad74b58e6271857e356fff3399473e599d227ab5d0ce6637f0 \
+    --hash=sha256:726b40c0d499f4904d4b5b7abe8d43e6aff090de0d468ae8f2226290b331c667
     # via lightspeed-stack (pyproject.toml)
 prompt-toolkit==3.0.52 \
     --hash=sha256:28cde192929c8e7321de85de1ddbe736f1375148b02f2e17edd840042b1be855 \
@@ -2122,17 +2122,17 @@ proto-plus==1.27.0 \
     --hash=sha256:1baa7f81cf0f8acb8bc1f6d085008ba4171eaf669629d1b6d1673b21ed1c0a82 \
     --hash=sha256:873af56dd0d7e91836aee871e5799e1c6f1bda86ac9a983e0bb9f0c266a568c4
     # via google-api-core
-protobuf==6.33.3 \
-    --hash=sha256:08a6ca12f60ba99097dd3625ef4275280f99c9037990e47ce9368826b159b890 \
-    --hash=sha256:1fd18f030ae9df97712fbbb0849b6e54c63e3edd9b88d8c3bb4771f84d8db7a4 \
-    --hash=sha256:2756963dcfd414eba46bcbb341f0e2c652036e5d700f112b3bb90fa1a031893a \
-    --hash=sha256:642fce7187526c98683c79a3ad68e5d646a5ef5eb004582fe123fc9a33a9456b \
-    --hash=sha256:648b7b0144222eb06cf529a3d7b01333c5f30b4196773b682d388f04db373759 \
-    --hash=sha256:6fa9b5f4baa12257542273e5e6f3c3d3867b30bc2770c14ad9ac8315264bf986 \
-    --hash=sha256:b4046f9f2ede57ad5b1d9917baafcbcad42f8151a73c755a1e2ec9557b0a764f \
-    --hash=sha256:c2bf221076b0d463551efa2e1319f08d4cffcc5f0d864614ccd3d0e77a637794 \
-    --hash=sha256:c46dcc47b243b299f4f7eabeed21929c07f0d36fffe2ea8431793b53c308ab80 \
-    --hash=sha256:c8794debeb402963fddff41a595e1f649bcd76616ba56c835645cab4539e810e
+protobuf==6.33.4 \
+    --hash=sha256:0f12ddbf96912690c3582f9dffb55530ef32015ad8e678cd494312bd78314c4f \
+    --hash=sha256:1fe3730068fcf2e595816a6c34fe66eeedd37d51d0400b72fabc848811fdc1bc \
+    --hash=sha256:2fe67f6c014c84f655ee06f6f66213f9254b3a8b6bda6cda0ccd4232c73c06f0 \
+    --hash=sha256:3df850c2f8db9934de4cf8f9152f8dc2558f49f298f37f90c517e8e5c84c30e9 \
+    --hash=sha256:757c978f82e74d75cba88eddec479df9b99a42b31193313b75e492c06a51764e \
+    --hash=sha256:8f11ffae31ec67fc2554c2ef891dcb561dae9a2a3ed941f9e134c2db06657dbc \
+    --hash=sha256:918966612c8232fc6c24c78e1cd89784307f5814ad7506c308ee3cf86662850d \
+    --hash=sha256:955478a89559fa4568f5a81dce77260eabc5c686f9e8366219ebd30debf06aa6 \
+    --hash=sha256:c7c64f259c618f0bef7bee042075e390debbf9682334be2b67408ec7c1c09ee6 \
+    --hash=sha256:dc2e61bca3b10470c1912d166fe0af67bfc20eb55971dcef8dfa48ce14f0ed91
     # via
     #   a2a-sdk
     #   google-api-core
@@ -3225,9 +3225,9 @@ tqdm==4.67.1 \
     #   peft
     #   sentence-transformers
     #   transformers
-transformers==4.57.3 \
-    --hash=sha256:c77d353a4851b1880191603d36acb313411d3577f6e2897814f333841f7003f4 \
-    --hash=sha256:df4945029aaddd7c09eec5cad851f30662f8bd1746721b34cc031d70c65afebc
+transformers==4.57.5 \
+    --hash=sha256:5a1e0deb989cd0b8f141b6d8c9b7c956fc029cd288d68844f57dc0acbaf2fe39 \
+    --hash=sha256:d631faea6bd32fc51962e482744afeaa70170c70e5e991cf8e355d7275631524
     # via
     #   lightspeed-stack (pyproject.toml:llslibdev)
     #   peft
