@@ -52,6 +52,21 @@ jobs:
           echo "=== Recent commits ==="
           git log --oneline -5
 
+      - name: Add Azure Entra ID config block to all test configs
+        if: matrix.environment == 'azure'
+        run: |
+          echo "Adding azure_entra_id configuration block to all test configs..."
+          for config in tests/e2e/configuration/*/lightspeed-stack*.yaml; do
+            if [ -f "$config" ]; then
+              echo "" >> "$config"
+              echo "azure_entra_id:" >> "$config"
+              echo "  tenant_id: \${env.TENANT_ID}" >> "$config"
+              echo "  client_id: \${env.CLIENT_ID}" >> "$config"
+              echo "  client_secret: \${env.CLIENT_SECRET}" >> "$config"
+              echo "✅ Added to: $config"
+            fi
+          done
+
       - name: Load lightspeed-stack.yaml configuration
         run: |
           MODE="${{ matrix.mode }}"
@@ -66,32 +81,6 @@ jobs:
           
           cp "${CONFIG_FILE}" lightspeed-stack.yaml
           echo "✅ Configuration loaded successfully"
-        
-      - name: Get Azure API key (access token)
-        if: matrix.environment == 'azure'
-        id: azure_token
-        env:
-          CLIENT_ID: ${{ secrets.CLIENT_ID }}
-          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
-          TENANT_ID: ${{ secrets.TENANT_ID }}
-        run: |
-          echo "Requesting Azure API token..."
-          RESPONSE=$(curl -s -X POST \
-            -H "Content-Type: application/x-www-form-urlencoded" \
-            -d "client_id=$CLIENT_ID&scope=https://cognitiveservices.azure.com/.default&client_secret=$CLIENT_SECRET&grant_type=client_credentials" \
-            "https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token")
-
-          echo "Response received. Extracting access_token..."
-          ACCESS_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
-
-          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" == "null" ]; then
-            echo "❌ Failed to obtain Azure access token. Response:"
-            echo "$RESPONSE"
-            exit 1
-          fi
-
-          echo "✅ Successfully obtained Azure access token."
-          echo "AZURE_API_KEY=$ACCESS_TOKEN" >> $GITHUB_ENV
 
       - name: Save VertexAI service account key to file
         if: matrix.environment == 'vertexai'
@@ -198,7 +187,9 @@ jobs:
         if: matrix.mode == 'server'
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          AZURE_API_KEY: ${{ env.AZURE_API_KEY }}
+          TENANT_ID: ${{ secrets.TENANT_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           VERTEX_AI_LOCATION: ${{ secrets.VERTEX_AI_LOCATION }}
           VERTEX_AI_PROJECT: ${{ secrets.VERTEX_AI_PROJECT }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
@@ -227,7 +218,9 @@ jobs:
         if: matrix.mode == 'library'
         env: 
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          AZURE_API_KEY: ${{ env.AZURE_API_KEY }}
+          TENANT_ID: ${{ secrets.TENANT_ID }}
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
           VERTEX_AI_LOCATION: ${{ secrets.VERTEX_AI_LOCATION }}
           VERTEX_AI_PROJECT: ${{ secrets.VERTEX_AI_PROJECT }}
           GOOGLE_APPLICATION_CREDENTIALS: ${{ env.GOOGLE_APPLICATION_CREDENTIALS }}
