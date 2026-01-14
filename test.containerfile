@@ -1,5 +1,5 @@
 # Custom Red Hat llama-stack image with missing dependencies
-FROM quay.io/aipcc/llama-stack/cpu-ubi9:rhoai-3.2 
+FROM quay.io/rhoai/odh-llama-stack-core-rhel9:rhoai-3.2 
 
 # Install missing dependencies and create required directories
 USER root
