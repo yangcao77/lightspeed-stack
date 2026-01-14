@@ -68,10 +68,13 @@ def main():
         generate_documentation_on_path(f"{directory}/")
         for path in Path(directory).rglob("*"):
             if path.is_dir():
+                # LCORE-679: Script to generate documentation should create
+                #            README.md files just for source modules
                 if (
                     path.name == "lightspeed_stack.egg-info"
                     or path.name == "__pycache__"
                     or ".ruff_cache" in str(path)
+                    or ".mypy_cache" in str(path)
                 ):
                     continue
                 generate_documentation_on_path(path)
