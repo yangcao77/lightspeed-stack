@@ -1,0 +1,5 @@
+date=2026-01-04 20:25:21+0100
+os=Linux 6.17.9-200.fc42.x86_64
+schemaspy-version=7.0.2
+schemaspy-revision=v7.0.2
+renderer=Graphviz dot 12.2.1 
