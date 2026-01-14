@@ -5,9 +5,11 @@ ARG APP_ROOT=/app-root
 ARG LSC_SOURCE_DIR=.
 
 # UV_PYTHON_DOWNLOADS=0 : Disable Python interpreter downloads and use the system interpreter.
+# MATURIN_NO_INSTALL_RUST=1 : Disable installation of Rust dependencies by Maturin.
 ENV UV_COMPILE_BYTECODE=0 \
     UV_LINK_MODE=copy \
-    UV_PYTHON_DOWNLOADS=0
+    UV_PYTHON_DOWNLOADS=0 \
+    MATURIN_NO_INSTALL_RUST=1
 
 WORKDIR /app-root
 
@@ -15,7 +17,8 @@ USER root
 
 # Install gcc - required by polyleven python package on aarch64
 # (dependency of autoevals, no pre-built binary wheels for linux on aarch64)
-RUN dnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs gcc
+# cmake and cargo are required by fastuuid, maturin
+RUN dnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs gcc cmake cargo
 
 # Install uv package manager
 RUN pip3.12 install "uv>=0.8.15"
@@ -34,7 +37,8 @@ RUN if [ -f /cachi2/cachi2.env ]; then \
     . /cachi2/cachi2.env && \
     uv venv --seed --no-index --find-links ${PIP_FIND_LINKS} && \
     . .venv/bin/activate && \
-    pip install --no-index --find-links ${PIP_FIND_LINKS} -r requirements.$(uname -m).txt -r requirements.torch.txt; \
+    pip install --no-cache-dir --ignore-installed --no-index --find-links ${PIP_FIND_LINKS} --no-deps -r requirements.hashes.wheel.txt -r requirements.hashes.source.txt && \
+    pip check; \
     else \
     uv sync --locked --no-dev --group llslibdev; \
     fi

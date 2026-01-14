@@ -16,85 +16,93 @@ The service includes comprehensive user data collection capabilities for various
 <!-- vim-markdown-toc GFM -->
 
 * [lightspeed-stack](#lightspeed-stack)
-    * [About The Project](#about-the-project)
+  * [About The Project](#about-the-project)
 * [Architecture](#architecture)
 * [Prerequisites](#prerequisites)
 * [Installation](#installation)
 * [Run LCS locally](#run-lcs-locally)
 * [Configuration](#configuration)
-    * [LLM Compatibility](#llm-compatibility)
-    * [Set LLM provider and model](#set-llm-provider-and-model)
-    * [Selecting provider and model](#selecting-provider-and-model)
-        * [Provider and model selection in REST API request](#provider-and-model-selection-in-rest-api-request)
-        * [Default provider and model](#default-provider-and-model)
-    * [Supported providers](#supported-providers)
-    * [Integration with Llama Stack](#integration-with-llama-stack)
-    * [Llama Stack as separate server](#llama-stack-as-separate-server)
-        * [MCP Server and Tool Configuration](#mcp-server-and-tool-configuration)
-            * [Configuring MCP Servers](#configuring-mcp-servers)
-            * [Configuring MCP Headers](#configuring-mcp-headers)
-        * [Llama Stack project and configuration](#llama-stack-project-and-configuration)
-        * [Check connection to Llama Stack](#check-connection-to-llama-stack)
-    * [Llama Stack as client library](#llama-stack-as-client-library)
-    * [Llama Stack version check](#llama-stack-version-check)
-    * [User data collection](#user-data-collection)
-    * [System prompt](#system-prompt)
-        * [System Prompt Path](#system-prompt-path)
-        * [System Prompt Literal](#system-prompt-literal)
-        * [Custom Profile](#custom-profile)
-        * [Control model/provider overrides via authorization](#control-modelprovider-overrides-via-authorization)
-    * [Safety Shields](#safety-shields)
-    * [Authentication](#authentication)
-    * [CORS](#cors)
-        * [Default values](#default-values)
-    * [Allow credentials](#allow-credentials)
+  * [LLM Compatibility](#llm-compatibility)
+  * [Set LLM provider and model](#set-llm-provider-and-model)
+  * [Selecting provider and model](#selecting-provider-and-model)
+    * [Provider and model selection in REST API request](#provider-and-model-selection-in-rest-api-request)
+    * [Default provider and model](#default-provider-and-model)
+  * [Supported providers](#supported-providers)
+  * [Integration with Llama Stack](#integration-with-llama-stack)
+  * [Llama Stack as separate server](#llama-stack-as-separate-server)
+    * [MCP Server and Tool Configuration](#mcp-server-and-tool-configuration)
+      * [Configuring MCP Servers](#configuring-mcp-servers)
+      * [Configuring MCP Server Authentication](#configuring-mcp-server-authentication)
+        * [1. Static Tokens from Files (Recommended for Service Credentials)](#1-static-tokens-from-files-recommended-for-service-credentials)
+        * [2. Kubernetes Service Account Tokens (For K8s Deployments)](#2-kubernetes-service-account-tokens-for-k8s-deployments)
+        * [3. Client-Provided Tokens (For Per-User Authentication)](#3-client-provided-tokens-for-per-user-authentication)
+        * [Combining Authentication Methods](#combining-authentication-methods)
+        * [Authentication Method Comparison](#authentication-method-comparison)
+        * [Important: Automatic Server Skipping](#important-automatic-server-skipping)
+    * [Llama Stack project and configuration](#llama-stack-project-and-configuration)
+    * [Check connection to Llama Stack](#check-connection-to-llama-stack)
+  * [Llama Stack as client library](#llama-stack-as-client-library)
+  * [Llama Stack version check](#llama-stack-version-check)
+  * [User data collection](#user-data-collection)
+  * [System prompt](#system-prompt)
+    * [System Prompt Path](#system-prompt-path)
+    * [System Prompt Literal](#system-prompt-literal)
+    * [Custom Profile](#custom-profile)
+    * [Control model/provider overrides via authorization](#control-modelprovider-overrides-via-authorization)
+  * [Safety Shields](#safety-shields)
+  * [Authentication](#authentication)
+  * [CORS](#cors)
+    * [Default values](#default-values)
+  * [Allow credentials](#allow-credentials)
 * [RAG Configuration](#rag-configuration)
-    * [Example configurations for inference](#example-configurations-for-inference)
+  * [Example configurations for inference](#example-configurations-for-inference)
 * [Usage](#usage)
-    * [Make targets](#make-targets)
-    * [Running Linux container image](#running-linux-container-image)
-    * [Building Container Images](#building-container-images)
-        * [Llama-Stack as Separate Service (Server Mode)](#llama-stack-as-separate-service-server-mode)
-            * [macOS (arm64)](#macos-arm64)
-        * [Llama-Stack as Library (Library Mode)](#llama-stack-as-library-library-mode)
-            * [macOS](#macos)
-        * [Verify it's running properly](#verify-its-running-properly)
-    * [Custom Container Image](#custom-container-image)
+  * [Make targets](#make-targets)
+  * [Running Linux container image](#running-linux-container-image)
+  * [Building Container Images](#building-container-images)
+    * [Llama-Stack as Separate Service (Server Mode)](#llama-stack-as-separate-service-server-mode)
+      * [macOS (arm64)](#macos-arm64)
+    * [Llama-Stack as Library (Library Mode)](#llama-stack-as-library-library-mode)
+      * [macOS](#macos)
+    * [Verify it's running properly](#verify-its-running-properly)
+  * [Custom Container Image](#custom-container-image)
 * [Endpoints](#endpoints)
-    * [OpenAPI specification](#openapi-specification)
-    * [Readiness Endpoint](#readiness-endpoint)
-    * [Liveness Endpoint](#liveness-endpoint)
+  * [OpenAPI specification](#openapi-specification)
+  * [Readiness Endpoint](#readiness-endpoint)
+  * [Liveness Endpoint](#liveness-endpoint)
 * [Database structure](#database-structure)
 * [Publish the service as Python package on PyPI](#publish-the-service-as-python-package-on-pypi)
-    * [Generate distribution archives to be uploaded into Python registry](#generate-distribution-archives-to-be-uploaded-into-python-registry)
-    * [Upload distribution archives into selected Python registry](#upload-distribution-archives-into-selected-python-registry)
-    * [Packages on PyPI and Test PyPI](#packages-on-pypi-and-test-pypi)
+  * [Generate distribution archives to be uploaded into Python registry](#generate-distribution-archives-to-be-uploaded-into-python-registry)
+  * [Upload distribution archives into selected Python registry](#upload-distribution-archives-into-selected-python-registry)
+  * [Packages on PyPI and Test PyPI](#packages-on-pypi-and-test-pypi)
 * [Contributing](#contributing)
 * [Testing](#testing)
 * [License](#license)
 * [Additional tools](#additional-tools)
-    * [Utility to generate OpenAPI schema](#utility-to-generate-openapi-schema)
-        * [Path](#path)
-        * [Usage](#usage-1)
-    * [Makefile target to generate OpenAPI specification](#makefile-target-to-generate-openapi-specification)
-    * [Utility to generate documentation from source code](#utility-to-generate-documentation-from-source-code)
-        * [Path](#path-1)
-        * [Usage](#usage-2)
+  * [Utility to generate OpenAPI schema](#utility-to-generate-openapi-schema)
+    * [Path](#path)
+    * [Usage](#usage-1)
+  * [Makefile target to generate OpenAPI specification](#makefile-target-to-generate-openapi-specification)
+  * [Utility to generate documentation from source code](#utility-to-generate-documentation-from-source-code)
+    * [Path](#path-1)
+    * [Usage](#usage-2)
 * [Data Export Integration](#data-export-integration)
-    * [Quick Integration](#quick-integration)
-    * [Documentation](#documentation)
+  * [Quick Integration](#quick-integration)
+  * [Documentation](#documentation)
 * [Project structure](#project-structure)
-    * [Configuration classes](#configuration-classes)
-    * [REST API](#rest-api)
-    * [Sequence diagrams](#sequence-diagrams)
-        * [Query endpoint REST API handler](#query-endpoint-rest-api-handler)
-    * [Streaming query endpoint REST API handler](#streaming-query-endpoint-rest-api-handler)
-    * [Versioning](#versioning)
+  * [Configuration classes](#configuration-classes)
+  * [REST API](#rest-api)
+  * [Sequence diagrams](#sequence-diagrams)
+    * [Query endpoint REST API handler](#query-endpoint-rest-api-handler)
+  * [Streaming query endpoint REST API handler](#streaming-query-endpoint-rest-api-handler)
+  * [Versioning](#versioning)
+* [Development Tools](#development-tools)
+  * [MCP Mock Server](#mcp-mock-server)
 * [Konflux](#konflux)
-    * [Updating Dependencies for Hermetic Builds](#updating-dependencies-for-hermetic-builds)
-        * [When to Update Dependency Files](#when-to-update-dependency-files)
-        * [Updating Python Dependencies](#updating-python-dependencies)
-        * [Updating RPM Dependencies](#updating-rpm-dependencies)
+  * [Updating Dependencies for Hermetic Builds](#updating-dependencies-for-hermetic-builds)
+    * [When to Update Dependency Files](#when-to-update-dependency-files)
+    * [Updating Python Dependencies](#updating-python-dependencies)
+    * [Updating RPM Dependencies](#updating-rpm-dependencies)
 
 <!-- vim-markdown-toc -->
 
@@ -421,13 +429,13 @@ mcp_servers:
     url: "http://weather-api:8080"
     authorization_headers:
       X-API-Key: "/var/secrets/weather-api-key"
-  
+
   # Kubernetes auth for internal services
   - name: "internal-db"
     url: "http://db-mcp.cluster.local:8080"
     authorization_headers:
       Authorization: "kubernetes"
-  
+
   # Mixed: static API key + per-user token
   - name: "multi-tenant-service"
     url: "http://multi-tenant:8080"
@@ -1176,10 +1184,14 @@ Update these files when you:
 make konflux-requirements
 ```
 
-This generates three platform-specific requirements files:
-- `requirements.x86_64.txt` - x86_64 packages (excludes torch)
-- `requirements.aarch64.txt` - ARM64 packages (excludes torch)
-- `requirements.torch.txt` - CPU variant of torch (shared by both platforms)
+This compiles Python dependencies from `pyproject.toml` using `uv`, splits packages by their source index (PyPI vs Red Hat's internal registry), and generates hermetic requirements files with pinned versions and hashes for Konflux builds.
+
+**Files produced:**
+- `requirements.hashes.source.txt` – PyPI packages with hashes
+- `requirements.hashes.wheel.txt` – Red Hat registry packages with hashes
+- `requirements-build.txt` – Build-time dependencies for source packages
+
+The script also updates the Tekton pipeline configurations (`.tekton/lightspeed-stack-*.yaml`) with the list of pre-built wheel packages.
 
 ### Updating RPM Dependencies
 
