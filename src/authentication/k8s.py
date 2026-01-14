@@ -10,7 +10,7 @@ from fastapi import HTTPException, Request
 from kubernetes.client.rest import ApiException
 from kubernetes.config import ConfigException
 
-from authentication.interface import AuthInterface
+from authentication.interface import NO_AUTH_TUPLE, AuthInterface
 from authentication.utils import extract_user_token
 from configuration import configuration
 from constants import DEFAULT_VIRTUAL_PATH
@@ -240,6 +240,12 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
         Raises:
             HTTPException: If authentication or authorization fails.
         """
+        # LCORE-694: Config option to skip authorization for readiness and liveness probe
+        if not request.headers.get("Authorization"):
+            if configuration.authentication_configuration.skip_for_health_probes:
+                if request.url.path in ("/readiness", "/liveness"):
+                    return NO_AUTH_TUPLE
+
         token = extract_user_token(request.headers)
         user_info = get_user_info(token)
 
