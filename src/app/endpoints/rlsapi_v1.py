@@ -8,9 +8,8 @@ import logging
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from llama_stack_client import APIConnectionError  # type: ignore
-from llama_stack_client.types import UserMessage  # type: ignore
-from llama_stack_client.types.alpha.agents.turn import Turn
+from llama_stack.apis.agents.openai_responses import OpenAIResponseObject
+from llama_stack_client import APIConnectionError
 
 import constants
 from authentication import get_auth_dependency
@@ -27,9 +26,8 @@ from models.responses import (
 )
 from models.rlsapi.requests import RlsapiV1InferRequest
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
-from utils.endpoints import get_temp_agent
+from utils.responses import extract_text_from_response_output_item
 from utils.suid import get_suid
-from utils.types import content_to_str
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["rlsapi-v1"])
@@ -82,8 +80,8 @@ def _get_default_model_id() -> str:
 async def retrieve_simple_response(question: str) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
-    Creates a temporary agent, sends a single turn with the user's question,
-    and returns the LLM response text. No conversation persistence or tools.
+    Uses the Responses API for simple stateless inference, consistent with
+    other endpoints (query_v2, streaming_query_v2).
 
     Args:
         question: The combined user input (question + context).
@@ -100,24 +98,19 @@ async def retrieve_simple_response(question: str) -> str:
 
     logger.debug("Using model %s for rlsapi v1 inference", model_id)
 
-    agent, session_id, _ = await get_temp_agent(
-        client, model_id, constants.DEFAULT_SYSTEM_PROMPT
-    )
-
-    response = await agent.create_turn(
-        messages=[UserMessage(role="user", content=question).model_dump()],
-        session_id=session_id,
+    response = await client.responses.create(
+        input=question,
+        model=model_id,
+        instructions=constants.DEFAULT_SYSTEM_PROMPT,
         stream=False,
+        store=False,
     )
-    response = cast(Turn, response)
+    response = cast(OpenAIResponseObject, response)
 
-    if getattr(response, "output_message", None) is None:
-        return ""
-
-    if getattr(response.output_message, "content", None) is None:
-        return ""
-
-    return content_to_str(response.output_message.content)
+    return "".join(
+        extract_text_from_response_output_item(output_item)
+        for output_item in response.output
+    )
 
 
 @router.post("/infer", responses=infer_responses)

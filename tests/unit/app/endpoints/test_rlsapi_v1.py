@@ -3,6 +3,8 @@
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
 
+from typing import Any
+
 import pytest
 from fastapi import HTTPException, status
 from llama_stack_client import APIConnectionError
@@ -25,11 +27,26 @@ from models.rlsapi.requests import (
     RlsapiV1Terminal,
 )
 from models.rlsapi.responses import RlsapiV1InferResponse
-from tests.unit.conftest import AgentFixtures
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
 
 MOCK_AUTH: AuthTuple = ("test_user_id", "test_user", True, "test_token")
+
+
+def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
+    """Set up responses.create mock with custom behavior."""
+    mock_responses = mocker.Mock()
+    mock_responses.create = create_behavior
+
+    mock_client = mocker.Mock()
+    mock_client.responses = mock_responses
+
+    mock_client_holder = mocker.Mock()
+    mock_client_holder.get_client.return_value = mock_client
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.AsyncLlamaStackClientHolder",
+        return_value=mock_client_holder,
+    )
 
 
 @pytest.fixture(name="mock_configuration")
@@ -43,80 +60,39 @@ def mock_configuration_fixture(
     return minimal_config
 
 
+def _create_mock_response_output(mocker: MockerFixture, text: str) -> Any:
+    """Create a mock Responses API output item with assistant message."""
+    mock_output_item = mocker.Mock()
+    mock_output_item.type = "message"
+    mock_output_item.role = "assistant"
+    mock_output_item.content = text
+    return mock_output_item
+
+
 @pytest.fixture(name="mock_llm_response")
-def mock_llm_response_fixture(
-    mocker: MockerFixture, prepare_agent_mocks: AgentFixtures
-) -> None:
-    """Mock the LLM integration for successful responses."""
-    mock_client, mock_agent = prepare_agent_mocks
-
-    # Create mock output message with content
-    mock_output_message = mocker.Mock()
-    mock_output_message.content = "This is a test LLM response."
-
-    # Create mock turn response
-    mock_turn = mocker.Mock()
-    mock_turn.output_message = mock_output_message
-    mock_turn.steps = []
-
-    # Use AsyncMock for async method
-    mock_agent.create_turn = mocker.AsyncMock(return_value=mock_turn)
-
-    # Mock get_temp_agent to return our mock agent
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.get_temp_agent",
-        return_value=(mock_agent, "test_session_id", None),
-    )
-
-    # Mock the client holder
-    mock_client_holder = mocker.Mock()
-    mock_client_holder.get_client.return_value = mock_client
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.AsyncLlamaStackClientHolder",
-        return_value=mock_client_holder,
-    )
+def mock_llm_response_fixture(mocker: MockerFixture) -> None:
+    """Mock the LLM integration for successful responses via Responses API."""
+    mock_response = mocker.Mock()
+    mock_response.output = [
+        _create_mock_response_output(mocker, "This is a test LLM response.")
+    ]
+    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
 
 
 @pytest.fixture(name="mock_empty_llm_response")
-def mock_empty_llm_response_fixture(
-    mocker: MockerFixture, prepare_agent_mocks: AgentFixtures
-) -> None:
-    """Mock the LLM integration for empty responses (output_message=None)."""
-    mock_client, mock_agent = prepare_agent_mocks
-
-    # Create mock turn response with no output
-    mock_turn = mocker.Mock()
-    mock_turn.output_message = None
-    mock_turn.steps = []
-
-    # Use AsyncMock for async method
-    mock_agent.create_turn = mocker.AsyncMock(return_value=mock_turn)
-
-    # Mock get_temp_agent to return our mock agent
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.get_temp_agent",
-        return_value=(mock_agent, "test_session_id", None),
-    )
-
-    # Mock the client holder
-    mock_client_holder = mocker.Mock()
-    mock_client_holder.get_client.return_value = mock_client
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.AsyncLlamaStackClientHolder",
-        return_value=mock_client_holder,
-    )
+def mock_empty_llm_response_fixture(mocker: MockerFixture) -> None:
+    """Mock responses.create to return empty output list."""
+    mock_response = mocker.Mock()
+    mock_response.output = []
+    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
 
 
 @pytest.fixture(name="mock_api_connection_error")
 def mock_api_connection_error_fixture(mocker: MockerFixture) -> None:
-    """Mock AsyncLlamaStackClientHolder to raise APIConnectionError."""
-    mock_client_holder = mocker.Mock()
-    mock_client_holder.get_client.side_effect = APIConnectionError(
-        request=mocker.Mock()
-    )
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.AsyncLlamaStackClientHolder",
-        return_value=mock_client_holder,
+    """Mock responses.create() to raise APIConnectionError."""
+    _setup_responses_mock(
+        mocker,
+        mocker.AsyncMock(side_effect=APIConnectionError(request=mocker.Mock())),
     )
 
 
@@ -212,6 +188,7 @@ async def test_infer_minimal_request(
 
     assert isinstance(response, RlsapiV1InferResponse)
     assert response.data.text == "This is a test LLM response."
+    assert response.data.request_id is not None
     assert check_suid(response.data.request_id)
 
 
