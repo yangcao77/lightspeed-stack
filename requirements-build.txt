@@ -84,12 +84,14 @@ uv-dynamic-versioning==0.12.0
 wheel==0.45.1
     # via
     #   authlib
+    #   azure-identity
     #   litellm
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==80.9.0
     # via
     #   authlib
+    #   azure-identity
     #   blobfile
     #   calver
     #   certifi
@@ -105,6 +107,7 @@ setuptools==80.9.0
     #   prometheus-client
     #   psutil
     #   pycryptodomex
+    #   regex
     #   semver
     #   setuptools-rust
     #   setuptools-scm
