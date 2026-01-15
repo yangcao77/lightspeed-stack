@@ -64,6 +64,26 @@ Feature: Query endpoint API tests
       }
       """
 
+  Scenario: Check if LLM responds to sent question with error when bearer token is missing
+    Given The system is in default state
+    And I set the Authorization header to Bearer
+    When I use "query" to ask question with authorization header
+    """
+    {"query": "Write a simple code for reversing string", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    """
+      Then The status code of the response is 401
+      And The body of the response contains No token found in Authorization header
+
+  Scenario: Check if LLM responds to sent question with error when model does not exist
+    Given The system is in default state
+    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    When I use "query" to ask question with authorization header
+    """
+    {"query": "Write a simple code for reversing string", "model": "does-not-exist", "provider": "does-not-exist"}
+    """
+      Then The status code of the response is 404
+      And The body of the response contains Model not found
+
   Scenario: Check if LLM responds to sent question with error when attempting to access conversation
     Given The system is in default state
      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
