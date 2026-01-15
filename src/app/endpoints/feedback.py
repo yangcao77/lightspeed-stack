@@ -24,11 +24,7 @@ from models.responses import (
     StatusResponse,
     UnauthorizedResponse,
 )
-from utils.endpoints import (
-    check_configuration_loaded,
-    retrieve_conversation,
-    validate_conversation_ownership,
-)
+from utils.endpoints import check_configuration_loaded, retrieve_conversation
 from utils.suid import get_suid
 
 logger = logging.getLogger(__name__)
@@ -125,7 +121,7 @@ async def feedback_endpoint_handler(
     user_id, _, _, _ = auth
     check_configuration_loaded(configuration)
 
-    # Validate conversation exists
+    # Validate conversation exists and belongs to the user
     conversation_id = feedback_request.conversation_id
     conversation = retrieve_conversation(conversation_id)
     if conversation is None:
@@ -134,9 +130,7 @@ async def feedback_endpoint_handler(
         )
         raise HTTPException(**response.model_dump())
 
-    # Validate conversation belongs to the user
-    owned_conversation = validate_conversation_ownership(user_id, conversation_id)
-    if owned_conversation is None:
+    if conversation.user_id != user_id:
         response = ForbiddenResponse.conversation(
             action="submit feedback for", resource_id=conversation_id, user_id=user_id
         )
