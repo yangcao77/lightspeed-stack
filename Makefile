@@ -7,7 +7,7 @@ PATH_TO_PLANTUML := ~/bin
 PYTHON_REGISTRY = pypi
 
 # PyTorch version
-TORCH_VERSION := 2.7.1
+TORCH_VERSION := 2.9.0
 
 
 run: ## Run the service locally
@@ -111,14 +111,7 @@ upload-distribution-archives:	## Upload distribution archives into Python regist
 	uv run python -m twine upload --repository ${PYTHON_REGISTRY} dist/*
 
 konflux-requirements:	## generate hermetic requirements.*.txt file for konflux build
-	uv pip compile pyproject.toml -o requirements.x86_64.txt --generate-hashes --group llslibdev --python-platform x86_64-unknown-linux-gnu --torch-backend cpu --python-version 3.12 --refresh
-	uv pip compile pyproject.toml -o requirements.aarch64.txt --generate-hashes --group llslibdev --python-platform aarch64-unknown-linux-gnu --torch-backend cpu --python-version 3.12 --refresh
-	./scripts/remove_torch_deps.sh requirements.x86_64.txt
-	./scripts/remove_torch_deps.sh requirements.aarch64.txt
-	echo "torch==${TORCH_VERSION}" | uv pip compile - -o requirements.torch.txt --generate-hashes --python-version 3.12 --torch-backend cpu --emit-index-url --no-deps --index-url https://download.pytorch.org/whl/cpu --refresh
-	uv run pybuild-deps compile --output-file=requirements-build.txt \
-	<(grep -v "^faiss-cpu" requirements.hermetic.txt) \
-	<(grep -Eo "^[a-zA-Z0-9][-a-zA-Z0-9._]*==[^ ]+" requirements.x86_64.txt | grep -v "^faiss-cpu")
+	./scripts/konflux_requirements.sh
 
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
