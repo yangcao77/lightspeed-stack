@@ -125,6 +125,53 @@ def initialize_conversation(context: Context) -> None:
     context.response = response
 
 
+@given("A conversation owned by a different user is initialized")  # type: ignore
+def initialize_conversation_different_user(context: Context) -> None:
+    """Create a conversation owned by a different user for testing access control.
+
+    This step temporarily switches to a different auth token to create a conversation
+    that will be owned by a different user, then restores the original auth header.
+    """
+    # Save original auth headers
+    original_auth_headers = (
+        context.auth_headers.copy() if hasattr(context, "auth_headers") else {}
+    )
+
+    # Set a different auth token (different user_id in the sub claim)
+    # This token has sub: "different_user_id" instead of "1234567890"
+    different_user_token = (
+        "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9."
+        "eyJzdWIiOiJkaWZmZXJlbnRfdXNlcl9pZCIsIm5hbWUiOiJPdGhlclVzZXIifQ."
+        "placeholder_signature"
+    )
+    context.auth_headers = {"Authorization": different_user_token}
+
+    # Create a conversation as the different user
+    endpoint = "query"
+    base = f"http://{context.hostname}:{context.port}"
+    path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
+    url = base + path
+    payload = {
+        "query": "Say Hello.",
+        "system_prompt": "You are a helpful assistant",
+        "model": context.default_model,
+        "provider": context.default_provider,
+    }
+
+    response = requests.post(url, headers=context.auth_headers, json=payload)
+    assert (
+        response.status_code == 200
+    ), f"Failed to create conversation as different user: {response.text}"
+
+    body = response.json()
+    context.conversation_id = body["conversation_id"]
+    assert context.conversation_id, "Conversation was not created."
+    context.feedback_conversations.append(context.conversation_id)
+
+    # Restore original auth headers
+    context.auth_headers = original_auth_headers
+
+
 @given("An invalid feedback storage path is configured")  # type: ignore
 def configure_invalid_feedback_storage_path(context: Context) -> None:
     """Set an invalid feedback storage path and restart the container."""
