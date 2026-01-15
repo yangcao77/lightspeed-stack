@@ -60,6 +60,8 @@ dependencies = [
     "urllib3==2.6.2",
     # Used for agent card configuration
     "PyYAML>=6.0.0",
+    # Used for rag faiss support
+    "einops>=0.8.1",
 ]
 
 
