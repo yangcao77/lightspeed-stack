@@ -131,7 +131,7 @@ class SQLiteCache(Cache):
 
         Initialize the SQLiteCache with the provided database configuration and
         establish the database connection.
-        
+
         Parameters:
             config (SQLiteDatabaseConfiguration): Configuration containing the
             SQLite database path and related settings used to create and open
@@ -149,7 +149,7 @@ class SQLiteCache(Cache):
 
         Establish a SQLite connection using the configured db_path, initialize
         the cache schema, and enable autocommit.
-        
+
         Raises:
             sqlite3.Error: If the database cannot be opened or the cache schema
             cannot be initialized.
@@ -173,7 +173,7 @@ class SQLiteCache(Cache):
         """Check if connection to cache is alive.
 
         Return whether the SQLite connection used by the cache is alive.
-        
+
         Returns:
             bool: `True` if a working connection to storage exists, `False` otherwise.
         """
@@ -201,7 +201,7 @@ class SQLiteCache(Cache):
 
         Creates the cache table, conversations table, and index if they do not
         already exist, and commits the changes.
-        
+
         Raises:
             CacheError: if the database connection is not established.
         """

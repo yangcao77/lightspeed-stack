@@ -133,10 +133,10 @@ class PostgresCache(Cache):
         """Create a new instance of PostgreSQL cache.
 
         Initialize a Postgres-backed cache using the provided database configuration.
-        
+
         Stores the configuration on the instance and establishes the PostgreSQL
         connection, initializing the cache schema.
-        
+
         Parameters:
             config (PostgreSQLDatabaseConfiguration): Configuration used to
             connect to the PostgreSQL server and configure the cache.
@@ -191,7 +191,7 @@ class PostgresCache(Cache):
         """Check if connection to cache is alive.
 
         Determine whether the PostgreSQL connection is alive and responsive.
-        
+
         Returns:
             bool: `True` if the connection exists and a simple probe query
             succeeds, `False` otherwise.
