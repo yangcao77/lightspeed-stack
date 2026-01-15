@@ -69,7 +69,21 @@ async def setup_model_metrics() -> None:
 def update_llm_token_count_from_turn(
     turn: Turn, model: str, provider: str, system_prompt: str = ""
 ) -> None:
-    """Update the LLM calls metrics from a turn."""
+    """
+    Update token usage metrics for a completed LLM turn.
+
+    Counts tokens produced by the model (the turn's output message) and tokens sent to the model
+    (the system prompt prepended to the turn's input messages), and increments the metrics
+    `llm_token_received_total` and `llm_token_sent_total` using the provided
+    `provider` and `model` as label values.
+
+    Parameters:
+        turn (Turn): The turn containing input and output messages to measure.
+        model (str): The model identifier used to label the metrics.
+        provider (str): The LLM provider name used to label the metrics.
+        system_prompt (str): Optional system prompt text to prepend to the
+        input messages before counting.
+    """
     tokenizer = Tokenizer.get_instance()
     formatter = ChatFormat(tokenizer)
 
