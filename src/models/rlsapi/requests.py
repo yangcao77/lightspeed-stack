@@ -126,7 +126,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
     Attributes:
         question: User question string.
         context: Context with system info, terminal output, etc. (defaults provided).
-        skip_rag: Whether to skip RAG retrieval (default False).
+        skip_rag: Reserved for future use. RAG retrieval is not yet implemented.
 
     Example:
         ```python
@@ -152,7 +152,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
     )
     skip_rag: bool = Field(
         default=False,
-        description="Whether to skip RAG retrieval",
+        description="Reserved for future use. RAG retrieval is not yet implemented.",
         examples=[False, True],
     )
 
