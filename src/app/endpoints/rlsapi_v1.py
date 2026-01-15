@@ -27,7 +27,7 @@ from models.responses import (
     UnauthorizedResponse,
     UnprocessableEntityResponse,
 )
-from models.rlsapi.requests import RlsapiV1InferRequest
+from models.rlsapi.requests import RlsapiV1InferRequest, RlsapiV1SystemInfo
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
 from utils.responses import extract_text_from_response_output_item
 from utils.suid import get_suid
@@ -47,6 +47,35 @@ infer_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(examples=["generic"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
+
+
+def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
+    """Build LLM instructions incorporating system context when available.
+
+    Enhances the default system prompt with RHEL system information to provide
+    the LLM with relevant context about the user's environment.
+
+    Args:
+        systeminfo: System information from the client (OS, version, arch).
+
+    Returns:
+        Instructions string for the LLM, with system context if available.
+    """
+    base_prompt = constants.DEFAULT_SYSTEM_PROMPT
+
+    context_parts = []
+    if systeminfo.os:
+        context_parts.append(f"OS: {systeminfo.os}")
+    if systeminfo.version:
+        context_parts.append(f"Version: {systeminfo.version}")
+    if systeminfo.arch:
+        context_parts.append(f"Architecture: {systeminfo.arch}")
+
+    if not context_parts:
+        return base_prompt
+
+    system_context = ", ".join(context_parts)
+    return f"{base_prompt}\n\nUser's system: {system_context}"
 
 
 def _get_default_model_id() -> str:
@@ -82,7 +111,7 @@ def _get_default_model_id() -> str:
     )
 
 
-async def retrieve_simple_response(question: str) -> str:
+async def retrieve_simple_response(question: str, instructions: str) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
     Uses the Responses API for simple stateless inference, consistent with
@@ -90,6 +119,7 @@ async def retrieve_simple_response(question: str) -> str:
 
     Args:
         question: The combined user input (question + context).
+        instructions: System instructions for the LLM.
 
     Returns:
         The LLM-generated response text.
@@ -106,7 +136,7 @@ async def retrieve_simple_response(question: str) -> str:
     response = await client.responses.create(
         input=question,
         model=model_id,
-        instructions=constants.DEFAULT_SYSTEM_PROMPT,
+        instructions=instructions,
         stream=False,
         store=False,
     )
@@ -149,14 +179,14 @@ async def infer_endpoint(
 
     logger.info("Processing rlsapi v1 /infer request %s", request_id)
 
-    # Combine all input sources (question, stdin, attachments, terminal)
     input_source = infer_request.get_input_source()
+    instructions = _build_instructions(infer_request.context.systeminfo)
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
 
     try:
-        response_text = await retrieve_simple_response(input_source)
+        response_text = await retrieve_simple_response(input_source, instructions)
     except APIConnectionError as e:
         metrics.llm_calls_failures_total.inc()
         logger.error(

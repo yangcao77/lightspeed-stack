@@ -13,6 +13,7 @@ from pytest_mock import MockerFixture
 
 import constants
 from app.endpoints.rlsapi_v1 import (
+    _build_instructions,
     _get_default_model_id,
     infer_endpoint,
     retrieve_simple_response,
@@ -87,6 +88,12 @@ def mock_empty_llm_response_fixture(mocker: MockerFixture) -> None:
     _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
 
 
+@pytest.fixture(name="mock_auth_resolvers")
+def mock_auth_resolvers_fixture(mocker: MockerFixture) -> None:
+    """Mock authorization resolvers for endpoint tests."""
+    mock_authorization_resolvers(mocker)
+
+
 @pytest.fixture(name="mock_api_connection_error")
 def mock_api_connection_error_fixture(mocker: MockerFixture) -> None:
     """Mock responses.create() to raise APIConnectionError."""
@@ -94,6 +101,47 @@ def mock_api_connection_error_fixture(mocker: MockerFixture) -> None:
         mocker,
         mocker.AsyncMock(side_effect=APIConnectionError(request=mocker.Mock())),
     )
+
+
+# --- Test _build_instructions ---
+
+
+@pytest.mark.parametrize(
+    ("systeminfo_kwargs", "expected_contains", "expected_not_contains"),
+    [
+        pytest.param(
+            {"os": "RHEL", "version": "9.3", "arch": "x86_64"},
+            ["OS: RHEL", "Version: 9.3", "Architecture: x86_64"],
+            [],
+            id="full_systeminfo",
+        ),
+        pytest.param(
+            {"os": "RHEL", "version": "", "arch": ""},
+            ["OS: RHEL"],
+            ["Version:", "Architecture:"],
+            id="partial_systeminfo",
+        ),
+        pytest.param(
+            {},
+            [constants.DEFAULT_SYSTEM_PROMPT],
+            ["OS:", "Version:", "Architecture:"],
+            id="empty_systeminfo",
+        ),
+    ],
+)
+def test_build_instructions(
+    systeminfo_kwargs: dict[str, str],
+    expected_contains: list[str],
+    expected_not_contains: list[str],
+) -> None:
+    """Test _build_instructions with various system info combinations."""
+    systeminfo = RlsapiV1SystemInfo(**systeminfo_kwargs)
+    result = _build_instructions(systeminfo)
+
+    for expected in expected_contains:
+        assert expected in result
+    for not_expected in expected_not_contains:
+        assert not_expected not in result
 
 
 # --- Test _get_default_model_id ---
@@ -151,7 +199,9 @@ async def test_retrieve_simple_response_success(
     mock_configuration: AppConfig, mock_llm_response: None
 ) -> None:
     """Test retrieve_simple_response returns LLM response text."""
-    response = await retrieve_simple_response("How do I list files?")
+    response = await retrieve_simple_response(
+        "How do I list files?", constants.DEFAULT_SYSTEM_PROMPT
+    )
     assert response == "This is a test LLM response."
 
 
@@ -160,7 +210,9 @@ async def test_retrieve_simple_response_empty_output(
     mock_configuration: AppConfig, mock_empty_llm_response: None
 ) -> None:
     """Test retrieve_simple_response handles empty LLM output."""
-    response = await retrieve_simple_response("Test question")
+    response = await retrieve_simple_response(
+        "Test question", constants.DEFAULT_SYSTEM_PROMPT
+    )
     assert response == ""
 
 
@@ -170,7 +222,7 @@ async def test_retrieve_simple_response_api_connection_error(
 ) -> None:
     """Test retrieve_simple_response propagates APIConnectionError."""
     with pytest.raises(APIConnectionError):
-        await retrieve_simple_response("Test question")
+        await retrieve_simple_response("Test question", constants.DEFAULT_SYSTEM_PROMPT)
 
 
 # --- Test infer_endpoint ---
@@ -178,10 +230,11 @@ async def test_retrieve_simple_response_api_connection_error(
 
 @pytest.mark.asyncio
 async def test_infer_minimal_request(
-    mocker: MockerFixture, mock_configuration: AppConfig, mock_llm_response: None
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns valid response with LLM text."""
-    mock_authorization_resolvers(mocker)
     request = RlsapiV1InferRequest(question="How do I list files?")
 
     response = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
@@ -194,10 +247,11 @@ async def test_infer_minimal_request(
 
 @pytest.mark.asyncio
 async def test_infer_full_context_request(
-    mocker: MockerFixture, mock_configuration: AppConfig, mock_llm_response: None
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint handles full context (stdin, attachments, terminal)."""
-    mock_authorization_resolvers(mocker)
     request = RlsapiV1InferRequest(
         question="Why did this command fail?",
         context=RlsapiV1Context(
@@ -217,10 +271,11 @@ async def test_infer_full_context_request(
 
 @pytest.mark.asyncio
 async def test_infer_generates_unique_request_ids(
-    mocker: MockerFixture, mock_configuration: AppConfig, mock_llm_response: None
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
 ) -> None:
     """Test that each /infer call generates a unique request_id."""
-    mock_authorization_resolvers(mocker)
     request = RlsapiV1InferRequest(question="How do I list files?")
 
     response1 = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
@@ -231,12 +286,11 @@ async def test_infer_generates_unique_request_ids(
 
 @pytest.mark.asyncio
 async def test_infer_api_connection_error_returns_503(
-    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_api_connection_error: None,
+    mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns 503 when LLM service is unavailable."""
-    mock_authorization_resolvers(mocker)
     request = RlsapiV1InferRequest(question="Test question")
 
     with pytest.raises(HTTPException) as exc_info:
@@ -247,12 +301,11 @@ async def test_infer_api_connection_error_returns_503(
 
 @pytest.mark.asyncio
 async def test_infer_empty_llm_response_returns_fallback(
-    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_empty_llm_response: None,
+    mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns fallback text when LLM returns empty response."""
-    mock_authorization_resolvers(mocker)
     request = RlsapiV1InferRequest(question="Test question")
 
     response = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
