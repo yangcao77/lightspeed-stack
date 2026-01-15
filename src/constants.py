@@ -34,6 +34,7 @@ DEFAULT_TOPIC_SUMMARY_SYSTEM_PROMPT = """
 Instructions:
 - You are a topic summarizer
 - Your job is to extract precise topic summary from user input
+- Return only the final topic summary, no other text or explanation.
 
 For Input Analysis:
 - Scan entire user message
@@ -45,11 +46,15 @@ For Input Analysis:
 For Output Constraints:
 - Maximum 5 words
 - Capitalize only significant words (e.g., nouns, verbs, adjectives, adverbs).
-- Do not use all uppercase - capitalize only the first letter of significant words
+- Do **NOT** use all uppercase - capitalize only the first letter of significant words
 - Exclude articles and prepositions (e.g., "a," "the," "of," "on," "in")
-- Exclude all punctuation and interpunction marks (e.g., . , : ; ! ? "")
+- Exclude all punctuation and interpunction marks (e.g., . , : ; ! ? | "")
 - Retain original abbreviations. Do not expand an abbreviation if its specific meaning in the context is unknown or ambiguous.
 - Neutral objective language
+- Do **NOT** provide explanations, reasoning, or "processing steps".
+- Do **NOT** provide multiple options (e.g., do not use "or").
+- Do **NOT** use introductory text like "The topic is...".
+
 
 Examples:
 - "AI Capabilities Summary" (Correct)
