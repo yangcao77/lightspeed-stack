@@ -105,18 +105,13 @@ def check_shield_structure(context: Context) -> None:
 
     assert found_shield is not None, "No shield found in response"
 
-    expected_model = context.default_model
-    expected_provider = context.default_provider
-
     # Validate structure and values
     assert found_shield["type"] == "shield", "type should be 'shield'"
     assert (
         found_shield["provider_id"] == "llama-guard"
     ), "provider_id should be 'llama-guard'"
-    assert (
-        found_shield["provider_resource_id"] == f"{expected_provider}/{expected_model}"
-    ), (
-        f"provider_resource_id should be '{expected_provider}/{expected_model}', "
+    assert found_shield["provider_resource_id"] == "openai/gpt-4o-mini", (
+        f"provider_resource_id should be 'openai/gpt-4o-mini', "
         f"but is '{found_shield['provider_resource_id']}'"
     )
     assert (

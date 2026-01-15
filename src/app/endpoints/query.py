@@ -69,6 +69,8 @@ from utils.suid import normalize_conversation_id
 from utils.token_counter import TokenCounter, extract_and_update_token_metrics
 from utils.transcripts import store_transcript
 from utils.types import TurnSummary, content_to_str
+from authorization.azure_token_manager import AzureEntraIDManager
+
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["query"])
@@ -312,6 +314,28 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
+
+        if (
+            provider_id == "azure"
+            and AzureEntraIDManager().is_entra_id_configured
+            and AzureEntraIDManager().is_token_expired
+            and AzureEntraIDManager().refresh_token()
+        ):
+            if AsyncLlamaStackClientHolder().is_library_client:
+                client = await AsyncLlamaStackClientHolder().reload_library_client()
+            else:
+                azure_config = next(
+                    p.config
+                    for p in await client.providers.list()
+                    if p.provider_type == "remote::azure"
+                )
+                client = AsyncLlamaStackClientHolder().update_provider_data(
+                    {
+                        "azure_api_key": AzureEntraIDManager().access_token.get_secret_value(),
+                        "azure_api_base": str(azure_config.get("api_base")),
+                    }
+                )
+
         summary, conversation_id, referenced_documents, token_usage = (
             await retrieve_response_func(
                 client,

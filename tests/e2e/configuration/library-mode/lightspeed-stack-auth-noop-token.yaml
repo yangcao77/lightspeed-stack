@@ -23,4 +23,3 @@ conversation_cache:
 
 authentication:
   module: "noop-with-token"
-

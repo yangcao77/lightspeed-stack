@@ -49,6 +49,7 @@ from app.endpoints.query import parse_referenced_documents
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
+from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL, MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
@@ -890,6 +891,28 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
                 user_conversation=user_conversation, query_request=query_request
             ),
         )
+
+        if (
+            provider_id == "azure"
+            and AzureEntraIDManager().is_entra_id_configured
+            and AzureEntraIDManager().is_token_expired
+            and AzureEntraIDManager().refresh_token()
+        ):
+            if AsyncLlamaStackClientHolder().is_library_client:
+                client = await AsyncLlamaStackClientHolder().reload_library_client()
+            else:
+                azure_config = next(
+                    p.config
+                    for p in await client.providers.list()
+                    if p.provider_type == "remote::azure"
+                )
+                client = AsyncLlamaStackClientHolder().update_provider_data(
+                    {
+                        "azure_api_key": AzureEntraIDManager().access_token.get_secret_value(),
+                        "azure_api_base": str(azure_config.get("api_base")),
+                    }
+                )
+
         response, conversation_id = await retrieve_response_func(
             client,
             llama_stack_model_id,

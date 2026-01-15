@@ -60,7 +60,7 @@ jobs:
           
           cp "${CONFIG_FILE}" lightspeed-stack.yaml
           echo "✅ Configuration loaded successfully"
-        
+
       - name: Select and configure run.yaml
         env:
           CONFIG_ENVIRONMENT: ${{ matrix.environment || 'ci' }}
@@ -100,7 +100,7 @@ jobs:
           echo "=== Configuration Summary ==="
           echo "Deployment mode: ${{ matrix.mode }}"
           echo "Environment: ${{ matrix.environment }}"
-          echo "Source config: tests/e2e/configs/run-ci.yaml"
+          echo "Source config: tests/e2e/configs/run-${{ matrix.environment }}.yaml"
           echo ""
           echo "=== Configuration Preview ==="
           echo "Providers: $(grep -c "provider_id:" run.yaml)"

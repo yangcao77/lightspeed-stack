@@ -10,8 +10,17 @@ PYTHON_REGISTRY = pypi
 TORCH_VERSION := 2.9.0
 
 
+# Default configuration files (override with: make run CONFIG=myconfig.yaml)
+CONFIG ?= lightspeed-stack.yaml
+LLAMA_STACK_CONFIG ?= run.yaml
+
 run: ## Run the service locally
-	uv run src/lightspeed_stack.py
+	uv run src/lightspeed_stack.py -c $(CONFIG)
+
+run-llama-stack: ## Start Llama Stack with enriched config (for local service mode)
+	uv run src/llama_stack_configuration.py -c $(CONFIG) -i $(LLAMA_STACK_CONFIG) -o $(LLAMA_STACK_CONFIG) && \
+	AZURE_API_KEY=$$(grep '^AZURE_API_KEY=' .env | cut -d'=' -f2-) \
+	uv run llama stack run $(LLAMA_STACK_CONFIG)
 
 test-unit: ## Run the unit tests
 	@echo "Running unit tests..."

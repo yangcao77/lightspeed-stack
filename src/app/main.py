@@ -9,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.routing import Mount, Route, WebSocketRoute
 
+from authorization.azure_token_manager import AzureEntraIDManager
 import metrics
 import version
 from app import routers
@@ -16,8 +17,8 @@ from app.database import create_tables, initialize_database
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from log import get_logger
-from models.responses import InternalServerErrorResponse
 from a2a_storage import A2AStorageFactory
+from models.responses import InternalServerErrorResponse
 from utils.common import register_mcp_servers_async
 from utils.llama_stack_version import check_llama_stack_version
 
@@ -39,6 +40,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     logger, and database before serving requests.
     """
     configuration.load_configuration(os.environ["LIGHTSPEED_STACK_CONFIG_PATH"])
+
+    azure_config = configuration.configuration.azure_entra_id
+    if azure_config is not None:
+        AzureEntraIDManager().set_config(azure_config)
+        if not AzureEntraIDManager().refresh_token():
+            logger.warning(
+                "Failed to refresh Azure token at startup. "
+                "Token refresh will be retried on next Azure request."
+            )
+
     await AsyncLlamaStackClientHolder().load(configuration.configuration.llama_stack)
     client = AsyncLlamaStackClientHolder().get_client()
     # check if the Llama Stack version is supported by the service
