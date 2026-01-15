@@ -22,6 +22,9 @@ class CacheFactory:
 
         Returns:
             An instance of `Cache` (either `SQLiteCache`, `PostgresCache` or `InMemoryCache`).
+        
+        Raises:
+            ValueError: If `config.type` is None, if required type-specific configuration is missing, or if `config.type` is not a recognized cache type.
         """
         logger.info("Creating cache instance of type %s", config.type)
         match config.type:

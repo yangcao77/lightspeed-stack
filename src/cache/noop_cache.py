@@ -16,15 +16,28 @@ class NoopCache(Cache):
         """Create a new instance of no-op cache."""
 
     def connect(self) -> None:
-        """Initialize connection to database."""
+        """Initialize connection to database.
+
+        Mark the cache as connected and log the connection attempt.
+        """
         logger.info("Connecting to storage")
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """Check if connection to cache is alive.
+
+        Indicates whether the cache is connected.
+
+        Returns:
+            `true` if the cache is connected, `false` otherwise.
+        """
         return True
 
     def initialize_cache(self) -> None:
-        """Initialize cache."""
+        """Initialize cache.
+
+        Prepare the cache for use. In this NoopCache implementation, this
+        method performs no actions.
+        """
 
     @connection
     def get(
@@ -32,13 +45,13 @@ class NoopCache(Cache):
     ) -> list[CacheEntry]:
         """Get the value associated with the given key.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
-            Empty list.
+            list[CacheEntry]: An empty list (this cache does not persist entries).
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -54,12 +67,14 @@ class NoopCache(Cache):
     ) -> None:
         """Set the value associated with the given key.
 
-        Args:
+        Validate the key for the given user and conversation and accept a cache
+        entry without persisting it.
+
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
-
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -70,14 +85,13 @@ class NoopCache(Cache):
     ) -> bool:
         """Delete conversation history for a given user_id and conversation_id.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
             bool: True in all cases.
-
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -89,13 +103,14 @@ class NoopCache(Cache):
     ) -> list[ConversationData]:
         """List all conversations for a given user_id.
 
-        Args:
+        Validate the user ID and return an empty list of conversations (noop implementation).
+
+        Parameters:
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
             An empty list.
-
         """
         super()._check_user_id(user_id, skip_user_id_check)
         return []
@@ -110,7 +125,7 @@ class NoopCache(Cache):
     ) -> None:
         """Set the topic summary for the given conversation.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
