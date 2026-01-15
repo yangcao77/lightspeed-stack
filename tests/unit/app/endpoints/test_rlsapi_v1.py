@@ -31,7 +31,7 @@ from models.rlsapi.responses import RlsapiV1InferResponse
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
 
-MOCK_AUTH: AuthTuple = ("test_user_id", "test_user", True, "test_token")
+MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
 
 def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
