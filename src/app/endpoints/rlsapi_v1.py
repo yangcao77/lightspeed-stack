@@ -9,7 +9,7 @@ from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
 from llama_stack.apis.agents.openai_responses import OpenAIResponseObject
-from llama_stack_client import APIConnectionError
+from llama_stack_client import APIConnectionError, APIStatusError, RateLimitError
 
 import constants
 from authentication import get_auth_dependency
@@ -20,6 +20,8 @@ from configuration import configuration
 from models.config import Action
 from models.responses import (
     ForbiddenResponse,
+    InternalServerErrorResponse,
+    QuotaExceededResponse,
     ServiceUnavailableResponse,
     UnauthorizedResponse,
     UnprocessableEntityResponse,
@@ -40,6 +42,8 @@ infer_responses: dict[int | str, dict[str, Any]] = {
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     422: UnprocessableEntityResponse.openapi_response(),
+    429: QuotaExceededResponse.openapi_response(),
+    500: InternalServerErrorResponse.openapi_response(examples=["generic"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
 
@@ -160,6 +164,16 @@ async def infer_endpoint(
             backend_name="Llama Stack",
             cause=str(e),
         )
+        raise HTTPException(**response.model_dump()) from e
+    except RateLimitError as e:
+        logger.error("Rate limit exceeded for request %s: %s", request_id, e)
+        response = QuotaExceededResponse(
+            response="The quota has been exceeded", cause=str(e)
+        )
+        raise HTTPException(**response.model_dump()) from e
+    except APIStatusError as e:
+        logger.exception("API error for request %s: %s", request_id, e)
+        response = InternalServerErrorResponse.generic()
         raise HTTPException(**response.model_dump()) from e
 
     if not response_text:
