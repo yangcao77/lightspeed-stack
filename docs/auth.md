@@ -352,6 +352,8 @@ authorization:
 - `info` - Access the `/` endpoint, `/info` endpoint, `/readiness` endpoint, and `/liveness` endpoint
 - `get_config` - Access the `/config` endpoint
 - `get_models` - Access the `/models` endpoint
+- `get_tools` - Access the `/tools` and `/mcp-auth/client-options` endpoints
+- `get_shields` - Access the `/shields` endpoint
 - `list_providers` - Access the `/providers` endpoint
 - `get_provider` - Access the `/providers/{provider_id}` endpoint
 - `get_metrics` - Access the `/metrics` endpoint

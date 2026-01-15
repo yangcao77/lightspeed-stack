@@ -390,7 +390,7 @@ mcp_servers:
       Authorization: "kubernetes"    # Uses user's k8s token from request auth
 ```
 
-The user's Kubernetes token is extracted from the incoming request's `Authorization` header and forwarded to the MCP server.
+**Note:** Kubernetes token-based MCP authorization only works when Lightspeed Core Stack is configured with Kubernetes authentication (`authentication.k8s`). For any other authentication types, MCP servers configured with `Authorization: "kubernetes"` are removed from the available MCP servers list.
 
 ##### 3. Client-Provided Tokens (For Per-User Authentication)
 
@@ -417,6 +417,34 @@ curl -X POST "http://localhost:8080/v1/query" \
 **Note**: `MCP-HEADERS` is an **HTTP request header** containing a JSON-encoded dictionary. The dictionary is keyed by **server name** (not URL), matching the `name` field in your MCP server configuration. Each server name maps to another dictionary containing the HTTP headers to forward to that specific MCP server.
 
 **Structure**: `MCP-HEADERS: {"<server-name>": {"<header-name>": "<header-value>", ...}, ...}`
+
+##### Client-Authenticated MCP Servers Discovery
+
+To help clients determine which MCP servers require client-provided tokens, use the **MCP Client Auth Options** endpoint:
+
+```bash
+GET /v1/mcp-auth/client-options
+```
+
+**Response:**
+```json
+{
+  "servers": [
+    {
+      "name": "user-specific-service",
+      "client_auth_headers": ["Authorization", "X-User-Token"]
+    },
+    {
+      "name": "github-integration",
+      "client_auth_headers": ["Authorization"]
+    }
+  ]
+}
+```
+
+This endpoint returns only MCP servers configured with `authorization_headers: "client"`, along with the specific header names that need to be provided via `MCP-HEADERS`. Servers using file-based or Kubernetes authentication are not included in this response.
+
+**Use case:** Clients can call this endpoint at startup or before making requests to discover which servers they can authenticate with using their own tokens.
 
 ##### Combining Authentication Methods
 
