@@ -12,6 +12,7 @@ from llama_stack.apis.agents.openai_responses import OpenAIResponseObject
 from llama_stack_client import APIConnectionError, APIStatusError, RateLimitError
 
 import constants
+import metrics
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
@@ -157,6 +158,7 @@ async def infer_endpoint(
     try:
         response_text = await retrieve_simple_response(input_source)
     except APIConnectionError as e:
+        metrics.llm_calls_failures_total.inc()
         logger.error(
             "Unable to connect to Llama Stack for request %s: %s", request_id, e
         )
@@ -166,12 +168,14 @@ async def infer_endpoint(
         )
         raise HTTPException(**response.model_dump()) from e
     except RateLimitError as e:
+        metrics.llm_calls_failures_total.inc()
         logger.error("Rate limit exceeded for request %s: %s", request_id, e)
         response = QuotaExceededResponse(
             response="The quota has been exceeded", cause=str(e)
         )
         raise HTTPException(**response.model_dump()) from e
     except APIStatusError as e:
+        metrics.llm_calls_failures_total.inc()
         logger.exception("API error for request %s: %s", request_id, e)
         response = InternalServerErrorResponse.generic()
         raise HTTPException(**response.model_dump()) from e
