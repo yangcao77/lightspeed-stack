@@ -130,7 +130,17 @@ class PostgresCache(Cache):
         """
 
     def __init__(self, config: PostgreSQLDatabaseConfiguration) -> None:
-        """Create a new instance of PostgreSQL cache."""
+        """Create a new instance of PostgreSQL cache.
+
+        Initialize a Postgres-backed cache using the provided database configuration.
+
+        Stores the configuration on the instance and establishes the PostgreSQL
+        connection, initializing the cache schema.
+
+        Parameters:
+            config (PostgreSQLDatabaseConfiguration): Configuration used to
+            connect to the PostgreSQL server and configure the cache.
+        """
         self.postgres_config = config
 
         # initialize connection to DB
@@ -178,7 +188,14 @@ class PostgresCache(Cache):
         self.connection.autocommit = True
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """Check if connection to cache is alive.
+
+        Determine whether the PostgreSQL connection is alive and responsive.
+
+        Returns:
+            bool: `True` if the connection exists and a simple probe query
+            succeeds, `False` otherwise.
+        """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
             return False
@@ -232,13 +249,16 @@ class PostgresCache(Cache):
     ) -> list[CacheEntry]:
         """Get the value associated with the given key.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
             The value associated with the key, or None if not found.
+
+        Raises:
+            CacheError: If the cache connection is not available.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -326,12 +346,15 @@ class PostgresCache(Cache):
     ) -> None:
         """Set the value associated with the given key.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
 
+        Raises:
+            CacheError: If the cache is disconnected or a database error occurs
+            while persisting the entry.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -417,7 +440,7 @@ class PostgresCache(Cache):
     ) -> bool:
         """Delete conversation history for a given user_id and conversation_id.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
@@ -425,6 +448,8 @@ class PostgresCache(Cache):
         Returns:
             bool: True if the conversation was deleted, False if not found.
 
+        Raises:
+            CacheError: If the cache is disconnected or a database error occurs.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -455,7 +480,7 @@ class PostgresCache(Cache):
     ) -> list[ConversationData]:
         """List all conversations for a given user_id.
 
-        Args:
+        Parameters:
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
@@ -493,7 +518,7 @@ class PostgresCache(Cache):
     ) -> None:
         """Set the topic summary for the given conversation.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.

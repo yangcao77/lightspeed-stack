@@ -127,7 +127,16 @@ class SQLiteCache(Cache):
         """
 
     def __init__(self, config: SQLiteDatabaseConfiguration) -> None:
-        """Create a new instance of SQLite cache."""
+        """Create a new instance of SQLite cache.
+
+        Initialize the SQLiteCache with the provided database configuration and
+        establish the database connection.
+
+        Parameters:
+            config (SQLiteDatabaseConfiguration): Configuration containing the
+            SQLite database path and related settings used to create and open
+            the connection.
+        """
         self.sqlite_config = config
 
         # initialize connection to DB
@@ -136,7 +145,15 @@ class SQLiteCache(Cache):
 
     # pylint: disable=W0201
     def connect(self) -> None:
-        """Initialize connection to database."""
+        """Initialize connection to database.
+
+        Establish a SQLite connection using the configured db_path, initialize
+        the cache schema, and enable autocommit.
+
+        Raises:
+            sqlite3.Error: If the database cannot be opened or the cache schema
+            cannot be initialized.
+        """
         logger.info("Connecting to storage")
         # make sure the connection will have known state
         # even if SQLite is not alive
@@ -153,7 +170,13 @@ class SQLiteCache(Cache):
         self.connection.autocommit = True
 
     def connected(self) -> bool:
-        """Check if connection to cache is alive."""
+        """Check if connection to cache is alive.
+
+        Return whether the SQLite connection used by the cache is alive.
+
+        Returns:
+            bool: `True` if a working connection to storage exists, `False` otherwise.
+        """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
             return False
@@ -174,7 +197,14 @@ class SQLiteCache(Cache):
                     logger.warning("Unable to close cursor")
 
     def initialize_cache(self) -> None:
-        """Initialize cache - clean it up etc."""
+        """Initialize cache - clean it up etc.
+
+        Creates the cache table, conversations table, and index if they do not
+        already exist, and commits the changes.
+
+        Raises:
+            CacheError: if the database connection is not established.
+        """
         if self.connection is None:
             logger.error("Cache is disconnected")
             raise CacheError("Initialize_cache: cache is disconnected")
@@ -199,13 +229,16 @@ class SQLiteCache(Cache):
     ) -> list[CacheEntry]:
         """Get the value associated with the given key.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
             The value associated with the key, or None if not found.
+
+        Raises:
+            CacheError: If the cache connection is disconnected.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -293,12 +326,14 @@ class SQLiteCache(Cache):
     ) -> None:
         """Set the value associated with the given key.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
 
+        Raises:
+            CacheError: If the cache connection is not available.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -384,7 +419,7 @@ class SQLiteCache(Cache):
     ) -> bool:
         """Delete conversation history for a given user_id and conversation_id.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
@@ -392,6 +427,8 @@ class SQLiteCache(Cache):
         Returns:
             bool: True if the conversation was deleted, False if not found.
 
+        Raises:
+            CacheError: If the cache connection is not available.
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -420,7 +457,7 @@ class SQLiteCache(Cache):
     ) -> list[ConversationData]:
         """List all conversations for a given user_id.
 
-        Args:
+        Parameters:
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
@@ -459,7 +496,7 @@ class SQLiteCache(Cache):
     ) -> None:
         """Set the topic summary for the given conversation.
 
-        Args:
+        Parameters:
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
