@@ -213,7 +213,7 @@ setuptools-scm==9.2.2
     #   zipp
 tomlkit==0.14.0
     # via uv-dynamic-versioning
-trove-classifiers==2026.1.12.15
+trove-classifiers==2026.1.14.14
     # via hatchling
 typing-extensions==4.15.0
     # via setuptools-scm
