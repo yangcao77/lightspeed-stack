@@ -367,6 +367,18 @@ async def test_query_v2_endpoint_with_tool_calls(
         "doc_url": "https://example.com/ansible-docs.txt",
         "link": "https://example.com/ansible-docs.txt",
     }
+    mock_result.model_dump = mocker.Mock(
+        return_value={
+            "file_id": "doc-1",
+            "filename": "ansible-docs.txt",
+            "score": 0.95,
+            "text": "Ansible is an open-source automation tool...",
+            "attributes": {
+                "doc_url": "https://example.com/ansible-docs.txt",
+                "link": "https://example.com/ansible-docs.txt",
+            },
+        }
+    )
     mock_tool_output.results = [mock_result]
 
     mock_message_output = mocker.MagicMock()
@@ -422,9 +434,13 @@ async def test_query_v2_endpoint_with_mcp_list_tools(
 
     mock_tool1 = mocker.MagicMock()
     mock_tool1.name = "list_pods"
+    mock_tool1.description = "List Kubernetes pods"
+    mock_tool1.input_schema = {"type": "object", "properties": {}}
 
     mock_tool2 = mocker.MagicMock()
     mock_tool2.name = "get_deployment"
+    mock_tool2.description = "Get Kubernetes deployment"
+    mock_tool2.input_schema = {"type": "object", "properties": {}}
 
     mock_mcp_list = mocker.MagicMock()
     mock_mcp_list.type = "mcp_list_tools"
@@ -494,8 +510,9 @@ async def test_query_v2_endpoint_with_multiple_tool_types(
     mock_function = mocker.MagicMock()
     mock_function.type = "function_call"
     mock_function.id = "func-2"
+    mock_function.call_id = "func-2"
     mock_function.name = "calculate"
-    mock_function.arguments = {"operation": "sum"}
+    mock_function.arguments = '{"operation": "sum"}'
     mock_function.status = "completed"
 
     mock_message = mocker.MagicMock()

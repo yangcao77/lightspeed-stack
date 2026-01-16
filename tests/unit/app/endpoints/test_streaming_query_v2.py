@@ -140,8 +140,8 @@ async def test_streaming_query_endpoint_handler_v2_success_yields_events(
         lambda conv_id: f"START:{conv_id}\n",
     )
     mocker.patch(
-        "app.endpoints.streaming_query_v2.format_stream_data",
-        lambda obj: f"EV:{obj['event']}:{obj['data'].get('token','')}\n",
+        "app.endpoints.streaming_query_v2.stream_event",
+        lambda data, event_type, media_type: f"EV:{event_type}:{data.get('token','')}\n",
     )
     mocker.patch(
         "app.endpoints.streaming_query_v2.stream_end_event",
@@ -164,9 +164,7 @@ async def test_streaming_query_endpoint_handler_v2_success_yields_events(
         - a "response.created" event with a conversation id,
         - content and text delta events ("response.content_part.added",
           "response.output_text.delta"),
-        - function call events ("response.output_item.added",
-          "response.function_call_arguments.delta",
-          "response.function_call_arguments.done"),
+        - function call events ("response.output_item.done" with completed tool call),
         - a final "response.output_text.done" event and a "response.completed" event.
 
         Returns:
@@ -182,13 +180,8 @@ async def test_streaming_query_endpoint_handler_v2_success_yields_events(
         yield Mock(type="response.output_text.delta", delta="world")
         item_mock = Mock(type="function_call", id="item1", call_id="call1")
         item_mock.name = "search"  # 'name' is a special Mock param, set explicitly
-        yield Mock(type="response.output_item.added", item=item_mock)
-        yield Mock(type="response.function_call_arguments.delta", delta='{"q":"x"}')
-        yield Mock(
-            type="response.function_call_arguments.done",
-            item_id="item1",
-            arguments='{"q":"x"}',
-        )
+        item_mock.arguments = '{"q":"x"}'
+        yield Mock(type="response.output_item.done", item=item_mock)
         yield Mock(type="response.output_text.done", text="Hello world")
         # Include a response object with output attribute for shield violation detection
         mock_response = Mock(output=[])
@@ -392,8 +385,8 @@ async def test_streaming_response_blocked_by_shield_moderation(
         lambda conv_id: f"START:{conv_id}\n",
     )
     mocker.patch(
-        "app.endpoints.streaming_query_v2.format_stream_data",
-        lambda obj: f"EV:{obj['event']}:{obj['data'].get('token','')}\n",
+        "app.endpoints.streaming_query_v2.stream_event",
+        lambda data, event_type, media_type: f"EV:{event_type}:{data.get('token','')}\n",
     )
     mocker.patch(
         "app.endpoints.streaming_query_v2.stream_end_event",
@@ -484,8 +477,8 @@ async def test_streaming_response_no_shield_violation(
         lambda conv_id: f"START:{conv_id}\n",
     )
     mocker.patch(
-        "app.endpoints.streaming_query_v2.format_stream_data",
-        lambda obj: f"EV:{obj['event']}:{obj['data'].get('token','')}\n",
+        "app.endpoints.streaming_query_v2.stream_event",
+        lambda data, event_type, media_type: f"EV:{event_type}:{data.get('token','')}\n",
     )
     mocker.patch(
         "app.endpoints.streaming_query_v2.stream_end_event",

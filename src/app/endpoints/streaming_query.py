@@ -10,7 +10,6 @@ from datetime import UTC, datetime
 from typing import (
     Annotated,
     Any,
-    AsyncGenerator,
     AsyncIterator,
     Iterator,
     Optional,
@@ -369,7 +368,7 @@ def generic_llm_error(error: Exception, media_type: str) -> str:
     )
 
 
-async def stream_http_error(error: AbstractErrorResponse) -> AsyncGenerator[str, None]:
+def stream_http_error(error: AbstractErrorResponse) -> Iterator[str]:
     """
     Yield an SSE-formatted error response for generic LLM or API errors.
 

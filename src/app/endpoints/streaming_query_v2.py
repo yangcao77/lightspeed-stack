@@ -6,14 +6,13 @@ from typing import Annotated, Any, AsyncIterator, Optional, cast
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 from llama_stack.apis.agents.openai_responses import (
-    OpenAIResponseContentPartOutputText,
-    OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponseObjectStreamResponseCompleted,
-    OpenAIResponseObjectStreamResponseContentPartAdded,
+    OpenAIResponseObjectStreamResponseFailed,
+    OpenAIResponseObjectStreamResponseOutputItemDone,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
-    OpenAIResponseOutputMessageContentOutputText,
+    OpenAIResponseObjectStreamResponseOutputTextDone,
 )
 from llama_stack_client import AsyncLlamaStackClient
 
@@ -23,14 +22,19 @@ from app.endpoints.query import (
     validate_attachments_metadata,
 )
 from app.endpoints.query_v2 import (
+    _build_tool_call_summary,
     extract_token_usage_from_responses_api,
     get_topic_summary,
     parse_referenced_documents_from_responses_api,
     prepare_tools_for_responses_api,
 )
 from app.endpoints.streaming_query import (
+    LLM_TOKEN_EVENT,
+    LLM_TOOL_CALL_EVENT,
+    LLM_TOOL_RESULT_EVENT,
     format_stream_data,
     stream_end_event,
+    stream_event,
     stream_start_event,
     streaming_query_endpoint_handler_base,
 )
@@ -56,6 +60,7 @@ from utils.endpoints import (
     cleanup_after_streaming,
     get_system_prompt,
 )
+from utils.query import create_violation_stream
 from utils.quota import consume_tokens, get_available_quotas
 from utils.suid import normalize_conversation_id, to_llama_stack_conversation_id
 from utils.mcp_headers import mcp_headers_dependency
@@ -65,7 +70,7 @@ from utils.shields import (
 )
 from utils.token_counter import TokenCounter
 from utils.transcripts import store_transcript
-from utils.types import ToolCallSummary, TurnSummary
+from utils.types import TurnSummary
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query_v1"])
@@ -130,12 +135,10 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
 
         # Accumulators for Responses API
         text_parts: list[str] = []
-        tool_item_registry: dict[str, dict[str, str]] = {}
         emitted_turn_complete = False
 
         # Use the conversation_id from context (either provided or newly created)
         conv_id = context.conversation_id
-        start_event_emitted = False
 
         # Track the latest response object from response.completed event
         latest_response_object: Optional[Any] = None
@@ -146,121 +149,122 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
             event_type = getattr(chunk, "type", None)
             logger.debug("Processing chunk %d, type: %s", chunk_id, event_type)
 
-            # Emit start event on first chunk (conversation_id is always set at this point)
-            if not start_event_emitted:
-                yield stream_start_event(conv_id)
-                start_event_emitted = True
-
-            # Handle response.created event (just skip, no need to extract conversation_id)
+            # Emit start event when response is created
             if event_type == "response.created":
-                continue
+                yield stream_start_event(conv_id)
 
             # Text streaming
             if event_type == "response.output_text.delta":
-                delta = getattr(chunk, "delta", "")
-                if delta:
-                    text_parts.append(delta)
-                    yield format_stream_data(
+                delta_chunk = cast(
+                    OpenAIResponseObjectStreamResponseOutputTextDelta, chunk
+                )
+                if delta_chunk.delta:
+                    text_parts.append(delta_chunk.delta)
+                    yield stream_event(
                         {
-                            "event": "token",
-                            "data": {
-                                "id": chunk_id,
-                                "token": delta,
-                            },
-                        }
+                            "id": chunk_id,
+                            "token": delta_chunk.delta,
+                        },
+                        LLM_TOKEN_EVENT,
+                        media_type,
                     )
                     chunk_id += 1
 
             # Final text of the output (capture, but emit at response.completed)
             elif event_type == "response.output_text.done":
-                final_text = getattr(chunk, "text", "")
-                if final_text:
-                    summary.llm_response = final_text
+                done_chunk = cast(
+                    OpenAIResponseObjectStreamResponseOutputTextDone, chunk
+                )
+                if done_chunk.text:
+                    summary.llm_response = done_chunk.text
 
-            # Content part started - emit an empty token to kick off UI streaming if desired
+            # Content part started - emit an empty token to kick off UI streaming
             elif event_type == "response.content_part.added":
-                yield format_stream_data(
+                yield stream_event(
                     {
-                        "event": "token",
-                        "data": {
-                            "id": chunk_id,
-                            "token": "",
-                        },
-                    }
+                        "id": chunk_id,
+                        "token": "",
+                    },
+                    LLM_TOKEN_EVENT,
+                    media_type,
                 )
                 chunk_id += 1
 
-            # Track tool call items as they are added so we can build a summary later
-            elif event_type == "response.output_item.added":
-                item = getattr(chunk, "item", None)
-                item_type = getattr(item, "type", None)
-                if item and item_type == "function_call":
-                    item_id = getattr(item, "id", "")
-                    name = getattr(item, "name", "function_call")
-                    call_id = getattr(item, "call_id", item_id)
-                    if item_id:
-                        tool_item_registry[item_id] = {
-                            "name": name,
-                            "call_id": call_id,
-                        }
-
-            # Stream tool call arguments as tool_call events
-            elif event_type == "response.function_call_arguments.delta":
-                delta = getattr(chunk, "delta", "")
-                yield format_stream_data(
-                    {
-                        "event": "tool_call",
-                        "data": {
-                            "id": chunk_id,
-                            "role": "tool_execution",
-                            "token": delta,
-                        },
-                    }
+            # Process tool calls and results are emitted together when output items are done
+            # TODO(asimurka): support emitting tool calls and results separately when ready
+            elif event_type == "response.output_item.done":
+                done_chunk = cast(
+                    OpenAIResponseObjectStreamResponseOutputItemDone, chunk
                 )
-                chunk_id += 1
-
-            # Finalize tool call arguments and append to summary
-            elif event_type in (
-                "response.function_call_arguments.done",
-                "response.mcp_call.arguments.done",
-            ):
-                item_id = getattr(chunk, "item_id", "")
-                arguments = getattr(chunk, "arguments", "")
-                meta = tool_item_registry.get(item_id, {})
-                summary.tool_calls.append(
-                    ToolCallSummary(
-                        id=meta.get("call_id", item_id or "unknown"),
-                        name=meta.get("name", "tool_call"),
-                        args=(
-                            arguments if isinstance(arguments, dict) else {}
-                        ),  # Handle non-dict arguments
-                        type="tool_call",
+                if done_chunk.item.type == "message":
+                    continue
+                tool_call, tool_result = _build_tool_call_summary(done_chunk.item)
+                if tool_call:
+                    summary.tool_calls.append(tool_call)
+                    yield stream_event(
+                        tool_call.model_dump(),
+                        LLM_TOOL_CALL_EVENT,
+                        media_type,
                     )
-                )
+                if tool_result:
+                    summary.tool_results.append(tool_result)
+                    yield stream_event(
+                        tool_result.model_dump(),
+                        LLM_TOOL_RESULT_EVENT,
+                        media_type,
+                    )
 
             # Completed response - capture final text and response object
             elif event_type == "response.completed":
                 # Capture the response object for token usage extraction
-                latest_response_object = getattr(chunk, "response", None)
+                completed_chunk = cast(
+                    OpenAIResponseObjectStreamResponseCompleted, chunk
+                )
+                latest_response_object = completed_chunk.response
 
                 if not emitted_turn_complete:
                     final_message = summary.llm_response or "".join(text_parts)
                     if not final_message:
                         final_message = "No response from the model"
                     summary.llm_response = final_message
-                    yield format_stream_data(
+                    yield stream_event(
                         {
-                            "event": "turn_complete",
-                            "data": {
-                                "id": chunk_id,
-                                "token": final_message,
-                            },
-                        }
+                            "id": chunk_id,
+                            "token": final_message,
+                        },
+                        "turn_complete",
+                        media_type,
                     )
                     chunk_id += 1
                     emitted_turn_complete = True
 
-            # Ignore other event types for now; could add heartbeats if desired
+            # Incomplete response - emit error because LLS does not
+            # support incomplete responses "incomplete_detail" attribute yet
+            elif event_type == "response.incomplete":
+                error_response = InternalServerErrorResponse.query_failed(
+                    "An unexpected error occurred while processing the request."
+                )
+                logger.error("Error while obtaining answer for user question")
+                yield format_stream_data(
+                    {"event": "error", "data": {**error_response.detail.model_dump()}}
+                )
+                return
+
+            # Failed response - emit error with custom cause from error message
+            elif event_type == "response.failed":
+                failed_chunk = cast(OpenAIResponseObjectStreamResponseFailed, chunk)
+                latest_response_object = failed_chunk.response
+                error_message = (
+                    failed_chunk.response.error.message
+                    if failed_chunk.response.error
+                    else "An unexpected error occurred while processing the request."
+                )
+                error_response = InternalServerErrorResponse.query_failed(error_message)
+                logger.error("Error while obtaining answer for user question")
+                yield format_stream_data(
+                    {"event": "error", "data": {**error_response.detail.model_dump()}}
+                )
+                return
 
         logger.debug(
             "Streaming complete - Tool calls: %d, Response chars: %d",
@@ -467,54 +471,3 @@ async def retrieve_response(  # pylint: disable=too-many-locals
     response_stream = cast(AsyncIterator[OpenAIResponseObjectStream], response)
 
     return response_stream, normalize_conversation_id(conversation_id)
-
-
-async def create_violation_stream(
-    message: str,
-    shield_model: Optional[str] = None,
-) -> AsyncIterator[OpenAIResponseObjectStream]:
-    """Generate a minimal streaming response for cases where input is blocked by a shield.
-
-    This yields only the essential streaming events to indicate that the input was rejected.
-    Dummy item identifiers are used solely for protocol compliance and are not used later.
-    """
-    response_id = "resp_shield_violation"
-
-    # Content part added (triggers empty initial token)
-    yield OpenAIResponseObjectStreamResponseContentPartAdded(
-        content_index=0,
-        response_id=response_id,
-        item_id="msg_shield_violation_1",
-        output_index=0,
-        part=OpenAIResponseContentPartOutputText(text=""),
-        sequence_number=0,
-    )
-
-    # Text delta
-    yield OpenAIResponseObjectStreamResponseOutputTextDelta(
-        content_index=1,
-        delta=message,
-        item_id="msg_shield_violation_2",
-        output_index=1,
-        sequence_number=1,
-    )
-
-    # Completed response
-    yield OpenAIResponseObjectStreamResponseCompleted(
-        response=OpenAIResponseObject(
-            id=response_id,
-            created_at=0,  # not used
-            model=shield_model or "shield",
-            output=[
-                OpenAIResponseMessage(
-                    id="msg_shield_violation_3",
-                    content=[
-                        OpenAIResponseOutputMessageContentOutputText(text=message)
-                    ],
-                    role="assistant",
-                    status="completed",
-                )
-            ],
-            status="completed",
-        )
-    )

@@ -543,14 +543,13 @@ class TestInternalServerErrorResponse:
 
     def test_factory_query_failed(self) -> None:
         """Test InternalServerErrorResponse.query_failed() factory method."""
-        response = InternalServerErrorResponse.query_failed("https://api.example.com")
+        custom_cause = "Failed to call backend: https://api.example.com"
+        response = InternalServerErrorResponse.query_failed(custom_cause)
         assert isinstance(response, AbstractErrorResponse)
         assert response.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
         assert isinstance(response.detail, DetailModel)
         assert response.detail.response == "Error while processing query"
-        assert (
-            response.detail.cause == "Failed to call backend: https://api.example.com"
-        )
+        assert response.detail.cause == custom_cause
 
     def test_factory_cache_unavailable(self) -> None:
         """Test InternalServerErrorResponse.cache_unavailable() factory method."""

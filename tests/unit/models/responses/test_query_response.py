@@ -38,7 +38,7 @@ class TestQueryResponse:
             ToolResultSummary(
                 id="call-1",
                 status="success",
-                content={"chunks_found": 5},
+                content='{"chunks_found": 5}',
                 type="tool_result",
                 round=1,
             )
@@ -73,7 +73,7 @@ class TestQueryResponse:
         assert qr.tool_results is not None
         assert len(qr.tool_results) == 1
         assert qr.tool_results[0].status == "success"
-        assert qr.tool_results[0].content == {"chunks_found": 5}
+        assert qr.tool_results[0].content == '{"chunks_found": 5}'
         assert qr.tool_results[0].type == "tool_result"
         assert qr.tool_results[0].round == 1
         assert len(qr.referenced_documents) == 1
