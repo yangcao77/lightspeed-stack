@@ -101,10 +101,25 @@ def access_feedback_get_endpoint(context: Context) -> None:
 @given("A new conversation is initialized")  # type: ignore
 def initialize_conversation(context: Context) -> None:
     """Create a conversation for submitting feedback."""
+    create_conversation_with_user_id(context, user_id=None)
+
+
+@given('A new conversation is initialized with user_id "{user_id}"')  # type: ignore
+def initialize_conversation_with_user_id(context: Context, user_id: str) -> None:
+    """Create a conversation for submitting feedback with a specific user_id."""
+    create_conversation_with_user_id(context, user_id=user_id)
+
+
+def create_conversation_with_user_id(
+    context: Context, user_id: Optional[str] = None
+) -> None:
+    """Create a conversation, optionally with a specific user_id query parameter."""
     endpoint = "query"
     base = f"http://{context.hostname}:{context.port}"
     path = f"{context.api_prefix}/{endpoint}".replace("//", "/")
     url = base + path
+    if user_id is not None:
+        url = f"{url}?user_id={user_id}"
     headers = context.auth_headers if hasattr(context, "auth_headers") else {}
     payload = {
         "query": "Say Hello.",

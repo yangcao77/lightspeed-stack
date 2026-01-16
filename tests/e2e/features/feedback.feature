@@ -224,10 +224,8 @@ Feature: feedback endpoint API tests
         }
         """
 
-  @skip
-  Scenario: Check if feedback submittion fails when nonexisting conversation ID is passed
+  Scenario: Check if feedback submission fails when nonexisting conversation ID is passed
     Given The system is in default state
-    And A new conversation is initialized
     And The feedback is enabled
      When I submit the following feedback for nonexisting conversation "12345678-abcd-0000-0123-456789abcdef"
         """
@@ -238,14 +236,36 @@ Feature: feedback endpoint API tests
             "user_question": "Sample Question"
         }
         """
-     Then The status code of the response is 422
+     Then The status code of the response is 404
      And The body of the response is the following
         """
         {
-            "response": "User has no access to this conversation"
+            "detail": {
+                "response": "Conversation not found",
+                "cause": "Conversation with ID 12345678-abcd-0000-0123-456789abcdef does not exist"
+            }
         }
         """
-    
+
+  Scenario: Check if feedback submission fails when conversation belongs to a different user
+    Given The system is in default state
+    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    # Create a conversation as a different user (via user_id query param for noop_with_token)
+    And A new conversation is initialized with user_id "different_user_id"
+    # Feedback submission will use the default user from the auth header
+    And The feedback is enabled
+     When I submit the following feedback for the conversation created before
+        """
+        {
+            "llm_response": "Sample Response",
+            "sentiment": -1,
+            "user_feedback": "Not satisfied with the response quality",
+            "user_question": "Sample Question"
+        }
+        """
+     Then The status code of the response is 403
+     And The body of the response contains User does not have permission to perform this action
+
   Scenario: Check if feedback endpoint is not working when not authorized
     Given The system is in default state
     And A new conversation is initialized

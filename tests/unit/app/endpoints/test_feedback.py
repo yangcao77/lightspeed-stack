@@ -102,9 +102,17 @@ async def test_feedback_endpoint_handler(
     mocker.patch("app.endpoints.feedback.assert_feedback_enabled", return_value=None)
     mocker.patch("app.endpoints.feedback.store_feedback", return_value=None)
 
+    # Mock retrieve_conversation to return a conversation owned by test_user_id
+    mock_conversation = mocker.Mock()
+    mock_conversation.user_id = "test_user_id"
+    mocker.patch(
+        "app.endpoints.feedback.retrieve_conversation", return_value=mock_conversation
+    )
+
     # Prepare the feedback request mock
     feedback_request = mocker.Mock()
     feedback_request.model_dump.return_value = feedback_request_data
+    feedback_request.conversation_id = "12345678-abcd-0000-0123-456789abcdef"
 
     # Authorization tuple required by URL endpoint handler
     auth: AuthTuple = ("test_user_id", "test_user", True, "test_token")
@@ -126,6 +134,14 @@ async def test_feedback_endpoint_handler_error(mocker: MockerFixture) -> None:
     mock_authorization_resolvers(mocker)
     mocker.patch("app.endpoints.feedback.assert_feedback_enabled", return_value=None)
     mocker.patch("app.endpoints.feedback.check_configuration_loaded", return_value=None)
+
+    # Mock retrieve_conversation to return a conversation owned by test_user_id
+    mock_conversation = mocker.Mock()
+    mock_conversation.user_id = "test_user_id"
+    mocker.patch(
+        "app.endpoints.feedback.retrieve_conversation", return_value=mock_conversation
+    )
+
     # Mock Path.mkdir to raise OSError so the try block in store_feedback catches it
     mocker.patch(
         "app.endpoints.feedback.Path.mkdir", side_effect=OSError("Permission denied")
@@ -300,6 +316,14 @@ async def test_feedback_endpoint_valid_requests(
     """Test endpoint with valid feedback payloads."""
     mock_authorization_resolvers(mocker)
     mocker.patch("app.endpoints.feedback.store_feedback")
+
+    # Mock retrieve_conversation to return a conversation owned by mock_user_id
+    mock_conversation = mocker.Mock()
+    mock_conversation.user_id = "mock_user_id"
+    mocker.patch(
+        "app.endpoints.feedback.retrieve_conversation", return_value=mock_conversation
+    )
+
     request = FeedbackRequest(**{**VALID_BASE, **payload})
     response = await feedback_endpoint_handler(
         feedback_request=request,
@@ -337,3 +361,57 @@ def test_feedback_status_disabled(mocker: MockerFixture) -> None:
 
     assert response.functionality == "feedback"
     assert response.status == {"enabled": False}
+
+
+@pytest.mark.asyncio
+async def test_feedback_endpoint_handler_conversation_not_found(
+    mocker: MockerFixture,
+) -> None:
+    """Test that feedback_endpoint_handler returns 404 when conversation doesn't exist."""
+    mock_authorization_resolvers(mocker)
+    mocker.patch("app.endpoints.feedback.assert_feedback_enabled", return_value=None)
+    mocker.patch("app.endpoints.feedback.retrieve_conversation", return_value=None)
+
+    feedback_request = FeedbackRequest(**{**VALID_BASE, "sentiment": 1})
+    auth: AuthTuple = ("test_user_id", "test_user", True, "test_token")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await feedback_endpoint_handler(
+            feedback_request=feedback_request,
+            _ensure_feedback_enabled=assert_feedback_enabled,
+            auth=auth,
+        )
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    detail = exc_info.value.detail
+    assert isinstance(detail, dict)
+    assert detail["response"] == "Conversation not found"
+
+
+@pytest.mark.asyncio
+async def test_feedback_endpoint_handler_conversation_wrong_owner(
+    mocker: MockerFixture,
+) -> None:
+    """Test feedback_endpoint_handler returns 403 for conversation owned by different user."""
+    mock_authorization_resolvers(mocker)
+    mocker.patch("app.endpoints.feedback.assert_feedback_enabled", return_value=None)
+
+    # Mock retrieve_conversation to return a conversation owned by a different user
+    mock_conversation = mocker.Mock()
+    mock_conversation.user_id = "different_user_id"
+    mocker.patch(
+        "app.endpoints.feedback.retrieve_conversation", return_value=mock_conversation
+    )
+
+    feedback_request = FeedbackRequest(**{**VALID_BASE, "sentiment": 1})
+    auth: AuthTuple = ("test_user_id", "test_user", True, "test_token")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await feedback_endpoint_handler(
+            feedback_request=feedback_request,
+            _ensure_feedback_enabled=assert_feedback_enabled,
+            auth=auth,
+        )
+    assert exc_info.value.status_code == status.HTTP_403_FORBIDDEN
+    detail = exc_info.value.detail
+    assert isinstance(detail, dict)
+    assert "does not have permission" in detail["response"]

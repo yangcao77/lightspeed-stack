@@ -24,7 +24,7 @@ from models.responses import (
     StatusResponse,
     UnauthorizedResponse,
 )
-from utils.endpoints import check_configuration_loaded
+from utils.endpoints import check_configuration_loaded, retrieve_conversation
 from utils.suid import get_suid
 
 logger = logging.getLogger(__name__)
@@ -112,12 +112,30 @@ async def feedback_endpoint_handler(
         Response indicating the status of the feedback storage request.
 
     Raises:
+        HTTPException: Returns HTTP 404 if conversation does not exist.
+        HTTPException: Returns HTTP 403 if conversation belongs to a different user.
         HTTPException: Returns HTTP 500 if feedback storage fails.
     """
     logger.debug("Feedback received %s", str(feedback_request))
 
     user_id, _, _, _ = auth
     check_configuration_loaded(configuration)
+
+    # Validate conversation exists and belongs to the user
+    conversation_id = feedback_request.conversation_id
+    conversation = retrieve_conversation(conversation_id)
+    if conversation is None:
+        response = NotFoundResponse(
+            resource="conversation", resource_id=conversation_id
+        )
+        raise HTTPException(**response.model_dump())
+
+    if conversation.user_id != user_id:
+        response = ForbiddenResponse.conversation(
+            action="submit feedback for", resource_id=conversation_id, user_id=user_id
+        )
+        raise HTTPException(**response.model_dump())
+
     store_feedback(user_id, feedback_request.model_dump(exclude={"model_config"}))
 
     return FeedbackResponse(response="feedback received")
