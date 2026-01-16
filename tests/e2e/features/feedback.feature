@@ -249,11 +249,10 @@ Feature: feedback endpoint API tests
 
   Scenario: Check if feedback submission fails when conversation belongs to a different user
     Given The system is in default state
-    # Create a conversation as a different user (sub: "different_user_id")
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkaWZmZXJlbnRfdXNlcl9pZCIsIm5hbWUiOiJPdGhlclVzZXIifQ.placeholder
-    And A new conversation is initialized
-    # Switch back to original user (sub: "1234567890")
     And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    # Create a conversation as a different user (via user_id query param for noop_with_token)
+    And A new conversation is initialized with user_id "different_user_id"
+    # Feedback submission will use the default user from the auth header
     And The feedback is enabled
      When I submit the following feedback for the conversation created before
         """
