@@ -287,7 +287,7 @@ class TestQueryResponse:
             ToolResultSummary(
                 id="call-1",
                 status="success",
-                content={"chunks_found": 5},
+                content='{"chunks_found": 5}',
                 type="tool_result",
                 round=1,
             )

@@ -128,7 +128,7 @@ class ToolResultSummary(BaseModel):
     status: str = Field(
         ..., description="Status of the tool execution (e.g., 'success')"
     )
-    content: Any = Field(..., description="Content/result returned from the tool")
+    content: str = Field(..., description="Content/result returned from the tool")
     type: str = Field("tool_result", description="Type indicator for tool result")
     round: int = Field(..., description="Round number or step of tool execution")
 
@@ -193,9 +193,9 @@ class TurnSummary(BaseModel):
                 ToolResultSummary(
                     id=call_id,
                     status="success" if resp else "failure",
-                    content=response_content,
+                    content=response_content or "",
                     type="tool_result",
-                    round=1,  # clarify meaning of this attribute
+                    round=1,
                 )
             )
             # Extract RAG chunks from knowledge_search tool responses

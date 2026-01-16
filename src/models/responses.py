@@ -1885,21 +1885,20 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         )
 
     @classmethod
-    def query_failed(cls, backend_url: str) -> "InternalServerErrorResponse":
+    def query_failed(cls, cause: str) -> "InternalServerErrorResponse":
         """
-        Create an InternalServerErrorResponse representing a failed query to an external backend.
+        Create an InternalServerErrorResponse representing a failed query.
 
         Parameters:
-            backend_url (str): The backend URL included in the error cause message.
+            cause (str): The error cause message.
 
         Returns:
             InternalServerErrorResponse: An error response with response "Error
-            while processing query" and cause "Failed to call backend:
-            {backend_url}".
+            while processing query" and the provided cause.
         """
         return cls(
             response="Error while processing query",
-            cause=f"Failed to call backend: {backend_url}",
+            cause=cause,
         )
 
     @classmethod

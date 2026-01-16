@@ -113,11 +113,11 @@ async def run_shield_moderation(
                     shield_model=shield.provider_resource_id,
                 )
 
-        # Known Llama Stack bug: BadRequestError is raised when violation is present
+        # Known Llama Stack bug: error is raised when violation is present
         # in the shield LLM response but has wrong format that cannot be parsed.
-        except BadRequestError:
+        except (BadRequestError, ValueError):
             logger.warning(
-                "Shield '%s' returned BadRequestError, treating as blocked",
+                "Shield '%s' violation detected, treating as blocked",
                 shield.identifier,
             )
             metrics.llm_calls_validation_errors_total.inc()

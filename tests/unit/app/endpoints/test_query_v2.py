@@ -341,8 +341,9 @@ async def test_retrieve_response_parses_output_and_tool_calls(
     tool_call_item = mocker.Mock()
     tool_call_item.type = "function_call"
     tool_call_item.id = "tc-1"
+    tool_call_item.call_id = "tc-1"
     tool_call_item.name = "do_something"
-    tool_call_item.arguments = {"x": 1}
+    tool_call_item.arguments = '{"x": 1}'
     tool_call_item.status = None  # Explicitly set to avoid Mock auto-creation
 
     response_obj = mocker.Mock()
@@ -898,6 +899,7 @@ def _create_file_search_output(mocker: MockerFixture) -> Any:
     # 2. Output item with file search tool call results
     output_item = mocker.Mock()
     output_item.type = "file_search_call"
+    output_item.id = "file-search-1"
     output_item.queries = (
         []
     )  # Ensure queries is a list to avoid iteration error in tool summary
@@ -909,6 +911,15 @@ def _create_file_search_output(mocker: MockerFixture) -> Any:
     result_1.text = "Sample text from file2.pdf"
     result_1.score = 0.95
     result_1.file_id = "file-123"
+    result_1.model_dump = mocker.Mock(
+        return_value={
+            "filename": "file2.pdf",
+            "attributes": {"url": "http://example.com/doc2"},
+            "text": "Sample text from file2.pdf",
+            "score": 0.95,
+            "file_id": "file-123",
+        }
+    )
 
     result_2 = mocker.Mock()
     result_2.filename = "file3.docx"
@@ -916,6 +927,15 @@ def _create_file_search_output(mocker: MockerFixture) -> Any:
     result_2.text = "Sample text from file3.docx"
     result_2.score = 0.85
     result_2.file_id = "file-456"
+    result_2.model_dump = mocker.Mock(
+        return_value={
+            "filename": "file3.docx",
+            "attributes": {},
+            "text": "Sample text from file3.docx",
+            "score": 0.85,
+            "file_id": "file-456",
+        }
+    )
 
     output_item.results = [result_1, result_2]
     return output_item
