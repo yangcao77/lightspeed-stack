@@ -32,7 +32,6 @@ from models.rlsapi.responses import RlsapiV1InferResponse
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
 
-
 # ==========================================
 # Shared Fixtures
 # ==========================================
