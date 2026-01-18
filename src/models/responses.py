@@ -531,6 +531,15 @@ class InfoResponse(AbstractSuccessfulResponse):
         name: Service name.
         service_version: Service version.
         llama_stack_version: Llama Stack version.
+
+    Example:
+        ```python
+        info_response = InfoResponse(
+            name="Lightspeed Stack",
+            service_version="1.0.0",
+            llama_stack_version="0.2.22",
+        )
+        ```
     """
 
     name: str = Field(
@@ -548,6 +557,7 @@ class InfoResponse(AbstractSuccessfulResponse):
         examples=["0.2.1", "0.2.2", "0.2.18", "0.2.21", "0.2.22"],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -591,6 +601,21 @@ class ReadinessResponse(AbstractSuccessfulResponse):
         ready: If service is ready.
         reason: The reason for the readiness.
         providers: List of unhealthy providers in case of readiness failure.
+
+    Example:
+        ```python
+        readiness_response = ReadinessResponse(
+            ready=False,
+            reason="Service is not ready",
+            providers=[
+                ProviderHealthStatus(
+                    provider_id="ollama",
+                    status="unhealthy",
+                    message="Server is unavailable"
+                )
+            ]
+        )
+        ```
     """
 
     ready: bool = Field(
@@ -611,6 +636,7 @@ class ReadinessResponse(AbstractSuccessfulResponse):
         examples=[],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -629,6 +655,11 @@ class LivenessResponse(AbstractSuccessfulResponse):
 
     Attributes:
         alive: If app is alive.
+
+    Example:
+        ```python
+        liveness_response = LivenessResponse(alive=True)
+        ```
     """
 
     alive: bool = Field(
@@ -637,6 +668,7 @@ class LivenessResponse(AbstractSuccessfulResponse):
         examples=[True, False],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -653,6 +685,11 @@ class FeedbackResponse(AbstractSuccessfulResponse):
 
     Attributes:
         response: The response of the feedback request.
+
+    Example:
+        ```python
+        feedback_response = FeedbackResponse(response="feedback received")
+        ```
     """
 
     response: str = Field(
@@ -661,6 +698,7 @@ class FeedbackResponse(AbstractSuccessfulResponse):
         examples=["feedback received"],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -678,6 +716,14 @@ class StatusResponse(AbstractSuccessfulResponse):
     Attributes:
         functionality: The functionality of the service.
         status: The status of the service.
+
+    Example:
+        ```python
+        status_response = StatusResponse(
+            functionality="feedback",
+            status={"enabled": True},
+        )
+        ```
     """
 
     functionality: str = Field(
@@ -692,6 +738,7 @@ class StatusResponse(AbstractSuccessfulResponse):
         examples=[{"enabled": True}],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -729,6 +776,7 @@ class AuthorizedResponse(AbstractSuccessfulResponse):
         examples=[True, False],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -748,6 +796,23 @@ class ConversationResponse(AbstractSuccessfulResponse):
     Attributes:
         conversation_id: The conversation ID (UUID).
         chat_history: The simplified chat history as a list of conversation turns.
+
+    Example:
+        ```python
+        conversation_response = ConversationResponse(
+            conversation_id="123e4567-e89b-12d3-a456-426614174000",
+            chat_history=[
+                {
+                    "messages": [
+                        {"content": "Hello", "type": "user"},
+                        {"content": "Hi there!", "type": "assistant"}
+                    ],
+                    "started_at": "2024-01-01T00:01:00Z",
+                    "completed_at": "2024-01-01T00:01:05Z"
+                }
+            ]
+        )
+        ```
     """
 
     conversation_id: str = Field(
@@ -771,6 +836,7 @@ class ConversationResponse(AbstractSuccessfulResponse):
         ],
     )
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -917,6 +983,19 @@ class ConversationDetails(BaseModel):
         last_used_model: The last model used for the conversation.
         last_used_provider: The provider of the last used model.
         topic_summary: The topic summary for the conversation.
+
+    Example:
+        ```python
+        conversation = ConversationDetails(
+            conversation_id="123e4567-e89b-12d3-a456-426614174000"
+            created_at="2024-01-01T00:00:00Z",
+            last_message_at="2024-01-01T00:05:00Z",
+            message_count=5,
+            last_used_model="gemini/gemini-2.0-flash",
+            last_used_provider="gemini",
+            topic_summary="Openshift Microservices Deployment Strategies",
+        )
+        ```
     """
 
     conversation_id: str = Field(
@@ -1032,10 +1111,23 @@ class FeedbackStatusUpdateResponse(AbstractSuccessfulResponse):
 
     Attributes:
         status: The previous and current status of the service and who updated it.
+
+    Example:
+        ```python
+        status_response = StatusResponse(
+            status={
+                "previous_status": true,
+                "updated_status": false,
+                "updated_by": "user/test",
+                "timestamp": "2023-03-15 12:34:56"
+            },
+        )
+        ```
     """
 
     status: dict
 
+    # provides examples for /docs endpoint
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -1059,19 +1151,31 @@ class ConversationUpdateResponse(AbstractSuccessfulResponse):
         conversation_id: The conversation ID (UUID) that was updated.
         success: Whether the update was successful.
         message: A message about the update result.
+
+    Example:
+        ```python
+        update_response = ConversationUpdateResponse(
+            conversation_id="123e4567-e89b-12d3-a456-426614174000",
+            success=True,
+            message="Topic summary updated successfully",
+        )
+        ```
     """
 
     conversation_id: str = Field(
         ...,
         description="The conversation ID (UUID) that was updated",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
     )
     success: bool = Field(
         ...,
         description="Whether the update was successful",
+        examples=[True],
     )
     message: str = Field(
         ...,
         description="A message about the update result",
+        examples=["Topic summary updated successfully"],
     )
 
     model_config = {
