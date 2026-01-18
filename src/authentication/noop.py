@@ -18,19 +18,31 @@ class NoopAuthDependency(AuthInterface):  # pylint: disable=too-few-public-metho
     """No-op AuthDependency class that bypasses authentication and authorization checks."""
 
     def __init__(self, virtual_path: str = DEFAULT_VIRTUAL_PATH) -> None:
-        """Initialize the required allowed paths for authorization checks."""
+        """Initialize the required allowed paths for authorization checks.
+
+        Create a NoopAuthDependency configured with a virtual path and with
+        user-ID checking disabled.
+
+        Parameters:
+            virtual_path (str): Virtual path context used by the dependency
+                                (defaults to DEFAULT_VIRTUAL_PATH).
+        """
         self.virtual_path = virtual_path
         self.skip_userid_check = True
 
     async def __call__(self, request: Request) -> tuple[str, str, bool, str]:
         """Validate FastAPI Requests for authentication and authorization.
 
-        Args:
-            request: The FastAPI request object.
+        Parameters:
+            request (Request): FastAPI request whose query parameters may contain "user_id".
 
         Returns:
-            The user's UID and username if authentication and authorization succeed
-            user_id check is skipped with noop auth to allow consumers provide user_id
+            tuple[str, str, bool, str]: A 4-tuple containing:
+                - user_id: the value of the "user_id" query parameter if
+                           present, otherwise DEFAULT_USER_UID.
+                - username: DEFAULT_USER_NAME.
+                - skip_userid_check: True to indicate the user ID check is skipped.
+                - token: NO_USER_TOKEN.
         """
         logger.warning(
             "No-op authentication dependency is being used. "

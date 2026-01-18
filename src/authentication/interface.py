@@ -36,4 +36,13 @@ class AuthInterface(ABC):  # pylint: disable=too-few-public-methods
 
     @abstractmethod
     async def __call__(self, request: Request) -> AuthTuple:
-        """Validate FastAPI Requests for authentication and authorization."""
+        """Validate FastAPI Requests for authentication and authorization.
+
+        Returns:
+            AuthTuple: A 4-tuple (user_id, user_name, skip_user_id_check, token) where
+                user_id (str): authenticated user's unique identifier,
+                user_name (str): authenticated user's display name,
+                skip_user_id_check (bool): whether downstream handlers should
+                                           skip user-id verification,
+                token (str): authentication token or NO_USER_TOKEN when no token is present.
+        """

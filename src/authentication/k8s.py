@@ -52,6 +52,9 @@ class K8sClientSingleton:
 
         This method initializes the Kubernetes API clients the first time it is called.
         and ensures that subsequent calls return the same instance.
+
+        Returns:
+            instance (K8sClientSingleton): The singleton instance.
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -105,6 +108,9 @@ class K8sClientSingleton:
         """Return the Authentication API client instance.
 
         Ensures the singleton is initialized before returning the Authentication API client.
+
+        Returns:
+            kubernetes.client.AuthenticationV1Api: The initialized AuthenticationV1Api instance.
         """
         if cls._instance is None or cls._authn_api is None:
             cls()
@@ -115,6 +121,10 @@ class K8sClientSingleton:
         """Return the Authorization API client instance.
 
         Ensures the singleton is initialized before returning the Authorization API client.
+
+        Returns:
+            kubernetes.client.AuthorizationV1Api: The Kubernetes Authorization
+                                                  API client instance.
         """
         if cls._instance is None or cls._authz_api is None:
             cls()
@@ -125,6 +135,9 @@ class K8sClientSingleton:
         """Return the custom objects API instance.
 
         Ensures the singleton is initialized before returning the Authorization API client.
+
+        Returns:
+            kubernetes.client.CustomObjectsApi: The CustomObjectsApi client used by the singleton.
         """
         if cls._instance is None or cls._custom_objects_api is None:
             cls()
@@ -132,6 +145,20 @@ class K8sClientSingleton:
 
     @classmethod
     def _get_cluster_id(cls) -> str:
+        """
+        Retrieve the OpenShift cluster ID from the ClusterVersion custom object and cache it.
+
+        Fetches the "version" ClusterVersion from group
+        `config.openshift.io/v1`, extracts `spec.clusterID`, assigns it to
+        `cls._cluster_id`, and returns it.
+
+        Returns:
+            str: The cluster's `clusterID`.
+
+        Raises:
+            ClusterIDUnavailableError: If the cluster ID cannot be obtained due
+            to missing keys, an API error, or any unexpected error.
+        """
         try:
             custom_objects_api = cls.get_custom_objects_api()
             version_data = custom_objects_api.get_cluster_custom_object(
@@ -159,7 +186,21 @@ class K8sClientSingleton:
 
     @classmethod
     def get_cluster_id(cls) -> str:
-        """Return the cluster ID."""
+        """Return the cluster ID.
+
+        Get the cached Kubernetes cluster identifier, initializing the
+        singleton and fetching the ID when necessary.
+
+        If running outside a cluster, sets and returns the sentinel value
+        "local". When running inside a cluster, attempts to fetch and cache the
+        cluster ID via the private retrieval method.
+
+        Returns:
+            str: The cluster identifier.
+
+        Raises:
+            ClusterIDUnavailableError: If running in-cluster and fetching the cluster ID fails.
+        """
         if cls._instance is None:
             cls()
         if cls._cluster_id is None:
@@ -174,7 +215,7 @@ class K8sClientSingleton:
 def get_user_info(token: str) -> Optional[kubernetes.client.V1TokenReview]:
     """Perform a Kubernetes TokenReview to validate a given token.
 
-    Args:
+    Parameters:
         token: The bearer token to be validated.
 
     Returns:
@@ -221,14 +262,27 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
     """
 
     def __init__(self, virtual_path: str = DEFAULT_VIRTUAL_PATH) -> None:
-        """Initialize the required allowed paths for authorization checks."""
+        """Initialize the required allowed paths for authorization checks.
+
+        Create a K8SAuthDependency configured for performing
+        SubjectAccessReview checks on a specific virtual path.
+
+        Parameters:
+            virtual_path (str): The request path used in SubjectAccessReview
+            non-resource attributes; defaults to DEFAULT_VIRTUAL_PATH.
+
+        Attributes set:
+            virtual_path: Stored `virtual_path` value.
+            skip_userid_check (bool): Flag indicating whether user ID checks
+                                      should be skipped; initialized to False.
+        """
         self.virtual_path = virtual_path
         self.skip_userid_check = False
 
     async def __call__(self, request: Request) -> tuple[str, str, bool, str]:
         """Validate FastAPI Requests for authentication and authorization.
 
-        Args:
+        Parameters:
             request: The FastAPI request object.
 
         Returns:
