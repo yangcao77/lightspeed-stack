@@ -35,7 +35,13 @@ _jwk_cache_lock = Lock()
 
 
 async def get_jwk_set(url: str) -> KeySet:
-    """Fetch the JWK set from the cache, or fetch it from the URL if not cached."""
+    """Fetch the JWK set from the cache, or fetch it from the URL if not cached.
+
+    Retrieve a JWK KeySet from the in-memory cache or fetch and cache it from the provided URL.
+
+    Returns:
+        KeySet: The JWK `KeySet` corresponding to the URL.
+    """
     async with _jwk_cache_lock:
         if url not in _jwk_cache:
             async with aiohttp.ClientSession() as session:
@@ -54,10 +60,21 @@ def key_resolver_func(
     jwk_set: KeySet,
 ) -> Callable[[dict[str, Any], dict[str, Any]], Key]:
     """
-    Create a key resolver function.
+    Create a JWK key resolver used to locate the verification key from a KeySet.
 
-    Return a function to find a key in the given jwk_set. The function matches the
-    signature expected by the jwt.decode key kwarg.
+    The returned callable accepts a JWT header and payload and selects a key from the provided
+    jwk_set. If the header contains a `kid`, the resolver returns the single key with that `kid`
+    and verifies the key's `alg` matches the header `alg`. If `kid` is absent, the resolver
+    returns the first key that matches the header `alg`. The resolver raises `KeyNotFoundError`
+    if no suitable key is found or if multiple keys are found for the same `kid`.
+
+    Parameters:
+        jwk_set (KeySet): JWK set to search for verification keys.
+
+    Returns:
+        callable: A function `header, payload -> Key` that resolves and returns
+                  the verification key.
+        Raises `KeyNotFoundError` when resolution fails.
     """
 
     def _internal(header: dict[str, Any], _payload: dict[str, Any]) -> Key:
@@ -67,8 +84,16 @@ def key_resolver_func(
         match the algorithm to make sure the algorithm stated by the user
         is the same algorithm the key itself expects.
 
-        # We intentionally do not use find_by_kid because it's a bad function
-        # that doesn't take the alg into account
+        We intentionally do not use find_by_kid because it's a bad function
+        that doesn't take the alg into account
+
+        Returns:
+            key (Key): The JWK matching the header's selection criteria.
+
+        Raises:
+            KeyNotFoundError: If the header is missing `alg`, no matching key
+            is found, multiple keys match a `kid`, or a found key's algorithm
+            does not match the header's `alg`.
         """
         if "alg" not in header:
             raise KeyNotFoundError("Token header missing 'alg' field")
@@ -117,13 +142,42 @@ class JwkTokenAuthDependency(AuthInterface):  # pylint: disable=too-few-public-m
     def __init__(
         self, config: JwkConfiguration, virtual_path: str = DEFAULT_VIRTUAL_PATH
     ) -> None:
-        """Initialize the required allowed paths for authorization checks."""
+        """Initialize the required allowed paths for authorization checks.
+
+        Create a JWK-based token authentication dependency configured for a specific virtual path.
+
+        Parameters:
+            config (JwkConfiguration): Configuration containing the JWK URL,
+                                       claim names, and validation settings.
+            virtual_path (str): Virtual authorization scope path used when
+                                resolving authorization rules; defaults to DEFAULT_VIRTUAL_PATH.
+
+        Notes:
+            Initializes the instance and sets `skip_userid_check` to False.
+        """
         self.virtual_path: str = virtual_path
         self.config: JwkConfiguration = config
         self.skip_userid_check = False
 
     async def __call__(self, request: Request) -> AuthTuple:
-        """Authenticate the JWT in the headers against the keys from the JWK url."""
+        """Authenticate the JWT in the headers against the keys from the JWK url.
+
+        If the Authorization header is missing, returns NO_AUTH_TUPLE. On token
+        verification or validation failures this function raises HTTPException
+        with appropriate HTTP status codes:
+        - 401 for unknown signing key/algorithm, bad signature, expired token,
+              or missing required claims;
+        - 400 for token decode or other JOSE-related decode/validation errors;
+        - 500 for unexpected internal errors.
+
+        Parameters:
+            request (Request): The incoming FastAPI request containing the Authorization header.
+
+        Returns:
+            AuthTuple: A tuple (user_id, username, skip_userid_check, token)
+            extracted from the validated token, or NO_AUTH_TUPLE when no
+            Authorization header is present.
+        """
         if not request.headers.get("Authorization"):
             return NO_AUTH_TUPLE
 
