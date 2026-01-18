@@ -25,7 +25,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-
 # Global storage for captured headers (last request)
 last_headers: dict[str, str] = {}
 request_log: list = []

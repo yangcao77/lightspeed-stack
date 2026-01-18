@@ -18,7 +18,6 @@ from utils.types import ToolCallSummary, ToolResultSummary
 from cache.cache_error import CacheError
 from cache.postgres_cache import PostgresCache
 
-
 USER_ID_1 = suid.get_suid()
 USER_ID_2 = suid.get_suid()
 CONVERSATION_ID_1 = suid.get_suid()

@@ -43,7 +43,6 @@ from tests.unit.conftest import AgentFixtures
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.token_counter import TokenCounter
 
-
 # Note: content_delta module doesn't exist in llama-stack-client 0.3.x
 # These are mock classes for backward compatibility with Agent API tests
 # pylint: disable=too-few-public-methods,redefined-builtin
