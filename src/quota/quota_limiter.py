@@ -42,7 +42,6 @@ from models.config import SQLiteDatabaseConfiguration, PostgreSQLDatabaseConfigu
 from quota.connect_pg import connect_pg
 from quota.connect_sqlite import connect_sqlite
 
-
 logger = get_logger(__name__)
 
 

@@ -71,7 +71,6 @@ from utils.transcripts import store_transcript
 from utils.types import TurnSummary, content_to_str
 from authorization.azure_token_manager import AzureEntraIDManager
 
-
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["query"])
 
