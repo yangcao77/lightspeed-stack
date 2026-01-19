@@ -1936,7 +1936,7 @@
                     "feedback"
                 ],
                 "summary": "Feedback Endpoint Handler",
-                "description": "Handle feedback requests.\n\nProcesses a user feedback submission, storing the feedback and\nreturning a confirmation response.\n\nArgs:\n    feedback_request: The request containing feedback information.\n    ensure_feedback_enabled: The feedback handler (FastAPI Depends) that\n        will handle feedback status checks.\n    auth: The Authentication handler (FastAPI Depends) that will\n        handle authentication Logic.\n\nReturns:\n    Response indicating the status of the feedback storage request.\n\nRaises:\n    HTTPException: Returns HTTP 500 if feedback storage fails.",
+                "description": "Handle feedback requests.\n\nProcesses a user feedback submission, storing the feedback and\nreturning a confirmation response.\n\nArgs:\n    feedback_request: The request containing feedback information.\n    ensure_feedback_enabled: The feedback handler (FastAPI Depends) that\n        will handle feedback status checks.\n    auth: The Authentication handler (FastAPI Depends) that will\n        handle authentication Logic.\n\nReturns:\n    Response indicating the status of the feedback storage request.\n\nRaises:\n    HTTPException: Returns HTTP 404 if conversation does not exist.\n    HTTPException: Returns HTTP 403 if conversation belongs to a different user.\n    HTTPException: Returns HTTP 500 if feedback storage fails.",
                 "operationId": "feedback_endpoint_handler_v1_feedback_post",
                 "requestBody": {
                     "content": {
@@ -3670,6 +3670,84 @@
                             }
                         }
                     },
+                    "429": {
+                        "description": "Quota limit exceeded",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/QuotaExceededResponse"
+                                },
+                                "examples": {
+                                    "model": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+                                                "response": "The model quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "user none": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 123 has no available tokens.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "cluster none": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Cluster has no available tokens.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "subject none": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Unknown subject 999 has no available tokens.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "user insufficient": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "cluster insufficient": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    },
+                                    "subject insufficient": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+                                                "response": "The quota has been exceeded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
                     "503": {
                         "description": "Service unavailable",
                         "content": {
@@ -4105,7 +4183,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_get",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -4123,7 +4201,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_get",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -5645,7 +5723,7 @@
                     "conversation_id"
                 ],
                 "title": "ConversationDetails",
-                "description": "Model representing the details of a user conversation.\n\nAttributes:\n    conversation_id: The conversation ID (UUID).\n    created_at: When the conversation was created.\n    last_message_at: When the last message was sent.\n    message_count: Number of user messages in the conversation.\n    last_used_model: The last model used for the conversation.\n    last_used_provider: The provider of the last used model.\n    topic_summary: The topic summary for the conversation."
+                "description": "Model representing the details of a user conversation.\n\nAttributes:\n    conversation_id: The conversation ID (UUID).\n    created_at: When the conversation was created.\n    last_message_at: When the last message was sent.\n    message_count: Number of user messages in the conversation.\n    last_used_model: The last model used for the conversation.\n    last_used_provider: The provider of the last used model.\n    topic_summary: The topic summary for the conversation.\n\nExample:\n    ```python\n    conversation = ConversationDetails(\n        conversation_id=\"123e4567-e89b-12d3-a456-426614174000\"\n        created_at=\"2024-01-01T00:00:00Z\",\n        last_message_at=\"2024-01-01T00:05:00Z\",\n        message_count=5,\n        last_used_model=\"gemini/gemini-2.0-flash\",\n        last_used_provider=\"gemini\",\n        topic_summary=\"Openshift Microservices Deployment Strategies\",\n    )\n    ```"
             },
             "ConversationHistoryConfiguration": {
                 "properties": {
@@ -5751,7 +5829,7 @@
                     "chat_history"
                 ],
                 "title": "ConversationResponse",
-                "description": "Model representing a response for retrieving a conversation.\n\nAttributes:\n    conversation_id: The conversation ID (UUID).\n    chat_history: The simplified chat history as a list of conversation turns.",
+                "description": "Model representing a response for retrieving a conversation.\n\nAttributes:\n    conversation_id: The conversation ID (UUID).\n    chat_history: The simplified chat history as a list of conversation turns.\n\nExample:\n    ```python\n    conversation_response = ConversationResponse(\n        conversation_id=\"123e4567-e89b-12d3-a456-426614174000\",\n        chat_history=[\n            {\n                \"messages\": [\n                    {\"content\": \"Hello\", \"type\": \"user\"},\n                    {\"content\": \"Hi there!\", \"type\": \"assistant\"}\n                ],\n                \"started_at\": \"2024-01-01T00:01:00Z\",\n                \"completed_at\": \"2024-01-01T00:01:05Z\"\n            }\n        ]\n    )\n    ```",
                 "examples": [
                     {
                         "chat_history": [
@@ -5800,17 +5878,26 @@
                     "conversation_id": {
                         "type": "string",
                         "title": "Conversation Id",
-                        "description": "The conversation ID (UUID) that was updated"
+                        "description": "The conversation ID (UUID) that was updated",
+                        "examples": [
+                            "123e4567-e89b-12d3-a456-426614174000"
+                        ]
                     },
                     "success": {
                         "type": "boolean",
                         "title": "Success",
-                        "description": "Whether the update was successful"
+                        "description": "Whether the update was successful",
+                        "examples": [
+                            true
+                        ]
                     },
                     "message": {
                         "type": "string",
                         "title": "Message",
-                        "description": "A message about the update result"
+                        "description": "A message about the update result",
+                        "examples": [
+                            "Topic summary updated successfully"
+                        ]
                     }
                 },
                 "type": "object",
@@ -5820,7 +5907,7 @@
                     "message"
                 ],
                 "title": "ConversationUpdateResponse",
-                "description": "Model representing a response for updating a conversation topic summary.\n\nAttributes:\n    conversation_id: The conversation ID (UUID) that was updated.\n    success: Whether the update was successful.\n    message: A message about the update result.",
+                "description": "Model representing a response for updating a conversation topic summary.\n\nAttributes:\n    conversation_id: The conversation ID (UUID) that was updated.\n    success: Whether the update was successful.\n    message: A message about the update result.\n\nExample:\n    ```python\n    update_response = ConversationUpdateResponse(\n        conversation_id=\"123e4567-e89b-12d3-a456-426614174000\",\n        success=True,\n        message=\"Topic summary updated successfully\",\n    )\n    ```",
                 "examples": [
                     {
                         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
@@ -6203,7 +6290,7 @@
                     "response"
                 ],
                 "title": "FeedbackResponse",
-                "description": "Model representing a response to a feedback request.\n\nAttributes:\n    response: The response of the feedback request.",
+                "description": "Model representing a response to a feedback request.\n\nAttributes:\n    response: The response of the feedback request.\n\nExample:\n    ```python\n    feedback_response = FeedbackResponse(response=\"feedback received\")\n    ```",
                 "examples": [
                     {
                         "response": "feedback received"
@@ -6241,7 +6328,7 @@
                     "status"
                 ],
                 "title": "FeedbackStatusUpdateResponse",
-                "description": "Model representing a response to a feedback status update request.\n\nAttributes:\n    status: The previous and current status of the service and who updated it.",
+                "description": "Model representing a response to a feedback status update request.\n\nAttributes:\n    status: The previous and current status of the service and who updated it.\n\nExample:\n    ```python\n    status_response = StatusResponse(\n        status={\n            \"previous_status\": true,\n            \"updated_status\": false,\n            \"updated_by\": \"user/test\",\n            \"timestamp\": \"2023-03-15 12:34:56\"\n        },\n    )\n    ```",
                 "examples": [
                     {
                         "status": {
@@ -6495,7 +6582,7 @@
                     "llama_stack_version"
                 ],
                 "title": "InfoResponse",
-                "description": "Model representing a response to an info request.\n\nAttributes:\n    name: Service name.\n    service_version: Service version.\n    llama_stack_version: Llama Stack version.",
+                "description": "Model representing a response to an info request.\n\nAttributes:\n    name: Service name.\n    service_version: Service version.\n    llama_stack_version: Llama Stack version.\n\nExample:\n    ```python\n    info_response = InfoResponse(\n        name=\"Lightspeed Stack\",\n        service_version=\"1.0.0\",\n        llama_stack_version=\"0.2.22\",\n    )\n    ```",
                 "examples": [
                     {
                         "llama_stack_version": "1.0.0",
@@ -6687,7 +6774,7 @@
                     "alive"
                 ],
                 "title": "LivenessResponse",
-                "description": "Model representing a response to a liveness request.\n\nAttributes:\n    alive: If app is alive.",
+                "description": "Model representing a response to a liveness request.\n\nAttributes:\n    alive: If app is alive.\n\nExample:\n    ```python\n    liveness_response = LivenessResponse(alive=True)\n    ```",
                 "examples": [
                     {
                         "alive": true
@@ -8092,7 +8179,7 @@
                     "providers"
                 ],
                 "title": "ReadinessResponse",
-                "description": "Model representing response to a readiness request.\n\nAttributes:\n    ready: If service is ready.\n    reason: The reason for the readiness.\n    providers: List of unhealthy providers in case of readiness failure.",
+                "description": "Model representing response to a readiness request.\n\nAttributes:\n    ready: If service is ready.\n    reason: The reason for the readiness.\n    providers: List of unhealthy providers in case of readiness failure.\n\nExample:\n    ```python\n    readiness_response = ReadinessResponse(\n        ready=False,\n        reason=\"Service is not ready\",\n        providers=[\n            ProviderHealthStatus(\n                provider_id=\"ollama\",\n                status=\"unhealthy\",\n                message=\"Server is unavailable\"\n            )\n        ]\n    )\n    ```",
                 "examples": [
                     {
                         "providers": [],
@@ -8273,7 +8360,7 @@
                     "skip_rag": {
                         "type": "boolean",
                         "title": "Skip Rag",
-                        "description": "Whether to skip RAG retrieval",
+                        "description": "Reserved for future use. RAG retrieval is not yet implemented.",
                         "default": false,
                         "examples": [
                             false,
@@ -8287,7 +8374,7 @@
                     "question"
                 ],
                 "title": "RlsapiV1InferRequest",
-                "description": "RHEL Lightspeed rlsapi v1 /infer request.\n\nAttributes:\n    question: User question string.\n    context: Context with system info, terminal output, etc. (defaults provided).\n    skip_rag: Whether to skip RAG retrieval (default False).\n\nExample:\n    ```python\n    request = RlsapiV1InferRequest(\n        question=\"How do I list files?\",\n        context=RlsapiV1Context(\n            systeminfo=RlsapiV1SystemInfo(os=\"RHEL\", version=\"9.3\"),\n            terminal=RlsapiV1Terminal(output=\"bash: command not found\"),\n        ),\n    )\n    ```"
+                "description": "RHEL Lightspeed rlsapi v1 /infer request.\n\nAttributes:\n    question: User question string.\n    context: Context with system info, terminal output, etc. (defaults provided).\n    skip_rag: Reserved for future use. RAG retrieval is not yet implemented.\n\nExample:\n    ```python\n    request = RlsapiV1InferRequest(\n        question=\"How do I list files?\",\n        context=RlsapiV1Context(\n            systeminfo=RlsapiV1SystemInfo(os=\"RHEL\", version=\"9.3\"),\n            terminal=RlsapiV1Terminal(output=\"bash: command not found\"),\n        ),\n    )\n    ```"
             },
             "RlsapiV1InferResponse": {
                 "properties": {
@@ -8567,7 +8654,7 @@
                     "status"
                 ],
                 "title": "StatusResponse",
-                "description": "Model representing a response to a status request.\n\nAttributes:\n    functionality: The functionality of the service.\n    status: The status of the service.",
+                "description": "Model representing a response to a status request.\n\nAttributes:\n    functionality: The functionality of the service.\n    status: The status of the service.\n\nExample:\n    ```python\n    status_response = StatusResponse(\n        functionality=\"feedback\",\n        status={\"enabled\": True},\n    )\n    ```",
                 "examples": [
                     {
                         "functionality": "feedback",
@@ -8670,6 +8757,7 @@
                         "description": "Status of the tool execution (e.g., 'success')"
                     },
                     "content": {
+                        "type": "string",
                         "title": "Content",
                         "description": "Content/result returned from the tool"
                     },

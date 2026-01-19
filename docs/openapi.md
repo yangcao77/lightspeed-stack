@@ -1734,6 +1734,8 @@ Returns:
     Response indicating the status of the feedback storage request.
 
 Raises:
+    HTTPException: Returns HTTP 404 if conversation does not exist.
+    HTTPException: Returns HTTP 403 if conversation belongs to a different user.
     HTTPException: Returns HTTP 500 if feedback storage fails.
 
 
@@ -3205,6 +3207,96 @@ Examples
 }
 ```
  |
+| 429 | Quota limit exceeded | [QuotaExceededResponse](#quotaexceededresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "The token quota for model gpt-4-turbo has been exceeded.",
+    "response": "The model quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has no available tokens.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 123 has 5 tokens, but 10 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Cluster has 500 tokens, but 900 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Unknown subject 999 has 3 tokens, but 6 tokens are needed.",
+    "response": "The quota has been exceeded"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
 | 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
 
 Examples
@@ -3891,6 +3983,7 @@ Authentication configuration.
 |-------|------|-------------|
 | module | string |  |
 | skip_tls_verification | boolean |  |
+| skip_for_health_probes | boolean | Skip authorization for readiness and liveness probes |
 | k8s_cluster_api |  |  |
 | k8s_ca_cert_path |  |  |
 | jwk_config |  |  |
@@ -3939,6 +4032,20 @@ Attributes:
 | user_id | string | User ID, for example UUID |
 | username | string | User name |
 | skip_userid_check | boolean | Whether to skip the user ID check |
+
+
+## AzureEntraIdConfiguration
+
+
+Microsoft Entra ID authentication attributes for Azure.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| tenant_id | string |  |
+| client_id | string |  |
+| client_secret | string |  |
+| scope | string | Azure Cognitive Services scope for token requests. Override only if using a different Azure service. |
 
 
 ## BadRequestResponse
@@ -4028,6 +4135,7 @@ Global service configuration.
 | byok_rag | array | BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file |
 | a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
+| azure_entra_id |  |  |
 
 
 ## ConfigurationResponse
@@ -4091,6 +4199,19 @@ Attributes:
     last_used_provider: The provider of the last used model.
     topic_summary: The topic summary for the conversation.
 
+Example:
+    ```python
+    conversation = ConversationDetails(
+        conversation_id="123e4567-e89b-12d3-a456-426614174000"
+        created_at="2024-01-01T00:00:00Z",
+        last_message_at="2024-01-01T00:05:00Z",
+        message_count=5,
+        last_used_model="gemini/gemini-2.0-flash",
+        last_used_provider="gemini",
+        topic_summary="Openshift Microservices Deployment Strategies",
+    )
+    ```
+
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -4125,6 +4246,23 @@ Model representing a response for retrieving a conversation.
 Attributes:
     conversation_id: The conversation ID (UUID).
     chat_history: The simplified chat history as a list of conversation turns.
+
+Example:
+    ```python
+    conversation_response = ConversationResponse(
+        conversation_id="123e4567-e89b-12d3-a456-426614174000",
+        chat_history=[
+            {
+                "messages": [
+                    {"content": "Hello", "type": "user"},
+                    {"content": "Hi there!", "type": "assistant"}
+                ],
+                "started_at": "2024-01-01T00:01:00Z",
+                "completed_at": "2024-01-01T00:01:05Z"
+            }
+        ]
+    )
+    ```
 
 
 | Field | Type | Description |
@@ -4163,6 +4301,15 @@ Attributes:
     conversation_id: The conversation ID (UUID) that was updated.
     success: Whether the update was successful.
     message: A message about the update result.
+
+Example:
+    ```python
+    update_response = ConversationUpdateResponse(
+        conversation_id="123e4567-e89b-12d3-a456-426614174000",
+        success=True,
+        message="Topic summary updated successfully",
+    )
+    ```
 
 
 | Field | Type | Description |
@@ -4309,6 +4456,11 @@ Model representing a response to a feedback request.
 Attributes:
     response: The response of the feedback request.
 
+Example:
+    ```python
+    feedback_response = FeedbackResponse(response="feedback received")
+    ```
+
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -4343,6 +4495,18 @@ Model representing a response to a feedback status update request.
 
 Attributes:
     status: The previous and current status of the service and who updated it.
+
+Example:
+    ```python
+    status_response = StatusResponse(
+        status={
+            "previous_status": true,
+            "updated_status": false,
+            "updated_by": "user/test",
+            "timestamp": "2023-03-15 12:34:56"
+        },
+    )
+    ```
 
 
 | Field | Type | Description |
@@ -4438,6 +4602,15 @@ Attributes:
     name: Service name.
     service_version: Service version.
     llama_stack_version: Llama Stack version.
+
+Example:
+    ```python
+    info_response = InfoResponse(
+        name="Lightspeed Stack",
+        service_version="1.0.0",
+        llama_stack_version="0.2.22",
+    )
+    ```
 
 
 | Field | Type | Description |
@@ -4539,6 +4712,11 @@ Model representing a response to a liveness request.
 Attributes:
     alive: If app is alive.
 
+Example:
+    ```python
+    liveness_response = LivenessResponse(alive=True)
+    ```
+
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -4593,6 +4771,8 @@ Useful resources:
 | name | string | MCP server name that must be unique |
 | provider_id | string | MCP provider identification |
 | url | string | URL of the MCP server |
+| authorization_headers | object | Headers to send to the MCP server. The map contains the header name and the path to a file containing the header value (secret). There are 2 special cases: 1. Usage of the kubernetes token in the header. To specify this use a string 'kubernetes' instead of the file path. 2. Usage of the client provided token in the header. To specify this use a string 'client' instead of the file path. |
+| timeout |  | Timeout in seconds for requests to the MCP server. If not specified, the default timeout from Llama Stack will be used. Note: This field is reserved for future use when Llama Stack adds timeout support. |
 
 
 ## ModelsResponse
@@ -4952,6 +5132,21 @@ Attributes:
     reason: The reason for the readiness.
     providers: List of unhealthy providers in case of readiness failure.
 
+Example:
+    ```python
+    readiness_response = ReadinessResponse(
+        ready=False,
+        reason="Service is not ready",
+        providers=[
+            ProviderHealthStatus(
+                provider_id="ollama",
+                status="unhealthy",
+                message="Server is unavailable"
+            )
+        ]
+    )
+    ```
+
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -5054,7 +5249,7 @@ RHEL Lightspeed rlsapi v1 /infer request.
 Attributes:
     question: User question string.
     context: Context with system info, terminal output, etc. (defaults provided).
-    skip_rag: Whether to skip RAG retrieval (default False).
+    skip_rag: Reserved for future use. RAG retrieval is not yet implemented.
 
 Example:
     ```python
@@ -5072,7 +5267,7 @@ Example:
 |-------|------|-------------|
 | question | string | User question |
 | context |  | Optional context (system info, terminal output, stdin, attachments) |
-| skip_rag | boolean | Whether to skip RAG retrieval |
+| skip_rag | boolean | Reserved for future use. RAG retrieval is not yet implemented. |
 
 
 ## RlsapiV1InferResponse
@@ -5196,6 +5391,14 @@ Attributes:
     functionality: The functionality of the service.
     status: The status of the service.
 
+Example:
+    ```python
+    status_response = StatusResponse(
+        functionality="feedback",
+        status={"enabled": True},
+    )
+    ```
+
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -5252,7 +5455,7 @@ Model representing a result from a tool call (for tool_results list).
 |-------|------|-------------|
 | id | string | ID of the tool call/result, matches the corresponding tool call 'id' |
 | status | string | Status of the tool execution (e.g., 'success') |
-| content |  | Content/result returned from the tool |
+| content | string | Content/result returned from the tool |
 | type | string | Type indicator for tool result |
 | round | integer | Round number or step of tool execution |
 
