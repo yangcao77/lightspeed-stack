@@ -91,6 +91,20 @@ Authorization configuration.
 | access_rules | array | Rules for role-based access control |
 
 
+## AzureEntraIdConfiguration
+
+
+Microsoft Entra ID authentication attributes for Azure.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| tenant_id | string |  |
+| client_id | string |  |
+| client_secret | string |  |
+| scope | string | Azure Cognitive Services scope for token requests. Override only if using a different Azure service. |
+
+
 ## ByokRag
 
 
@@ -153,6 +167,7 @@ Global service configuration.
 | byok_rag | array | BYOK RAG configuration. This configuration can be used to reconfigure Llama Stack through its run.yaml configuration file |
 | a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
+| azure_entra_id |  |  |
 
 
 ## ConversationHistoryConfiguration
@@ -353,6 +368,8 @@ Useful resources:
 | name | string | MCP server name that must be unique |
 | provider_id | string | MCP provider identification |
 | url | string | URL of the MCP server |
+| authorization_headers | object | Headers to send to the MCP server. The map contains the header name and the path to a file containing the header value (secret). There are 2 special cases: 1. Usage of the kubernetes token in the header. To specify this use a string 'kubernetes' instead of the file path. 2. Usage of the client provided token in the header. To specify this use a string 'client' instead of the file path. |
+| timeout | integer | Timeout in seconds for requests to the MCP server. If not specified, the default timeout from Llama Stack will be used. Note: This field is reserved for future use when Llama Stack adds timeout support. |
 
 
 ## PostgreSQLDatabaseConfiguration
