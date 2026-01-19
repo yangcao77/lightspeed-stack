@@ -334,6 +334,45 @@ names.</p>
         </tr>
       </tbody>
     </table>
+    <h2 id="azureentraidconfiguration">AzureEntraIdConfiguration</h2>
+    <p>Microsoft Entra ID authentication attributes for Azure.</p>
+    <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
+      <thead>
+        <tr class="header">
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td>tenant_id</td>
+          <td>string</td>
+          <td/>
+        </tr>
+        <tr class="even">
+          <td>client_id</td>
+          <td>string</td>
+          <td/>
+        </tr>
+        <tr class="odd">
+          <td>client_secret</td>
+          <td>string</td>
+          <td/>
+        </tr>
+        <tr class="even">
+          <td>scope</td>
+          <td>string</td>
+          <td>Azure Cognitive Services scope for token requests. Override only if
+using a different Azure service.</td>
+        </tr>
+      </tbody>
+    </table>
     <h2 id="byokrag">ByokRag</h2>
     <p>BYOK (Bring Your Own Knowledge) RAG configuration.</p>
     <table>
@@ -546,6 +585,11 @@ reconfigure Llama Stack through its run.yaml configuration file</td>
           <td>quota_handlers</td>
           <td/>
           <td>Quota handlers configuration</td>
+        </tr>
+        <tr class="odd">
+          <td>azure_entra_id</td>
+          <td/>
+          <td/>
         </tr>
       </tbody>
     </table>
@@ -957,6 +1001,11 @@ article</a>
       </li>
     </ul>
     <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
       <thead>
         <tr class="header">
           <th>Field</th>
@@ -979,6 +1028,23 @@ article</a>
           <td>url</td>
           <td>string</td>
           <td>URL of the MCP server</td>
+        </tr>
+        <tr class="even">
+          <td>authorization_headers</td>
+          <td>object</td>
+          <td>Headers to send to the MCP server. The map contains the header name
+and the path to a file containing the header value (secret). There are 2
+special cases: 1. Usage of the kubernetes token in the header. To
+specify this use a string &#x2018;kubernetes&#x2019; instead of the file path. 2.
+Usage of the client provided token in the header. To specify this use a
+string &#x2018;client&#x2019; instead of the file path.</td>
+        </tr>
+        <tr class="odd">
+          <td>timeout</td>
+          <td>integer</td>
+          <td>Timeout in seconds for requests to the MCP server. If not specified,
+the default timeout from Llama Stack will be used. Note: This field is
+reserved for future use when Llama Stack adds timeout support.</td>
         </tr>
       </tbody>
     </table>
