@@ -65,6 +65,8 @@ Feature: Info tests
          {"detail": {"response": "Unable to connect to Llama Stack", "cause": "Connection error."}}
       """
 
+  #https://issues.redhat.com/browse/LCORE-1211
+  @skip
   Scenario: Check if tools endpoint is working
     Given The system is in default state
      When I access REST API endpoint "tools" using HTTP GET method
