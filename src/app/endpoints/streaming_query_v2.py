@@ -70,7 +70,7 @@ from utils.shields import (
 )
 from utils.token_counter import TokenCounter
 from utils.transcripts import store_transcript
-from utils.types import TurnSummary
+from utils.types import RAGChunk, TurnSummary
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query_v1"])
@@ -143,6 +143,9 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
         # Track the latest response object from response.completed event
         latest_response_object: Optional[Any] = None
 
+        # RAG chunks
+        rag_chunks: list[RAGChunk] = []
+
         logger.debug("Starting streaming response (Responses API) processing")
 
         async for chunk in turn_response:
@@ -198,7 +201,9 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
                 )
                 if done_chunk.item.type == "message":
                     continue
-                tool_call, tool_result = _build_tool_call_summary(done_chunk.item)
+                tool_call, tool_result = _build_tool_call_summary(
+                    done_chunk.item, rag_chunks
+                )
                 if tool_call:
                     summary.tool_calls.append(tool_call)
                     yield stream_event(
@@ -321,7 +326,7 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
             is_transcripts_enabled_func=is_transcripts_enabled,
             store_transcript_func=store_transcript,
             persist_user_conversation_details_func=persist_user_conversation_details,
-            rag_chunks=[],  # Responses API uses empty list for rag_chunks
+            rag_chunks=[rag_chunk.model_dump() for rag_chunk in rag_chunks],
         )
 
     return response_generator
