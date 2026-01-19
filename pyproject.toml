@@ -63,7 +63,7 @@ dependencies = [
     # Used for rag faiss support
     "einops>=0.8.1",
     # Used for Azure Entra ID token management
-    "azure-core",
+    "azure-core>=1.38.0",
     "azure-identity",
 ]
 
