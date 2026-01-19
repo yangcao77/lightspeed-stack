@@ -747,7 +747,7 @@ async def cleanup_after_streaming(
         is_transcripts_enabled_func: Function to check if transcripts are enabled
         store_transcript_func: Function to store transcript
         persist_user_conversation_details_func: Function to persist conversation details
-        rag_chunks: Optional RAG chunks dict (for Agent API, None for Responses API)
+        rag_chunks: Optional RAG chunks dict
     """
     # Store transcript if enabled
     if not is_transcripts_enabled_func():

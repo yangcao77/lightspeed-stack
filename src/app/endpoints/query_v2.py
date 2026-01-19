@@ -83,13 +83,16 @@ query_v2_response: dict[int | str, dict[str, Any]] = {
 
 def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches
     output_item: OpenAIResponseOutput,
+    rag_chunks: list[RAGChunk],
 ) -> tuple[Optional[ToolCallSummary], Optional[ToolResultSummary]]:
     """Translate Responses API tool outputs into ToolCallSummary and ToolResultSummary records.
 
     Processes OpenAI response output items and extracts tool call and result information.
+    Also parses RAG chunks from file_search_call items and appends them to the provided list.
 
     Args:
         output_item: An OpenAIResponseOutput item from the response.output array
+        rag_chunks: List to append extracted RAG chunks to (from file_search_call items)
 
     Returns:
         A tuple of (ToolCallSummary, ToolResultSummary) one of them possibly None
@@ -97,7 +100,7 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
 
     Supported tool types:
         - function_call: Function tool calls with parsed arguments (no result)
-        - file_search_call: File search operations with results
+        - file_search_call: File search operations with results (also extracts RAG chunks)
         - web_search_call: Web search operations (incomplete)
         - mcp_call: MCP calls with server labels
         - mcp_list_tools: MCP server tool listings
@@ -120,6 +123,7 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
 
     if item_type == "file_search_call":
         item = cast(OpenAIResponseOutputMessageFileSearchToolCall, output_item)
+        extract_rag_chunks_from_file_search_item(item, rag_chunks)
         response_payload: Optional[dict[str, Any]] = None
         if item.results is not None:
             response_payload = {
@@ -430,12 +434,13 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     llm_response = ""
     tool_calls: list[ToolCallSummary] = []
     tool_results: list[ToolResultSummary] = []
+    rag_chunks: list[RAGChunk] = []
     for output_item in response.output:
         message_text = extract_text_from_response_output_item(output_item)
         if message_text:
             llm_response += message_text
 
-        tool_call, tool_result = _build_tool_call_summary(output_item)
+        tool_call, tool_result = _build_tool_call_summary(output_item, rag_chunks)
         if tool_call:
             tool_calls.append(tool_call)
         if tool_result:
@@ -446,9 +451,6 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
         len(tool_calls),
         len(llm_response),
     )
-
-    # Extract rag chunks
-    rag_chunks = parse_rag_chunks_from_responses_api(response)
 
     summary = TurnSummary(
         llm_response=llm_response,
@@ -478,7 +480,27 @@ async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branche
     )
 
 
-def parse_rag_chunks_from_responses_api(response_obj: Any) -> list[RAGChunk]:
+def extract_rag_chunks_from_file_search_item(
+    item: OpenAIResponseOutputMessageFileSearchToolCall,
+    rag_chunks: list[RAGChunk],
+) -> None:
+    """Extract RAG chunks from a file search tool call item and append to rag_chunks.
+
+    Args:
+        item: The file search tool call item.
+        rag_chunks: List to append extracted RAG chunks to.
+    """
+    if item.results is not None:
+        for result in item.results:
+            rag_chunk = RAGChunk(
+                content=result.text, source="file_search", score=result.score
+            )
+            rag_chunks.append(rag_chunk)
+
+
+def parse_rag_chunks_from_responses_api(
+    response_obj: OpenAIResponseObject,
+) -> list[RAGChunk]:
     """
     Extract rag_chunks from the llama-stack OpenAI response.
 
@@ -488,20 +510,13 @@ def parse_rag_chunks_from_responses_api(response_obj: Any) -> list[RAGChunk]:
     Returns:
         List of RAGChunk with content, source, score
     """
-    rag_chunks = []
+    rag_chunks: list[RAGChunk] = []
 
     for output_item in response_obj.output:
-        if (
-            hasattr(output_item, "type")
-            and output_item.type == "file_search_call"
-            and hasattr(output_item, "results")
-        ):
-
-            for result in output_item.results:
-                rag_chunk = RAGChunk(
-                    content=result.text, source="file_search", score=result.score
-                )
-                rag_chunks.append(rag_chunk)
+        item_type = getattr(output_item, "type", None)
+        if item_type == "file_search_call":
+            item = cast(OpenAIResponseOutputMessageFileSearchToolCall, output_item)
+            extract_rag_chunks_from_file_search_item(item, rag_chunks)
 
     return rag_chunks
 
