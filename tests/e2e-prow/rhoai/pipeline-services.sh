@@ -2,10 +2,10 @@
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-oc apply -f "$BASE_DIR/manifests/lightspeed/llama-stack.yaml"
+envsubst < "$BASE_DIR/manifests/lightspeed/llama-stack.yaml" | oc apply -f -
 
 oc wait pod/llama-stack-service \
--n e2e-rhoai-dsc --for=condition=Ready --timeout=300s
+-n e2e-rhoai-dsc --for=condition=Ready --timeout=600s
 
 # Get url address of llama-stack pod
 oc label pod llama-stack-service pod=llama-stack-service -n e2e-rhoai-dsc
