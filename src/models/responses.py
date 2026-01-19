@@ -408,13 +408,13 @@ class QueryResponse(AbstractSuccessfulResponse):
         examples=[{"daily": 1000, "monthly": 50000}],
     )
 
-    tool_calls: Optional[list[ToolCallSummary]] = Field(
-        None,
+    tool_calls: list[ToolCallSummary] = Field(
+        default_factory=list,
         description="List of tool calls made during response generation",
     )
 
-    tool_results: Optional[list[ToolResultSummary]] = Field(
-        None,
+    tool_results: list[ToolResultSummary] = Field(
+        default_factory=list,
         description="List of tool results",
     )
 
