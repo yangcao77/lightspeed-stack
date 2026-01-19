@@ -11,7 +11,6 @@ from llama_stack_client import AsyncLlamaStackClient  # type: ignore
 from models.config import LlamaStackConfiguration
 from utils.types import Singleton
 
-
 logger = logging.getLogger(__name__)
 
 

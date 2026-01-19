@@ -250,8 +250,7 @@ def test_load_proper_configuration(tmpdir: Path) -> None:
     """Test loading proper configuration from YAML file."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: foo bar baz
 service:
   host: localhost
@@ -267,8 +266,7 @@ llama_stack:
 user_data_collection:
   feedback_enabled: false
 mcp_servers: []
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -282,8 +280,7 @@ def test_load_configuration_with_mcp_servers(tmpdir: Path) -> None:
     """Test loading configuration from YAML file with MCP servers."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -304,8 +301,7 @@ mcp_servers:
   - name: git-server
     provider_id: custom-git-provider
     url: https://git.example.com/mcp
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -446,8 +442,7 @@ def test_load_configuration_with_customization_system_prompt_path(tmpdir: Path) 
 
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            f"""
+        fout.write(f"""
 name: test service
 service:
   host: localhost
@@ -471,8 +466,7 @@ mcp_servers:
 customization:
   disable_query_system_prompt: true
   system_prompt_path: {system_prompt_filename}
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -486,8 +480,7 @@ def test_load_configuration_with_customization_system_prompt(tmpdir: Path) -> No
     """Test loading configuration from YAML file with system_prompt in the customization."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -511,8 +504,7 @@ mcp_servers:
 customization:
   system_prompt: |-
     this is system prompt in the customization section
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -531,8 +523,7 @@ def test_configuration_with_profile_customization(tmpdir: Path) -> None:
     expected_prompts = expected_profile.get_prompts()
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -549,8 +540,7 @@ user_data_collection:
   feedback_enabled: false
 customization:
   profile_path: tests/profiles/test/profile.py
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -574,8 +564,7 @@ def test_configuration_with_all_customizations(tmpdir: Path) -> None:
 
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            f"""
+        fout.write(f"""
 name: test service
 service:
   host: localhost
@@ -594,8 +583,7 @@ customization:
   profile_path: tests/profiles/test/profile.py
   system_prompt: custom prompt
   system_prompt_path: {system_prompt_filename}
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -613,8 +601,7 @@ def test_configuration_with_sqlite_conversation_cache(tmpdir: Path) -> None:
     """Test loading configuration from YAML file with conversation cache configuration."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -633,8 +620,7 @@ conversation_cache:
   type: "sqlite"
   sqlite:
     db_path: ":memory:"
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -652,8 +638,7 @@ def test_configuration_with_in_memory_conversation_cache(tmpdir: Path) -> None:
     """Test loading configuration from YAML file with conversation cache configuration."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -672,8 +657,7 @@ conversation_cache:
   type: "memory"
   memory:
     max_entries: 42
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -691,8 +675,7 @@ def test_configuration_with_quota_handlers_no_storage(tmpdir: Path) -> None:
     """Test loading configuration from YAML file with quota handlers configuration."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -722,8 +705,7 @@ quota_handlers:
   scheduler:
     # scheduler ticks in seconds
     period: 1
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))
@@ -745,8 +727,7 @@ def test_configuration_with_quota_handlers(tmpdir: Path) -> None:
     """Test loading configuration from YAML file with quota handlers configuration."""
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
-        fout.write(
-            """
+        fout.write("""
 name: test service
 service:
   host: localhost
@@ -778,8 +759,7 @@ quota_handlers:
   scheduler:
     # scheduler ticks in seconds
     period: 1
-            """
-        )
+            """)
 
     cfg = AppConfig()
     cfg.load_configuration(str(cfg_filename))

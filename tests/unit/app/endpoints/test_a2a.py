@@ -39,7 +39,6 @@ from app.endpoints.a2a import (
 from configuration import AppConfig
 from models.config import Action
 
-
 # User ID must be proper UUID
 MOCK_AUTH = (
     "00000001-0001-0001-0001-000000000001",

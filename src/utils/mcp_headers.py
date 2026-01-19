@@ -8,7 +8,6 @@ from fastapi import Request
 
 from configuration import AppConfig
 
-
 logger = logging.getLogger("app.endpoints.dependencies")
 
 

@@ -12,7 +12,6 @@ from models.rlsapi.responses import (
 )
 from models.responses import AbstractSuccessfulResponse
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
