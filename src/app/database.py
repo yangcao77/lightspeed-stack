@@ -19,7 +19,15 @@ session_local: Optional[sessionmaker] = None
 
 
 def get_engine() -> Engine:
-    """Get the database engine. Raises an error if not initialized."""
+    """Get the database engine. Raises an error if not initialized.
+
+    Returns:
+        Engine: The initialized SQLAlchemy Engine instance.
+
+    Raises:
+        RuntimeError: If the database engine has not been initialized; call
+        initialize_database() first.
+    """
     if engine is None:
         raise RuntimeError(
             "Database engine not initialized. Call initialize_database() first."
@@ -28,12 +36,29 @@ def get_engine() -> Engine:
 
 
 def create_tables() -> None:
-    """Create tables."""
+    """Create tables.
+
+    Create all ORM tables defined on Base.metadata using the currently initialized engine.
+
+    Raises:
+        RuntimeError: If the global database engine is not initialized (call
+        initialize_database() first).
+    """
     Base.metadata.create_all(get_engine())
 
 
 def get_session() -> Session:
-    """Get a database session. Raises an error if not initialized."""
+    """Get a database session. Raises an error if not initialized.
+
+    Provide a new ORM Session bound to the configured engine.
+
+    Returns:
+        Session: A SQLAlchemy ORM Session instance bound to the initialized engine.
+
+    Raises:
+        RuntimeError: If the database has not been initialized; call
+        initialize_database() first.
+    """
     if session_local is None:
         raise RuntimeError(
             "Database session not initialized. Call initialize_database() first."
@@ -42,7 +67,20 @@ def get_session() -> Session:
 
 
 def _create_sqlite_engine(config: SQLiteDatabaseConfiguration, **kwargs: Any) -> Engine:
-    """Create SQLite database engine."""
+    """Create SQLite database engine.
+
+    Parameters:
+        config (SQLiteDatabaseConfiguration): Configuration containing
+        `db_path` for the SQLite file.
+        **kwargs: Additional keyword arguments forwarded to SQLAlchemy's create_engine.
+
+    Returns:
+        Engine: A SQLAlchemy Engine bound to the specified SQLite database file.
+
+    Raises:
+        FileNotFoundError: If the parent directory of `config.db_path` does not exist.
+        RuntimeError: If engine creation fails.
+    """
     if not Path(config.db_path).parent.exists():
         raise FileNotFoundError(
             f"SQLite database directory does not exist: {config.db_path}"
@@ -58,7 +96,25 @@ def _create_sqlite_engine(config: SQLiteDatabaseConfiguration, **kwargs: Any) ->
 def _create_postgres_engine(
     config: PostgreSQLDatabaseConfiguration, **kwargs: Any
 ) -> Engine:
-    """Create PostgreSQL database engine."""
+    """Create PostgreSQL database engine.
+
+    Builds a connection URL from the configuration and creates an Engine. If
+    the configuration specifies a non-default namespace (a schema other than
+    "public"), ensures that schema exists by creating it if necessary. If a CA
+    certificate path is provided, the engine will be configured to use it for
+    SSL.
+
+    Parameters:
+        config (PostgreSQLDatabaseConfiguration): Connection and database
+        settings (user, password, host, port, db, ssl/gss options, optional
+        namespace and ca_cert_path).
+
+    Returns:
+        Engine: A SQLAlchemy Engine connected to the configured PostgreSQL database.
+
+    Raises:
+        RuntimeError: If engine creation fails or if creating the specified schema fails.
+    """
     postgres_url = (
         f"postgresql://{config.user}:{config.password.get_secret_value()}@"
         f"{config.host}:{config.port}/{config.db}"
@@ -100,7 +156,18 @@ def _create_postgres_engine(
 
 
 def initialize_database() -> None:
-    """Initialize the database engine."""
+    """Initialize the database engine.
+
+    Initialize module-level database engine and session factory from the
+    application's configuration.
+
+    Reads configuration.database_configuration to determine the database type
+    (SQLite or PostgreSQL), creates and assigns a module-level `engine`, and
+    initializes `session_local` as a sessionmaker bound to that engine. The
+    engine is configured to echo SQL when the logger is at DEBUG level and to
+    use connection pre-ping. May raise RuntimeError if engine creation or
+    required schema creation fails.
+    """
     db_config = configuration.database_configuration
 
     global engine, session_local  # pylint: disable=global-statement
