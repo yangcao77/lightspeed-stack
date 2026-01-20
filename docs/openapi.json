@@ -13,7 +13,7 @@
             "name": "Apache 2.0",
             "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
         },
-        "version": "0.3.1"
+        "version": "0.4.0"
     },
     "servers": [
         {
@@ -7711,32 +7711,18 @@
                         ]
                     },
                     "tool_calls": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "$ref": "#/components/schemas/ToolCallSummary"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/ToolCallSummary"
+                        },
+                        "type": "array",
                         "title": "Tool Calls",
                         "description": "List of tool calls made during response generation"
                     },
                     "tool_results": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "$ref": "#/components/schemas/ToolResultSummary"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
+                        "items": {
+                            "$ref": "#/components/schemas/ToolResultSummary"
+                        },
+                        "type": "array",
                         "title": "Tool Results",
                         "description": "List of tool results"
                     }

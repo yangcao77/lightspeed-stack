@@ -5000,8 +5000,8 @@ Attributes:
 | input_tokens | integer | Number of tokens sent to LLM |
 | output_tokens | integer | Number of tokens received from LLM |
 | available_quotas | object | Quota available as measured by all configured quota limiters |
-| tool_calls |  | List of tool calls made during response generation |
-| tool_results |  | List of tool results |
+| tool_calls | array | List of tool calls made during response generation |
+| tool_results | array | List of tool results |
 
 
 ## QuotaExceededResponse
