@@ -93,7 +93,6 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
     Args:
         output_item: An OpenAIResponseOutput item from the response.output array
         rag_chunks: List to append extracted RAG chunks to (from file_search_call items)
-
     Returns:
         A tuple of (ToolCallSummary, ToolResultSummary) one of them possibly None
         if current llama stack Responses API does not provide the information.

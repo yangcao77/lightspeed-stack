@@ -268,8 +268,8 @@ class TestQueryResponse:
         assert isinstance(response_obj, AbstractSuccessfulResponse)
         assert response_obj.response == "Test response"
         assert response_obj.conversation_id is None
-        assert response_obj.tool_calls is None
-        assert response_obj.tool_results is None
+        assert response_obj.tool_calls == []
+        assert response_obj.tool_results == []
         assert response_obj.referenced_documents == []
         assert response_obj.truncated is False
         assert response_obj.input_tokens == 0
