@@ -30,8 +30,14 @@ from app.endpoints import (
 def include_routers(app: FastAPI) -> None:
     """Include FastAPI routers for different endpoints.
 
-    Args:
-        app: The `FastAPI` app instance.
+    Register and mount project routers on the given FastAPI application.
+
+    Registers endpoint routers and assigns URL prefixes: most endpoints are
+    mounted under "/v1", v2 routers under "/v2", and core endpoints (health,
+    authorized, metrics) are mounted without a version prefix.
+
+    Parameters:
+        app (FastAPI): The FastAPI application to which routers will be attached.
     """
     app.include_router(root.router)
 
