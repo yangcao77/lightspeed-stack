@@ -93,7 +93,7 @@ def create_auth_header(identity_data: dict) -> str:
     return base64.b64encode(json_str.encode("utf-8")).decode("utf-8")
 
 
-def create_request_with_header(header_value: Optional[str]) -> Request:
+def create_request_with_header(header_value: Optional[str]) -> Mock:
     """Helper to create mock Request with x-rh-identity header.
 
     Create a mock FastAPI Request with an `x-rh-identity` header for tests.
@@ -109,6 +109,7 @@ def create_request_with_header(header_value: Optional[str]) -> Request:
     """
     request = Mock(spec=Request)
     request.headers = {"x-rh-identity": header_value} if header_value else {}
+    request.state = Mock()
     return request
 
 
@@ -142,8 +143,12 @@ class TestRHIdentityData:
 
     def test_get_org_id_missing(self, user_identity_data: dict) -> None:
         """Test org_id returns empty string when not present."""
-        user_identity_data["identity"].pop("org_id")
-        rh_identity = RHIdentityData(user_identity_data)
+        identity_data = {
+            **user_identity_data,
+            "identity": {**user_identity_data["identity"]},
+        }
+        identity_data["identity"].pop("org_id", None)
+        rh_identity = RHIdentityData(identity_data)
         assert rh_identity.get_org_id() == ""
 
     @pytest.mark.parametrize(
@@ -325,6 +330,31 @@ class TestRHIdentityAuthDependency:
         assert username == "123"
         assert skip_check is False
         assert token == NO_USER_TOKEN
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "fixture_name,expected_user_id",
+        [
+            ("user_identity_data", "abc123"),
+            ("system_identity_data", "c87dcb4c-8af1-40dd-878e-60c744edddd0"),
+        ],
+    )
+    async def test_rh_identity_stored_in_request_state(
+        self, fixture_name: str, expected_user_id: str, request: pytest.FixtureRequest
+    ) -> None:
+        """Test RH Identity data is stored in request.state for downstream access."""
+        identity_data = request.getfixturevalue(fixture_name)
+        auth_dep = RHIdentityAuthDependency()
+        header_value = create_auth_header(identity_data)
+        mock_request = create_request_with_header(header_value)
+
+        await auth_dep(mock_request)
+
+        assert hasattr(mock_request.state, "rh_identity_data")
+        rh_identity = mock_request.state.rh_identity_data
+        assert isinstance(rh_identity, RHIdentityData)
+        assert rh_identity.get_user_id() == expected_user_id
+        assert rh_identity.get_org_id() == "321"
 
     @pytest.mark.asyncio
     async def test_missing_header(self) -> None:

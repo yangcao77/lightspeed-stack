@@ -247,6 +247,9 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
         # Validate entitlements if configured
         rh_identity.validate_entitlements()
 
+        # Store identity data in request.state for downstream access
+        request.state.rh_identity_data = rh_identity
+
         # Extract user data
         user_id = rh_identity.get_user_id()
         username = rh_identity.get_username()
