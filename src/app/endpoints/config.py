@@ -44,6 +44,8 @@ async def config_endpoint_handler(
     Process GET requests to the /config endpoint and returns the
     current service configuration.
 
+    Ensures the application configuration is loaded before returning it.
+
     Returns:
         ConfigurationResponse: The loaded service configuration response.
     """
