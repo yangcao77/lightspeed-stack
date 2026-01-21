@@ -1,4 +1,17 @@
-packages: [gcc, jq, patch, cmake, cargo, libpq]
+packages:
+  [
+    gcc,
+    jq,
+    patch,
+    cmake,
+    cargo,
+    libpq,
+    libtiff,
+    openjpeg2,
+    lcms2,
+    libjpeg-turbo,
+    libwebp,
+  ]
 contentOrigin:
   repofiles: ["./ubi.repo"]
 arches: [x86_64, aarch64]
