@@ -998,8 +998,8 @@ async def test_retrieve_response_parses_referenced_documents(
     # Verify RAG chunks were extracted from file_search_call results
     assert len(_summary.rag_chunks) == 2
     assert _summary.rag_chunks[0].content == "Sample text from file2.pdf"
-    assert _summary.rag_chunks[0].source == "file_search"
+    assert _summary.rag_chunks[0].source == "file2.pdf"
     assert _summary.rag_chunks[0].score == 0.95
     assert _summary.rag_chunks[1].content == "Sample text from file3.docx"
-    assert _summary.rag_chunks[1].source == "file_search"
+    assert _summary.rag_chunks[1].source == "file3.docx"
     assert _summary.rag_chunks[1].score == 0.85

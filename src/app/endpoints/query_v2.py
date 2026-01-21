@@ -492,7 +492,7 @@ def extract_rag_chunks_from_file_search_item(
     if item.results is not None:
         for result in item.results:
             rag_chunk = RAGChunk(
-                content=result.text, source="file_search", score=result.score
+                content=result.text, source=result.filename, score=result.score
             )
             rag_chunks.append(rag_chunk)
 

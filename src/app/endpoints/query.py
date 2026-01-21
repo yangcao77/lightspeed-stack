@@ -441,6 +441,7 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
             response=summary.llm_response,
             tool_calls=summary.tool_calls,
             tool_results=summary.tool_results,
+            rag_chunks=summary.rag_chunks,
             referenced_documents=referenced_documents,
             truncated=False,  # TODO: implement truncation detection
             input_tokens=token_usage.input_tokens,

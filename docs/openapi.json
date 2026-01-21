@@ -7648,6 +7648,14 @@
                             "Kubernetes is an open-source container orchestration system for automating ..."
                         ]
                     },
+                    "rag_chunks": {
+                        "items": {
+                            "$ref": "#/components/schemas/RAGChunk"
+                        },
+                        "type": "array",
+                        "title": "Rag Chunks",
+                        "description": "Deprecated: List of RAG chunks used to generate the response."
+                    },
                     "referenced_documents": {
                         "items": {
                             "$ref": "#/components/schemas/ReferencedDocument"
@@ -7732,7 +7740,7 @@
                     "response"
                 ],
                 "title": "QueryResponse",
-                "description": "Model representing LLM response to a query.\n\nAttributes:\n    conversation_id: The optional conversation ID (UUID).\n    response: The response.\n    rag_chunks: List of RAG chunks used to generate the response.\n    referenced_documents: The URLs and titles for the documents used to generate the response.\n    tool_calls: List of tool calls made during response generation.\n    truncated: Whether conversation history was truncated.\n    input_tokens: Number of tokens sent to LLM.\n    output_tokens: Number of tokens received from LLM.\n    available_quotas: Quota available as measured by all configured quota limiters.",
+                "description": "Model representing LLM response to a query.\n\nAttributes:\n    conversation_id: The optional conversation ID (UUID).\n    response: The response.\n    rag_chunks: Deprecated. List of RAG chunks used to generate the response.\n        This information is now available in tool_results under file_search_call type.\n    referenced_documents: The URLs and titles for the documents used to generate the response.\n    tool_calls: List of tool calls made during response generation.\n    tool_results: List of tool results.\n    truncated: Whether conversation history was truncated.\n    input_tokens: Number of tokens sent to LLM.\n    output_tokens: Number of tokens received from LLM.\n    available_quotas: Quota available as measured by all configured quota limiters.",
                 "examples": [
                     {
                         "available_quotas": {
@@ -7964,6 +7972,45 @@
                 "type": "object",
                 "title": "QuotaSchedulerConfiguration",
                 "description": "Quota scheduler configuration."
+            },
+            "RAGChunk": {
+                "properties": {
+                    "content": {
+                        "type": "string",
+                        "title": "Content",
+                        "description": "The content of the chunk"
+                    },
+                    "source": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Source",
+                        "description": "Source document or URL"
+                    },
+                    "score": {
+                        "anyOf": [
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Score",
+                        "description": "Relevance score"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "content"
+                ],
+                "title": "RAGChunk",
+                "description": "Model representing a RAG chunk used in the response."
             },
             "RAGInfoResponse": {
                 "properties": {
