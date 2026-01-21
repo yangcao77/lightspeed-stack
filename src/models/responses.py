@@ -10,7 +10,7 @@ from pydantic_core import SchemaError
 
 from quota.quota_exceed_error import QuotaExceedError
 from models.config import Action, Configuration
-from utils.types import ToolCallSummary, ToolResultSummary
+from utils.types import RAGChunk, ToolCallSummary, ToolResultSummary
 
 SUCCESSFUL_RESPONSE_DESCRIPTION = "Successful response"
 BAD_REQUEST_DESCRIPTION = "Invalid request format"
@@ -348,9 +348,11 @@ class QueryResponse(AbstractSuccessfulResponse):
     Attributes:
         conversation_id: The optional conversation ID (UUID).
         response: The response.
-        rag_chunks: List of RAG chunks used to generate the response.
+        rag_chunks: Deprecated. List of RAG chunks used to generate the response.
+            This information is now available in tool_results under file_search_call type.
         referenced_documents: The URLs and titles for the documents used to generate the response.
         tool_calls: List of tool calls made during response generation.
+        tool_results: List of tool results.
         truncated: Whether conversation history was truncated.
         input_tokens: Number of tokens sent to LLM.
         output_tokens: Number of tokens received from LLM.
@@ -368,6 +370,11 @@ class QueryResponse(AbstractSuccessfulResponse):
         examples=[
             "Kubernetes is an open-source container orchestration system for automating ..."
         ],
+    )
+
+    rag_chunks: list[RAGChunk] = Field(
+        default_factory=list,
+        description="Deprecated: List of RAG chunks used to generate the response.",
     )
 
     referenced_documents: list[ReferencedDocument] = Field(
