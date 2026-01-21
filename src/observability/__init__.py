@@ -2,9 +2,13 @@
 
 This module provides functionality for sending telemetry events to external
 systems like Splunk HEC for monitoring and analytics.
+
+The splunk module provides a format-agnostic send_splunk_event() function.
+Event formats are in the formats subpackage - see formats.rlsapi for the
+default implementation, or create your own format module.
 """
 
+from observability.formats import InferenceEventData, build_inference_event
 from observability.splunk import send_splunk_event
-from observability.telemetry import build_inference_event
 
-__all__ = ["send_splunk_event", "build_inference_event"]
+__all__ = ["send_splunk_event", "InferenceEventData", "build_inference_event"]
