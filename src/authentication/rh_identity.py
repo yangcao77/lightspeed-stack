@@ -125,6 +125,14 @@ class RHIdentityData:
             return identity["user"]["username"]
         return identity["account_number"]
 
+    def get_org_id(self) -> str:
+        """Extract organization ID from identity data.
+
+        Returns:
+            Organization ID string, or empty string if not present
+        """
+        return self.identity_data["identity"].get("org_id", "")
+
     def has_entitlement(self, service: str) -> bool:
         """Check if user has a specific service entitlement.
 

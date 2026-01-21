@@ -130,6 +130,23 @@ class TestRHIdentityData:
         assert rh_identity.get_username() == "123"
 
     @pytest.mark.parametrize(
+        "fixture_name", ["user_identity_data", "system_identity_data"]
+    )
+    def test_get_org_id(
+        self, fixture_name: str, request: pytest.FixtureRequest
+    ) -> None:
+        """Test org_id extraction for both identity types."""
+        identity_data = request.getfixturevalue(fixture_name)
+        rh_identity = RHIdentityData(identity_data)
+        assert rh_identity.get_org_id() == "321"
+
+    def test_get_org_id_missing(self, user_identity_data: dict) -> None:
+        """Test org_id returns empty string when not present."""
+        user_identity_data["identity"].pop("org_id")
+        rh_identity = RHIdentityData(user_identity_data)
+        assert rh_identity.get_org_id() == ""
+
+    @pytest.mark.parametrize(
         "service,expected",
         [
             ("rhel", True),  # Entitled service
