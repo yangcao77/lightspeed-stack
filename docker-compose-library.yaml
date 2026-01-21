@@ -1,4 +1,21 @@
 services:
+  # Mock MCP server for testing
+  mcp-mock-server:
+    build:
+      context: .
+      dockerfile: dev-tools/mcp-mock-server/Dockerfile
+    container_name: mcp-mock-server
+    ports:
+      - "3000:3000"
+    networks:
+      - lightspeednet
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
   # Lightspeed Stack with embedded llama-stack (library mode)
   lightspeed-stack:
     build:
@@ -8,6 +25,11 @@ services:
     container_name: lightspeed-stack
     ports:
       - "8080:8080"
+    depends_on:
+      mcp-mock-server:
+        condition: service_healthy
+    networks:
+      - lightspeednet
     volumes:
       # Mount both config files - lightspeed-stack.yaml should have library mode enabled
       - ./lightspeed-stack.yaml:/app-root/lightspeed-stack.yaml:Z
@@ -51,3 +73,6 @@ services:
       retries: 3      # how many times to retry before marking as unhealthy
       start_period: 15s # time to wait before starting checks (increased for library initialization)
 
+networks:
+  lightspeednet:
+    driver: bridge

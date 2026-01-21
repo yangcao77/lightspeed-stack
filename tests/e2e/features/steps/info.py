@@ -178,3 +178,64 @@ def check_tool_structure(context: Context, provider_name: str) -> None:
     assert (
         provider_tool["type"] == expected_json["type"]
     ), f"type should be {expected_json["type"]}"
+
+
+@then("The body of the response has proper client auth options structure")
+def check_client_auth_options_structure(context: Context) -> None:
+    """Check that the MCP client auth options response has the correct structure."""
+    response_json = context.response.json()
+    assert response_json is not None, "Response is not valid JSON"
+
+    assert "servers" in response_json, "Response missing 'servers' field"
+    servers = response_json["servers"]
+    assert isinstance(servers, list), "'servers' should be a list"
+
+    # Verify structure of each server entry
+    for server in servers:
+        assert "name" in server, "Server missing 'name' field"
+        assert isinstance(server["name"], str), "Server 'name' should be a string"
+
+        assert (
+            "client_auth_headers" in server
+        ), "Server missing 'client_auth_headers' field"
+        assert isinstance(
+            server["client_auth_headers"], list
+        ), "'client_auth_headers' should be a list"
+        assert (
+            len(server["client_auth_headers"]) > 0
+        ), "'client_auth_headers' should not be empty"
+
+        # Validate all headers are strings
+        for header in server["client_auth_headers"]:
+            assert isinstance(
+                header, str
+            ), f"Header should be a string, but got {type(header)}"
+
+
+@then(
+    'The response contains server "{server_name}" with client auth header "{header_name}"'
+)
+def check_server_with_header(
+    context: Context, server_name: str, header_name: str
+) -> None:
+    """Check that a specific server with a specific header is present in the response."""
+    response_json = context.response.json()
+    assert response_json is not None, "Response is not valid JSON"
+
+    servers = response_json.get("servers", [])
+
+    # Find the server by name
+    found_server = None
+    for server in servers:
+        if server.get("name") == server_name:
+            found_server = server
+            break
+
+    assert found_server is not None, f"Server '{server_name}' not found in response"
+
+    # Check that the header is in the client_auth_headers list
+    headers = found_server.get("client_auth_headers", [])
+    assert header_name in headers, (
+        f"Header '{header_name}' not found in server '{server_name}'. "
+        f"Found headers: {headers}"
+    )

@@ -127,6 +127,44 @@ class ToolsResponse(AbstractSuccessfulResponse):
     }
 
 
+class MCPServerAuthInfo(BaseModel):
+    """Information about MCP server client authentication options."""
+
+    name: str = Field(..., description="MCP server name")
+    client_auth_headers: list[str] = Field(
+        ...,
+        description="List of authentication header names for client-provided tokens",
+    )
+
+
+class MCPClientAuthOptionsResponse(AbstractSuccessfulResponse):
+    """Response containing MCP servers that accept client-provided authorization."""
+
+    servers: list[MCPServerAuthInfo] = Field(
+        default_factory=list,
+        description="List of MCP servers that accept client-provided authorization",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "servers": [
+                        {
+                            "name": "github",
+                            "client_auth_headers": ["Authorization"],
+                        },
+                        {
+                            "name": "gitlab",
+                            "client_auth_headers": ["Authorization", "X-API-Key"],
+                        },
+                    ]
+                }
+            ]
+        }
+    }
+
+
 class ShieldsResponse(AbstractSuccessfulResponse):
     """Model representing a response to shields request."""
 
