@@ -612,6 +612,87 @@ class LlamaStackConfiguration(ConfigurationBase):
         return self
 
 
+class SplunkConfiguration(ConfigurationBase):
+    """Splunk HEC (HTTP Event Collector) configuration.
+
+    Splunk HEC allows sending events directly to Splunk over HTTP/HTTPS.
+    This configuration is used to send telemetry events for inference
+    requests to the corporate Splunk deployment.
+
+    Useful resources:
+
+      - [Splunk HEC Docs](https://docs.splunk.com/Documentation/SplunkCloud)
+      - [About HEC](https://docs.splunk.com/Documentation/Splunk/latest/Data)
+    """
+
+    enabled: bool = Field(
+        False,
+        title="Enabled",
+        description="Enable or disable Splunk HEC integration.",
+    )
+
+    url: Optional[str] = Field(
+        None,
+        title="HEC URL",
+        description="Splunk HEC endpoint URL.",
+    )
+
+    token_path: Optional[FilePath] = Field(
+        None,
+        title="Token path",
+        description="Path to file containing the Splunk HEC authentication token.",
+    )
+
+    index: Optional[str] = Field(
+        None,
+        title="Index",
+        description="Target Splunk index for events.",
+    )
+
+    source: str = Field(
+        "lightspeed-stack",
+        title="Source",
+        description="Event source identifier.",
+    )
+
+    timeout: PositiveInt = Field(
+        5,
+        title="Timeout",
+        description="HTTP timeout in seconds for HEC requests.",
+    )
+
+    verify_ssl: bool = Field(
+        True,
+        title="Verify SSL",
+        description="Whether to verify SSL certificates for HEC endpoint.",
+    )
+
+    @model_validator(mode="after")
+    def check_splunk_configuration(self) -> Self:
+        """Validate that required fields are set when Splunk is enabled.
+
+        Returns:
+            Self: The validated configuration instance.
+
+        Raises:
+            ValueError: If enabled is True but required fields are missing.
+        """
+        if self.enabled:
+            missing_fields = []
+            if not self.url:
+                missing_fields.append("url")
+            if not self.token_path:
+                missing_fields.append("token_path")
+            if not self.index:
+                missing_fields.append("index")
+            if missing_fields:
+                raise ValueError(
+                    f"Splunk is enabled but required fields are missing: "
+                    f"{', '.join(missing_fields)}"
+                )
+        return self
+
+
 class UserDataCollection(ConfigurationBase):
     """User data collection configuration."""
 
@@ -1658,6 +1739,19 @@ class Configuration(ConfigurationBase):
         description="Quota handlers configuration",
     )
     azure_entra_id: Optional[AzureEntraIdConfiguration] = None
+
+    splunk: Optional[SplunkConfiguration] = Field(
+        default=None,
+        title="Splunk configuration",
+        description="Splunk HEC configuration for sending telemetry events.",
+    )
+
+    deployment_environment: str = Field(
+        "development",
+        title="Deployment environment",
+        description="Deployment environment name (e.g., 'development', 'staging', 'production'). "
+        "Used in telemetry events.",
+    )
 
     @model_validator(mode="after")
     def validate_mcp_auth_headers(self) -> Self:
