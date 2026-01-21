@@ -23,6 +23,7 @@ from models.config import (
     DatabaseConfiguration,
     ConversationHistoryConfiguration,
     QuotaHandlersConfiguration,
+    SplunkConfiguration,
 )
 
 from cache.cache import Cache
@@ -39,7 +40,7 @@ class LogicError(Exception):
     """Error in application logic."""
 
 
-class AppConfig:
+class AppConfig:  # pylint: disable=too-many-public-methods
     """Singleton class to load and store the configuration."""
 
     _instance = None
@@ -347,6 +348,20 @@ class AppConfig:
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.azure_entra_id
+
+    @property
+    def splunk(self) -> Optional[SplunkConfiguration]:
+        """Return Splunk configuration, or None if not provided."""
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.splunk
+
+    @property
+    def deployment_environment(self) -> str:
+        """Return deployment environment name."""
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.deployment_environment
 
 
 configuration: AppConfig = AppConfig()
