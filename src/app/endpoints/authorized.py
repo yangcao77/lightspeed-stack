@@ -31,6 +31,8 @@ async def authorized_endpoint_handler(
     Process POST requests to the /authorized endpoint, returning
     the authenticated user's ID and username.
 
+    The response intentionally omits any authentication token.
+
     Returns:
         AuthorizedResponse: Contains the user ID and username of the authenticated user.
     """
