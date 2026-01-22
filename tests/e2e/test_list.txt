@@ -2,6 +2,7 @@ features/faiss.feature
 features/smoketests.feature
 features/authorized_noop.feature
 features/authorized_noop_token.feature
+features/authorized_rh_identity.feature
 features/rbac.feature
 features/conversations.feature
 features/conversation_cache_v2.feature
