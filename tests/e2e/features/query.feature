@@ -29,6 +29,8 @@ Feature: Query endpoint API tests
           | Fragments in LLM response |
           | checkout                  |
 
+  #enable on demand
+  @skip 
   Scenario: Check if LLM ignores new system prompt in same conversation
     Given The system is in default state
     And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva

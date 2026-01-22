@@ -73,6 +73,23 @@ services:
       retries: 3      # how many times to retry before marking as unhealthy
       start_period: 15s # time to wait before starting checks (increased for library initialization)
 
+  # Mock JWKS server for RBAC E2E tests
+  mock-jwks:
+    build:
+      context: ./tests/e2e/mock_jwks_server
+      dockerfile: Dockerfile
+    container_name: mock-jwks
+    ports:
+      - "8000:8000"
+    networks:
+      - lightspeednet
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 2s
+
 networks:
   lightspeednet:
     driver: bridge
