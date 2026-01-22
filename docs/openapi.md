@@ -87,6 +87,12 @@ Handle request to the /info endpoint.
 Process GET requests to the /info endpoint, returning the
 service name, version and Llama-stack version.
 
+Raises:
+    HTTPException: with status 500 and a detail object
+    containing `response` and `cause` when unable to connect to
+    Llama Stack. It can also return status 401 or 403 for
+    unauthorized access.
+
 Returns:
     InfoResponse: An object containing the service's name and version.
 
@@ -441,6 +447,99 @@ Examples
   "detail": {
     "cause": "Connection error while trying to reach backend service.",
     "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+ |
+## GET `/v1/mcp-auth/client-options`
+
+> **Get Mcp Client Auth Options**
+
+Get MCP servers that accept client-provided authorization.
+
+Returns a list of MCP servers configured to accept client-provided
+authorization tokens, along with the header names where clients
+should provide these tokens.
+
+This endpoint helps clients discover which MCP servers they can
+authenticate with using their own tokens.
+
+Args:
+    request: The incoming HTTP request (used by middleware).
+    auth: Authentication tuple from the auth dependency (used by middleware).
+
+Returns:
+    MCPClientAuthOptionsResponse: List of MCP servers and their
+        accepted client authentication headers.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description | Component |
+|-------------|-------------|-----------|
+| 200 | Successful response | [MCPClientAuthOptionsResponse](#mcpclientauthoptionsresponse) |
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+ |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+ |
+| 500 | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse)
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
   }
 }
 ```
@@ -1638,6 +1737,8 @@ Handle requests to the /config endpoint.
 
 Process GET requests to the /config endpoint and returns the
 current service configuration.
+
+Ensures the application configuration is loaded before returning it.
 
 Returns:
     ConfigurationResponse: The loaded service configuration response.
@@ -3469,6 +3570,8 @@ Handle request to the /authorized endpoint.
 Process POST requests to the /authorized endpoint, returning
 the authenticated user's ID and username.
 
+The response intentionally omits any authentication token.
+
 Returns:
     AuthorizedResponse: Contains the user ID and username of the authenticated user.
 
@@ -4748,6 +4851,29 @@ Useful resources:
 | library_client_config_path |  | Path to configuration file used when Llama Stack is run in library mode |
 
 
+## MCPClientAuthOptionsResponse
+
+
+Response containing MCP servers that accept client-provided authorization.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| servers | array | List of MCP servers that accept client-provided authorization |
+
+
+## MCPServerAuthInfo
+
+
+Information about MCP server client authentication options.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| name | string | MCP server name |
+| client_auth_headers | array | List of authentication header names for client-provided tokens |
+
+
 ## ModelContextProtocolServer
 
 
@@ -4982,9 +5108,11 @@ Model representing LLM response to a query.
 Attributes:
     conversation_id: The optional conversation ID (UUID).
     response: The response.
-    rag_chunks: List of RAG chunks used to generate the response.
+    rag_chunks: Deprecated. List of RAG chunks used to generate the response.
+        This information is now available in tool_results under file_search_call type.
     referenced_documents: The URLs and titles for the documents used to generate the response.
     tool_calls: List of tool calls made during response generation.
+    tool_results: List of tool results.
     truncated: Whether conversation history was truncated.
     input_tokens: Number of tokens sent to LLM.
     output_tokens: Number of tokens received from LLM.
@@ -4995,6 +5123,7 @@ Attributes:
 |-------|------|-------------|
 | conversation_id |  | The optional conversation ID (UUID) |
 | response | string | Response from LLM |
+| rag_chunks | array | Deprecated: List of RAG chunks used to generate the response. |
 | referenced_documents | array | List of documents referenced in generating the response |
 | truncated | boolean | Whether conversation history was truncated |
 | input_tokens | integer | Number of tokens sent to LLM |
@@ -5080,6 +5209,19 @@ Quota scheduler configuration.
 | period | integer | Quota scheduler period specified in seconds |
 | database_reconnection_count | integer | Database reconnection count on startup. When database for quota is not available on startup, the service tries to reconnect N times with specified delay. |
 | database_reconnection_delay | integer | Database reconnection delay specified in seconds. When database for quota is not available on startup, the service tries to reconnect N times with specified delay. |
+
+
+## RAGChunk
+
+
+Model representing a RAG chunk used in the response.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| content | string | The content of the chunk |
+| source |  | Source document or URL |
+| score |  | Relevance score |
 
 
 ## RAGInfoResponse
