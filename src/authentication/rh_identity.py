@@ -125,6 +125,14 @@ class RHIdentityData:
             return identity["user"]["username"]
         return identity["account_number"]
 
+    def get_org_id(self) -> str:
+        """Extract organization ID from identity data.
+
+        Returns:
+            Organization ID string, or empty string if not present
+        """
+        return self.identity_data["identity"].get("org_id", "")
+
     def has_entitlement(self, service: str) -> bool:
         """Check if user has a specific service entitlement.
 
@@ -238,6 +246,9 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
 
         # Validate entitlements if configured
         rh_identity.validate_entitlements()
+
+        # Store identity data in request.state for downstream access
+        request.state.rh_identity_data = rh_identity
 
         # Extract user data
         user_id = rh_identity.get_user_id()
