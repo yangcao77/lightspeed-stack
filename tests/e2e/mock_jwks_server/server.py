@@ -7,6 +7,7 @@ No external dependencies - uses only Python stdlib.
 
 import json
 from http.server import HTTPServer, BaseHTTPRequestHandler
+from typing import Any
 
 # Static JWKS - pre-generated RSA public key
 JWKS = {
@@ -55,7 +56,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
-    def log_message(self, format: str, *args) -> None:
+    def log_message(self, format: str, *args: Any) -> None:
         """Suppress request logging."""
 
 
