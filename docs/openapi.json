@@ -102,7 +102,7 @@
                     "info"
                 ],
                 "summary": "Info Endpoint Handler",
-                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\nReturns:\n    InfoResponse: An object containing the service's name and version.",
+                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\nRaises:\n    HTTPException: with status 500 and a detail object\n    containing `response` and `cause` when unable to connect to\n    Llama Stack. It can also return status 401 or 403 for\n    unauthorized access.\n\nReturns:\n    InfoResponse: An object containing the service's name and version.",
                 "operationId": "info_endpoint_handler_v1_info_get",
                 "responses": {
                     "200": {
@@ -482,6 +482,113 @@
                                             "detail": {
                                                 "cause": "Connection error while trying to reach backend service.",
                                                 "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/mcp-auth/client-options": {
+            "get": {
+                "tags": [
+                    "mcp-auth"
+                ],
+                "summary": "Get Mcp Client Auth Options",
+                "description": "Get MCP servers that accept client-provided authorization.\n\nReturns a list of MCP servers configured to accept client-provided\nauthorization tokens, along with the header names where clients\nshould provide these tokens.\n\nThis endpoint helps clients discover which MCP servers they can\nauthenticate with using their own tokens.\n\nArgs:\n    request: The incoming HTTP request (used by middleware).\n    auth: Authentication tuple from the auth dependency (used by middleware).\n\nReturns:\n    MCPClientAuthOptionsResponse: List of MCP servers and their\n        accepted client authentication headers.",
+                "operationId": "get_mcp_client_auth_options_v1_mcp_auth_client_options_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/MCPClientAuthOptionsResponse"
+                                },
+                                "example": {
+                                    "servers": [
+                                        {
+                                            "client_auth_headers": [
+                                                "Authorization"
+                                            ],
+                                            "name": "github"
+                                        },
+                                        {
+                                            "client_auth_headers": [
+                                                "Authorization",
+                                                "X-API-Key"
+                                            ],
+                                            "name": "gitlab"
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
                                             }
                                         }
                                     }
@@ -1777,7 +1884,7 @@
                     "config"
                 ],
                 "summary": "Config Endpoint Handler",
-                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nReturns:\n    ConfigurationResponse: The loaded service configuration response.",
+                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nEnsures the application configuration is loaded before returning it.\n\nReturns:\n    ConfigurationResponse: The loaded service configuration response.",
                 "operationId": "config_endpoint_handler_v1_config_get",
                 "responses": {
                     "200": {
@@ -3945,7 +4052,7 @@
                     "authorized"
                 ],
                 "summary": "Authorized Endpoint Handler",
-                "description": "Handle request to the /authorized endpoint.\n\nProcess POST requests to the /authorized endpoint, returning\nthe authenticated user's ID and username.\n\nReturns:\n    AuthorizedResponse: Contains the user ID and username of the authenticated user.",
+                "description": "Handle request to the /authorized endpoint.\n\nProcess POST requests to the /authorized endpoint, returning\nthe authenticated user's ID and username.\n\nThe response intentionally omits any authentication token.\n\nReturns:\n    AuthorizedResponse: Contains the user ID and username of the authenticated user.",
                 "operationId": "authorized_endpoint_handler_authorized_post",
                 "responses": {
                     "200": {
@@ -6838,6 +6945,64 @@
                 "type": "object",
                 "title": "LlamaStackConfiguration",
                 "description": "Llama stack configuration.\n\nLlama Stack is a comprehensive system that provides a uniform set of tools\nfor building, scaling, and deploying generative AI applications, enabling\ndevelopers to create, integrate, and orchestrate multiple AI services and\ncapabilities into an adaptable setup.\n\nUseful resources:\n\n  - [Llama Stack](https://www.llama.com/products/llama-stack/)\n  - [Python Llama Stack client](https://github.com/llamastack/llama-stack-client-python)\n  - [Build AI Applications with Llama Stack](https://llamastack.github.io/)"
+            },
+            "MCPClientAuthOptionsResponse": {
+                "properties": {
+                    "servers": {
+                        "items": {
+                            "$ref": "#/components/schemas/MCPServerAuthInfo"
+                        },
+                        "type": "array",
+                        "title": "Servers",
+                        "description": "List of MCP servers that accept client-provided authorization"
+                    }
+                },
+                "type": "object",
+                "title": "MCPClientAuthOptionsResponse",
+                "description": "Response containing MCP servers that accept client-provided authorization.",
+                "examples": [
+                    {
+                        "servers": [
+                            {
+                                "client_auth_headers": [
+                                    "Authorization"
+                                ],
+                                "name": "github"
+                            },
+                            {
+                                "client_auth_headers": [
+                                    "Authorization",
+                                    "X-API-Key"
+                                ],
+                                "name": "gitlab"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "MCPServerAuthInfo": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "MCP server name"
+                    },
+                    "client_auth_headers": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Client Auth Headers",
+                        "description": "List of authentication header names for client-provided tokens"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "name",
+                    "client_auth_headers"
+                ],
+                "title": "MCPServerAuthInfo",
+                "description": "Information about MCP server client authentication options."
             },
             "ModelContextProtocolServer": {
                 "properties": {
