@@ -13,6 +13,8 @@ BUILD_FILE="requirements-build.txt"
 
 # extra wheels to be included in the wheel list, often come from build-time dependencies
 EXTRA_WHEELS="uv,pip,maturin"
+# packages to exclude from the wheel list
+NO_WHEEL_PACKAGES="markupsafe"
 
 # Generate requirements list from pyproject.toml from both indexes
 uv pip compile pyproject.toml -o "$RAW_REQ_FILE" \
@@ -40,12 +42,15 @@ while IFS= read -r line || [[ -n "$line" ]]; do
     # Check if this is a package line (starts with a letter/digit, not whitespace or #)
     if [[ "$line" =~ ^[a-zA-Z0-9] ]]; then
         current_package="$line"
+        package_name="${current_package%%==*}"
     # Check if this is a "# from" annotation line
     elif [[ "$line" =~ ^[[:space:]]*#[[:space:]]*from[[:space:]]+(.*) ]]; then
         index_url="${BASH_REMATCH[1]}"
 
         if [[ -n "$current_package" ]]; then
             if [[ "$index_url" == "https://pypi.org/simple/" ]]; then
+                echo "$current_package" >> "$SOURCE_FILE"
+            elif [[ "$NO_WHEEL_PACKAGES" == *"$package_name"* ]]; then
                 echo "$current_package" >> "$SOURCE_FILE"
             elif [[ "$index_url" == "https://console.redhat.com/api/pypi/public-rhai/rhoai/3.2/cpu-ubi9/simple/" ]]; then
                 echo "$current_package" >> "$WHEEL_FILE"
@@ -67,8 +72,8 @@ echo "Packages from pypi.org written to: $SOURCE_FILE ($(wc -l < "$SOURCE_FILE")
 echo "Packages from console.redhat.com written to: $WHEEL_FILE ($(wc -l < "$WHEEL_FILE") packages)"
 
 
-uv pip compile "$WHEEL_FILE" -o "$WHEEL_HASH_FILE" --refresh --generate-hashes --index-url https://console.redhat.com/api/pypi/public-rhai/rhoai/3.2/cpu-ubi9/simple/ --python-version 3.12 --emit-index-url --no-deps --no-annotate --universal
-uv pip compile "$SOURCE_FILE" -o "$SOURCE_HASH_FILE" --refresh --generate-hashes --python-version 3.12 --emit-index-url --no-deps --no-annotate
+uv pip compile "$WHEEL_FILE" --refresh --generate-hashes --index-url https://console.redhat.com/api/pypi/public-rhai/rhoai/3.2/cpu-ubi9/simple/ --python-version 3.12 --emit-index-url --no-deps --no-annotate --universal >  "$WHEEL_HASH_FILE"
+uv pip compile "$SOURCE_FILE" --refresh --generate-hashes --python-version 3.12 --emit-index-url --no-deps --no-annotate > "$SOURCE_HASH_FILE"
 uv run pybuild-deps compile --output-file="$BUILD_FILE" "$SOURCE_FILE"
 
 # pin maturin to the version available in the Red Hat registry

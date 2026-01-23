@@ -26,6 +26,7 @@ hatch-vcs==0.5.0
     #   filelock
     #   jsonschema
     #   termcolor
+    #   urllib3
 hatchling==1.26.3
     # via
     #   hatch-fancy-pypi-readme
@@ -39,26 +40,28 @@ hatchling==1.28.0
     #   jsonschema
     #   mcp
     #   termcolor
+    #   urllib3
     #   uv-dynamic-versioning
     #   uvicorn
+    #   wcwidth
 jinja2==3.1.6
     # via uv-dynamic-versioning
 markupsafe==3.0.3
     # via jinja2
 maturin==1.10.2
     # via fastuuid
-packaging==25.0
+packaging==26.0
     # via
-    #   dunamai
     #   hatchling
     #   setuptools-scm
+    #   wheel
 pathspec==1.0.3
     # via hatchling
 pdm-backend==2.4.6
     # via fastapi
 pluggy==1.6.0
     # via hatchling
-poetry-core==2.2.1
+poetry-core==2.3.0
     # via
     #   dunamai
     #   litellm
@@ -73,22 +76,24 @@ setuptools-scm==9.2.2
     #   importlib-metadata
     #   pluggy
     #   setuptools-rust
+    #   urllib3
 tomlkit==0.14.0
     # via uv-dynamic-versioning
 trove-classifiers==2026.1.14.14
     # via hatchling
-uv-dynamic-versioning==0.12.0
+uv-dynamic-versioning==0.13.0
     # via
     #   a2a-sdk
     #   mcp
-wheel==0.45.1
+wheel==0.46.3
     # via
     #   authlib
     #   azure-identity
     #   litellm
+    #   pycparser
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==80.9.0
+setuptools==80.10.1
     # via
     #   authlib
     #   azure-identity
@@ -97,6 +102,7 @@ setuptools==80.9.0
     #   certifi
     #   emoji
     #   google-api-core
+    #   greenlet
     #   importlib-metadata
     #   llama-stack
     #   markupsafe
@@ -106,6 +112,7 @@ setuptools==80.9.0
     #   pluggy
     #   prometheus-client
     #   psutil
+    #   pycparser
     #   pycryptodomex
     #   regex
     #   semver
