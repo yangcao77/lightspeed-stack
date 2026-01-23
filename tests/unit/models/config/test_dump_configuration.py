@@ -204,6 +204,8 @@ def test_dump_configuration(tmp_path: Path) -> None:
                 "postgres": None,
             },
             "azure_entra_id": None,
+            "splunk": None,
+            "deployment_environment": "development",
         }
 
 
@@ -539,6 +541,8 @@ def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
                 "postgres": None,
             },
             "azure_entra_id": None,
+            "splunk": None,
+            "deployment_environment": "development",
         }
 
 
@@ -756,6 +760,8 @@ def test_dump_configuration_with_quota_limiters_different_values(
                 "postgres": None,
             },
             "azure_entra_id": None,
+            "splunk": None,
+            "deployment_environment": "development",
         }
 
 
@@ -947,6 +953,8 @@ def test_dump_configuration_byok(tmp_path: Path) -> None:
                 "postgres": None,
             },
             "azure_entra_id": None,
+            "splunk": None,
+            "deployment_environment": "development",
         }
 
 
@@ -1124,4 +1132,6 @@ def test_dump_configuration_pg_namespace(tmp_path: Path) -> None:
                 "postgres": None,
             },
             "azure_entra_id": None,
+            "splunk": None,
+            "deployment_environment": "development",
         }
