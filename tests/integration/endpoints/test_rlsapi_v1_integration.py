@@ -37,6 +37,32 @@ from utils.suid import check_suid
 # ==========================================
 
 
+def _create_mock_request(mocker: MockerFixture) -> Any:
+    """Create a mock FastAPI Request with minimal state."""
+    mock_request = mocker.Mock()
+    # Use spec=[] to create a Mock with no attributes, simulating absent rh_identity_data
+    mock_request.state = mocker.Mock(spec=[])
+    mock_request.headers = {"User-Agent": "CLA/0.4.0"}
+    return mock_request
+
+
+def _create_mock_background_tasks(mocker: MockerFixture) -> Any:
+    """Create a mock BackgroundTasks object."""
+    return mocker.Mock()
+
+
+@pytest.fixture(name="mock_request")
+def mock_request_fixture(mocker: MockerFixture) -> Any:
+    """Fixture for mock FastAPI Request."""
+    return _create_mock_request(mocker)
+
+
+@pytest.fixture(name="mock_background_tasks")
+def mock_background_tasks_fixture(mocker: MockerFixture) -> Any:
+    """Fixture for mock BackgroundTasks."""
+    return _create_mock_background_tasks(mocker)
+
+
 @pytest.fixture(name="rlsapi_config")
 def rlsapi_config_fixture(test_config: AppConfig, mocker: MockerFixture) -> AppConfig:
     """Extend test_config with inference defaults required by rlsapi v1."""
@@ -99,11 +125,15 @@ def mock_llama_stack_fixture(rlsapi_config: AppConfig, mocker: MockerFixture) ->
 async def test_rlsapi_v1_infer_minimal_request(
     mock_llama_stack: Any,
     mock_authorization: None,
+    mock_request: Any,
+    mock_background_tasks: Any,
     test_auth: AuthTuple,
 ) -> None:
     """Test /v1/infer endpoint with minimal request (question only)."""
     response = await infer_endpoint(
         infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+        request=mock_request,
+        background_tasks=mock_background_tasks,
         auth=test_auth,
     )
 
@@ -149,6 +179,8 @@ async def test_rlsapi_v1_infer_minimal_request(
 async def test_rlsapi_v1_infer_with_context(
     mock_llama_stack: Any,
     mock_authorization: None,
+    mock_request: Any,
+    mock_background_tasks: Any,
     test_auth: AuthTuple,
     context: RlsapiV1Context,
     test_id: str,
@@ -156,6 +188,8 @@ async def test_rlsapi_v1_infer_with_context(
     """Test /v1/infer endpoint with various context configurations."""
     response = await infer_endpoint(
         infer_request=RlsapiV1InferRequest(question="Help me?", context=context),
+        request=mock_request,
+        background_tasks=mock_background_tasks,
         auth=test_auth,
     )
 
@@ -168,13 +202,21 @@ async def test_rlsapi_v1_infer_with_context(
 async def test_rlsapi_v1_infer_generates_unique_request_ids(
     mock_llama_stack: Any,
     mock_authorization: None,
+    mock_request: Any,
+    mock_background_tasks: Any,
     test_auth: AuthTuple,
 ) -> None:
     """Test that each /v1/infer call generates a unique request_id."""
-    request = RlsapiV1InferRequest(question="How do I list files?")
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
 
     responses = [
-        await infer_endpoint(infer_request=request, auth=test_auth) for _ in range(3)
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=test_auth,
+        )
+        for _ in range(3)
     ]
     request_ids = {r.data.request_id for r in responses}
 
@@ -213,6 +255,8 @@ async def test_rlsapi_v1_infer_connection_error_returns_503(
     with pytest.raises(HTTPException) as exc_info:
         await infer_endpoint(
             infer_request=RlsapiV1InferRequest(question="Test"),
+            request=_create_mock_request(mocker),
+            background_tasks=_create_mock_background_tasks(mocker),
             auth=test_auth,
         )
 
@@ -247,6 +291,8 @@ async def test_rlsapi_v1_infer_fallback_response_empty_output(
 
     response = await infer_endpoint(
         infer_request=RlsapiV1InferRequest(question="Test"),
+        request=_create_mock_request(mocker),
+        background_tasks=_create_mock_background_tasks(mocker),
         auth=test_auth,
     )
 
@@ -291,6 +337,8 @@ async def test_rlsapi_v1_infer_input_source_combination(
                 terminal=RlsapiV1Terminal(output="terminal output"),
             ),
         ),
+        request=_create_mock_request(mocker),
+        background_tasks=_create_mock_background_tasks(mocker),
         auth=test_auth,
     )
 
@@ -314,6 +362,8 @@ async def test_rlsapi_v1_infer_input_source_combination(
 async def test_rlsapi_v1_infer_skip_rag(
     mock_llama_stack: Any,
     mock_authorization: None,
+    mock_request: Any,
+    mock_background_tasks: Any,
     test_auth: AuthTuple,
     skip_rag: bool,
 ) -> None:
@@ -321,8 +371,15 @@ async def test_rlsapi_v1_infer_skip_rag(
 
     NOTE(major): RAG is not implemented in lightspeed-stack rlsapi v1.
     """
-    request = RlsapiV1InferRequest(question="How do I list files?", skip_rag=skip_rag)
-    assert request.skip_rag == skip_rag
+    infer_request = RlsapiV1InferRequest(
+        question="How do I list files?", skip_rag=skip_rag
+    )
+    assert infer_request.skip_rag == skip_rag
 
-    response = await infer_endpoint(infer_request=request, auth=test_auth)
+    response = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=test_auth,
+    )
     assert isinstance(response, RlsapiV1InferResponse)

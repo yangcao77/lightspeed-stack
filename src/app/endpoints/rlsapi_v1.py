@@ -5,9 +5,10 @@ from the RHEL Lightspeed Command Line Assistant (CLA).
 """
 
 import logging
+import time
 from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from llama_stack_api.openai_responses import OpenAIResponseObject
 from llama_stack_client import APIConnectionError, APIStatusError, RateLimitError
 
@@ -15,6 +16,7 @@ import constants
 import metrics
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
+from authentication.rh_identity import RHIdentityData
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
@@ -29,11 +31,40 @@ from models.responses import (
 )
 from models.rlsapi.requests import RlsapiV1InferRequest, RlsapiV1SystemInfo
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
+from observability import InferenceEventData, build_inference_event, send_splunk_event
 from utils.responses import extract_text_from_response_output_item
 from utils.suid import get_suid
 
 logger = logging.getLogger(__name__)
 router = APIRouter(tags=["rlsapi-v1"])
+
+# Default values when RH Identity auth is not configured
+AUTH_DISABLED = "auth_disabled"
+
+
+def _get_rh_identity_context(request: Request) -> tuple[str, str]:
+    """Extract org_id and system_id from RH Identity request state.
+
+    When RH Identity authentication is configured, the auth dependency stores
+    the RHIdentityData object in request.state.rh_identity_data. This function
+    extracts the org_id and system_id for telemetry purposes.
+
+    Args:
+        request: The FastAPI request object.
+
+    Returns:
+        Tuple of (org_id, system_id). Returns ("auth_disabled", "auth_disabled")
+        when RH Identity auth is not configured or data is unavailable.
+    """
+    rh_identity: RHIdentityData | None = getattr(
+        request.state, "rh_identity_data", None
+    )
+    if rh_identity is None:
+        return AUTH_DISABLED, AUTH_DISABLED
+
+    org_id = rh_identity.get_org_id() or AUTH_DISABLED
+    system_id = rh_identity.get_user_id() or AUTH_DISABLED
+    return org_id, system_id
 
 
 infer_responses: dict[int | str, dict[str, Any]] = {
@@ -148,10 +179,52 @@ async def retrieve_simple_response(question: str, instructions: str) -> str:
     )
 
 
+def _get_cla_version(request: Request) -> str:
+    """Extract CLA version from User-Agent header."""
+    return request.headers.get("User-Agent", "")
+
+
+def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    background_tasks: BackgroundTasks,
+    infer_request: RlsapiV1InferRequest,
+    request: Request,
+    request_id: str,
+    response_text: str,
+    inference_time: float,
+    sourcetype: str,
+) -> None:
+    """Build and queue a Splunk telemetry event for background sending."""
+    org_id, system_id = _get_rh_identity_context(request)
+    systeminfo = infer_request.context.systeminfo
+
+    event_data = InferenceEventData(
+        question=infer_request.question,
+        response=response_text,
+        inference_time=inference_time,
+        model=(
+            (configuration.inference.default_model or "")
+            if configuration.inference
+            else ""
+        ),
+        org_id=org_id,
+        system_id=system_id,
+        request_id=request_id,
+        cla_version=_get_cla_version(request),
+        system_os=systeminfo.os,
+        system_version=systeminfo.version,
+        system_arch=systeminfo.arch,
+    )
+
+    event = build_inference_event(event_data)
+    background_tasks.add_task(send_splunk_event, event, sourcetype)
+
+
 @router.post("/infer", responses=infer_responses)
 @authorize(Action.RLSAPI_V1_INFER)
 async def infer_endpoint(
     infer_request: RlsapiV1InferRequest,
+    request: Request,
+    background_tasks: BackgroundTasks,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
 ) -> RlsapiV1InferResponse:
     """Handle rlsapi v1 /infer requests for stateless inference.
@@ -163,6 +236,8 @@ async def infer_endpoint(
 
     Args:
         infer_request: The inference request containing question and context.
+        request: The FastAPI request object for accessing headers and state.
+        background_tasks: FastAPI background tasks for async Splunk event sending.
         auth: Authentication tuple from the configured auth provider.
 
     Returns:
@@ -174,7 +249,6 @@ async def infer_endpoint(
     # Authentication enforced by get_auth_dependency(), authorization by @authorize decorator.
     _ = auth
 
-    # Generate unique request ID
     request_id = get_suid()
 
     logger.info("Processing rlsapi v1 /infer request %s", request_id)
@@ -185,12 +259,24 @@ async def infer_endpoint(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
 
+    start_time = time.monotonic()
     try:
         response_text = await retrieve_simple_response(input_source, instructions)
+        inference_time = time.monotonic() - start_time
     except APIConnectionError as e:
+        inference_time = time.monotonic() - start_time
         metrics.llm_calls_failures_total.inc()
         logger.error(
             "Unable to connect to Llama Stack for request %s: %s", request_id, e
+        )
+        _queue_splunk_event(
+            background_tasks,
+            infer_request,
+            request,
+            request_id,
+            str(e),
+            inference_time,
+            "infer_error",
         )
         response = ServiceUnavailableResponse(
             backend_name="Llama Stack",
@@ -198,21 +284,51 @@ async def infer_endpoint(
         )
         raise HTTPException(**response.model_dump()) from e
     except RateLimitError as e:
+        inference_time = time.monotonic() - start_time
         metrics.llm_calls_failures_total.inc()
         logger.error("Rate limit exceeded for request %s: %s", request_id, e)
+        _queue_splunk_event(
+            background_tasks,
+            infer_request,
+            request,
+            request_id,
+            str(e),
+            inference_time,
+            "infer_error",
+        )
         response = QuotaExceededResponse(
             response="The quota has been exceeded", cause=str(e)
         )
         raise HTTPException(**response.model_dump()) from e
     except APIStatusError as e:
+        inference_time = time.monotonic() - start_time
         metrics.llm_calls_failures_total.inc()
         logger.exception("API error for request %s: %s", request_id, e)
+        _queue_splunk_event(
+            background_tasks,
+            infer_request,
+            request,
+            request_id,
+            str(e),
+            inference_time,
+            "infer_error",
+        )
         response = InternalServerErrorResponse.generic()
         raise HTTPException(**response.model_dump()) from e
 
     if not response_text:
         logger.warning("Empty response from LLM for request %s", request_id)
         response_text = constants.UNABLE_TO_PROCESS_RESPONSE
+
+    _queue_splunk_event(
+        background_tasks,
+        infer_request,
+        request,
+        request_id,
+        response_text,
+        inference_time,
+        "infer_with_llm",
+    )
 
     logger.info("Completed rlsapi v1 /infer request %s", request_id)
 
