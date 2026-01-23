@@ -5,6 +5,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Request
 
+import constants
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
@@ -77,7 +78,7 @@ async def get_mcp_client_auth_options(
         client_headers = [
             header_name
             for header_name, header_value in mcp_server.authorization_headers.items()
-            if header_value.strip() == "client"
+            if header_value.strip() == constants.MCP_AUTH_CLIENT
         ]
 
         if client_headers:

@@ -122,6 +122,10 @@ DEFAULT_AUTHENTICATION_MODULE = AUTH_MOD_NOOP
 DEFAULT_JWT_UID_CLAIM = "user_id"
 DEFAULT_JWT_USER_NAME_CLAIM = "username"
 
+# MCP authorization header special values
+MCP_AUTH_KUBERNETES = "kubernetes"
+MCP_AUTH_CLIENT = "client"
+
 # default RAG tool value
 DEFAULT_RAG_TOOL = "knowledge_search"
 

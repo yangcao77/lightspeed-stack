@@ -1665,8 +1665,12 @@ class Configuration(ConfigurationBase):
         Validate MCP server authorization headers against authentication module.
 
         Removes any MCP server with authorization_headers="kubernetes" when the
-        authentication module is not "k8s". This prevents sending wrong credential
-        types to MCP servers.
+        authentication module is not "k8s" or "noop-with-token". This prevents sending
+        wrong credential types to MCP servers.
+
+        Note: "noop-with-token" should only be used for testing/development purposes.
+        When using "noop-with-token" with kubernetes authorization headers, a real
+        Kubernetes token must still be passed in the request headers.
 
         Returns:
             Self: The model instance after validation.
@@ -1680,15 +1684,28 @@ class Configuration(ConfigurationBase):
             is_valid = True
             if mcp_server.authorization_headers:
                 for value in mcp_server.authorization_headers.values():
-                    if value.strip() == "kubernetes" and auth_module != "k8s":
+                    if (
+                        value.strip() == constants.MCP_AUTH_KUBERNETES
+                        and auth_module
+                        not in [
+                            constants.AUTH_MOD_K8S,
+                            constants.AUTH_MOD_NOOP_WITH_TOKEN,
+                        ]
+                    ):
                         logger.warning(
                             "Removing MCP server '%s': has authorization_headers with "
-                            "value 'kubernetes' but authentication module is '%s' "
-                            "(not 'k8s'). Either change authentication.module to 'k8s' "
-                            "or update the MCP server's authorization_headers to use a "
-                            "file path or 'client'.",
+                            "value '%s' but authentication module is '%s' "
+                            "(not '%s' or '%s'). Either change authentication.module to "
+                            "'%s' or '%s' or update the MCP server's authorization_headers "
+                            "to use a file path or '%s'.",
                             mcp_server.name,
+                            constants.MCP_AUTH_KUBERNETES,
                             auth_module,
+                            constants.AUTH_MOD_K8S,
+                            constants.AUTH_MOD_NOOP_WITH_TOKEN,
+                            constants.AUTH_MOD_K8S,
+                            constants.AUTH_MOD_NOOP_WITH_TOKEN,
+                            constants.MCP_AUTH_CLIENT,
                         )
                         is_valid = False
                         break

@@ -3,6 +3,8 @@
 import logging
 from pathlib import Path
 
+import constants
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,16 +41,16 @@ def resolve_authorization_headers(
     for header_name, value in authorization_headers.items():
         value = value.strip()
         try:
-            if value == "kubernetes":
+            if value == constants.MCP_AUTH_KUBERNETES:
                 # Special case: Keep kubernetes keyword for later substitution
-                resolved[header_name] = "kubernetes"
+                resolved[header_name] = constants.MCP_AUTH_KUBERNETES
                 logger.debug(
                     "Header %s will use Kubernetes token (resolved at request time)",
                     header_name,
                 )
-            elif value == "client":
+            elif value == constants.MCP_AUTH_CLIENT:
                 # Special case: Keep client keyword for later substitution
-                resolved[header_name] = "client"
+                resolved[header_name] = constants.MCP_AUTH_CLIENT
                 logger.debug(
                     "Header %s will use client-provided token (resolved at request time)",
                     header_name,

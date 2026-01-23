@@ -20,6 +20,7 @@ from llama_stack.apis.agents.openai_responses import (
 )
 from llama_stack_client import AsyncLlamaStackClient
 
+import constants
 import metrics
 from app.endpoints.query import (
     query_endpoint_handler_base,
@@ -782,12 +783,12 @@ def get_mcp_tools(
     def _get_token_value(original: str, header: str) -> str | None:
         """Convert to header value."""
         match original:
-            case "kubernetes":
+            case constants.MCP_AUTH_KUBERNETES:
                 # use k8s token
                 if token is None or token == "":
                     return None
                 return f"Bearer {token}"
-            case "client":
+            case constants.MCP_AUTH_CLIENT:
                 # use client provided token
                 if mcp_headers is None:
                     return None
