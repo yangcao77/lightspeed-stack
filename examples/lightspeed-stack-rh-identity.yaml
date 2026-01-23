@@ -1,3 +1,18 @@
+# Red Hat Identity Authentication Example
+#
+# This configuration is for deployments behind Red Hat Hybrid Cloud Console
+# infrastructure (console.redhat.com, Insights, etc.) where an authentication
+# proxy injects the x-rh-identity header.
+#
+# For detailed documentation, see: docs/auth/rh-identity.md
+#
+# Identity Types Supported:
+#   - User: Console users authenticated via Red Hat SSO
+#   - System: Certificate-authenticated RHEL systems
+#
+# Security Note: This module trusts the x-rh-identity header. Only use
+# behind Red Hat's authentication proxy - never expose directly to the internet.
+
 name: Red Hat Identity Authentication Example
 service:
   host: localhost
@@ -10,14 +25,81 @@ llama_stack:
   use_as_library_client: false
   url: http://localhost:8321
 authentication:
-  module: "rh-identity"
+  module: rh-identity
+
   rh_identity_config:
-    # Option 1: Single entitlement validation
-    required_entitlements: ["rhel"]
+    # Entitlement Validation
+    # ----------------------
+    # When configured, ALL listed entitlements must be present and is_entitled=true.
+    # Requests without required entitlements receive HTTP 403.
+    #
+    # Common entitlement names:
+    #   - rhel: Red Hat Enterprise Linux
+    #   - insights: Red Hat Insights
+    #   - ansible: Ansible Automation Platform
+    #   - openshift: OpenShift Container Platform
 
-    # Option 2: Multiple entitlements validation - ALL required (uncomment to use, comment out option 1)
+    # Option 1: Single entitlement - require RHEL subscription
+    required_entitlements:
+      - rhel
+
+    # Option 2: Multiple entitlements - require BOTH rhel AND insights
     # required_entitlements:
-    #   - "rhel"
-    #   - "ansible"
+    #   - rhel
+    #   - insights
 
-    # Option 3: No validation - omit required_entitlements field (comment out both options above)
+    # Option 3: No entitlement validation - allow any authenticated identity
+    # Omit the required_entitlements field entirely or leave it empty:
+    # required_entitlements: []
+
+# Authorization (optional)
+# ------------------------
+# Configure role-based access control for fine-grained permissions.
+# By default, all authenticated users can access all endpoints.
+#
+# authorization:
+#   access_rules:
+#     # All authenticated users can query and check service info
+#     - role: "*"
+#       actions:
+#         - query
+#         - streaming_query
+#         - info
+#
+#     # Users with admin entitlements get full access (configure via role rules)
+#     # Note: rh-identity currently uses no-op role resolution, so custom roles
+#     # would need to be assigned via a different mechanism or future enhancement.
+
+# User Data Collection (optional)
+# -------------------------------
+# user_data_collection:
+#   feedback_enabled: true
+#   feedback_storage: /var/data/lightspeed/feedback
+#   transcripts_enabled: true
+#   transcripts_storage: /var/data/lightspeed/transcripts
+
+# Testing the Configuration
+# -------------------------
+# Create a test identity header:
+#
+#   IDENTITY='{
+#     "identity": {
+#       "account_number": "123456",
+#       "org_id": "654321",
+#       "type": "User",
+#       "user": {
+#         "user_id": "test-user-id",
+#         "username": "testuser@example.com"
+#       }
+#     },
+#     "entitlements": {
+#       "rhel": {"is_entitled": true, "is_trial": false}
+#     }
+#   }'
+#
+#   HEADER=$(echo -n "$IDENTITY" | base64)
+#
+#   curl http://localhost:8080/v1/query \
+#     -H "Content-Type: application/json" \
+#     -H "x-rh-identity: $HEADER" \
+#     -d '{"query": "Hello"}'
