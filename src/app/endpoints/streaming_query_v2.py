@@ -5,7 +5,7 @@ from typing import Annotated, Any, AsyncIterator, Optional, cast
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.openai_responses import (
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
     OpenAIResponseObjectStreamResponseCompleted,
@@ -175,11 +175,11 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
 
             # Final text of the output (capture, but emit at response.completed)
             elif event_type == "response.output_text.done":
-                done_chunk = cast(
+                text_done_chunk = cast(
                     OpenAIResponseObjectStreamResponseOutputTextDone, chunk
                 )
-                if done_chunk.text:
-                    summary.llm_response = done_chunk.text
+                if text_done_chunk.text:
+                    summary.llm_response = text_done_chunk.text
 
             # Content part started - emit an empty token to kick off UI streaming
             elif event_type == "response.content_part.added":
@@ -196,13 +196,13 @@ def create_responses_response_generator(  # pylint: disable=too-many-locals,too-
             # Process tool calls and results are emitted together when output items are done
             # TODO(asimurka): support emitting tool calls and results separately when ready
             elif event_type == "response.output_item.done":
-                done_chunk = cast(
+                output_item_done_chunk = cast(
                     OpenAIResponseObjectStreamResponseOutputItemDone, chunk
                 )
-                if done_chunk.item.type == "message":
+                if output_item_done_chunk.item.type == "message":
                     continue
                 tool_call, tool_result = _build_tool_call_summary(
-                    done_chunk.item, rag_chunks
+                    output_item_done_chunk.item, rag_chunks
                 )
                 if tool_call:
                     summary.tool_calls.append(tool_call)

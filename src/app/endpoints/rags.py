@@ -140,9 +140,9 @@ async def get_rag_endpoint_handler(
             created_at=rag_info.created_at,
             last_active_at=rag_info.last_active_at,
             expires_at=rag_info.expires_at,
-            object=rag_info.object,
-            status=rag_info.status,
-            usage_bytes=rag_info.usage_bytes,
+            object=rag_info.object or "vector_store",
+            status=rag_info.status or "unknown",
+            usage_bytes=rag_info.usage_bytes or 0,
         )
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)

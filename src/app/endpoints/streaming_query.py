@@ -8,52 +8,31 @@ import uuid
 from collections.abc import Callable
 from datetime import UTC, datetime
 from typing import (
-    Annotated,
     Any,
-    AsyncIterator,
     Iterator,
     Optional,
-    cast,
 )
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 from llama_stack_client import (
     APIConnectionError,
-    AsyncLlamaStackClient,
     RateLimitError,  # type: ignore
 )
-from llama_stack_client.types import UserMessage  # type: ignore
-from llama_stack_client.types.alpha.agents.agent_turn_response_stream_chunk import (
-    AgentTurnResponseStreamChunk,
-)
-from llama_stack_client.types.shared import ToolCall
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 from openai._exceptions import APIStatusError
 
 import metrics
 from app.endpoints.query import (
     evaluate_model_hints,
-    get_rag_toolgroups,
-    get_topic_summary,
-    is_input_shield,
-    is_output_shield,
-    is_transcripts_enabled,
-    persist_user_conversation_details,
     select_model_and_provider_id,
-    validate_attachments_metadata,
     validate_conversation_ownership,
 )
-from app.endpoints.query import parse_referenced_documents
-from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
-from authorization.middleware import authorize
 from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL, MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
-from metrics.utils import update_llm_token_count_from_turn
-from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest
@@ -61,8 +40,8 @@ from models.responses import (
     AbstractErrorResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
-    PromptTooLongResponse,
     NotFoundResponse,
+    PromptTooLongResponse,
     QuotaExceededResponse,
     ServiceUnavailableResponse,
     StreamingQueryResponse,
@@ -72,17 +51,10 @@ from models.responses import (
 from utils.endpoints import (
     ReferencedDocument,
     check_configuration_loaded,
-    cleanup_after_streaming,
-    create_rag_chunks_dict,
-    get_agent,
-    get_system_prompt,
     validate_model_provider_override,
 )
-from utils.mcp_headers import handle_mcp_headers_with_toolgroups, mcp_headers_dependency
-from utils.quota import get_available_quotas
-from utils.token_counter import TokenCounter, extract_token_usage_from_turn
-from utils.transcripts import store_transcript
-from utils.types import TurnSummary, content_to_str
+from utils.token_counter import TokenCounter
+from utils.types import content_to_str
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["streaming_query"])
@@ -232,59 +204,6 @@ def stream_event(data: dict, event_type: str, media_type: str) -> str:
             "data": data,
         }
     )
-
-
-def stream_build_event(
-    chunk: Any,
-    chunk_id: int,
-    metadata_map: dict,
-    media_type: str = MEDIA_TYPE_JSON,
-    conversation_id: Optional[str] = None,
-) -> Iterator[str]:
-    """Build a streaming event from a chunk response.
-
-    This function processes chunks from the Llama Stack streaming response and
-    formats them into Server-Sent Events (SSE) format for the client. It
-    dispatches on (event_type, step_type):
-
-    1. turn_start, turn_awaiting_input -> start token
-    2. turn_complete -> final output message
-    3. step_* with step_type in {"shield_call", "inference", "tool_execution"} -> delegated handlers
-    4. anything else -> heartbeat
-
-    Args:
-        chunk: The streaming chunk from Llama Stack containing event data
-        chunk_id: The current chunk ID counter (gets incremented for each token)
-
-    Returns:
-        Iterator[str]: An iterable list of formatted SSE data strings with event information
-    """
-    if hasattr(chunk, "error"):
-        yield from _handle_error_event(chunk, chunk_id, media_type)
-
-    event_type = chunk.event.payload.event_type
-    step_type = getattr(chunk.event.payload, "step_type", None)
-
-    match (event_type, step_type):
-        case (("turn_start" | "turn_awaiting_input"), _):
-            yield from _handle_turn_start_event(chunk_id, media_type, conversation_id)
-        case ("turn_complete", _):
-            yield from _handle_turn_complete_event(chunk, chunk_id, media_type)
-        case (_, "shield_call"):
-            yield from _handle_shield_event(chunk, chunk_id, media_type)
-        case (_, "inference"):
-            yield from _handle_inference_event(chunk, chunk_id, media_type)
-        case (_, "tool_execution"):
-            yield from _handle_tool_execution_event(
-                chunk, chunk_id, metadata_map, media_type
-            )
-        case _:
-            logger.debug(
-                "Unhandled event combo: event_type=%s, step_type=%s",
-                event_type,
-                step_type,
-            )
-            yield from _handle_heartbeat_event(chunk_id, media_type)
 
 
 # -----------------------------------
@@ -500,64 +419,6 @@ def _handle_shield_event(
 
 
 # -----------------------------------
-# Inference handling
-# -----------------------------------
-def _handle_inference_event(
-    chunk: Any, chunk_id: int, media_type: str = MEDIA_TYPE_JSON
-) -> Iterator[str]:
-    """
-    Yield inference step event.
-
-    Yield formatted Server-Sent Events (SSE) strings for inference
-    step events during streaming.
-
-    Processes inference-related streaming chunks, yielding SSE
-    events for step start, text token deltas, and tool call deltas.
-    Supports both string and ToolCall object tool calls.
-    """
-    if chunk.event.payload.event_type == "step_start":
-        yield stream_event(
-            data={
-                "id": chunk_id,
-                "token": "",
-            },
-            event_type=LLM_TOKEN_EVENT,
-            media_type=media_type,
-        )
-
-    elif chunk.event.payload.event_type == "step_progress":
-        if chunk.event.payload.delta.type == "tool_call":
-            if isinstance(chunk.event.payload.delta.tool_call, str):
-                yield stream_event(
-                    data={
-                        "id": chunk_id,
-                        "token": chunk.event.payload.delta.tool_call,
-                    },
-                    event_type=LLM_TOOL_CALL_EVENT,
-                    media_type=media_type,
-                )
-            elif isinstance(chunk.event.payload.delta.tool_call, ToolCall):
-                yield stream_event(
-                    data={
-                        "id": chunk_id,
-                        "token": chunk.event.payload.delta.tool_call.tool_name,
-                    },
-                    event_type=LLM_TOOL_CALL_EVENT,
-                    media_type=media_type,
-                )
-
-        elif chunk.event.payload.delta.type == "text":
-            yield stream_event(
-                data={
-                    "id": chunk_id,
-                    "token": chunk.event.payload.delta.text,
-                },
-                event_type=LLM_TOKEN_EVENT,
-                media_type=media_type,
-            )
-
-
-# -----------------------------------
 # Tool Execution handling
 # -----------------------------------
 # pylint: disable=R1702,R0912
@@ -696,124 +557,6 @@ def _handle_heartbeat_event(
         event_type=LLM_TOKEN_EVENT,
         media_type=media_type,
     )
-
-
-def create_agent_response_generator(  # pylint: disable=too-many-locals
-    context: ResponseGeneratorContext,
-) -> Any:
-    """
-    Create a response generator function for Agent API streaming.
-
-    This factory function returns an async generator that processes streaming
-    responses from the Agent API and yields Server-Sent Events (SSE).
-
-    Args:
-        context: Context object containing all necessary parameters for response generation
-
-    Returns:
-        An async generator function that yields SSE-formatted strings
-    """
-
-    async def response_generator(
-        turn_response: AsyncIterator[AgentTurnResponseStreamChunk],
-    ) -> AsyncIterator[str]:
-        """
-        Generate SSE formatted streaming response.
-
-        Asynchronously generates a stream of Server-Sent Events
-        (SSE) representing incremental responses from a
-        language model turn.
-
-        Yields start, token, tool call, turn completion, and
-        end events as SSE-formatted strings. Collects the
-        complete response for transcript storage if enabled.
-        """
-        chunk_id = 0
-        summary = TurnSummary(
-            llm_response="No response from the model",
-            tool_calls=[],
-            tool_results=[],
-            rag_chunks=[],
-        )
-
-        # Determine media type for response formatting
-        media_type = context.query_request.media_type or MEDIA_TYPE_JSON
-
-        # Send start event at the beginning of the stream
-        yield stream_start_event(context.conversation_id)
-
-        latest_turn: Optional[Any] = None
-
-        async for chunk in turn_response:
-            if chunk.event is None:
-                continue
-            p = chunk.event.payload
-            if p.event_type == "turn_complete":
-                summary.llm_response = content_to_str(p.turn.output_message.content)
-                latest_turn = p.turn
-                system_prompt = get_system_prompt(context.query_request, configuration)
-                try:
-                    update_llm_token_count_from_turn(
-                        p.turn, context.model_id, context.provider_id, system_prompt
-                    )
-                except Exception:  # pylint: disable=broad-except
-                    logger.exception("Failed to update token usage metrics")
-            elif p.event_type == "step_complete":
-                if p.step_details.step_type == "tool_execution":
-                    summary.append_tool_calls_from_llama(p.step_details)
-
-            for event in stream_build_event(
-                chunk,
-                chunk_id,
-                context.metadata_map,
-                media_type,
-                context.conversation_id,
-            ):
-                chunk_id += 1
-                yield event
-
-        # Extract token usage from the turn
-        token_usage = (
-            extract_token_usage_from_turn(latest_turn)
-            if latest_turn is not None
-            else TokenCounter()
-        )
-        referenced_documents = (
-            parse_referenced_documents(latest_turn) if latest_turn is not None else []
-        )
-        available_quotas = get_available_quotas(
-            configuration.quota_limiters, context.user_id
-        )
-        yield stream_end_event(
-            context.metadata_map,
-            token_usage,
-            available_quotas,
-            referenced_documents,
-            media_type,
-        )
-
-        # Perform cleanup tasks (database and cache operations)
-        await cleanup_after_streaming(
-            user_id=context.user_id,
-            conversation_id=context.conversation_id,
-            model_id=context.model_id,
-            provider_id=context.provider_id,
-            llama_stack_model_id=context.llama_stack_model_id,
-            query_request=context.query_request,
-            summary=summary,
-            metadata_map=context.metadata_map,
-            started_at=context.started_at,
-            client=context.client,
-            config=configuration,
-            skip_userid_check=context.skip_userid_check,
-            get_topic_summary_func=get_topic_summary,
-            is_transcripts_enabled_func=is_transcripts_enabled,
-            store_transcript_func=store_transcript,
-            persist_user_conversation_details_func=persist_user_conversation_details,
-            rag_chunks=create_rag_chunks_dict(summary),
-        )
-
-    return response_generator
 
 
 async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-locals,too-many-statements,too-many-arguments,too-many-positional-arguments
@@ -981,175 +724,3 @@ async def streaming_query_endpoint_handler_base(  # pylint: disable=too-many-loc
             status_code=error_response.status_code,
             media_type=query_request.media_type or MEDIA_TYPE_JSON,
         )
-
-
-@router.post(
-    "/streaming_query",
-    response_class=StreamingResponse,
-    responses=streaming_query_responses,
-)
-@authorize(Action.STREAMING_QUERY)
-async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals,too-many-statements
-    request: Request,
-    query_request: QueryRequest,
-    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
-    mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
-) -> StreamingResponse:
-    """
-    Handle request to the /streaming_query endpoint using Agent API.
-
-    Returns a streaming response using Server-Sent Events (SSE) format with
-    content type text/event-stream.
-
-    Returns:
-        StreamingResponse: An HTTP streaming response yielding
-        SSE-formatted events for the query lifecycle with content type
-        text/event-stream.
-
-    Raises:
-        HTTPException:
-            - 401: Unauthorized - Missing or invalid credentials
-            - 403: Forbidden - Insufficient permissions or model override not allowed
-            - 404: Not Found - Conversation, model, or provider not found
-            - 422: Unprocessable Entity - Request validation failed
-            - 429: Too Many Requests - Quota limit exceeded
-            - 500: Internal Server Error - Configuration not loaded or other server errors
-            - 503: Service Unavailable - Unable to connect to Llama Stack backend
-    """
-    return await streaming_query_endpoint_handler_base(
-        request=request,
-        query_request=query_request,
-        auth=auth,
-        mcp_headers=mcp_headers,
-        retrieve_response_func=retrieve_response,
-        create_response_generator_func=create_agent_response_generator,
-    )
-
-
-async def retrieve_response(
-    client: AsyncLlamaStackClient,
-    model_id: str,
-    query_request: QueryRequest,
-    token: str,
-    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
-) -> tuple[AsyncIterator[AgentTurnResponseStreamChunk], str]:
-    """
-    Retrieve response from LLMs and agents.
-
-    Asynchronously retrieves a streaming response and conversation
-    ID from the Llama Stack agent for a given user query.
-
-    This function configures input/output shields, system prompt,
-    and tool usage based on the request and environment. It
-    prepares the agent with appropriate headers and toolgroups,
-    validates attachments if present, and initiates a streaming
-    turn with the user's query and any provided documents.
-
-    Parameters:
-        model_id (str): Identifier of the model to use for the query.
-        query_request (QueryRequest): The user's query and associated metadata.
-        token (str): Authentication token for downstream services.
-        mcp_headers (dict[str, dict[str, str]], optional):
-        Multi-cluster proxy headers for tool integrations.
-
-    Returns:
-        tuple: A tuple containing the streaming response object
-        and the conversation ID.
-    """
-    available_input_shields = [
-        shield.identifier
-        for shield in filter(is_input_shield, await client.shields.list())
-    ]
-    available_output_shields = [
-        shield.identifier
-        for shield in filter(is_output_shield, await client.shields.list())
-    ]
-    if not available_input_shields and not available_output_shields:
-        logger.info("No available shields. Disabling safety")
-    else:
-        logger.info(
-            "Available input shields: %s, output shields: %s",
-            available_input_shields,
-            available_output_shields,
-        )
-    # use system prompt from request or default one
-    system_prompt = get_system_prompt(query_request, configuration)
-    logger.debug("Using system prompt: %s", system_prompt)
-
-    # TODO(lucasagomes): redact attachments content before sending to LLM
-    # if attachments are provided, validate them
-    if query_request.attachments:
-        validate_attachments_metadata(query_request.attachments)
-
-    agent, conversation_id, session_id = await get_agent(
-        client,
-        model_id,
-        system_prompt,
-        available_input_shields,
-        available_output_shields,
-        query_request.conversation_id,
-        query_request.no_tools or False,
-    )
-
-    logger.debug("Conversation ID: %s, session ID: %s", conversation_id, session_id)
-    # bypass tools and MCP servers if no_tools is True
-    if query_request.no_tools:
-        mcp_headers = {}
-        agent.extra_headers = {}
-        toolgroups = None
-    else:
-        # preserve compatibility when mcp_headers is not provided
-        if mcp_headers is None:
-            mcp_headers = {}
-
-        mcp_headers = handle_mcp_headers_with_toolgroups(mcp_headers, configuration)
-
-        if not mcp_headers and token:
-            for mcp_server in configuration.mcp_servers:
-                mcp_headers[mcp_server.url] = {
-                    "Authorization": f"Bearer {token}",
-                }
-
-        agent.extra_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(
-                {
-                    "mcp_headers": mcp_headers,
-                }
-            ),
-        }
-
-        # Use specified vector stores or fetch all available ones
-        if query_request.vector_store_ids:
-            vector_db_ids = query_request.vector_store_ids
-        else:
-            vector_db_ids = [
-                vector_store.id
-                for vector_store in (await client.vector_stores.list()).data
-            ]
-        toolgroups = (get_rag_toolgroups(vector_db_ids) or []) + [
-            mcp_server.name for mcp_server in configuration.mcp_servers
-        ]
-        # Convert empty list to None for consistency with existing behavior
-        if not toolgroups:
-            toolgroups = None
-
-    # TODO: LCORE-881 - Remove if Llama Stack starts to support these mime types
-    # documents: list[Document] = [
-    #     (
-    #         {"content": doc["content"], "mime_type": "text/plain"}
-    #         if doc["mime_type"].lower() in ("application/json", "application/xml")
-    #         else doc
-    #     )
-    #     for doc in query_request.get_documents()
-    # ]
-
-    response = await agent.create_turn(
-        messages=[UserMessage(role="user", content=query_request.query).model_dump()],
-        session_id=session_id,
-        # documents=documents,
-        stream=True,
-        # toolgroups=toolgroups,
-    )
-    response = cast(AsyncIterator[AgentTurnResponseStreamChunk], response)
-
-    return response, conversation_id

@@ -8,7 +8,7 @@ import logging
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException
-from llama_stack.apis.agents.openai_responses import OpenAIResponseObject
+from llama_stack_api.openai_responses import OpenAIResponseObject
 from llama_stack_client import APIConnectionError, APIStatusError, RateLimitError
 
 import constants

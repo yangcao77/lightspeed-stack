@@ -8,7 +8,7 @@ from typing import Any, Generator
 
 import pytest
 from fastapi import HTTPException, Request, status
-from llama_stack.apis.agents.openai_responses import OpenAIResponseObject
+from llama_stack_api.openai_responses import OpenAIResponseObject
 from llama_stack_client import APIConnectionError
 from llama_stack_client.types import VersionInfo
 from pytest_mock import AsyncMockType, MockerFixture
@@ -74,9 +74,11 @@ def mock_llama_stack_client_fixture(
 
     # Mock models list (required for model selection)
     mock_model = mocker.MagicMock()
-    mock_model.identifier = "test-provider/test-model"
-    mock_model.provider_id = "test-provider"
-    mock_model.model_type = "llm"  # Required by select_model_and_provider_id
+    mock_model.id = "test-provider/test-model"
+    mock_model.custom_metadata = {
+        "provider_id": "test-provider",
+        "model_type": "llm",
+    }
     mock_client.models.list.return_value = [mock_model]
 
     # Mock shields list (empty by default for simpler tests)

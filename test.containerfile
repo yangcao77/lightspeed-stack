@@ -1,5 +1,5 @@
 # Custom Red Hat llama-stack image with missing dependencies
-FROM quay.io/rhoai/odh-llama-stack-core-rhel9:rhoai-3.2 
+FROM quay.io/rhoai/odh-llama-stack-core-rhel9:rhoai-3.3 
 
 # Install missing dependencies and create required directories
 USER root
@@ -8,7 +8,9 @@ RUN pip install faiss-cpu==1.11.0 azure-identity && \
     chown -R 1001:0 /app-root && \
     chmod -R 775 /app-root && \
     mkdir -p /opt/app-root/src/.llama/storage /opt/app-root/src/.llama/providers.d && \
-    chown -R 1001:0 /opt/app-root/src/.llama
+    chown -R 1001:0 /opt/app-root/src/.llama && \
+    mkdir -p /opt/app-root/src/.cache/huggingface && \
+    chown -R 1001:0 /opt/app-root/src/.cache
 
 # Copy enrichment scripts for runtime config enrichment
 COPY src/llama_stack_configuration.py /opt/app-root/llama_stack_configuration.py

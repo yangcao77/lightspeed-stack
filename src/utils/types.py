@@ -1,19 +1,21 @@
 """Common types for the project."""
 
-from typing import Any, Optional
 import json
+from typing import Any, Optional
+
 from llama_stack_client.lib.agents.tool_parser import ToolParser
 from llama_stack_client.lib.agents.types import (
     CompletionMessage as AgentCompletionMessage,
+)
+from llama_stack_client.lib.agents.types import (
     ToolCall as AgentToolCall,
 )
 from llama_stack_client.types.shared.interleaved_content_item import (
-    TextContentItem,
     ImageContentItem,
+    TextContentItem,
 )
-from llama_stack_client.types.alpha.tool_execution_step import ToolExecutionStep
-from pydantic import BaseModel
-from pydantic import Field
+from pydantic import BaseModel, Field
+
 from constants import DEFAULT_RAG_TOOL
 
 
@@ -148,59 +150,6 @@ class TurnSummary(BaseModel):
     tool_calls: list[ToolCallSummary]
     tool_results: list[ToolResultSummary]
     rag_chunks: list[RAGChunk]
-
-    def append_tool_calls_from_llama(self, tec: ToolExecutionStep) -> None:
-        """
-        Append the tool calls from a llama tool execution step.
-
-        For each tool call in `tec.tool_calls` the method appends a
-        ToolCallSummary to `self.tool_calls` and a corresponding
-        ToolResultSummary to `self.tool_results`. Arguments are preserved if
-        already a dict; otherwise they are converted to {"args":
-        str(arguments)}.
-
-        A result's `status` is "success" when a matching response (by call_id)
-        exists in `tec.tool_responses`, and "failure" when no response is
-        found.
-
-        If a call's tool name equals DEFAULT_RAG_TOOL and its response has
-        content, the method extracts and appends RAG chunks to
-        `self.rag_chunks` by calling _extract_rag_chunks_from_response.
-
-        Parameters:
-            tec (ToolExecutionStep): The execution step containing tool_calls
-                                     and tool_responses to summarize.
-        """
-        calls_by_id = {tc.call_id: tc for tc in tec.tool_calls}
-        responses_by_id = {tc.call_id: tc for tc in tec.tool_responses}
-        for call_id, tc in calls_by_id.items():
-            resp = responses_by_id.get(call_id)
-            response_content = content_to_str(resp.content) if resp else None
-
-            self.tool_calls.append(
-                ToolCallSummary(
-                    id=call_id,
-                    name=tc.tool_name,
-                    args=(
-                        tc.arguments
-                        if isinstance(tc.arguments, dict)
-                        else {"args": str(tc.arguments)}
-                    ),
-                    type="tool_call",
-                )
-            )
-            self.tool_results.append(
-                ToolResultSummary(
-                    id=call_id,
-                    status="success" if resp else "failure",
-                    content=response_content or "",
-                    type="tool_result",
-                    round=1,
-                )
-            )
-            # Extract RAG chunks from knowledge_search tool responses
-            if tc.tool_name == DEFAULT_RAG_TOOL and resp and response_content:
-                self._extract_rag_chunks_from_response(response_content)
 
     def _extract_rag_chunks_from_response(self, response_content: str) -> None:
         """

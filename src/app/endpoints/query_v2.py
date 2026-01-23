@@ -7,7 +7,7 @@ import logging
 from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, Depends, Request
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalRequest,
     OpenAIResponseMCPApprovalResponse,
     OpenAIResponseObject,
@@ -121,21 +121,23 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
         )
 
     if item_type == "file_search_call":
-        item = cast(OpenAIResponseOutputMessageFileSearchToolCall, output_item)
-        extract_rag_chunks_from_file_search_item(item, rag_chunks)
+        file_search_item = cast(
+            OpenAIResponseOutputMessageFileSearchToolCall, output_item
+        )
+        extract_rag_chunks_from_file_search_item(file_search_item, rag_chunks)
         response_payload: Optional[dict[str, Any]] = None
-        if item.results is not None:
+        if file_search_item.results is not None:
             response_payload = {
-                "results": [result.model_dump() for result in item.results]
+                "results": [result.model_dump() for result in file_search_item.results]
             }
         return ToolCallSummary(
-            id=item.id,
+            id=file_search_item.id,
             name=DEFAULT_RAG_TOOL,
-            args={"queries": item.queries},
+            args={"queries": file_search_item.queries},
             type="file_search_call",
         ), ToolResultSummary(
-            id=item.id,
-            status=item.status,
+            id=file_search_item.id,
+            status=file_search_item.status,
             content=json.dumps(response_payload) if response_payload else "",
             type="file_search_call",
             round=1,
@@ -143,17 +145,19 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
 
     # Incomplete OpenAI Responses API definition in LLS: action attribute not supported yet
     if item_type == "web_search_call":
-        item = cast(OpenAIResponseOutputMessageWebSearchToolCall, output_item)
+        web_search_item = cast(
+            OpenAIResponseOutputMessageWebSearchToolCall, output_item
+        )
         return (
             ToolCallSummary(
-                id=item.id,
+                id=web_search_item.id,
                 name="web_search",
                 args={},
                 type="web_search_call",
             ),
             ToolResultSummary(
-                id=item.id,
-                status=item.status,
+                id=web_search_item.id,
+                status=web_search_item.status,
                 content="",
                 type="web_search_call",
                 round=1,
@@ -161,48 +165,52 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
         )
 
     if item_type == "mcp_call":
-        item = cast(OpenAIResponseOutputMessageMCPCall, output_item)
-        args = parse_arguments_string(item.arguments)
-        if item.server_label:
-            args["server_label"] = item.server_label
-        content = item.error if item.error else (item.output if item.output else "")
+        mcp_call_item = cast(OpenAIResponseOutputMessageMCPCall, output_item)
+        args = parse_arguments_string(mcp_call_item.arguments)
+        if mcp_call_item.server_label:
+            args["server_label"] = mcp_call_item.server_label
+        content = (
+            mcp_call_item.error
+            if mcp_call_item.error
+            else (mcp_call_item.output if mcp_call_item.output else "")
+        )
 
         return ToolCallSummary(
-            id=item.id,
-            name=item.name,
+            id=mcp_call_item.id,
+            name=mcp_call_item.name,
             args=args,
             type="mcp_call",
         ), ToolResultSummary(
-            id=item.id,
-            status="success" if item.error is None else "failure",
+            id=mcp_call_item.id,
+            status="success" if mcp_call_item.error is None else "failure",
             content=content,
             type="mcp_call",
             round=1,
         )
 
     if item_type == "mcp_list_tools":
-        item = cast(OpenAIResponseOutputMessageMCPListTools, output_item)
+        mcp_list_tools_item = cast(OpenAIResponseOutputMessageMCPListTools, output_item)
         tools_info = [
             {
                 "name": tool.name,
                 "description": tool.description,
                 "input_schema": tool.input_schema,
             }
-            for tool in item.tools
+            for tool in mcp_list_tools_item.tools
         ]
         content_dict = {
-            "server_label": item.server_label,
+            "server_label": mcp_list_tools_item.server_label,
             "tools": tools_info,
         }
         return (
             ToolCallSummary(
-                id=item.id,
+                id=mcp_list_tools_item.id,
                 name="mcp_list_tools",
-                args={"server_label": item.server_label},
+                args={"server_label": mcp_list_tools_item.server_label},
                 type="mcp_list_tools",
             ),
             ToolResultSummary(
-                id=item.id,
+                id=mcp_list_tools_item.id,
                 status="success",
                 content=json.dumps(content_dict),
                 type="mcp_list_tools",
@@ -211,12 +219,12 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
         )
 
     if item_type == "mcp_approval_request":
-        item = cast(OpenAIResponseMCPApprovalRequest, output_item)
-        args = parse_arguments_string(item.arguments)
+        approval_request_item = cast(OpenAIResponseMCPApprovalRequest, output_item)
+        args = parse_arguments_string(approval_request_item.arguments)
         return (
             ToolCallSummary(
-                id=item.id,
-                name=item.name,
+                id=approval_request_item.id,
+                name=approval_request_item.name,
                 args=args,
                 type="tool_call",
             ),
@@ -224,15 +232,15 @@ def _build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-
         )
 
     if item_type == "mcp_approval_response":
-        item = cast(OpenAIResponseMCPApprovalResponse, output_item)
+        approval_response_item = cast(OpenAIResponseMCPApprovalResponse, output_item)
         content_dict = {}
-        if item.reason:
-            content_dict["reason"] = item.reason
+        if approval_response_item.reason:
+            content_dict["reason"] = approval_response_item.reason
         return (
             None,
             ToolResultSummary(
-                id=item.approval_request_id,
-                status="success" if item.approve else "denied",
+                id=approval_response_item.approval_request_id,
+                status="success" if approval_response_item.approve else "denied",
                 content=json.dumps(content_dict),
                 type="mcp_approval_response",
                 round=1,
@@ -262,14 +270,16 @@ async def get_topic_summary(  # pylint: disable=too-many-nested-blocks
     topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
 
     # Use Responses API to generate topic summary
-    response = await client.responses.create(
-        input=question,
-        model=model_id,
-        instructions=topic_summary_system_prompt,
-        stream=False,
-        store=False,  # Don't store topic summary requests
+    response = cast(
+        OpenAIResponseObject,
+        await client.responses.create(
+            input=question,
+            model=model_id,
+            instructions=topic_summary_system_prompt,
+            stream=False,
+            store=False,  # Don't store topic summary requests
+        ),
     )
-    response = cast(OpenAIResponseObject, response)
 
     # Extract text from response output
     summary_text = "".join(

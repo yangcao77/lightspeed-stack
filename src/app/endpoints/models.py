@@ -26,6 +26,41 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["models"])
 
 
+def parse_llama_stack_model(model: Any) -> dict[str, Any]:
+    """
+    Parse llama-stack model.
+
+    Converting the new llama-stack model format (0.4.x) with custom_metadata.
+
+    Args:
+        model: Model object from llama-stack (has id, custom_metadata, object fields)
+
+    Returns:
+        dict: Model in legacy format with identifier, provider_id, model_type, etc.
+    """
+    custom_metadata = getattr(model, "custom_metadata", {}) or {}
+
+    model_type = str(custom_metadata.get("model_type", "unknown"))
+
+    metadata = {
+        k: v
+        for k, v in custom_metadata.items()
+        if k not in ("provider_id", "provider_resource_id", "model_type")
+    }
+
+    legacy_model = {
+        "identifier": getattr(model, "id", ""),
+        "metadata": metadata,
+        "api_model_type": model_type,
+        "provider_id": str(custom_metadata.get("provider_id", "")),
+        "type": getattr(model, "object", "model"),
+        "provider_resource_id": str(custom_metadata.get("provider_resource_id", "")),
+        "model_type": model_type,
+    }
+
+    return legacy_model
+
+
 models_responses: dict[int | str, dict[str, Any]] = {
     200: ModelsResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
@@ -72,8 +107,9 @@ async def models_endpoint_handler(
         client = AsyncLlamaStackClientHolder().get_client()
         # retrieve models
         models = await client.models.list()
-        m = [dict(m) for m in models]
-        return ModelsResponse(models=m)
+        # Parse models to legacy format
+        parsed_models = [parse_llama_stack_model(model) for model in models]
+        return ModelsResponse(models=parsed_models)
 
     # Connection to Llama Stack server failed
     except APIConnectionError as e:

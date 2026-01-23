@@ -7,7 +7,6 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from llama_stack_client import (
     APIConnectionError,
     APIStatusError,
-    NOT_GIVEN,
 )
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -332,10 +331,10 @@ async def get_conversation_endpoint_handler(
         # Use Conversations API to retrieve conversation items
         conversation_items_response = await client.conversations.items.list(
             conversation_id=llama_stack_conv_id,
-            after=NOT_GIVEN,
-            include=NOT_GIVEN,
-            limit=NOT_GIVEN,
-            order=NOT_GIVEN,
+            after=None,
+            include=None,
+            limit=None,
+            order=None,
         )
         items = (
             conversation_items_response.data

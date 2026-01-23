@@ -7,18 +7,17 @@ import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Any, AsyncIterator, MutableMapping, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
-from llama_stack.apis.agents.openai_responses import (
-    OpenAIResponseObjectStream,
-)
-from llama_stack_client import APIConnectionError
-from starlette.responses import Response, StreamingResponse
-
+from a2a.server.agent_execution import AgentExecutor, RequestContext
+from a2a.server.apps import A2AStarletteApplication
+from a2a.server.events import EventQueue
+from a2a.server.request_handlers import DefaultRequestHandler
+from a2a.server.tasks import TaskStore
+from a2a.server.tasks.task_updater import TaskUpdater
 from a2a.types import (
-    AgentCard,
-    AgentSkill,
-    AgentProvider,
     AgentCapabilities,
+    AgentCard,
+    AgentProvider,
+    AgentSkill,
     Artifact,
     Message,
     Part,
@@ -28,27 +27,27 @@ from a2a.types import (
     TaskStatusUpdateEvent,
     TextPart,
 )
-from a2a.server.agent_execution import AgentExecutor, RequestContext
-from a2a.server.events import EventQueue
-from a2a.server.request_handlers import DefaultRequestHandler
-from a2a.server.tasks import TaskStore
-from a2a.server.tasks.task_updater import TaskUpdater
-from a2a.server.apps import A2AStarletteApplication
 from a2a.utils import new_agent_text_message, new_task
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from llama_stack_api.openai_responses import (
+    OpenAIResponseObjectStream,
+)
+from llama_stack_client import APIConnectionError
+from starlette.responses import Response, StreamingResponse
 
-from authentication.interface import AuthTuple
-from authentication import get_auth_dependency
-from authorization.middleware import authorize
-from configuration import configuration
-from a2a_storage import A2AStorageFactory, A2AContextStore
-from models.config import Action
-from models.requests import QueryRequest
+from a2a_storage import A2AContextStore, A2AStorageFactory
 from app.endpoints.query import (
-    select_model_and_provider_id,
     evaluate_model_hints,
+    select_model_and_provider_id,
 )
 from app.endpoints.streaming_query_v2 import retrieve_response
+from authentication import get_auth_dependency
+from authentication.interface import AuthTuple
+from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
+from configuration import configuration
+from models.config import Action
+from models.requests import QueryRequest
 from utils.mcp_headers import mcp_headers_dependency
 from utils.responses import extract_text_from_response_output_item
 from version import __version__
