@@ -65,6 +65,7 @@ dependencies = [
     # Used for Azure Entra ID token management
     "azure-core>=1.38.0",
     "azure-identity",
+    "pyasn1>=0.6.2",
 ]
 
 
