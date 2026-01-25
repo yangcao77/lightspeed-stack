@@ -726,6 +726,7 @@ options:
   -v, --verbose         make it verbose
   -d, --dump-configuration
                         dump actual configuration into JSON file and quit
+  -s, --dump-schema     dump configuration schema into OpenAPI-compatible file and quit
   -c CONFIG_FILE, --config CONFIG_FILE
                         path to configuration file (default: lightspeed-stack.yaml)
 
