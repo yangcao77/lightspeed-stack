@@ -168,6 +168,8 @@ Global service configuration.
 | a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
 | azure_entra_id |  |  |
+| splunk |  | Splunk HEC configuration for sending telemetry events. |
+| deployment_environment | string | Deployment environment name (e.g., 'development', 'staging', 'production'). Used in telemetry events. |
 
 
 ## ConversationHistoryConfiguration
@@ -511,6 +513,32 @@ the service can handle requests concurrently.
 | access_log | boolean | Enables logging of all access information |
 | tls_config |  | Transport Layer Security configuration for HTTPS support |
 | cors |  | Cross-Origin Resource Sharing configuration for cross-domain requests |
+
+
+## SplunkConfiguration
+
+
+Splunk HEC (HTTP Event Collector) configuration.
+
+Splunk HEC allows sending events directly to Splunk over HTTP/HTTPS.
+This configuration is used to send telemetry events for inference
+requests to the corporate Splunk deployment.
+
+Useful resources:
+
+  - [Splunk HEC Docs](https://docs.splunk.com/Documentation/SplunkCloud)
+  - [About HEC](https://docs.splunk.com/Documentation/Splunk/latest/Data)
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| enabled | boolean | Enable or disable Splunk HEC integration. |
+| url | string | Splunk HEC endpoint URL. |
+| token_path | string | Path to file containing the Splunk HEC authentication token. |
+| index | string | Target Splunk index for events. |
+| source | string | Event source identifier. |
+| timeout | integer | HTTP timeout in seconds for HEC requests. |
+| verify_ssl | boolean | Whether to verify SSL certificates for HEC endpoint. |
 
 
 ## TLSConfiguration
