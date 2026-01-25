@@ -31,6 +31,7 @@ def create_argument_parser() -> ArgumentParser:
     The parser includes these options:
     - -v / --verbose: enable verbose output
     - -d / --dump-configuration: dump the loaded configuration to JSON and exit
+    - -s / --dump-schema: dump the configuration schema to OpenAPI JSON and exit
     - -c / --config: path to the configuration file (default "lightspeed-stack.yaml")
     - -g / --generate-llama-stack-configuration: generate a Llama Stack
                                                  configuration from the service configuration
@@ -84,6 +85,8 @@ def main() -> None:
     Parses command-line arguments, loads the configured settings, and then:
     - If --dump-configuration is provided, writes the active configuration to
       configuration.json and exits (exits with status 1 on failure).
+    - If --dump-schema is provided, writes the active configuration schema to
+      schema.json and exits (exits with status 1 on failure).
     - If --generate-llama-stack-configuration is provided, generates and stores
       the Llama Stack configuration to the specified output file and exits
       (exits with status 1 on failure).

@@ -7,7 +7,13 @@ from models.config import Configuration
 
 
 def recursive_update(original: dict) -> dict:
-    """Recursively update the schema to be 100% OpenAPI-compatible."""
+    """Recursively update the schema to be 100% OpenAPI-compatible.
+
+    Parameters:
+        original: The original schema dictionary to transform.
+    Returns:
+        A new dictionary with OpenAPI-compatible transformations applied.
+    """
     new: dict = {}
     for key, value in original.items():
         # recurse into sub-dictionaries
@@ -17,6 +23,7 @@ def recursive_update(original: dict) -> dict:
         elif (
             key == "anyOf"
             and isinstance(value, list)
+            and len(value) >= 2
             and "type" in value[0]
             and value[1]["type"] == "null"
         ):
@@ -24,7 +31,7 @@ def recursive_update(original: dict) -> dict:
             # we need to ignore the second one
             val = value[0]["type"]
             new["type"] = val
-            # nový atribut
+            # create new attribute
             new["nullable"] = True
         # exclusiveMinimum attribute handling is broken
         # in Pydantic - this is simple fix
@@ -36,7 +43,17 @@ def recursive_update(original: dict) -> dict:
 
 
 def dump_schema(filename: str) -> None:
-    """Dump the configuration schema into OpenAPI-compatible JSON file."""
+    """Dump the configuration schema into OpenAPI-compatible JSON file.
+
+    Parameters:
+        - filename: str - name of file to export the schema to
+
+    Returns:
+        - None
+
+    Raises:
+        IOError: If the file cannot be written.
+    """
     with open(filename, "w", encoding="utf-8") as fout:
         # retrieve the schema
         _, schemas = models_json_schema(
@@ -55,7 +72,7 @@ def dump_schema(filename: str) -> None:
                 "version": "0.3.0",
             },
             "components": {
-                "schemas": schemas.get("$defs"),
+                "schemas": schemas.get("$defs", {}),
             },
             "paths": {},
         }
