@@ -220,8 +220,6 @@ requests==2.32.5 \
     --hash=sha256:c9a46b7e34f4aaf2dfdd082d6db64e92f265a201f6f273d92be037d08e80dc8a
 requests-oauthlib==2.0.0 \
     --hash=sha256:7b07553013810ee4f6f8a20d035c1e1a8a5144ecea22a9f4e6d9671b3b77b73e
-rich==14.2.0 \
-    --hash=sha256:171ec74821971add1824284a40bd1a8d248d1ae2a20631ecb7f1141f668e1347
 rpds-py==0.30.0 \
     --hash=sha256:07708740376815e3428827b399cadc04899df9e9f386abb3dfd14b3c2acfaa9a \
     --hash=sha256:77aa81a28a5f33b79dc4af0010a7a883681871c7de3cab995dd27dd8ab5efe52 \
