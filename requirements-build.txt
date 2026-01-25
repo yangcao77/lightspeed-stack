@@ -39,6 +39,7 @@ hatchling==1.28.0
     #   hatch-vcs
     #   jsonschema
     #   mcp
+    #   python-multipart
     #   termcolor
     #   urllib3
     #   uv-dynamic-versioning
@@ -52,6 +53,7 @@ maturin==1.10.2
     # via fastuuid
 packaging==26.0
     # via
+    #   dunamai
     #   hatchling
     #   setuptools-scm
     #   wheel
