@@ -3884,7 +3884,7 @@
                     "health"
                 ],
                 "summary": "Readiness Probe Get Method",
-                "description": "Handle the readiness probe endpoint, returning service readiness.\n\nIf any provider reports an error status, responds with HTTP 503\nand details of unhealthy providers; otherwise, indicates the\nservice is ready.",
+                "description": "Handle the readiness probe endpoint, returning service readiness.\n\nIf any provider reports an error status, responds with HTTP 503\nand details of unhealthy providers; otherwise, indicates the\nservice is ready.\n\nReturns:\n    ReadinessResponse: Object with `ready` indicating overall readiness,\n    `reason` explaining the outcome, and `providers` containing the list of\n    unhealthy ProviderHealthStatus entries (empty when ready).",
                 "operationId": "readiness_probe_get_method_readiness_get",
                 "responses": {
                     "200": {
@@ -4127,7 +4127,7 @@
                     "metrics"
                 ],
                 "summary": "Metrics Endpoint Handler",
-                "description": "Handle request to the /metrics endpoint.\n\nProcess GET requests to the /metrics endpoint, returning the\nlatest Prometheus metrics in form of a plain text.\n\nInitializes model metrics on the first request if not already\nset up, then responds with the current metrics snapshot in\nPrometheus format.",
+                "description": "Handle request to the /metrics endpoint.\n\nProcess GET requests to the /metrics endpoint, returning the\nlatest Prometheus metrics in form of a plain text.\n\nInitializes model metrics on the first request if not already\nset up, then responds with the current metrics snapshot in\nPrometheus format.\n\nReturns:\n    PlainTextResponse: Response body containing the Prometheus metrics text\n    and the Prometheus content type.",
                 "operationId": "metrics_endpoint_handler_metrics_get",
                 "responses": {
                     "200": {
@@ -4290,7 +4290,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -4308,7 +4308,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -5538,6 +5538,24 @@
                                 "type": "null"
                             }
                         ]
+                    },
+                    "splunk": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/SplunkConfiguration"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Splunk configuration",
+                        "description": "Splunk HEC configuration for sending telemetry events."
+                    },
+                    "deployment_environment": {
+                        "type": "string",
+                        "title": "Deployment environment",
+                        "description": "Deployment environment name (e.g., 'development', 'staging', 'production'). Used in telemetry events.",
+                        "default": "development"
                     }
                 },
                 "additionalProperties": false,
@@ -8823,6 +8841,76 @@
                         ]
                     }
                 ]
+            },
+            "SplunkConfiguration": {
+                "properties": {
+                    "enabled": {
+                        "type": "boolean",
+                        "title": "Enabled",
+                        "description": "Enable or disable Splunk HEC integration.",
+                        "default": false
+                    },
+                    "url": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "HEC URL",
+                        "description": "Splunk HEC endpoint URL."
+                    },
+                    "token_path": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "format": "file-path"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Token path",
+                        "description": "Path to file containing the Splunk HEC authentication token."
+                    },
+                    "index": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Index",
+                        "description": "Target Splunk index for events."
+                    },
+                    "source": {
+                        "type": "string",
+                        "title": "Source",
+                        "description": "Event source identifier.",
+                        "default": "lightspeed-stack"
+                    },
+                    "timeout": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Timeout",
+                        "description": "HTTP timeout in seconds for HEC requests.",
+                        "default": 5
+                    },
+                    "verify_ssl": {
+                        "type": "boolean",
+                        "title": "Verify SSL",
+                        "description": "Whether to verify SSL certificates for HEC endpoint.",
+                        "default": true
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "SplunkConfiguration",
+                "description": "Splunk HEC (HTTP Event Collector) configuration.\n\nSplunk HEC allows sending events directly to Splunk over HTTP/HTTPS.\nThis configuration is used to send telemetry events for inference\nrequests to the corporate Splunk deployment.\n\nUseful resources:\n\n  - [Splunk HEC Docs](https://docs.splunk.com/Documentation/SplunkCloud)\n  - [About HEC](https://docs.splunk.com/Documentation/Splunk/latest/Data)"
             },
             "StatusResponse": {
                 "properties": {
