@@ -96,6 +96,11 @@ async def readiness_probe_get_method(
     If any provider reports an error status, responds with HTTP 503
     and details of unhealthy providers; otherwise, indicates the
     service is ready.
+
+    Returns:
+        ReadinessResponse: Object with `ready` indicating overall readiness,
+        `reason` explaining the outcome, and `providers` containing the list of
+        unhealthy ProviderHealthStatus entries (empty when ready).
     """
     # Used only for authorization
     _ = auth

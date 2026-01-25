@@ -151,6 +151,9 @@ def store_feedback(user_id: str, feedback: dict) -> None:
     Parameters:
         user_id (str): Unique identifier of the user submitting feedback.
         feedback (dict): Feedback data to be stored, merged with user ID and timestamp.
+
+    Raises:
+        HTTPException: If writing the feedback file fails (HTTP 500).
     """
     logger.debug("Storing feedback for user %s", user_id)
     # Creates storage path only if it doesn't exist. The `exist_ok=True` prevents

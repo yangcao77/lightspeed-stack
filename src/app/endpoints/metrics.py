@@ -51,6 +51,10 @@ async def metrics_endpoint_handler(
     Initializes model metrics on the first request if not already
     set up, then responds with the current metrics snapshot in
     Prometheus format.
+
+    Returns:
+        PlainTextResponse: Response body containing the Prometheus metrics text
+        and the Prometheus content type.
     """
     # Used only for authorization
     _ = auth
