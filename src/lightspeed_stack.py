@@ -8,12 +8,14 @@ import logging
 import os
 from argparse import ArgumentParser
 
+
 from rich.logging import RichHandler
 
 from log import get_logger
 from configuration import configuration
 from runners.uvicorn import start_uvicorn
 from runners.quota_scheduler import start_quota_scheduler
+from utils import schema_dumper
 
 FORMAT = "%(message)s"
 logging.basicConfig(
@@ -52,6 +54,14 @@ def create_argument_parser() -> ArgumentParser:
         "--dump-configuration",
         dest="dump_configuration",
         help="dump actual configuration into JSON file and quit",
+        action="store_true",
+        default=False,
+    )
+    parser.add_argument(
+        "-s",
+        "--dump-schema",
+        dest="dump_schema",
+        help="dump configuration schema into OpenAPI-compatible file and quit",
         action="store_true",
         default=False,
     )
@@ -102,6 +112,17 @@ def main() -> None:
             logger.info("Configuration dumped to configuration.json")
         except Exception as e:
             logger.error("Failed to dump configuration: %s", e)
+            raise SystemExit(1) from e
+        return
+
+    # -s or --dump-schema CLI flags are used to dump configuration schema
+    # into a JSON file that is compatible with OpenAPI schema specification
+    if args.dump_schema:
+        try:
+            schema_dumper.dump_schema("schema.json")
+            logger.info("Configuration schema dumped to schema.json")
+        except Exception as e:
+            logger.error("Failed to dump configuration schema: %s", e)
             raise SystemExit(1) from e
         return
 
