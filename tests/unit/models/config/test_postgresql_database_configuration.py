@@ -18,7 +18,9 @@ from models.config import PostgreSQLDatabaseConfiguration
 def test_postgresql_database_configuration() -> None:
     """Test the PostgreSQLDatabaseConfiguration model."""
     # pylint: disable=no-member
-    c = PostgreSQLDatabaseConfiguration(db="db", user="user", password="password")
+    c = PostgreSQLDatabaseConfiguration(
+        db="db", user="user", password="password"
+    )  # pyright: ignore[reportCallIssue]
     assert c is not None
     assert c.host == "localhost"
     assert c.port == 5432
@@ -36,7 +38,7 @@ def test_postgresql_database_configuration_namespace_specification() -> None:
     # pylint: disable=no-member
     c = PostgreSQLDatabaseConfiguration(
         db="db", user="user", password="password", namespace="foo"
-    )
+    )  # pyright: ignore[reportCallIssue]
     assert c is not None
     assert c.host == "localhost"
     assert c.port == 5432
@@ -62,7 +64,7 @@ def test_postgresql_database_configuration_port_setting(subtests: SubTests) -> N
     with subtests.test(msg="Correct port value"):
         c = PostgreSQLDatabaseConfiguration(
             db="db", user="user", password="password", port=1234
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert c is not None
         assert c.port == 1234
 
@@ -70,13 +72,13 @@ def test_postgresql_database_configuration_port_setting(subtests: SubTests) -> N
         with pytest.raises(ValidationError, match="Input should be greater than 0"):
             PostgreSQLDatabaseConfiguration(
                 db="db", user="user", password="password", port=-1
-            )
+            )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="Too big port value"):
         with pytest.raises(ValueError, match="Port value should be less than 65536"):
             PostgreSQLDatabaseConfiguration(
                 db="db", user="user", password="password", port=100000
-            )
+            )  # pyright: ignore[reportCallIssue]
 
 
 def test_postgresql_database_configuration_ca_cert_path(subtests: SubTests) -> None:
@@ -99,7 +101,7 @@ def test_postgresql_database_configuration_ca_cert_path(subtests: SubTests) -> N
             password="password",
             port=1234,
             ca_cert_path=Path("tests/configuration/server.crt"),
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert c.ca_cert_path == Path("tests/configuration/server.crt")
 
     with subtests.test(msg="Path does not exist"):
@@ -110,4 +112,4 @@ def test_postgresql_database_configuration_ca_cert_path(subtests: SubTests) -> N
                 password="password",
                 port=1234,
                 ca_cert_path=Path("not a file"),
-            )
+            )  # pyright: ignore[reportCallIssue]

@@ -17,7 +17,7 @@ def token_file_fixture(tmp_path: Path) -> Path:
 
 def test_default_values() -> None:
     """Test default SplunkConfiguration has expected values."""
-    cfg = SplunkConfiguration()
+    cfg = SplunkConfiguration()  # pyright: ignore[reportCallIssue]
     assert cfg.enabled is False
     assert cfg.url is None
     assert cfg.token_path is None
@@ -29,7 +29,7 @@ def test_default_values() -> None:
 
 def test_disabled_skips_validation() -> None:
     """Test that disabled Splunk config doesn't require other fields."""
-    cfg = SplunkConfiguration(enabled=False)
+    cfg = SplunkConfiguration(enabled=False)  # pyright: ignore[reportCallIssue]
     assert cfg.enabled is False
     assert cfg.url is None
 
@@ -65,7 +65,7 @@ def test_enabled_missing_required_fields(
             url=url,
             token_path=token_file if has_token else None,
             index=index,
-        )
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_valid_enabled_configuration(token_file: Path) -> None:
@@ -91,17 +91,23 @@ def test_valid_enabled_configuration(token_file: Path) -> None:
 
 def test_custom_source() -> None:
     """Test custom source value is preserved."""
-    cfg = SplunkConfiguration(enabled=False, source="custom-source")
+    cfg = SplunkConfiguration(
+        enabled=False, source="custom-source"
+    )  # pyright: ignore[reportCallIssue]
     assert cfg.source == "custom-source"
 
 
 def test_custom_timeout() -> None:
     """Test custom timeout value is preserved."""
-    cfg = SplunkConfiguration(enabled=False, timeout=30)
+    cfg = SplunkConfiguration(
+        enabled=False, timeout=30
+    )  # pyright: ignore[reportCallIssue]
     assert cfg.timeout == 30
 
 
 def test_verify_ssl_disabled() -> None:
     """Test verify_ssl can be disabled."""
-    cfg = SplunkConfiguration(enabled=False, verify_ssl=False)
+    cfg = SplunkConfiguration(
+        enabled=False, verify_ssl=False
+    )  # pyright: ignore[reportCallIssue]
     assert cfg.verify_ssl is False

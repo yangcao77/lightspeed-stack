@@ -28,7 +28,14 @@ def test_tls_configuration_in_service_configuration() -> None:
             tls_certificate_path=Path("tests/configuration/server.crt"),
             tls_key_path=Path("tests/configuration/server.key"),
             tls_key_password=Path("tests/configuration/password"),
-        )
+        ),
+        host="localhost",
+        base_url="",
+        port=1234,
+        color_log=True,
+        access_log=True,
+        workers=10,
+        auth_enabled=True,
     )
     assert cfg is not None
     assert cfg.tls_config is not None

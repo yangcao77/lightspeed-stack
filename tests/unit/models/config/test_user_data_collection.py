@@ -9,7 +9,9 @@ from utils.checks import InvalidConfigurationError
 def test_user_data_collection_feedback_enabled() -> None:
     """Test the UserDataCollection constructor for feedback."""
     # correct configuration
-    cfg = UserDataCollection(feedback_enabled=False, feedback_storage=None)
+    cfg = UserDataCollection(
+        feedback_enabled=False, feedback_storage=None
+    )  # pyright: ignore[reportCallIssue]
     assert cfg is not None
     assert cfg.feedback_enabled is False
     assert cfg.feedback_storage is None
@@ -22,14 +24,20 @@ def test_user_data_collection_feedback_disabled() -> None:
         ValueError,
         match="feedback_storage is required when feedback is enabled",
     ):
-        UserDataCollection(feedback_enabled=True, feedback_storage=None)
+        UserDataCollection(
+            feedback_enabled=True, feedback_storage=None
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_user_data_collection_transcripts_enabled() -> None:
     """Test the UserDataCollection constructor for transcripts."""
     # correct configuration
-    cfg = UserDataCollection(transcripts_enabled=False, transcripts_storage=None)
+    cfg = UserDataCollection(
+        transcripts_enabled=False, transcripts_storage=None
+    )  # pyright: ignore[reportCallIssue]
     assert cfg is not None
+    assert cfg.transcripts_enabled is False
+    assert cfg.transcripts_storage is None
 
 
 def test_user_data_collection_transcripts_disabled() -> None:
@@ -47,7 +55,9 @@ def test_user_data_collection_transcripts_disabled() -> None:
         ValueError,
         match="transcripts_storage is required when transcripts is enabled",
     ):
-        UserDataCollection(transcripts_enabled=True, transcripts_storage=None)
+        UserDataCollection(
+            transcripts_enabled=True, transcripts_storage=None
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_user_data_collection_wrong_directory_path() -> None:
@@ -66,10 +76,14 @@ def test_user_data_collection_wrong_directory_path() -> None:
         InvalidConfigurationError,
         match="Check directory to store feedback '/root' is not writable",
     ):
-        _ = UserDataCollection(feedback_enabled=True, feedback_storage="/root")
+        _ = UserDataCollection(
+            feedback_enabled=True, feedback_storage="/root"
+        )  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(
         InvalidConfigurationError,
         match="Check directory to store transcripts '/root' is not writable",
     ):
-        _ = UserDataCollection(transcripts_enabled=True, transcripts_storage="/root")
+        _ = UserDataCollection(
+            transcripts_enabled=True, transcripts_storage="/root"
+        )  # pyright: ignore[reportCallIssue]
