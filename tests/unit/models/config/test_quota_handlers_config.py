@@ -9,7 +9,11 @@ def test_quota_handlers_configuration() -> None:
         sqlite=None,
         postgres=None,
         limiters=[],
-        scheduler=QuotaSchedulerConfiguration(period=10),
+        scheduler=QuotaSchedulerConfiguration(
+            database_reconnection_count=10,
+            database_reconnection_delay=60,
+            period=10,
+        ),
         enable_token_history=False,
     )
     assert cfg is not None

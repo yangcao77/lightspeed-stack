@@ -71,7 +71,7 @@ def test_quota_limiter_configuration_improper_value_3() -> None:
         ValueError, match="Input should be 'user_limiter' or 'cluster_limiter'"
     ):
         _ = QuotaLimiterConfiguration(
-            type="unknown_limiter",
+            type="unknown_limiter",  # pyright: ignore[reportArgumentType]
             name="cluster_monthly_limits",
             initial_quota=1,
             quota_increase=10,
