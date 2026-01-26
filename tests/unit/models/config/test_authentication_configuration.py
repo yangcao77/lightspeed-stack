@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from pydantic import ValidationError, SecretStr
+from pydantic import ValidationError, SecretStr, AnyHttpUrl
 
 from models.config import (
     AuthenticationConfiguration,
@@ -61,6 +61,7 @@ def test_authentication_configuration_rh_identity() -> None:
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
         rh_identity_config=RHIdentityConfiguration(required_entitlements=[]),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_RH_IDENTITY
@@ -70,6 +71,7 @@ def test_authentication_configuration_rh_identity() -> None:
     assert auth_config.rh_identity_config is not None
     assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
     assert auth_config.rh_identity_configuration.required_entitlements == []
+    assert auth_config.skip_for_health_probes is True
 
 
 def test_authentication_configuration_rh_identity_default_value() -> None:
@@ -80,7 +82,8 @@ def test_authentication_configuration_rh_identity_default_value() -> None:
         skip_tls_verification=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
-        rh_identity_config=RHIdentityConfiguration(),
+        rh_identity_config=RHIdentityConfiguration(required_entitlements=None),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_RH_IDENTITY
@@ -90,6 +93,7 @@ def test_authentication_configuration_rh_identity_default_value() -> None:
     assert auth_config.rh_identity_config is not None
     assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
     assert auth_config.rh_identity_configuration.required_entitlements is None
+    assert auth_config.skip_for_health_probes is True
 
 
 def test_authentication_configuration_rh_identity_one_entitlement() -> None:
@@ -101,6 +105,7 @@ def test_authentication_configuration_rh_identity_one_entitlement() -> None:
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
         rh_identity_config=RHIdentityConfiguration(required_entitlements=["foo"]),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_RH_IDENTITY
@@ -110,6 +115,7 @@ def test_authentication_configuration_rh_identity_one_entitlement() -> None:
     assert auth_config.rh_identity_config is not None
     assert auth_config.rh_identity_configuration is auth_config.rh_identity_config
     assert auth_config.rh_identity_configuration.required_entitlements == ["foo"]
+    assert auth_config.skip_for_health_probes is True
 
 
 def test_authentication_configuration_rh_identity_more_entitlements() -> None:
@@ -123,6 +129,7 @@ def test_authentication_configuration_rh_identity_more_entitlements() -> None:
         rh_identity_config=RHIdentityConfiguration(
             required_entitlements=["foo", "bar", "baz"]
         ),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_RH_IDENTITY
@@ -136,6 +143,7 @@ def test_authentication_configuration_rh_identity_more_entitlements() -> None:
         "bar",
         "baz",
     ]
+    assert auth_config.skip_for_health_probes is True
 
 
 def test_authentication_configuration_rh_identity_but_insufficient_config() -> None:
@@ -155,6 +163,7 @@ def test_authentication_configuration_rh_identity_but_insufficient_config() -> N
             skip_tls_verification=False,
             k8s_ca_cert_path=None,
             k8s_cluster_api=None,
+            skip_for_health_probes=True,
         )
 
 
@@ -166,7 +175,8 @@ def test_authentication_configuration_jwk_token() -> None:
         skip_tls_verification=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
-        jwk_config=JwkConfiguration(url="http://foo.bar.baz"),
+        jwk_config=JwkConfiguration(url=AnyHttpUrl("http://foo.bar.baz")),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_JWK_TOKEN
@@ -195,7 +205,8 @@ def test_authentication_configuration_jwk_token_but_insufficient_config() -> Non
             skip_tls_verification=False,
             k8s_ca_cert_path=None,
             k8s_cluster_api=None,
-            jwk_config=JwkConfiguration(),
+            jwk_config=JwkConfiguration(),  # pyright: ignore[reportCallIssue]
+            skip_for_health_probes=True,
         )
 
 
@@ -211,6 +222,7 @@ def test_authentication_configuration_jwk_token_but_not_config() -> None:
             skip_tls_verification=False,
             k8s_ca_cert_path=None,
             k8s_cluster_api=None,
+            skip_for_health_probes=True,
             # no JwkConfiguration
         )
 
@@ -231,7 +243,8 @@ def test_authentication_configuration_jwk_broken_config() -> None:
         skip_tls_verification=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
-        jwk_config=JwkConfiguration(url="http://foo.bar.baz"),
+        jwk_config=JwkConfiguration(url=AnyHttpUrl("http://foo.bar.baz")),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
 
@@ -256,6 +269,7 @@ def test_authentication_configuration_supported() -> None:
         skip_tls_verification=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_K8S
@@ -272,6 +286,7 @@ def test_authentication_configuration_module_unsupported() -> None:
             skip_tls_verification=False,
             k8s_ca_cert_path=None,
             k8s_cluster_api=None,
+            skip_for_health_probes=True,
         )
 
 
@@ -280,15 +295,31 @@ def test_authentication_configuration_in_config_noop() -> None:
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
-        service=ServiceConfiguration(),
+        service=ServiceConfiguration(
+            host="localhost",
+            port=1234,
+            base_url="",
+            auth_enabled=False,
+            color_log=True,
+            access_log=True,
+            workers=1,
+        ),
         llama_stack=LlamaStackConfiguration(
             use_as_library_client=True,
             library_client_config_path="tests/configuration/run.yaml",
+            url="localhost",
+            api_key=SecretStr(""),
         ),
         user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
+            feedback_enabled=False,
+            feedback_storage=None,
+            transcripts_enabled=False,
+            transcripts_storage=None,
         ),
         mcp_servers=[],
+        authorization=None,
+        customization=None,
+        deployment_environment="",
     )
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_NOOP
@@ -302,22 +333,38 @@ def test_authentication_configuration_skip_readiness_probe() -> None:
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
-        service=ServiceConfiguration(),
+        service=ServiceConfiguration(
+            host="localhost",
+            port=1234,
+            base_url="",
+            auth_enabled=False,
+            color_log=True,
+            access_log=True,
+            workers=1,
+        ),
         llama_stack=LlamaStackConfiguration(
             use_as_library_client=True,
             library_client_config_path="tests/configuration/run.yaml",
+            url="localhost",
+            api_key=SecretStr(""),
         ),
         user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
+            feedback_enabled=False,
+            feedback_storage=None,
+            transcripts_enabled=False,
+            transcripts_storage=None,
         ),
         mcp_servers=[],
         authentication=AuthenticationConfiguration(
             module=AUTH_MOD_K8S,
             skip_tls_verification=True,
             skip_for_health_probes=True,
-            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_ca_cert_path=Path("tests/configuration/server.crt"),
             k8s_cluster_api=None,
         ),
+        authorization=None,
+        customization=None,
+        deployment_environment="",
     )
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_K8S
@@ -332,21 +379,38 @@ def test_authentication_configuration_in_config_k8s() -> None:
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
-        service=ServiceConfiguration(),
+        service=ServiceConfiguration(
+            host="localhost",
+            port=1234,
+            base_url="",
+            auth_enabled=False,
+            color_log=True,
+            access_log=True,
+            workers=1,
+        ),
         llama_stack=LlamaStackConfiguration(
             use_as_library_client=True,
             library_client_config_path="tests/configuration/run.yaml",
+            url="localhost",
+            api_key=SecretStr(""),
         ),
         user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
+            feedback_enabled=False,
+            feedback_storage=None,
+            transcripts_enabled=False,
+            transcripts_storage=None,
         ),
         mcp_servers=[],
         authentication=AuthenticationConfiguration(
             module=AUTH_MOD_K8S,
             skip_tls_verification=True,
-            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_ca_cert_path=Path("tests/configuration/server.crt"),
             k8s_cluster_api=None,
+            skip_for_health_probes=False,
         ),
+        authorization=None,
+        customization=None,
+        deployment_environment="",
     )
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_K8S
@@ -371,22 +435,39 @@ def test_authentication_configuration_in_config_rh_identity() -> None:
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
-        service=ServiceConfiguration(),
+        service=ServiceConfiguration(
+            host="localhost",
+            port=1234,
+            base_url="",
+            auth_enabled=False,
+            color_log=True,
+            access_log=True,
+            workers=1,
+        ),
         llama_stack=LlamaStackConfiguration(
             use_as_library_client=True,
             library_client_config_path="tests/configuration/run.yaml",
+            url="localhost",
+            api_key=SecretStr(""),
         ),
         user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
+            feedback_enabled=False,
+            feedback_storage=None,
+            transcripts_enabled=False,
+            transcripts_storage=None,
         ),
         mcp_servers=[],
         authentication=AuthenticationConfiguration(
             module=AUTH_MOD_RH_IDENTITY,
             skip_tls_verification=True,
-            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_ca_cert_path=Path("tests/configuration/server.crt"),
             k8s_cluster_api=None,
             rh_identity_config=RHIdentityConfiguration(required_entitlements=[]),
+            skip_for_health_probes=False,
         ),
+        authorization=None,
+        customization=None,
+        deployment_environment="",
     )
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_RH_IDENTITY
@@ -400,22 +481,39 @@ def test_authentication_configuration_in_config_jwktoken() -> None:
     # pylint: disable=no-member
     cfg = Configuration(
         name="test_name",
-        service=ServiceConfiguration(),
+        service=ServiceConfiguration(
+            host="localhost",
+            port=1234,
+            base_url="",
+            auth_enabled=False,
+            color_log=True,
+            access_log=True,
+            workers=1,
+        ),
         llama_stack=LlamaStackConfiguration(
             use_as_library_client=True,
             library_client_config_path="tests/configuration/run.yaml",
+            url="localhost",
+            api_key=SecretStr(""),
         ),
         user_data_collection=UserDataCollection(
-            feedback_enabled=False, feedback_storage=None
+            feedback_enabled=False,
+            feedback_storage=None,
+            transcripts_enabled=False,
+            transcripts_storage=None,
         ),
         mcp_servers=[],
         authentication=AuthenticationConfiguration(
             module=AUTH_MOD_JWK_TOKEN,
             skip_tls_verification=True,
-            k8s_ca_cert_path="tests/configuration/server.crt",
+            k8s_ca_cert_path=Path("tests/configuration/server.crt"),
             k8s_cluster_api=None,
-            jwk_config=JwkConfiguration(url="http://foo.bar.baz"),
+            jwk_config=JwkConfiguration(url=AnyHttpUrl("http://foo.bar.baz")),
+            skip_for_health_probes=False,
         ),
+        authorization=None,
+        customization=None,
+        deployment_environment="",
     )
     assert cfg.authentication is not None
     assert cfg.authentication.module == AUTH_MOD_JWK_TOKEN
@@ -433,6 +531,7 @@ def test_authentication_configuration_api_token() -> None:
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
         api_key_config=APIKeyTokenConfiguration(api_key=SecretStr("my-api-key")),
+        skip_for_health_probes=True,
     )
     assert auth_config is not None
     assert auth_config.module == AUTH_MOD_APIKEY_TOKEN
@@ -461,4 +560,5 @@ def test_authentication_configuration_api_key_but_insufficient_config() -> None:
             skip_tls_verification=False,
             k8s_ca_cert_path=None,
             k8s_cluster_api=None,
+            skip_for_health_probes=True,
         )

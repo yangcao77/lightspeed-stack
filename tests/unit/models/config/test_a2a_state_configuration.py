@@ -3,7 +3,9 @@
 # pylint: disable=no-member
 
 import pytest
-from pydantic import ValidationError
+from pydantic import SecretStr, ValidationError
+
+import constants
 
 from models.config import (
     A2AStateConfiguration,
@@ -42,7 +44,11 @@ class TestA2AStateConfiguration:
             port=5432,
             db="a2a_state",
             user="lightspeed",
-            password="secret",
+            password=SecretStr("secret"),
+            namespace="namespace",
+            ssl_mode=constants.POSTGRES_DEFAULT_SSL_MODE,
+            gss_encmode=constants.POSTGRES_DEFAULT_GSS_ENCMODE,
+            ca_cert_path=None,
         )
         config = A2AStateConfiguration(postgres=postgres_config)
 
@@ -52,6 +58,9 @@ class TestA2AStateConfiguration:
         assert config.postgres.port == 5432
         assert config.postgres.db == "a2a_state"
         assert config.config == postgres_config
+        assert config.postgres.namespace == "namespace"
+        assert config.postgres.ssl_mode == constants.POSTGRES_DEFAULT_SSL_MODE
+        assert config.postgres.gss_encmode == constants.POSTGRES_DEFAULT_GSS_ENCMODE
 
     def test_postgres_with_all_options(self) -> None:
         """Test PostgreSQL configuration with all options."""
@@ -60,14 +69,16 @@ class TestA2AStateConfiguration:
             port=5433,
             db="lightspeed",
             user="admin",
-            password="secret123",
+            password=SecretStr("secret123"),
             namespace="a2a",
             ssl_mode="require",
+            gss_encmode=constants.POSTGRES_DEFAULT_GSS_ENCMODE,
             ca_cert_path=None,
         )
         config = A2AStateConfiguration(postgres=postgres_config)
 
         assert config.storage_type == "postgres"
+        assert config.postgres is not None
         assert config.postgres.host == "postgres.example.com"
         assert config.postgres.port == 5433
         assert config.postgres.namespace == "a2a"
@@ -82,7 +93,11 @@ class TestA2AStateConfiguration:
             port=5432,
             db="test",
             user="test",
-            password="test",
+            password=SecretStr("test"),
+            namespace="namespace",
+            ssl_mode=constants.POSTGRES_DEFAULT_SSL_MODE,
+            gss_encmode=constants.POSTGRES_DEFAULT_GSS_ENCMODE,
+            ca_cert_path=None,
         )
 
         with pytest.raises(ValidationError) as exc_info:

@@ -18,7 +18,7 @@ from constants import (
 def test_byok_rag_configuration_default_values() -> None:
     """Test the ByokRag constructor."""
 
-    byok_rag = ByokRag(
+    byok_rag = ByokRag(  # pyright: ignore[reportCallIssue]
         rag_id="rag_id",
         vector_db_id="vector_db_id",
         db_path="tests/configuration/rag.txt",
@@ -48,7 +48,7 @@ def test_byok_rag_configuration_nondefault_values() -> None:
         embedding_model="embedding_model",
         embedding_dimension=1024,
         vector_db_id="vector_db_id",
-        db_path="tests/configuration/rag.txt",
+        db_path=Path("tests/configuration/rag.txt"),
     )
     assert byok_rag is not None
     assert byok_rag.rag_id == "rag_id"
@@ -69,7 +69,7 @@ def test_byok_rag_configuration_wrong_dimension() -> None:
             embedding_model="embedding_model",
             embedding_dimension=-1024,
             vector_db_id="vector_db_id",
-            db_path="tests/configuration/rag.txt",
+            db_path=Path("tests/configuration/rag.txt"),
         )
 
 
@@ -85,7 +85,7 @@ def test_byok_rag_configuration_empty_rag_id() -> None:
             embedding_model="embedding_model",
             embedding_dimension=1024,
             vector_db_id="vector_db_id",
-            db_path="tests/configuration/rag.txt",
+            db_path=Path("tests/configuration/rag.txt"),
         )
 
 
@@ -108,7 +108,7 @@ def test_byok_rag_configuration_empty_rag_type() -> None:
             embedding_model="embedding_model",
             embedding_dimension=1024,
             vector_db_id="vector_db_id",
-            db_path="tests/configuration/rag.txt",
+            db_path=Path("tests/configuration/rag.txt"),
         )
 
 
@@ -124,7 +124,7 @@ def test_byok_rag_configuration_empty_embedding_model() -> None:
             embedding_model="",
             embedding_dimension=1024,
             vector_db_id="vector_db_id",
-            db_path="tests/configuration/rag.txt",
+            db_path=Path("tests/configuration/rag.txt"),
         )
 
 
@@ -140,5 +140,5 @@ def test_byok_rag_configuration_empty_vector_db_id() -> None:
             embedding_model="embedding_model",
             embedding_dimension=1024,
             vector_db_id="",
-            db_path="tests/configuration/rag.txt",
+            db_path=Path("tests/configuration/rag.txt"),
         )
