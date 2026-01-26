@@ -112,7 +112,7 @@ src/
 - Follow Google Python docstring conventions: https://google.github.io/styleguide/pyguide.html
 - Required for all modules, classes, and functions
 - Include brief description and detailed sections as needed:
-  - `Args:` for function parameters
+  - `Parameters:` for function parameters
   - `Returns:` for return values
   - `Raises:` for exceptions that may be raised
   - `Attributes:` for class attributes (Pydantic models)
