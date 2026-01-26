@@ -22,7 +22,7 @@ def test_conversation_cache_no_type_specified() -> None:
     Verify that a ConversationHistoryConfiguration created with no arguments
     has its type set to None.
     """
-    c = ConversationHistoryConfiguration()
+    c = ConversationHistoryConfiguration()  # pyright: ignore[reportCallIssue]
     assert c.type is None
 
 
@@ -40,7 +40,9 @@ def test_conversation_cache_unknown_type() -> None:
         ValidationError,
         match="Input should be 'noop', 'memory', 'sqlite' or 'postgres'",
     ):
-        _ = ConversationHistoryConfiguration(type="foo")
+        _ = ConversationHistoryConfiguration(
+            type="foo"
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_conversation_cache_correct_type_but_not_configured(subtests: SubTests) -> None:
@@ -57,19 +59,25 @@ def test_conversation_cache_correct_type_but_not_configured(subtests: SubTests) 
         with pytest.raises(
             ValidationError, match="Memory cache is selected, but not configured"
         ):
-            _ = ConversationHistoryConfiguration(type=constants.CACHE_TYPE_MEMORY)
+            _ = ConversationHistoryConfiguration(
+                type=constants.CACHE_TYPE_MEMORY
+            )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="SQLite cache"):
         with pytest.raises(
             ValidationError, match="SQLite cache is selected, but not configured"
         ):
-            _ = ConversationHistoryConfiguration(type=constants.CACHE_TYPE_SQLITE)
+            _ = ConversationHistoryConfiguration(
+                type=constants.CACHE_TYPE_SQLITE
+            )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="SQLite cache"):
         with pytest.raises(
             ValidationError, match="PostgreSQL cache is selected, but not configured"
         ):
-            _ = ConversationHistoryConfiguration(type=constants.CACHE_TYPE_POSTGRES)
+            _ = ConversationHistoryConfiguration(
+                type=constants.CACHE_TYPE_POSTGRES
+            )  # pyright: ignore[reportCallIssue]
 
 
 def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
@@ -89,13 +97,13 @@ def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
         with pytest.raises(ValidationError, match=m):
             _ = ConversationHistoryConfiguration(
                 memory=InMemoryCacheConfig(max_entries=100)
-            )
+            )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="SQLite cache"):
         with pytest.raises(ValidationError, match=m):
             _ = ConversationHistoryConfiguration(
                 sqlite=SQLiteDatabaseConfiguration(db_path="path")
-            )
+            )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="PostgreSQL cache"):
         d = PostgreSQLDatabaseConfiguration(
@@ -104,9 +112,11 @@ def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
             password="password",
             port=1234,
             ca_cert_path=Path("tests/configuration/server.crt"),
-        )
+        )  # pyright: ignore[reportCallIssue]
         with pytest.raises(ValidationError, match=m):
-            _ = ConversationHistoryConfiguration(postgres=d)
+            _ = ConversationHistoryConfiguration(
+                postgres=d
+            )  # pyright: ignore[reportCallIssue]
 
 
 def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
@@ -117,7 +127,7 @@ def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
         password="password",
         port=1234,
         ca_cert_path=Path("tests/configuration/server.crt"),
-    )
+    )  # pyright: ignore[reportCallIssue]
 
     with subtests.test(msg="Memory cache"):
         with pytest.raises(
@@ -157,7 +167,7 @@ def test_conversation_type_memory() -> None:
     """Test the memory conversation cache configuration."""
     c = ConversationHistoryConfiguration(
         type=constants.CACHE_TYPE_MEMORY, memory=InMemoryCacheConfig(max_entries=100)
-    )
+    )  # pyright: ignore[reportCallIssue]
     assert c.type == constants.CACHE_TYPE_MEMORY
     assert c.memory is not None
     assert c.sqlite is None
@@ -180,14 +190,14 @@ def test_conversation_type_memory_wrong_config() -> None:
     with pytest.raises(ValidationError, match="Field required"):
         _ = ConversationHistoryConfiguration(
             type=constants.CACHE_TYPE_MEMORY,
-            memory=InMemoryCacheConfig(),
-        )
+            memory=InMemoryCacheConfig(),  # pyright: ignore[reportCallIssue]
+        )  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(ValidationError, match="Input should be greater than 0"):
         _ = ConversationHistoryConfiguration(
             type=constants.CACHE_TYPE_MEMORY,
             memory=InMemoryCacheConfig(max_entries=-100),
-        )
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_conversation_type_sqlite() -> None:
@@ -195,7 +205,7 @@ def test_conversation_type_sqlite() -> None:
     c = ConversationHistoryConfiguration(
         type=constants.CACHE_TYPE_SQLITE,
         sqlite=SQLiteDatabaseConfiguration(db_path="path"),
-    )
+    )  # pyright: ignore[reportCallIssue]
     assert c.type == constants.CACHE_TYPE_SQLITE
     assert c.memory is None
     assert c.sqlite is not None
@@ -216,8 +226,8 @@ def test_conversation_type_sqlite_wrong_config() -> None:
     with pytest.raises(ValidationError, match="Field required"):
         _ = ConversationHistoryConfiguration(
             type=constants.CACHE_TYPE_SQLITE,
-            memory=SQLiteDatabaseConfiguration(),
-        )
+            memory=SQLiteDatabaseConfiguration(),  # pyright: ignore[reportCallIssue]
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_conversation_type_postgres() -> None:
@@ -228,12 +238,12 @@ def test_conversation_type_postgres() -> None:
         password="password",
         port=1234,
         ca_cert_path=Path("tests/configuration/server.crt"),
-    )
+    )  # pyright: ignore[reportCallIssue]
 
     c = ConversationHistoryConfiguration(
         type=constants.CACHE_TYPE_POSTGRES,
         postgres=d,
-    )
+    )  # pyright: ignore[reportCallIssue]
     assert c.type == constants.CACHE_TYPE_POSTGRES
     assert c.memory is None
     assert c.sqlite is None
@@ -255,5 +265,5 @@ def test_conversation_type_postgres_wrong_config() -> None:
     with pytest.raises(ValidationError, match="Field required"):
         _ = ConversationHistoryConfiguration(
             type=constants.CACHE_TYPE_POSTGRES,
-            postgres=PostgreSQLDatabaseConfiguration(),
-        )
+            postgres=PostgreSQLDatabaseConfiguration(),  # pyright: ignore[reportCallIssue]
+        )  # pyright: ignore[reportCallIssue]

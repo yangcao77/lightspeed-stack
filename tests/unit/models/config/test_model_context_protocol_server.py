@@ -45,13 +45,17 @@ def test_model_context_protocol_server_required_fields() -> None:
     """Test that ModelContextProtocolServer requires name and url."""
 
     with pytest.raises(ValidationError):
-        ModelContextProtocolServer()  # pyright: ignore
+        ModelContextProtocolServer()  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(ValidationError):
-        ModelContextProtocolServer(name="test-server")  # pyright: ignore
+        ModelContextProtocolServer(
+            name="test-server"
+        )  # pyright: ignore[reportCallIssue]
 
     with pytest.raises(ValidationError):
-        ModelContextProtocolServer(url="http://localhost:8080")  # pyright: ignore
+        ModelContextProtocolServer(
+            url="http://localhost:8080"
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_configuration_empty_mcp_servers() -> None:
