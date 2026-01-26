@@ -20,6 +20,7 @@ flit-core==3.12.0
 hatch-fancy-pypi-readme==25.1.0
     # via
     #   jsonschema
+    #   llama-stack-client
     #   openai
 hatch-vcs==0.5.0
     # via
@@ -30,10 +31,12 @@ hatch-vcs==0.5.0
 hatchling==1.26.3
     # via
     #   hatch-fancy-pypi-readme
+    #   llama-stack-client
     #   openai
 hatchling==1.28.0
     # via
     #   a2a-sdk
+    #   einops
     #   filelock
     #   hatch-fancy-pypi-readme
     #   hatch-vcs
@@ -53,7 +56,6 @@ maturin==1.10.2
     # via fastuuid
 packaging==26.0
     # via
-    #   dunamai
     #   hatchling
     #   setuptools-scm
     #   wheel
@@ -92,15 +94,17 @@ wheel==0.46.3
     # via
     #   authlib
     #   azure-identity
+    #   cachetools
     #   litellm
     #   pycparser
 
 # The following packages are considered to be unsafe in a requirements file:
-setuptools==80.10.1
+setuptools==80.10.2
     # via
     #   authlib
     #   azure-identity
     #   blobfile
+    #   cachetools
     #   calver
     #   certifi
     #   emoji
@@ -108,8 +112,10 @@ setuptools==80.10.1
     #   greenlet
     #   importlib-metadata
     #   llama-stack
+    #   llama-stack-api
     #   markupsafe
     #   maturin
+    #   multidict
     #   multiprocess
     #   pathspec
     #   pluggy
