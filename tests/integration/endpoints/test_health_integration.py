@@ -1,19 +1,19 @@
 """Integration tests for the /health endpoint."""
 
-from typing import Generator, Any
+from typing import Any, Generator
+
 import pytest
-from pytest_mock import MockerFixture, AsyncMockType
-from llama_stack.providers.datatypes import HealthStatus
-
 from fastapi import Response
-from authentication.interface import AuthTuple
+from pytest_mock import AsyncMockType, MockerFixture
 
-from configuration import AppConfig
 from app.endpoints.health import (
+    HealthStatus,
+    get_providers_health_statuses,
     liveness_probe_get_method,
     readiness_probe_get_method,
-    get_providers_health_statuses,
 )
+from authentication.interface import AuthTuple
+from configuration import AppConfig
 
 
 @pytest.fixture(name="mock_llama_stack_client_health")

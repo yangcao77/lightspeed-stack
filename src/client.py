@@ -7,7 +7,7 @@ import tempfile
 from typing import Optional
 
 import yaml
-from llama_stack import AsyncLlamaStackAsLibraryClient  # type: ignore
+from llama_stack.core.library_client import AsyncLlamaStackAsLibraryClient
 from llama_stack_client import AsyncLlamaStackClient  # type: ignore
 
 from configuration import configuration

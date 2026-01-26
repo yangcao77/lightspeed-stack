@@ -80,7 +80,7 @@ async def run_shield_moderation(
     Raises:
         HTTPException: If shield's provider_resource_id is not configured or model not found.
     """
-    available_models = {model.identifier for model in await client.models.list()}
+    available_models = {model.id for model in await client.models.list()}
 
     for shield in await client.shields.list():
         if (

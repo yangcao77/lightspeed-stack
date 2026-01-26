@@ -1,14 +1,13 @@
 """Models for REST API requests."""
 
-from typing import Optional, Self
 from enum import Enum
+from typing import Optional, Self
 
-from pydantic import BaseModel, model_validator, field_validator, Field
-from llama_stack_client.types.alpha.agents.turn_create_params import Document
+from pydantic import BaseModel, Field, field_validator, model_validator
 
+from constants import MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
 from log import get_logger
 from utils import suid
-from constants import MEDIA_TYPE_JSON, MEDIA_TYPE_TEXT
 
 logger = get_logger(__name__)
 
@@ -222,21 +221,6 @@ class QueryRequest(BaseModel):
         if value and not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID '{value}'")
         return value
-
-    def get_documents(self) -> list[Document]:
-        """
-        Produce a list of Document objects derived from the model's attachments.
-
-        Returns:
-            list[Document]: Documents created from attachments; empty list if
-                            there are no attachments.
-        """
-        if not self.attachments:
-            return []
-        return [
-            Document(content=att.content, mime_type=att.content_type)
-            for att in self.attachments  # pylint: disable=not-an-iterable
-        ]
 
     @model_validator(mode="after")
     def validate_provider_and_model(self) -> Self:

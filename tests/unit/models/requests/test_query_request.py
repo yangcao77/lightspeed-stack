@@ -1,11 +1,11 @@
 """Unit tests for QueryRequest model."""
 
 from logging import Logger
-from pytest_mock import MockerFixture
 
 import pytest
+from pytest_mock import MockerFixture
 
-from models.requests import QueryRequest, Attachment
+from models.requests import Attachment, QueryRequest
 
 
 class TestQueryRequest:
@@ -74,74 +74,6 @@ class TestQueryRequest:
         assert qr.model == "gpt-3.5-turbo"
         assert qr.system_prompt == "You are a helpful assistant"
         assert qr.attachments is None
-
-    def test_get_documents(self) -> None:
-        """Test the get_documents method.
-
-        Verify that QueryRequest.get_documents converts attachments into
-        document dictionaries with correct content and mime_type.
-
-        Asserts that:
-        - Two attachments produce two document entries.
-        - Each document's "content" matches the attachment's content.
-        - Each document's "mime_type" matches the attachment's content_type.
-        """
-        attachments = [
-            Attachment(
-                attachment_type="log",
-                content_type="text/plain",
-                content="this is attachment",
-            ),
-            Attachment(
-                attachment_type="configuration",
-                content_type="application/yaml",
-                content="kind: Pod\n metadata:\n name:    private-reg",
-            ),
-        ]
-        qr = QueryRequest(
-            query="Tell me about Kubernetes",
-            attachments=attachments,
-        )
-        documents = qr.get_documents()
-        assert len(documents) == 2
-        assert documents[0]["content"] == "this is attachment"
-        assert documents[0]["mime_type"] == "text/plain"
-        assert documents[1]["content"] == "kind: Pod\n metadata:\n name:    private-reg"
-        assert documents[1]["mime_type"] == "application/yaml"
-
-    def test_get_documents_no_attachments(self) -> None:
-        """Test the get_documents method."""
-        attachments: list[Attachment] = []
-        qr = QueryRequest(
-            query="Tell me about Kubernetes",
-            attachments=attachments,
-        )
-        documents = qr.get_documents()
-        assert len(documents) == 0
-
-    def test_validate_provider_and_model(self) -> None:
-        """Test the validate_provider_and_model method."""
-        qr = QueryRequest(
-            query="Tell me about Kubernetes",
-            provider="OpenAI",
-            model="gpt-3.5-turbo",
-        )
-        assert qr is not None
-        validated_qr = qr.validate_provider_and_model()
-        assert validated_qr.provider == "OpenAI"
-        assert validated_qr.model == "gpt-3.5-turbo"
-
-        # Test with missing provider
-        with pytest.raises(
-            ValueError, match="Provider must be specified if model is specified"
-        ):
-            QueryRequest(query="Tell me about Kubernetes", model="gpt-3.5-turbo")
-
-        # Test with missing model
-        with pytest.raises(
-            ValueError, match="Model must be specified if provider is specified"
-        ):
-            QueryRequest(query="Tell me about Kubernetes", provider="OpenAI")
 
     def test_validate_media_type(self, mocker: MockerFixture) -> None:
         """Test the validate_media_type method.

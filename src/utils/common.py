@@ -6,7 +6,7 @@ from typing import Any, Callable, List, cast
 from logging import Logger
 
 from llama_stack_client import AsyncLlamaStackClient
-from llama_stack import AsyncLlamaStackAsLibraryClient
+from llama_stack.core.library_client import AsyncLlamaStackAsLibraryClient
 
 from client import AsyncLlamaStackClientHolder
 from models.config import Configuration, ModelContextProtocolServer

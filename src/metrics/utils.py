@@ -1,13 +1,7 @@
 """Utility functions for metrics handling."""
 
-from typing import cast
-
 from fastapi import HTTPException
-from llama_stack.models.llama.datatypes import RawMessage
-from llama_stack.models.llama.llama3.chat_format import ChatFormat
-from llama_stack.models.llama.llama3.tokenizer import Tokenizer
 from llama_stack_client import APIConnectionError, APIStatusError
-from llama_stack_client.types.alpha.agents.turn import Turn
 
 import metrics
 from client import AsyncLlamaStackClientHolder
@@ -34,7 +28,7 @@ async def setup_model_metrics() -> None:
     models = [
         model
         for model in model_list
-        if model.model_type == "llm"  # pyright: ignore[reportAttributeAccessIssue]
+        if model.custom_metadata and model.custom_metadata.get("model_type") == "llm"
     ]
 
     default_model_label = (
@@ -43,8 +37,12 @@ async def setup_model_metrics() -> None:
     )
 
     for model in models:
-        provider = model.provider_id
-        model_name = model.identifier
+        provider = (
+            str(model.custom_metadata.get("provider_id", ""))
+            if model.custom_metadata
+            else ""
+        )
+        model_name = model.id
         if provider and model_name:
             # If the model/provider combination is the default, set the metric value to 1
             # Otherwise, set it to 0
@@ -64,37 +62,3 @@ async def setup_model_metrics() -> None:
                 default_model_value,
             )
     logger.info("Model metrics setup complete")
-
-
-def update_llm_token_count_from_turn(
-    turn: Turn, model: str, provider: str, system_prompt: str = ""
-) -> None:
-    """
-    Update token usage metrics for a completed LLM turn.
-
-    Counts tokens produced by the model (the turn's output message) and tokens sent to the model
-    (the system prompt prepended to the turn's input messages), and increments the metrics
-    `llm_token_received_total` and `llm_token_sent_total` using the provided
-    `provider` and `model` as label values.
-
-    Parameters:
-        turn (Turn): The turn containing input and output messages to measure.
-        model (str): The model identifier used to label the metrics.
-        provider (str): The LLM provider name used to label the metrics.
-        system_prompt (str): Optional system prompt text to prepend to the
-        input messages before counting.
-    """
-    tokenizer = Tokenizer.get_instance()
-    formatter = ChatFormat(tokenizer)
-
-    raw_message = cast(RawMessage, turn.output_message)
-    encoded_output = formatter.encode_dialog_prompt([raw_message])
-    token_count = len(encoded_output.tokens) if encoded_output.tokens else 0
-    metrics.llm_token_received_total.labels(provider, model).inc(token_count)
-
-    input_messages = [RawMessage(role="user", content=system_prompt)] + cast(
-        list[RawMessage], turn.input_messages
-    )
-    encoded_input = formatter.encode_dialog_prompt(input_messages)
-    token_count = len(encoded_input.tokens) if encoded_input.tokens else 0
-    metrics.llm_token_sent_total.labels(provider, model).inc(token_count)

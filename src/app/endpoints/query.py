@@ -1,26 +1,18 @@
 """Handler for REST API call to provide answer to query."""
 
 import ast
-import json
 import logging
 import re
 from datetime import UTC, datetime
-from typing import Annotated, Any, Optional, cast
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from llama_stack_api.shields import Shield
 from llama_stack_client import (
     APIConnectionError,
     APIStatusError,
-    AsyncLlamaStackClient,
     RateLimitError,  # type: ignore
 )
-from llama_stack_client.types import Shield, UserMessage  # type: ignore
-from llama_stack_client.types.alpha.agents.turn import Turn
-from llama_stack_client.types.alpha.agents.turn_create_params import (
-    Toolgroup,
-    ToolgroupAgentToolGroupWithArgs,
-)
-from llama_stack_client.types.alpha.tool_execution_step import ToolExecutionStep
 from llama_stack_client.types.model_list_response import ModelListResponse
 from llama_stack_client.types.shared.interleaved_content_item import TextContentItem
 from sqlalchemy.exc import SQLAlchemyError
@@ -30,7 +22,7 @@ import metrics
 from app.database import get_session
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
-from authorization.middleware import authorize
+from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from models.cache_entry import CacheEntry
@@ -51,25 +43,17 @@ from models.responses import (
 )
 from utils.endpoints import (
     check_configuration_loaded,
-    get_agent,
-    get_system_prompt,
-    get_temp_agent,
-    get_topic_summary_system_prompt,
     store_conversation_into_cache,
     validate_conversation_ownership,
     validate_model_provider_override,
 )
-from utils.mcp_headers import handle_mcp_headers_with_toolgroups, mcp_headers_dependency
 from utils.quota import (
     check_tokens_available,
     consume_tokens,
     get_available_quotas,
 )
 from utils.suid import normalize_conversation_id
-from utils.token_counter import TokenCounter, extract_and_update_token_metrics
 from utils.transcripts import store_transcript
-from utils.types import TurnSummary, content_to_str
-from authorization.azure_token_manager import AzureEntraIDManager
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["query"])
@@ -196,39 +180,6 @@ def evaluate_model_hints(
             provider_id = user_conversation.last_used_provider
 
     return model_id, provider_id
-
-
-async def get_topic_summary(
-    question: str, client: AsyncLlamaStackClient, model_id: str
-) -> str:
-    """Get a topic summary for a question.
-
-    Args:
-        question: The question to be validated.
-        client: The AsyncLlamaStackClient to use for the request.
-        model_id: The ID of the model to use.
-    Returns:
-        str: The topic summary for the question.
-    """
-    topic_summary_system_prompt = get_topic_summary_system_prompt(configuration)
-    agent, session_id, _ = await get_temp_agent(
-        client, model_id, topic_summary_system_prompt
-    )
-    response = await agent.create_turn(
-        messages=[UserMessage(role="user", content=question).model_dump()],
-        session_id=session_id,
-        stream=False,
-        # toolgroups=None,
-    )
-    response = cast(Turn, response)
-    return (
-        content_to_str(response.output_message.content)
-        if (
-            getattr(response, "output_message", None) is not None
-            and getattr(response.output_message, "content", None) is not None
-        )
-        else ""
-    )
 
 
 async def query_endpoint_handler_base(  # pylint: disable=R0914
@@ -480,33 +431,6 @@ async def query_endpoint_handler_base(  # pylint: disable=R0914
         raise HTTPException(**response.model_dump()) from e
 
 
-@router.post("/query", responses=query_response)
-@authorize(Action.QUERY)
-async def query_endpoint_handler(
-    request: Request,
-    query_request: QueryRequest,
-    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
-    mcp_headers: dict[str, dict[str, str]] = Depends(mcp_headers_dependency),
-) -> QueryResponse:
-    """
-    Handle request to the /query endpoint using Agent API.
-
-    This is a wrapper around query_endpoint_handler_base that provides
-    the Agent API specific retrieve_response and get_topic_summary functions.
-
-    Returns:
-        QueryResponse: Contains the conversation ID and the LLM-generated response.
-    """
-    return await query_endpoint_handler_base(
-        request=request,
-        query_request=query_request,
-        auth=auth,
-        mcp_headers=mcp_headers,
-        retrieve_response_func=retrieve_response,
-        get_topic_summary_func=get_topic_summary,
-    )
-
-
 def select_model_and_provider_id(
     models: ModelListResponse, model_id: Optional[str], provider_id: Optional[str]
 ) -> tuple[str, str, str]:
@@ -550,10 +474,15 @@ def select_model_and_provider_id(
             model = next(
                 m
                 for m in models
-                if m.model_type == "llm"  # pyright: ignore[reportAttributeAccessIssue]
+                if m.custom_metadata and m.custom_metadata.get("model_type") == "llm"
             )
-            model_id = model.identifier
-            provider_id = model.provider_id
+            model_id = model.id
+            # Extract provider_id from custom_metadata
+            provider_id = (
+                str(model.custom_metadata.get("provider_id", ""))
+                if model.custom_metadata
+                else ""
+            )
             logger.info("Selected model: %s", model)
             model_label = model_id.split("/", 1)[1] if "/" in model_id else model_id
             return model_id, model_label, provider_id
@@ -568,8 +497,11 @@ def select_model_and_provider_id(
     logger.debug("Searching for model: %s, provider: %s", model_id, provider_id)
     # TODO: Create sepparate validation of provider
     if not any(
-        m.identifier in (llama_stack_model_id, model_id)
-        and m.provider_id == provider_id
+        m.id in (llama_stack_model_id, model_id)
+        and (
+            m.custom_metadata
+            and str(m.custom_metadata.get("provider_id", "")) == provider_id
+        )
         for m in models
     ):
         message = f"Model {model_id} from provider {provider_id} not found in available models"
@@ -654,205 +586,6 @@ def parse_metadata_from_text_item(
     return None
 
 
-def parse_referenced_documents(response: Turn) -> list[ReferencedDocument]:
-    """
-    Parse referenced documents from Turn.
-
-    Iterate through the steps of a response and collect all referenced
-    documents from rag tool responses.
-
-    Args:
-        response(Turn): The response object from the agent turn.
-
-    Returns:
-        list[ReferencedDocument]: A list of ReferencedDocument, each with 'doc_url' and 'doc_title'
-        representing all referenced documents found in the response.
-    """
-    docs = []
-    for step in response.steps:
-        if not isinstance(step, ToolExecutionStep):
-            continue
-        for tool_response in step.tool_responses:
-            if tool_response.tool_name != constants.DEFAULT_RAG_TOOL:
-                continue
-            for text_item in tool_response.content:
-                if not isinstance(text_item, TextContentItem):
-                    continue
-                doc = parse_metadata_from_text_item(text_item)
-                if doc:
-                    docs.append(doc)
-    return docs
-
-
-async def retrieve_response(  # pylint: disable=too-many-locals,too-many-branches,too-many-arguments
-    client: AsyncLlamaStackClient,
-    model_id: str,
-    query_request: QueryRequest,
-    token: str,
-    mcp_headers: Optional[dict[str, dict[str, str]]] = None,
-    *,
-    provider_id: str = "",
-) -> tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]:
-    """
-    Retrieve response from LLMs and agents.
-
-    Retrieves a response from the Llama Stack LLM or agent for a
-    given query, handling shield configuration, tool usage, and
-    attachment validation.
-
-    This function configures input/output shields, system prompts,
-    and toolgroups (including RAG and MCP integration) as needed
-    based on the query request and system configuration. It
-    validates attachments, manages conversation and session
-    context, and processes MCP headers for multi-component
-    processing. Shield violations in the response are detected and
-    corresponding metrics are updated.
-
-    Parameters:
-        model_id (str): The identifier of the LLM model to use.
-        provider_id (str): The identifier of the LLM provider to use.
-        query_request (QueryRequest): The user's query and associated metadata.
-        token (str): The authentication token for authorization.
-        mcp_headers (dict[str, dict[str, str]], optional): Headers for multi-component processing.
-
-    Returns:
-        tuple[TurnSummary, str, list[ReferencedDocument], TokenCounter]: A tuple containing
-        a summary of the LLM or agent's response
-        content, the conversation ID, the list of parsed referenced documents, and token usage information.
-    """
-    available_input_shields = [
-        shield.identifier
-        for shield in filter(is_input_shield, await client.shields.list())
-    ]
-    available_output_shields = [
-        shield.identifier
-        for shield in filter(is_output_shield, await client.shields.list())
-    ]
-    if not available_input_shields and not available_output_shields:
-        logger.info("No available shields. Disabling safety")
-    else:
-        logger.info(
-            "Available input shields: %s, output shields: %s",
-            available_input_shields,
-            available_output_shields,
-        )
-    # use system prompt from request or default one
-    system_prompt = get_system_prompt(query_request, configuration)
-    logger.debug("Using system prompt: %s", system_prompt)
-
-    # TODO(lucasagomes): redact attachments content before sending to LLM
-    # if attachments are provided, validate them
-    if query_request.attachments:
-        validate_attachments_metadata(query_request.attachments)
-
-    agent, conversation_id, session_id = await get_agent(
-        client,
-        model_id,
-        system_prompt,
-        available_input_shields,
-        available_output_shields,
-        query_request.conversation_id,
-        query_request.no_tools or False,
-    )
-
-    logger.debug("Conversation ID: %s, session ID: %s", conversation_id, session_id)
-    # bypass tools and MCP servers if no_tools is True
-    if query_request.no_tools:
-        mcp_headers = {}
-        agent.extra_headers = {}
-        toolgroups = None
-    else:
-        # preserve compatibility when mcp_headers is not provided
-        if mcp_headers is None:
-            mcp_headers = {}
-        mcp_headers = handle_mcp_headers_with_toolgroups(mcp_headers, configuration)
-        if not mcp_headers and token:
-            for mcp_server in configuration.mcp_servers:
-                mcp_headers[mcp_server.url] = {
-                    "Authorization": f"Bearer {token}",
-                }
-
-        agent.extra_headers = {
-            "X-LlamaStack-Provider-Data": json.dumps(
-                {
-                    "mcp_headers": mcp_headers,
-                }
-            ),
-        }
-
-        # Use specified vector stores or fetch all available ones
-        if query_request.vector_store_ids:
-            vector_db_ids = query_request.vector_store_ids
-        else:
-            vector_db_ids = [
-                vector_store.id
-                for vector_store in (await client.vector_stores.list()).data
-            ]
-        toolgroups = (get_rag_toolgroups(vector_db_ids) or []) + [
-            mcp_server.name for mcp_server in configuration.mcp_servers
-        ]
-        # Convert empty list to None for consistency with existing behavior
-        if not toolgroups:
-            toolgroups = None
-
-    # TODO: LCORE-881 - Remove if Llama Stack starts to support these mime types
-    # documents: list[Document] = [
-    #     (
-    #         {"content": doc["content"], "mime_type": "text/plain"}
-    #         if doc["mime_type"].lower() in ("application/json", "application/xml")
-    #         else doc
-    #     )
-    #     for doc in query_request.get_documents()
-    # ]
-
-    response = await agent.create_turn(
-        messages=[UserMessage(role="user", content=query_request.query).model_dump()],
-        session_id=session_id,
-        # documents=documents,
-        stream=False,
-        # toolgroups=toolgroups,
-    )
-    response = cast(Turn, response)
-
-    summary = TurnSummary(
-        llm_response=(
-            content_to_str(response.output_message.content)
-            if (
-                getattr(response, "output_message", None) is not None
-                and getattr(response.output_message, "content", None) is not None
-            )
-            else ""
-        ),
-        tool_calls=[],
-        tool_results=[],
-        rag_chunks=[],
-    )
-
-    referenced_documents = parse_referenced_documents(response)
-
-    # Update token count metrics and extract token usage in one call
-    model_label = model_id.split("/", 1)[1] if "/" in model_id else model_id
-    token_usage = extract_and_update_token_metrics(
-        response, model_label, provider_id, system_prompt
-    )
-
-    # Check for validation errors in the response
-    steps = response.steps or []
-    for step in steps:
-        if step.step_type == "shield_call" and step.violation:
-            # Metric for LLM validation errors
-            metrics.llm_calls_validation_errors_total.inc()
-        if step.step_type == "tool_execution":
-            summary.append_tool_calls_from_llama(step)
-
-    if not summary.llm_response:
-        logger.warning(
-            "Response lacks output_message.content (conversation_id=%s)",
-            conversation_id,
-        )
-    return (summary, conversation_id, referenced_documents, token_usage)
-
-
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
     """Validate the attachments metadata provided in the request.
 
@@ -881,33 +614,3 @@ def validate_attachments_metadata(attachments: list[Attachment]) -> None:
                 response="Invalid attribute value", cause=message
             )
             raise HTTPException(**response.model_dump())
-
-
-def get_rag_toolgroups(
-    vector_db_ids: list[str],
-) -> Optional[list[Toolgroup]]:
-    """
-    Return a list of RAG Tool groups if the given vector DB list is not empty.
-
-    Generate a list containing a RAG knowledge search toolgroup if
-    vector database IDs are provided.
-
-    Parameters:
-        vector_db_ids (list[str]): List of vector database identifiers to include in the toolgroup.
-
-    Returns:
-        Optional[list[Toolgroup]]: A list with a single RAG toolgroup if
-        vector_db_ids is non-empty; otherwise, None.
-    """
-    return (
-        [
-            ToolgroupAgentToolGroupWithArgs(
-                name="builtin::rag/knowledge_search",
-                args={
-                    "vector_db_ids": vector_db_ids,
-                },
-            )
-        ]
-        if vector_db_ids
-        else None
-    )

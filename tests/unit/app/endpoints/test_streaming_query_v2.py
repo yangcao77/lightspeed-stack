@@ -283,7 +283,7 @@ async def test_retrieve_response_with_shields_available(mocker: MockerFixture) -
 
     # Create mock model matching the shield's provider_resource_id
     mock_model = mocker.Mock()
-    mock_model.identifier = "moderation-model"
+    mock_model.id = "moderation-model"
     mock_client.models.list = mocker.AsyncMock(return_value=[mock_model])
 
     # Mock moderations.create to return safe (not flagged) content

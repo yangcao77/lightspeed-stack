@@ -137,7 +137,7 @@ class TestRunShieldModeration:
 
         # Setup model
         model = mocker.Mock()
-        model.identifier = "moderation-model"
+        model.id = "moderation-model"
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         # Setup moderation result (not flagged)
@@ -173,7 +173,7 @@ class TestRunShieldModeration:
 
         # Setup model
         model = mocker.Mock()
-        model.identifier = "moderation-model"
+        model.id = "moderation-model"
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         # Setup moderation result (flagged)
@@ -210,7 +210,7 @@ class TestRunShieldModeration:
 
         # Setup model
         model = mocker.Mock()
-        model.identifier = "moderation-model"
+        model.id = "moderation-model"
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         # Setup moderation result (flagged, no user_message)
@@ -245,7 +245,7 @@ class TestRunShieldModeration:
 
         # Setup models (doesn't include the shield's model)
         model = mocker.Mock()
-        model.identifier = "other-model"
+        model.id = "other-model"
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         with pytest.raises(HTTPException) as exc_info:
@@ -292,7 +292,7 @@ class TestRunShieldModeration:
 
         # Setup model
         model = mocker.Mock()
-        model.identifier = "moderation-model"
+        model.id = "moderation-model"
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         # Setup moderation to raise BadRequestError

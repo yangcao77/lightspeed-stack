@@ -6,10 +6,10 @@ methods. For HEAD HTTP method, just the HTTP response code is used.
 """
 
 import logging
+from enum import Enum
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Response, status
-from llama_stack.providers.datatypes import HealthStatus
 from llama_stack_client import APIConnectionError
 
 from authentication import get_auth_dependency
@@ -28,6 +28,18 @@ from models.responses import (
 
 logger = logging.getLogger("app.endpoints.handlers")
 router = APIRouter(tags=["health"])
+
+
+# HealthStatus enum was removed from llama_stack in newer versions
+# Defining locally for compatibility
+class HealthStatus(str, Enum):
+    """Health status enum for provider health checks."""
+
+    OK = "ok"
+    ERROR = "Error"
+    NOT_IMPLEMENTED = "not_implemented"
+    HEALTHY = "healthy"
+    UNKNOWN = "unknown"
 
 
 get_readiness_responses: dict[int | str, dict[str, Any]] = {

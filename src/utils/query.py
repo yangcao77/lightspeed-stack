@@ -3,18 +3,17 @@
 import json
 from typing import Any, AsyncIterator, Optional
 
-
-from llama_stack.apis.agents.openai_responses import (
+from llama_stack_api.openai_responses import (
     OpenAIResponseContentPartOutputText,
+    OpenAIResponseMessage,
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
-    OpenAIResponseObjectStreamResponseCreated,
+    OpenAIResponseObjectStreamResponseCompleted,
     OpenAIResponseObjectStreamResponseContentPartAdded,
+    OpenAIResponseObjectStreamResponseCreated,
     OpenAIResponseObjectStreamResponseOutputTextDelta,
     OpenAIResponseObjectStreamResponseOutputTextDone,
-    OpenAIResponseMessage,
     OpenAIResponseOutputMessageContentOutputText,
-    OpenAIResponseObjectStreamResponseCompleted,
 )
 
 

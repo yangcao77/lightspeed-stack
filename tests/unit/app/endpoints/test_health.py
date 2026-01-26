@@ -2,10 +2,10 @@
 
 from llama_stack_client import APIConnectionError
 import pytest
-from llama_stack.providers.datatypes import HealthStatus
 from pytest_mock import MockerFixture
 
 from app.endpoints.health import (
+    HealthStatus,
     get_providers_health_statuses,
     liveness_probe_get_method,
     readiness_probe_get_method,

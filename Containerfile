@@ -85,6 +85,10 @@ RUN microdnf install -y --nodocs --setopt=keepcache=0 --setopt=tsflags=nodocs jq
 RUN mkdir -p /opt/app-root/src/.llama/storage /opt/app-root/src/.llama/providers.d && \
     chown -R 1001:1001 /opt/app-root/src/.llama
 
+# Create Hugging Face cache directory for embedding models
+RUN mkdir -p /opt/app-root/src/.cache/huggingface && \
+    chown -R 1001:1001 /opt/app-root/src/.cache
+
 # Add executables from .venv to system PATH
 ENV PATH="/app-root/.venv/bin:$PATH"
 

@@ -14,7 +14,7 @@ Feature: FAISS support tests
     """
     {
       "rags": [
-        "vs_37316db9-e60d-4e5f-a1d4-d2a22219aaee"
+        "vs_503a2261-c256-45ff-90aa-580a80de64b8"
       ]
     }
     """

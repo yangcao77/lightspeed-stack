@@ -591,9 +591,11 @@ async def test_query_endpoint_handler_v2_success(
         llm_response="ANSWER", tool_calls=[], tool_results=[], rag_chunks=[]
     )
     token_usage = mocker.Mock(input_tokens=10, output_tokens=20)
+    # Use a valid SUID for conversation_id
+    test_conversation_id = "00000000-0000-0000-0000-000000000001"
     mocker.patch(
         "app.endpoints.query_v2.retrieve_response",
-        return_value=(summary, "conv-1", [], token_usage),
+        return_value=(summary, test_conversation_id, [], token_usage),
     )
     mocker.patch("app.endpoints.query_v2.get_topic_summary", return_value="Topic")
     mocker.patch("app.endpoints.query.is_transcripts_enabled", return_value=False)
@@ -612,11 +614,11 @@ async def test_query_endpoint_handler_v2_success(
     res = await query_endpoint_handler_v2(
         request=dummy_request,
         query_request=QueryRequest(query="hi"),
-        auth=("user123", "", False, "token-abc"),
+        auth=MOCK_AUTH,
         mcp_headers={},
     )
 
-    assert res.conversation_id == "conv-1"
+    assert res.conversation_id == test_conversation_id
     assert res.response == "ANSWER"
 
 
@@ -732,7 +734,7 @@ async def test_retrieve_response_with_shields_available(mocker: MockerFixture) -
 
     # Create mock model matching the shield's provider_resource_id
     mock_model = mocker.Mock()
-    mock_model.identifier = "moderation-model"
+    mock_model.id = "moderation-model"
     mock_client.models.list = mocker.AsyncMock(return_value=[mock_model])
 
     # Mock moderations.create to return safe (not flagged) content
