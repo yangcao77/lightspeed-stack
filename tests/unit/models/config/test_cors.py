@@ -17,7 +17,7 @@ def test_cors_default_configuration() -> None:
     - allow_methods is ["*"]
     - allow_headers is ["*"]
     """
-    cfg = CORSConfiguration()
+    cfg = CORSConfiguration()  # pyright: ignore[reportCallIssue]
     assert cfg is not None
     assert cfg.allow_origins == ["*"]
     assert cfg.allow_credentials is False

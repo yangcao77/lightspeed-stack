@@ -23,8 +23,8 @@ def test_database_configuration(subtests: SubTests) -> None:
             password="password",
             port=1234,
             ca_cert_path=Path("tests/configuration/server.crt"),
-        )
-        d = DatabaseConfiguration(postgres=d1)
+        )  # pyright: ignore[reportCallIssue]
+        d = DatabaseConfiguration(postgres=d1)  # pyright: ignore[reportCallIssue]
         assert d is not None
         assert d.sqlite is None
         assert d.postgres is not None
@@ -35,7 +35,7 @@ def test_database_configuration(subtests: SubTests) -> None:
         d1 = SQLiteDatabaseConfiguration(
             db_path="/tmp/foo/bar/baz",
         )
-        d = DatabaseConfiguration(sqlite=d1)
+        d = DatabaseConfiguration(sqlite=d1)  # pyright: ignore[reportCallIssue]
         assert d is not None
         assert d.sqlite is not None
         assert d.postgres is None
@@ -45,7 +45,7 @@ def test_database_configuration(subtests: SubTests) -> None:
 
 def test_no_databases_configuration() -> None:
     """Test if no databases configuration is checked."""
-    d = DatabaseConfiguration()
+    d = DatabaseConfiguration()  # pyright: ignore[reportCallIssue]
     assert d is not None
 
     # default should be SQLite when nothing is provided
@@ -77,7 +77,9 @@ def test_two_databases_configuration() -> None:
     Raises:
         ValidationError: If more than one database configuration is provided.
     """
-    d1 = PostgreSQLDatabaseConfiguration(db="db", user="user", password="password")
+    d1 = PostgreSQLDatabaseConfiguration(
+        db="db", user="user", password="password"
+    )  # pyright: ignore[reportCallIssue]
     d2 = SQLiteDatabaseConfiguration(db_path="foo_bar_baz")
     with pytest.raises(
         ValidationError, match="Only one database configuration can be provided"

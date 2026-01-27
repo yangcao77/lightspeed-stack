@@ -11,7 +11,7 @@ def test_inference_constructor() -> None:
     parameters.
     """
     # Test with no default provider or model, as they are optional
-    inference_config = InferenceConfiguration()
+    inference_config = InferenceConfiguration()  # pyright: ignore[reportCallIssue]
     assert inference_config is not None
     assert inference_config.default_provider is None
     assert inference_config.default_model is None
@@ -36,7 +36,7 @@ def test_inference_default_model_missing() -> None:
     ):
         InferenceConfiguration(
             default_provider="default_provider",
-        )
+        )  # pyright: ignore[reportCallIssue]
 
 
 def test_inference_default_provider_missing() -> None:
@@ -49,4 +49,4 @@ def test_inference_default_provider_missing() -> None:
     ):
         InferenceConfiguration(
             default_model="default_model",
-        )
+        )  # pyright: ignore[reportCallIssue]
