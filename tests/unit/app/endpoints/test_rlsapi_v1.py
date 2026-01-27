@@ -13,12 +13,15 @@ from pytest_mock import MockerFixture
 
 import constants
 from app.endpoints.rlsapi_v1 import (
+    AUTH_DISABLED,
     _build_instructions,
     _get_default_model_id,
+    _get_rh_identity_context,
     infer_endpoint,
     retrieve_simple_response,
 )
 from authentication.interface import AuthTuple
+from authentication.rh_identity import RHIdentityData
 from configuration import AppConfig
 from models.rlsapi.requests import (
     RlsapiV1Attachment,
@@ -32,6 +35,26 @@ from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
 
 MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
+
+
+def _create_mock_request(mocker: MockerFixture, rh_identity: Any = None) -> Any:
+    """Create a mock FastAPI Request with optional RH Identity data."""
+    mock_request = mocker.Mock()
+    mock_request.headers = {"User-Agent": "CLA/0.4.0"}
+
+    if rh_identity is not None:
+        mock_request.state = mocker.Mock()
+        mock_request.state.rh_identity_data = rh_identity
+    else:
+        # Use spec=[] to create a Mock with no attributes, simulating absent rh_identity_data
+        mock_request.state = mocker.Mock(spec=[])
+
+    return mock_request
+
+
+def _create_mock_background_tasks(mocker: MockerFixture) -> Any:
+    """Create a mock BackgroundTasks object."""
+    return mocker.Mock()
 
 
 def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
@@ -225,19 +248,68 @@ async def test_retrieve_simple_response_api_connection_error(
         await retrieve_simple_response("Test question", constants.DEFAULT_SYSTEM_PROMPT)
 
 
+# --- Test _get_rh_identity_context ---
+
+
+def test_get_rh_identity_context_with_rh_identity(mocker: MockerFixture) -> None:
+    """Test extraction of org_id and system_id from RH Identity data."""
+    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+    mock_rh_identity.get_org_id.return_value = "12345678"
+    mock_rh_identity.get_user_id.return_value = "system-cn-abc123"
+
+    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
+
+    org_id, system_id = _get_rh_identity_context(mock_request)
+
+    assert org_id == "12345678"
+    assert system_id == "system-cn-abc123"
+
+
+def test_get_rh_identity_context_without_rh_identity(mocker: MockerFixture) -> None:
+    """Test auth_disabled defaults when RH Identity is not configured."""
+    mock_request = _create_mock_request(mocker, rh_identity=None)
+
+    org_id, system_id = _get_rh_identity_context(mock_request)
+
+    assert org_id == AUTH_DISABLED
+    assert system_id == AUTH_DISABLED
+
+
+def test_get_rh_identity_context_with_empty_values(mocker: MockerFixture) -> None:
+    """Test auth_disabled fallback when RH Identity returns empty strings."""
+    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+    mock_rh_identity.get_org_id.return_value = ""
+    mock_rh_identity.get_user_id.return_value = ""
+
+    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
+
+    org_id, system_id = _get_rh_identity_context(mock_request)
+
+    assert org_id == AUTH_DISABLED
+    assert system_id == AUTH_DISABLED
+
+
 # --- Test infer_endpoint ---
 
 
 @pytest.mark.asyncio
 async def test_infer_minimal_request(
+    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns valid response with LLM text."""
-    request = RlsapiV1InferRequest(question="How do I list files?")
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
 
-    response = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
+    response = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
 
     assert isinstance(response, RlsapiV1InferResponse)
     assert response.data.text == "This is a test LLM response."
@@ -247,12 +319,13 @@ async def test_infer_minimal_request(
 
 @pytest.mark.asyncio
 async def test_infer_full_context_request(
+    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint handles full context (stdin, attachments, terminal)."""
-    request = RlsapiV1InferRequest(
+    infer_request = RlsapiV1InferRequest(
         question="Why did this command fail?",
         context=RlsapiV1Context(
             stdin="some piped input",
@@ -261,8 +334,15 @@ async def test_infer_full_context_request(
             systeminfo=RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64"),
         ),
     )
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
 
-    response = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
+    response = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
 
     assert isinstance(response, RlsapiV1InferResponse)
     assert response.data.text
@@ -271,46 +351,157 @@ async def test_infer_full_context_request(
 
 @pytest.mark.asyncio
 async def test_infer_generates_unique_request_ids(
+    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
 ) -> None:
     """Test that each /infer call generates a unique request_id."""
-    request = RlsapiV1InferRequest(question="How do I list files?")
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
 
-    response1 = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
-    response2 = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
+    response1 = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+    response2 = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
 
     assert response1.data.request_id != response2.data.request_id
 
 
 @pytest.mark.asyncio
 async def test_infer_api_connection_error_returns_503(
+    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_api_connection_error: None,
     mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns 503 when LLM service is unavailable."""
-    request = RlsapiV1InferRequest(question="Test question")
+    infer_request = RlsapiV1InferRequest(question="Test question")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
 
     with pytest.raises(HTTPException) as exc_info:
-        await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
 
     assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
 
 
 @pytest.mark.asyncio
 async def test_infer_empty_llm_response_returns_fallback(
+    mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_empty_llm_response: None,
     mock_auth_resolvers: None,
 ) -> None:
     """Test /infer endpoint returns fallback text when LLM returns empty response."""
-    request = RlsapiV1InferRequest(question="Test question")
+    infer_request = RlsapiV1InferRequest(question="Test question")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
 
-    response = await infer_endpoint(infer_request=request, auth=MOCK_AUTH)
+    response = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
 
     assert response.data.text == constants.UNABLE_TO_PROCESS_RESPONSE
+
+
+# --- Test Splunk integration ---
+
+
+@pytest.mark.asyncio
+async def test_infer_queues_splunk_event_on_success(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+) -> None:
+    """Test that successful inference queues a Splunk event via BackgroundTasks."""
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
+
+    await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    mock_background_tasks.add_task.assert_called_once()
+    call_args = mock_background_tasks.add_task.call_args
+    assert call_args[0][1]["question"] == "How do I list files?"
+    assert call_args[0][2] == "infer_with_llm"
+
+
+@pytest.mark.asyncio
+async def test_infer_queues_splunk_error_event_on_failure(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_api_connection_error: None,
+    mock_auth_resolvers: None,
+) -> None:
+    """Test that failed inference queues a Splunk error event."""
+    infer_request = RlsapiV1InferRequest(question="Test question")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
+
+    with pytest.raises(HTTPException):
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
+
+    mock_background_tasks.add_task.assert_called_once()
+    call_args = mock_background_tasks.add_task.call_args
+    assert call_args[0][2] == "infer_error"
+
+
+@pytest.mark.asyncio
+async def test_infer_splunk_event_includes_rh_identity_context(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+) -> None:
+    """Test that Splunk event includes org_id and system_id from RH Identity."""
+    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+    mock_rh_identity.get_org_id.return_value = "org123"
+    mock_rh_identity.get_user_id.return_value = "system456"
+
+    infer_request = RlsapiV1InferRequest(question="Test question")
+    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
+
+    await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    call_args = mock_background_tasks.add_task.call_args
+    event = call_args[0][1]
+    assert event["org_id"] == "org123"
+    assert event["system_id"] == "system456"
 
 
 # --- Test request validation ---
