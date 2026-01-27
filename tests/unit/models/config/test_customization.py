@@ -1,5 +1,6 @@
 """Unit tests for Customization model."""
 
+from pathlib import Path
 import pytest
 from pytest_subtests import SubTests
 
@@ -46,7 +47,7 @@ def test_service_customization(subtests: SubTests) -> None:
     ):
         c = Customization(
             disable_query_system_prompt=True,
-            system_prompt_path="tests/configuration/system_prompt.txt",
+            system_prompt_path=Path("tests/configuration/system_prompt.txt"),
         )
         assert c.system_prompt is not None
         # check that the system prompt has been loaded from the provided file
@@ -58,14 +59,16 @@ def test_service_customization(subtests: SubTests) -> None:
 def test_service_customization_wrong_system_prompt_path() -> None:
     """Check the service customization class."""
     with pytest.raises(ValidationError, match="Path does not point to a file"):
-        _ = Customization(system_prompt_path="/path/does/not/exists")
+        _ = Customization(system_prompt_path=Path("/path/does/not/exists"))
 
 
 def test_service_customization_correct_system_prompt_path(subtests: SubTests) -> None:
     """Check the service customization class."""
     with subtests.test(msg="One line system prompt"):
         # pass a file containing system prompt
-        c = Customization(system_prompt_path="tests/configuration/system_prompt.txt")
+        c = Customization(
+            system_prompt_path=Path("tests/configuration/system_prompt.txt")
+        )
         assert c is not None
         # check that the system prompt has been loaded from the provided file
         assert c.system_prompt == "This is system prompt."
@@ -73,9 +76,10 @@ def test_service_customization_correct_system_prompt_path(subtests: SubTests) ->
     with subtests.test(msg="Multi line system prompt"):
         # pass a file containing system prompt
         c = Customization(
-            system_prompt_path="tests/configuration/multiline_system_prompt.txt"
+            system_prompt_path=Path("tests/configuration/multiline_system_prompt.txt")
         )
         assert c is not None
+        assert c.system_prompt is not None
         # check that the system prompt has been loaded from the provided file
         assert "You are OpenShift Lightspeed" in c.system_prompt
         assert "Here are your instructions" in c.system_prompt

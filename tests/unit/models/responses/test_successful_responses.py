@@ -2,10 +2,8 @@
 
 """Unit tests for all successful response models."""
 
-from typing import Any
-
 import pytest
-from pydantic import AnyUrl, ValidationError
+from pydantic import AnyUrl, ValidationError, ConfigDict
 from pydantic_core import SchemaError
 
 from models.config import (
@@ -655,7 +653,7 @@ class TestConversationDeleteResponse:
     def test_missing_required_parameters(self) -> None:
         """Test ConversationDeleteResponse raises ValidationError when required fields missing."""
         with pytest.raises(TypeError):
-            ConversationDeleteResponse()  # pylint: disable=missing-kwoa
+            ConversationDeleteResponse()  # pylint: disable=missing-kwoa # pyright: ignore
         with pytest.raises(TypeError):
             ConversationDeleteResponse(deleted=True)  # pylint: disable=missing-kwoa
 
@@ -936,10 +934,28 @@ class TestConfigurationResponse:
         # Create a minimal Configuration object for testing
         config = Configuration(
             name="test",
-            service=ServiceConfiguration(host="localhost", port=8080),
-            llama_stack=LlamaStackConfiguration(url="http://localhost:8321"),
-            user_data_collection=UserDataCollection(feedback_enabled=False),
-        )
+            service=ServiceConfiguration(
+                host="localhost",
+                port=8080,
+                base_url=None,
+                auth_enabled=True,
+                workers=10,
+                color_log=True,
+                access_log=True,
+            ),
+            llama_stack=LlamaStackConfiguration(
+                url="http://localhost:8321",
+                use_as_library_client=False,
+                api_key=None,
+                library_client_config_path=None,
+            ),
+            user_data_collection=UserDataCollection(
+                feedback_enabled=False,
+                feedback_storage=None,
+                transcripts_enabled=False,
+                transcripts_storage=None,
+            ),
+        )  # pyright: ignore[reportCallIssue]
         response = ConfigurationResponse(configuration=config)
         assert isinstance(response, AbstractSuccessfulResponse)
         assert isinstance(response.configuration, Configuration)
@@ -1005,7 +1021,7 @@ class TestAbstractSuccessfulResponseOpenAPI:
             """Class without examples."""
 
             field: str = "test"
-            model_config: dict[str, Any] = {"json_schema_extra": {}}
+            model_config: ConfigDict = {"json_schema_extra": {}}  # pyright: ignore
 
         with pytest.raises(SchemaError, match="Examples not found"):
             NoExamplesResponse.openapi_response()

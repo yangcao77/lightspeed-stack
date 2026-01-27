@@ -31,6 +31,7 @@ class TestFeedbackRequest:
                 conversation_id="invalid-uuid",
                 user_question="What is OpenStack?",
                 llm_response="OpenStack is a cloud computing platform.",
+                sentiment=1,
             )
 
     def test_check_sentiment(self) -> None:
@@ -69,6 +70,7 @@ class TestFeedbackRequest:
                 user_question="What is this?",
                 llm_response="Some response",
                 user_feedback="a" * 4097,
+                sentiment=1,
             )
 
     def test_with_categories(self) -> None:
@@ -78,10 +80,12 @@ class TestFeedbackRequest:
             user_question="What is Kubernetes?",
             llm_response="It's just some software thing.",
             categories=[FeedbackCategory.INCORRECT, FeedbackCategory.INCOMPLETE],
+            sentiment=None,
         )
         assert fr.conversation_id == "123e4567-e89b-12d3-a456-426614174000"
         assert fr.user_question == "What is Kubernetes?"
         assert fr.llm_response == "It's just some software thing."
+        assert fr.categories is not None
         assert set(fr.categories) == {
             FeedbackCategory.INCORRECT,
             FeedbackCategory.INCOMPLETE,
@@ -96,6 +100,7 @@ class TestFeedbackRequest:
             user_question="What is Docker?",
             llm_response="Docker is a database system.",
             categories=[FeedbackCategory.INCORRECT],
+            sentiment=1,
         )
         assert fr.categories == [FeedbackCategory.INCORRECT]
 
@@ -110,7 +115,9 @@ class TestFeedbackRequest:
                 FeedbackCategory.INCOMPLETE,
                 FeedbackCategory.INCORRECT,  # Duplicate
             ],
+            sentiment=1,
         )
+        assert fr.categories is not None
         assert len(fr.categories) == 2
         assert set(fr.categories) == {
             FeedbackCategory.INCORRECT,
@@ -127,6 +134,7 @@ class TestFeedbackRequest:
                 user_question="What is testing?",
                 llm_response="Testing is a verification process.",
                 categories=[],  # Empty list should be converted to None
+                sentiment=None,
             )
 
     def test_categories_only_feedback(self) -> None:
@@ -136,9 +144,11 @@ class TestFeedbackRequest:
             user_question="Explain machine learning",
             llm_response="It's AI stuff.",
             categories=[FeedbackCategory.NOT_RELEVANT, FeedbackCategory.INCOMPLETE],
+            sentiment=None,
         )
         assert fr.sentiment is None
         assert fr.user_feedback is None
+        assert fr.categories is not None
         assert len(fr.categories) == 2
 
     def test_mixed_feedback_types(self) -> None:
@@ -153,6 +163,7 @@ class TestFeedbackRequest:
         )
         assert fr.sentiment == -1
         assert fr.user_feedback == "This response is not informative and lacks detail"
+        assert fr.categories is not None
         assert len(fr.categories) == 2
         assert set(fr.categories) == {
             FeedbackCategory.OTHER,
@@ -168,7 +179,9 @@ class TestFeedbackRequest:
             user_question="Test question",
             llm_response="Test response",
             categories=all_categories,
+            sentiment=1,
         )
+        assert fr.categories is not None
         assert len(fr.categories) == len(all_categories)
         for category in all_categories:
             assert category in fr.categories
@@ -180,7 +193,8 @@ class TestFeedbackRequest:
                 conversation_id="123e4567-e89b-12d3-a456-426614174000",
                 user_question="Test question",
                 llm_response="Test response",
-                categories="invalid_type",  # Should be list, not string
+                categories="invalid_type",  # pyright: ignore Should be list, not string
+                sentiment=1,
             )
 
     def test_empty_user_feedback_not_sufficient(self) -> None:

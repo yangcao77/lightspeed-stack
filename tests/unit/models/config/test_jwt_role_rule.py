@@ -16,7 +16,7 @@ def test_jwt_role_rule_missing_attributes() -> None:
     ValidationError whose message contains "validation errors".
     """
     with pytest.raises(ValidationError, match="validation errors"):
-        _ = JwtRoleRule()
+        _ = JwtRoleRule()  # pyright: ignore[reportCallIssue]
 
 
 def test_jwt_role_rule_correct_attributes() -> None:
