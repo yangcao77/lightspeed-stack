@@ -13,7 +13,9 @@ class TestQueryRequest:
 
     def test_constructor(self) -> None:
         """Test the QueryRequest constructor."""
-        qr = QueryRequest(query="Tell me about Kubernetes")
+        qr = QueryRequest(
+            query="Tell me about Kubernetes"
+        )  # pyright: ignore[reportCallIssue]
 
         assert qr.query == "Tell me about Kubernetes"
         assert qr.conversation_id is None
@@ -25,7 +27,9 @@ class TestQueryRequest:
     def test_constructor_wrong_conversation_id(self) -> None:
         """Test the QueryRequest constructor with wrong conversation_id."""
         with pytest.raises(ValueError, match="Improper conversation ID 'xyzzy'"):
-            _ = QueryRequest(query="Tell me about Kubernetes", conversation_id="xyzzy")
+            _ = QueryRequest(
+                query="Tell me about Kubernetes", conversation_id="xyzzy"
+            )  # pyright: ignore[reportCallIssue]
 
     def test_with_attachments(self) -> None:
         """Test the QueryRequest with attachments."""
@@ -44,7 +48,7 @@ class TestQueryRequest:
         qr = QueryRequest(
             query="Tell me about Kubernetes",
             attachments=attachments,
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert qr.attachments is not None
         assert len(qr.attachments) == 2
 
@@ -67,7 +71,7 @@ class TestQueryRequest:
             provider="OpenAI",
             model="gpt-3.5-turbo",
             system_prompt="You are a helpful assistant",
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert qr.query == "Tell me about Kubernetes"
         assert qr.conversation_id == "123e4567-e89b-12d3-a456-426614174000"
         assert qr.provider == "OpenAI"
@@ -94,7 +98,7 @@ class TestQueryRequest:
             provider="OpenAI",
             model="gpt-3.5-turbo",
             media_type="text/plain",
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert qr is not None
         assert qr.provider == "OpenAI"
         assert qr.model == "gpt-3.5-turbo"
@@ -107,10 +111,12 @@ class TestQueryRequest:
         """Test that generate_topic_summary can be explicitly set to False."""
         qr = QueryRequest(
             query="Tell me about Kubernetes", generate_topic_summary=False
-        )
+        )  # pyright: ignore[reportCallIssue]
         assert qr.generate_topic_summary is False
 
     def test_generate_topic_summary_explicit_true(self) -> None:
         """Test that generate_topic_summary can be explicitly set to True."""
-        qr = QueryRequest(query="Tell me about Kubernetes", generate_topic_summary=True)
+        qr = QueryRequest(
+            query="Tell me about Kubernetes", generate_topic_summary=True
+        )  # pyright: ignore[reportCallIssue]
         assert qr.generate_topic_summary is True
