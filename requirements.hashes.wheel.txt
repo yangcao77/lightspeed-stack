@@ -229,8 +229,6 @@ scipy==1.16.3 \
     --hash=sha256:4febf9526575877c3c5cc0406b88b8cebfaa2e637e774aca42f91a4ace3f5bd0 \
     --hash=sha256:a0a03e05bd615457636280d89f77ecbdc58ee3820b1a0b14fbcc6ae650646bcd \
     --hash=sha256:b4cd9382be92f86cb762f6172b0b0eba036cde7325a2540a6412f185ad4fad71
-sentence-transformers==5.2.0 \
-    --hash=sha256:46bf518069ee6206a3c1b3d35a1d59ef32145affe4f3ec1058a044794bfa3df0
 setuptools==80.9.0 \
     --hash=sha256:2433beb21d0507141c56e9e0cf2efb0fd30398ca68909c8c6ecb9b33eb7ab53c
 six==1.17.0 \

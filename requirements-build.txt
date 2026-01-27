@@ -59,7 +59,7 @@ packaging==26.0
     #   hatchling
     #   setuptools-scm
     #   wheel
-pathspec==1.0.3
+pathspec==1.0.4
     # via hatchling
 pdm-backend==2.4.6
     # via fastapi
@@ -97,6 +97,7 @@ wheel==0.46.3
     #   cachetools
     #   litellm
     #   pycparser
+    #   sentence-transformers
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==80.10.2
@@ -125,6 +126,7 @@ setuptools==80.10.2
     #   pycryptodomex
     #   regex
     #   semver
+    #   sentence-transformers
     #   setuptools-rust
     #   setuptools-scm
     #   sse-starlette
