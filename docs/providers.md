@@ -37,7 +37,7 @@ The tables below summarize each provider category, containing the following atri
 | sentence-transformers | inline | `torch torchvision torchao>=0.12.0 --extra-index-url https://download.pytorch.org/whl/cpu`, `sentence-transformers --no-deps` | ❌ |
 | anthropic | remote | `litellm` | ❌ |
 | azure | remote | — | ✅ |
-| bedrock | remote | `boto3` | ❌ |
+| bedrock | remote | - | ✅ |
 | cerebras | remote | `cerebras_cloud_sdk` | ❌ |
 | databricks | remote | — | ❌ |
 | fireworks | remote | `fireworks-ai<=0.17.16` | ❌ |
