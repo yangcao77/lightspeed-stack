@@ -139,39 +139,58 @@ def _get_base_prompt() -> str:
     return constants.DEFAULT_SYSTEM_PROMPT
 
 
-def _get_default_model_id() -> str:
-    """Get the default model ID from configuration.
+async def _get_default_model_id() -> str:
+    """Get the default model ID from configuration or auto-discovery.
 
-    Returns the model identifier in Llama Stack format (provider/model).
+    Model selection precedence:
+    1. If default model and provider are configured, use them.
+    2. Otherwise, query Llama Stack for available LLM models and select the first one.
 
     Returns:
-        The model identifier string.
+        The model identifier string in "provider/model" format.
 
     Raises:
-        HTTPException: If no model can be determined from configuration.
+        HTTPException: If no model can be determined from configuration or discovery.
     """
-    if configuration.inference is None:
-        msg = "No inference configuration available"
+    # 1. Try configured defaults
+    if configuration.inference is not None:
+        model_id = configuration.inference.default_model
+        provider_id = configuration.inference.default_provider
+
+        if model_id and provider_id:
+            return f"{provider_id}/{model_id}"
+
+    # 2. Auto-discover from Llama Stack
+    client = AsyncLlamaStackClientHolder().get_client()
+    try:
+        models = await client.models.list()
+    except APIConnectionError as e:
+        error_response = ServiceUnavailableResponse(
+            backend_name="Llama Stack",
+            cause=str(e),
+        )
+        raise HTTPException(**error_response.model_dump()) from e
+    except APIStatusError as e:
+        error_response = InternalServerErrorResponse.generic()
+        raise HTTPException(**error_response.model_dump()) from e
+
+    llm_models = [
+        m
+        for m in models
+        if m.custom_metadata and m.custom_metadata.get("model_type") == "llm"
+    ]
+    if not llm_models:
+        msg = "No LLM model found in available models"
         logger.error(msg)
         error_response = ServiceUnavailableResponse(
-            backend_name="inference service (configuration)",
+            backend_name="inference service",
             cause=msg,
         )
         raise HTTPException(**error_response.model_dump())
 
-    model_id = configuration.inference.default_model
-    provider_id = configuration.inference.default_provider
-
-    if model_id and provider_id:
-        return f"{provider_id}/{model_id}"
-
-    msg = "No default model configured for rlsapi v1 inference"
-    logger.error(msg)
-    error_response = ServiceUnavailableResponse(
-        backend_name="inference service (configuration)",
-        cause=msg,
-    )
-    raise HTTPException(**error_response.model_dump())
+    model = llm_models[0]
+    logger.info("Auto-discovered LLM model for rlsapi v1: %s", model.id)
+    return model.id
 
 
 async def retrieve_simple_response(
@@ -200,7 +219,7 @@ async def retrieve_simple_response(
         HTTPException: 503 if no default model is configured.
     """
     client = AsyncLlamaStackClientHolder().get_client()
-    resolved_model_id = model_id or _get_default_model_id()
+    resolved_model_id = model_id or await _get_default_model_id()
     logger.debug("Using model %s for rlsapi v1 inference", resolved_model_id)
 
     response = await client.responses.create(
@@ -377,7 +396,7 @@ async def infer_endpoint(  # pylint: disable=R0914
 
     input_source = infer_request.get_input_source()
     instructions = _build_instructions(infer_request.context.systeminfo)
-    model_id = _get_default_model_id()
+    model_id = await _get_default_model_id()
     provider, model = extract_provider_and_model_from_model_id(model_id)
     mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
     logger.debug(
