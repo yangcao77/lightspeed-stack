@@ -7,11 +7,12 @@ from collections.abc import Mapping, Sequence
 from typing import Any, Optional, cast
 
 from fastapi import HTTPException
+from llama_stack_api import OpenAIResponseObject
 from llama_stack_api.openai_responses import (
     OpenAIResponseContentPartRefusal as ContentPartRefusal,
     OpenAIResponseInputMessageContent as InputMessageContent,
+    OpenAIResponseInputMessageContentFile as InputFilePart,
     OpenAIResponseInputMessageContentText as InputTextPart,
-    OpenAIResponseInputTool as InputTool,
     OpenAIResponseInputToolFileSearch as InputToolFileSearch,
     OpenAIResponseInputToolMCP as InputToolMCP,
     OpenAIResponseMCPApprovalRequest as MCPApprovalRequest,
@@ -27,6 +28,9 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools as MCPListTools,
     OpenAIResponseOutputMessageWebSearchToolCall as WebSearchCall,
     OpenAIResponseUsage as ResponseUsage,
+    OpenAIResponseInputTool as InputTool,
+    OpenAIResponseUsageInputTokensDetails as UsageInputTokensDetails,
+    OpenAIResponseUsageOutputTokensDetails as UsageOutputTokensDetails,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
 
@@ -55,6 +59,7 @@ from utils.token_counter import TokenCounter
 from utils.types import (
     RAGChunk,
     ReferencedDocument,
+    ResponseInput,
     ResponseItem,
     ResponsesApiParams,
     ToolCallSummary,
@@ -1045,7 +1050,7 @@ async def select_model_for_responses(
 
 
 def build_turn_summary(
-    response: Optional[ResponseObject],
+    response: Optional[OpenAIResponseObject],
     model: str,
     vector_store_ids: Optional[list[str]] = None,
     rag_id_mapping: Optional[dict[str, str]] = None,
@@ -1067,6 +1072,7 @@ def build_turn_summary(
     if response is None or response.output is None:
         return summary
 
+    summary.id = response.id
     # Extract text from output items
     summary.llm_response = extract_text_from_response_items(response.output)
 
@@ -1118,15 +1124,12 @@ def extract_text_from_response_item(response_item: ResponseItem) -> str:
         response_item: A single item from request input or response output.
 
     Returns:
-        Extracted text content, or empty string if not a message or role is user.
+        Extracted text content, or empty string if not a message.
     """
     if response_item.type != "message":
         return ""
 
     message_item = cast(ResponseMessage, response_item)
-    if message_item.role == "user":
-        return ""
-
     return _extract_text_from_content(message_item.content)
 
 
@@ -1178,3 +1181,70 @@ def deduplicate_referenced_documents(
         seen.add(key)
         out.append(d)
     return out
+
+
+async def create_new_conversation(
+    client: AsyncLlamaStackClient,
+) -> str:
+    """Create a new conversation via the Llama Stack Conversations API.
+
+    Args:
+        client: The Llama Stack client used to create the conversation.
+
+    Returns:
+        The new conversation's ID (string), as returned by the API.
+    """
+    try:
+        conversation = await client.conversations.create(metadata={})
+        return conversation.id
+    except APIConnectionError as e:
+        error_response = ServiceUnavailableResponse(
+            backend_name="Llama Stack",
+            cause=str(e),
+        )
+        raise HTTPException(**error_response.model_dump()) from e
+    except APIStatusError as e:
+        error_response = InternalServerErrorResponse.generic()
+        raise HTTPException(**error_response.model_dump()) from e
+
+
+def get_zero_usage() -> ResponseUsage:
+    """Create a Usage object with zero values for input and output tokens.
+
+    Returns:
+        Usage object with zero values for input and output tokens.
+    """
+    return ResponseUsage(
+        input_tokens=0,
+        input_tokens_details=UsageInputTokensDetails(cached_tokens=0),
+        output_tokens=0,
+        output_tokens_details=UsageOutputTokensDetails(reasoning_tokens=0),
+        total_tokens=0,
+    )
+
+
+def extract_attachments_text(response_input: ResponseInput) -> str:
+    """Extract file_data from input_file parts inside message content.
+
+    Args:
+        response_input: Response input (string or list of response items).
+
+    Returns:
+        All present file_data values joined by double newline.
+    """
+    if isinstance(response_input, str):
+        return ""
+    file_data_parts: list[str] = []
+    for item in response_input:
+        if item.type != "message":
+            continue
+        message = cast(ResponseMessage, item)
+        content = message.content
+        if isinstance(content, str):
+            continue
+        for part in content:
+            if part.type == "input_file":
+                file_part = cast(InputFilePart, part)
+                if file_part.file_data:
+                    file_data_parts.append(file_part.file_data)
+    return "\n\n".join(file_data_parts)
