@@ -34,6 +34,7 @@ import constants
 import metrics
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL
+from models.config import ByokRag
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest
 from models.responses import (
@@ -142,6 +143,11 @@ async def prepare_tools(  # pylint: disable=too-many-arguments,too-many-position
         except APIStatusError as e:
             error_response = InternalServerErrorResponse.generic()
             raise HTTPException(**error_response.model_dump()) from e
+    else:
+        # Translate customer-facing BYOK rag_ids to llama-stack vector_db_ids
+        vector_store_ids = resolve_vector_store_ids(
+            vector_store_ids, configuration.configuration.byok_rag
+        )
 
     # Add RAG tools if vector stores are available
     rag_tools = get_rag_tools(vector_store_ids)
@@ -307,6 +313,28 @@ def extract_vector_store_ids_from_tools(
         if tool.type == "file_search":
             vector_store_ids.extend(tool.vector_store_ids)
     return vector_store_ids
+
+
+def resolve_vector_store_ids(
+    vector_store_ids: list[str], byok_rags: list[ByokRag]
+) -> list[str]:
+    """Translate customer-facing BYOK rag_ids to llama-stack vector_db_ids.
+
+    Each ID is looked up against the BYOK RAG configuration. If a matching
+    ``rag_id`` is found, the corresponding ``vector_db_id`` is returned.
+    Otherwise the ID is passed through unchanged (assumed to already be a
+    llama-stack vector store ID).
+
+    Parameters:
+        vector_store_ids: List of IDs from the client request (may be
+            customer-facing rag_ids or raw llama-stack vector_db_ids).
+        byok_rags: BYOK RAG configuration entries.
+
+    Returns:
+        List of llama-stack vector_db_ids ready for the Llama Stack API.
+    """
+    rag_id_to_vector_db_id = {brag.rag_id: brag.vector_db_id for brag in byok_rags}
+    return [rag_id_to_vector_db_id.get(vs_id, vs_id) for vs_id in vector_store_ids]
 
 
 def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[InputToolFileSearch]]:
