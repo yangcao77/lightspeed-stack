@@ -142,20 +142,21 @@ uv run behave tests/e2e/features/health.feature --tags=-skip-in-library-mode
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `E2E_DEPLOYMENT_MODE` | `server` | `server` or `library`. Drives config paths and which scenarios run (e.g. `@skip-in-library-mode`). |
-| `E2E_LSC_HOSTNAME` | `localhost` | Host of the Lightspeed Core Stack API. |
-| `E2E_LSC_PORT` | `8080` | Port of the Lightspeed Core Stack API. |
-| `E2E_LLAMA_HOSTNAME` | `localhost` | Host of the Llama Stack service (server mode). |
-| `E2E_LLAMA_PORT` | `8321` | Port of the Llama Stack service. |
-| `E2E_LLAMA_STACK_URL` | — | Full base URL for Llama Stack (overrides host/port if set). Used by shield helpers. |
-| `E2E_LLAMA_STACK_API_KEY` | `xyzzy` | API key for Llama Stack client (e.g. shield API). |
-| `E2E_DEFAULT_MODEL_OVERRIDE` | — | Override default LLM model id (e.g. `gpt-4o-mini`). |
-| `E2E_DEFAULT_PROVIDER_OVERRIDE` | — | Override default provider id (e.g. `openai`). |
-| `FAISS_VECTOR_STORE_ID` | — | Vector store id for FAISS-related scenarios. |
-| `RUNNING_PROW` | — | Set in Prow/OpenShift; enables Prow config paths and pod/container ops. |
-| `OPENAI_API_KEY` | — | **Required.** Used by the app and Llama Stack for LLM calls (e.g. OpenAI). The E2E tests and the stack will not run correctly without it. |
+| Variable                        | Default     | Description                                                                                                                               |
+|---------------------------------|-------------|-------------------------------------------------------------------------------------------------------------------------------------------|
+| `E2E_DEPLOYMENT_MODE`           | `server`    | `server` or `library`. Drives config paths and which scenarios run (e.g. `@skip-in-library-mode`).                                        |
+| `E2E_LSC_HOSTNAME`              | `localhost` | Host of the Lightspeed Core Stack API.                                                                                                    |
+| `E2E_LSC_PORT`                  | `8080`      | Port of the Lightspeed Core Stack API.                                                                                                    |
+| `E2E_LLAMA_HOSTNAME`            | `localhost` | Host of the Llama Stack service (server mode).                                                                                            |
+| `E2E_LLAMA_PORT`                | `8321`      | Port of the Llama Stack service.                                                                                                          |
+| `E2E_LLAMA_STACK_URL`           | —           | Full base URL for Llama Stack (overrides host/port if set). Used by shield helpers.                                                       |
+| `E2E_LLAMA_STACK_API_KEY`       | `xyzzy`     | API key for Llama Stack client (e.g. shield API).                                                                                         |
+| `E2E_DEFAULT_MODEL_OVERRIDE`    | —           | Override default LLM model id (e.g. `gpt-4o-mini`).                                                                                       |
+| `E2E_DEFAULT_PROVIDER_OVERRIDE` | —           | Override default provider id (e.g. `openai`).                                                                                             |
+| `FAISS_VECTOR_STORE_ID`         | —           | Vector store id for FAISS-related scenarios.                                                                                              |
+| `RUNNING_PROW`                  | —           | Set in Prow/OpenShift; enables Prow config paths and pod/container ops.                                                                   |
+| `OPENAI_API_KEY`                | —           | **Required.** Used by the app and Llama Stack for LLM calls (e.g. OpenAI). The E2E tests and the stack will not run correctly without it. |
+
 
 For local Docker runs, defaults are usually enough. Override when the stack is on different host/ports or when using library mode. **You must set `OPENAI_API_KEY`** for the tests (and the services) to run.
 
@@ -176,19 +177,20 @@ All tag behaviour is implemented in **`features/environment.py`**: the hooks (`b
 
 ### Scenario Tags
 
-| Tag | Effect |
-|-----|--------|
-| `@skip` | Scenario is skipped (reason: "Marked with @skip"). Use for broken or WIP scenarios. |
-| `@skip-in-library-mode` | Scenario is skipped when `E2E_DEPLOYMENT_MODE=library`. Used for tests that require a separate Llama Stack (e.g. connection disruption). |
-| `@local` | Skipped unless running in "local" mode (context flag). |
-| `@InvalidFeedbackStorageConfig` | Before scenario: switch to invalid-feedback-storage config and restart container. After: restore feature config and restart. |
-| `@NoCacheConfig` | Before scenario: switch to no-cache config and restart. After: restore and restart. |
-| `@disable-shields` | (If used) Before scenario: unregister shield (e.g. llama-guard) via Llama Stack API; after: re-register. **Server mode only**; skipped in library mode. |
-| `@Authorized` | Feature-level: use auth-noop-token config for the whole feature; restore in after_feature. |
-| `@RBAC` | Feature-level: use RBAC config; restore in after_feature. |
-| `@RHIdentity` | Feature-level: use RH identity config; restore in after_feature. |
-| `@Feedback` | Feature-level: set feedback conversation list; after_feature deletes those conversations. |
-| `@MCP` | Feature-level: use MCP config; restore in after_feature. |
+| Tag                             | Effect                                                                                                                                                  |
+|---------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `@skip`                         | Scenario is skipped (reason: "Marked with @skip"). Use for broken or WIP scenarios.                                                                     |
+| `@skip-in-library-mode`         | Scenario is skipped when `E2E_DEPLOYMENT_MODE=library`. Used for tests that require a separate Llama Stack (e.g. connection disruption).                |
+| `@local`                        | Skipped unless running in "local" mode (context flag).                                                                                                  |
+| `@InvalidFeedbackStorageConfig` | Before scenario: switch to invalid-feedback-storage config and restart container. After: restore feature config and restart.                            |
+| `@NoCacheConfig`                | Before scenario: switch to no-cache config and restart. After: restore and restart.                                                                     |
+| `@disable-shields`              | (If used) Before scenario: unregister shield (e.g. llama-guard) via Llama Stack API; after: re-register. **Server mode only**; skipped in library mode. |
+| `@Authorized`                   | Feature-level: use auth-noop-token config for the whole feature; restore in after_feature.                                                              |
+| `@RBAC`                         | Feature-level: use RBAC config; restore in after_feature.                                                                                               |
+| `@RHIdentity`                   | Feature-level: use RH identity config; restore in after_feature.                                                                                        |
+| `@Feedback`                     | Feature-level: set feedback conversation list; after_feature deletes those conversations.                                                               |
+| `@MCP`                          | Feature-level: use MCP config; restore in after_feature.                                                                                                |
+
 
 ### Multiple Tags and Skip Comment
 
@@ -226,24 +228,25 @@ See `tests/e2e/configuration/README.md` for a short description of each config.
 
 The feature files below are run in the order given in `tests/e2e/test_list.txt`:
 
-| Feature file | What it tests |
-|--------------|----------------|
-| `faiss.feature` | FAISS support: vector store registration, RAGs endpoint, file_search tool. |
-| `smoketests.feature` | Smoke tests: main endpoint reachability. |
-| `authorized_noop.feature` | `/v1/authorized` endpoint with noop auth (no token required). |
-| `authorized_noop_token.feature` | `/v1/authorized` endpoint with noop-with-token auth (user_id, token validation). |
-| `authorized_rh_identity.feature` | `/v1/authorized` endpoint with RH identity auth (x-rh-identity header, entitlements). |
-| `rbac.feature` | Role-Based Access Control: admin/user/viewer/query-only/no-role permissions on query, models, conversations, info. |
-| `conversations.feature` | Conversations API: list, get by id, delete; auth and error cases. |
-| `conversation_cache_v2.feature` | Conversation Cache V2 API: conversations CRUD, topic summary, cache-off and llama-stack-down behaviour. |
-| `feedback.feature` | Feedback endpoint: enable/disable, status, submit feedback (sentiment, conversation id), invalid storage. |
-| `health.feature` | Readiness and liveness endpoints; behaviour when llama-stack is unavailable. |
-| `info.feature` | Info, OpenAPI, shields, tools, metrics, MCP client auth options endpoints. |
-| `query.feature` | Query endpoint: LLM responses, system prompt, auth errors, missing/invalid params, attachments, context length (413), llama-stack down. |
-| `streaming_query.feature` | Streaming query endpoint: token stream, system prompt, auth, params, attachments, context length (413 / stream error). |
-| `rest_api.feature` | REST API: OpenAPI endpoint. |
-| `mcp.feature` | MCP (Model Context Protocol): tools, query, streaming_query with MCP auth (required, token, invalid token). |
-| `models.feature` | Models endpoint: list models, filter, empty result; error when llama-stack unreachable. |
+| Feature file                     | What it tests                                                                                                                           |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
+| `faiss.feature`                  | FAISS support: vector store registration, RAGs endpoint, file_search tool.                                                              |
+| `smoketests.feature`             | Smoke tests: main endpoint reachability.                                                                                                |
+| `authorized_noop.feature`        | `/v1/authorized` endpoint with noop auth (no token required).                                                                           |
+| `authorized_noop_token.feature`  | `/v1/authorized` endpoint with noop-with-token auth (user_id, token validation).                                                        |
+| `authorized_rh_identity.feature` | `/v1/authorized` endpoint with RH identity auth (x-rh-identity header, entitlements).                                                   |
+| `rbac.feature`                   | Role-Based Access Control: admin/user/viewer/query-only/no-role permissions on query, models, conversations, info.                      |
+| `conversations.feature`          | Conversations API: list, get by id, delete; auth and error cases.                                                                       |
+| `conversation_cache_v2.feature`  | Conversation Cache V2 API: conversations CRUD, topic summary, cache-off and llama-stack-down behaviour.                                 |
+| `feedback.feature`               | Feedback endpoint: enable/disable, status, submit feedback (sentiment, conversation id), invalid storage.                               |
+| `health.feature`                 | Readiness and liveness endpoints; behaviour when llama-stack is unavailable.                                                            |
+| `info.feature`                   | Info, OpenAPI, shields, tools, metrics, MCP client auth options endpoints.                                                              |
+| `query.feature`                  | Query endpoint: LLM responses, system prompt, auth errors, missing/invalid params, attachments, context length (413), llama-stack down. |
+| `streaming_query.feature`        | Streaming query endpoint: token stream, system prompt, auth, params, attachments, context length (413 / stream error).                  |
+| `rest_api.feature`               | REST API: OpenAPI endpoint.                                                                                                             |
+| `mcp.feature`                    | MCP (Model Context Protocol): tools, query, streaming_query with MCP auth (required, token, invalid token).                             |
+| `models.feature`                 | Models endpoint: list models, filter, empty result; error when llama-stack unreachable.                                                 |
+
 
 If you add a new feature file, add it to **`tests/e2e/test_list.txt`** so it is included when you run the full E2E suite (e.g. `make test-e2e`). The order in that file is the run order.
 
@@ -266,24 +269,26 @@ Feature files use [Gherkin](https://cucumber.io/docs/gherkin/) syntax. Below is 
 
 ### Structure keywords
 
-| Keyword | Meaning | Example |
-|--------|---------|--------|
-| **Feature** | Title and optional description of a capability. One per `.feature` file. | `Feature: Query endpoint API tests` |
-| **Background** | Steps run **before every scenario** in that feature. Use for common setup (e.g. "service started", "API prefix"). | `Background:` then `Given The service is started locally` |
-| **Scenario** | One concrete test: a list of steps that set up, act, and assert. | `Scenario: Check if LLM responds properly...` |
-| **Scenario Outline** | Template for multiple scenarios; steps can use placeholders that are filled from an **Examples** table. (Used when the same flow is repeated with different data.) | `Scenario Outline:` with `Examples:` table |
+| Keyword              | Meaning                                                                                                                                                            | Example                                                   |
+|----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------|
+| **Feature**          | Title and optional description of a capability. One per `.feature` file.                                                                                           | `Feature: Query endpoint API tests`                       |
+| **Background**       | Steps run **before every scenario** in that feature. Use for common setup (e.g. "service started", "API prefix").                                                  | `Background:` then `Given The service is started locally` |
+| **Scenario**         | One concrete test: a list of steps that set up, act, and assert.                                                                                                   | `Scenario: Check if LLM responds properly...`             |
+| **Scenario Outline** | Template for multiple scenarios; steps can use placeholders that are filled from an **Examples** table. (Used when the same flow is repeated with different data.) | `Scenario Outline:` with `Examples:` table                |
+
 
 ### Step keywords (Given / When / Then / And / But)
 
 Each line in a scenario is a **step**. The keyword indicates the step's role; Behave matches the line to a step definition (e.g. `@given("The service is started locally")`).
 
-| Keyword | Meaning | Typical use in this project |
-|--------|---------|-----------------------------|
-| **Given** | Precondition or initial state. | Service is started, system in default state, auth header set, llama-stack disrupted. |
-| **When** | The action under test. | Call an endpoint (query, streaming_query, GET readiness), send a request body. |
-| **Then** | Expected outcome (assertion). | Status code is 200, body contains text or matches schema, response has certain fields. |
-| **And** | Continuation of the previous keyword. Same role as the last Given/When/Then, but reads more naturally. | "Given X **And** Y" = two preconditions; "Then A **And** B" = two assertions. |
-| **But** | Same as And, but used for contrast. | "Then status is 200 **But** body does not contain …" (rare in this suite.) |
+| Keyword   | Meaning                                                                                                | Typical use in this project                                                            |
+|-----------|--------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------|
+| **Given** | Precondition or initial state.                                                                         | Service is started, system in default state, auth header set, llama-stack disrupted.   |
+| **When**  | The action under test.                                                                                 | Call an endpoint (query, streaming_query, GET readiness), send a request body.         |
+| **Then**  | Expected outcome (assertion).                                                                          | Status code is 200, body contains text or matches schema, response has certain fields. |
+| **And**   | Continuation of the previous keyword. Same role as the last Given/When/Then, but reads more naturally. | "Given X **And** Y" = two preconditions; "Then A **And** B" = two assertions.          |
+| **But**   | Same as And, but used for contrast.                                                                    | "Then status is 200 **But** body does not contain …" (rare in this suite.)             |
+
 
 **Convention for this suite:** Each scenario should have **exactly one When step** (the single action under test). It can have **one or more Given steps** (optionally followed by And for more preconditions) and **one or more Then steps** (optionally followed by And for more assertions). So: 1–n Given (+ And), one When, 1–n Then (+ And).
 
@@ -304,19 +309,21 @@ Here, **Given** sets state, **When** performs the HTTP call, **Then** and **And*
 
 ### Literals and special syntax
 
-| Syntax | Meaning | Example |
-|--------|---------|--------|
-| **Doc string** | Multi-line argument to the step (between `"""`). Often JSON request or expected body. | Request body: `"""` … `"""` |
-| **Data table** | Table of values (header row, then rows). The step receives it as `context.table`. | `\| Fragments in LLM response \|` then `\| ask \|` |
-| **Placeholders** | `{MODEL}` and `{PROVIDER}` in doc strings are replaced with `context.default_model` and `context.default_provider` by the steps. | `"model": "{MODEL}", "provider": "{PROVIDER}"` |
-| **Step argument** | Quoted or unquoted text in the step line. Matches capture groups in the step definition. | `I use "query" to ask question` → endpoint `"query"`; `I access endpoint "readiness"` → `"readiness"`. |
+| Syntax            | Meaning                                                                                                                          | Example                                                                                                |
+|-------------------|----------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
+| **Doc string**    | Multi-line argument to the step (between `"""`). Often JSON request or expected body.                                            | Request body: `"""` … `"""`                                                                            |
+| **Data table**    | Table of values (header row, then rows). The step receives it as `context.table`.                                                | `\| Fragments in LLM response \|` then `\| ask \|`                                                     |
+| **Placeholders**  | `{MODEL}` and `{PROVIDER}` in doc strings are replaced with `context.default_model` and `context.default_provider` by the steps. | `"model": "{MODEL}", "provider": "{PROVIDER}"`                                                         |
+| **Step argument** | Quoted or unquoted text in the step line. Matches capture groups in the step definition.                                         | `I use "query" to ask question` → endpoint `"query"`; `I access endpoint "readiness"` → `"readiness"`. |
+
 
 ### Tags and comments
 
-| Syntax | Meaning | Example |
-|--------|---------|--------|
-| **@tag** | Tag for filtering or hooks. Above Feature (applies to all scenarios) or above Scenario (that scenario only). | `@Authorized`, `@skip`, `@skip-in-library-mode` |
-| **# comment** | Gherkin comment. Ignored by Behave. Use to explain why a scenario is skipped or to document a scenario. | `# Only in server mode` above a scenario |
+| Syntax        | Meaning                                                                                                      | Example                                         |
+|---------------|--------------------------------------------------------------------------------------------------------------|-------------------------------------------------|
+| **@tag**      | Tag for filtering or hooks. Above Feature (applies to all scenarios) or above Scenario (that scenario only). | `@Authorized`, `@skip`, `@skip-in-library-mode` |
+| **# comment** | Gherkin comment. Ignored by Behave. Use to explain why a scenario is skipped or to document a scenario.      | `# Only in server mode` above a scenario        |
+
 
 ### Summary
 
