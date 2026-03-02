@@ -103,13 +103,7 @@ def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
     Returns:
         Instructions string for the LLM, with system context if available.
     """
-    if (
-        configuration.customization is not None
-        and configuration.customization.system_prompt is not None
-    ):
-        base_prompt = configuration.customization.system_prompt
-    else:
-        base_prompt = constants.DEFAULT_SYSTEM_PROMPT
+    base_prompt = _get_base_prompt()
 
     context_parts = []
     if systeminfo.os:
@@ -124,6 +118,16 @@ def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
 
     system_context = ", ".join(context_parts)
     return f"{base_prompt}\n\nUser's system: {system_context}"
+
+
+def _get_base_prompt() -> str:
+    """Get the base system prompt with configuration fallback."""
+    if (
+        configuration.customization is not None
+        and configuration.customization.system_prompt is not None
+    ):
+        return configuration.customization.system_prompt
+    return constants.DEFAULT_SYSTEM_PROMPT
 
 
 def _get_default_model_id() -> str:
@@ -162,7 +166,10 @@ def _get_default_model_id() -> str:
 
 
 async def retrieve_simple_response(
-    question: str, instructions: str, tools: list | None = None
+    question: str,
+    instructions: str,
+    tools: list[Any] | None = None,
+    model_id: str | None = None,
 ) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
@@ -173,22 +180,23 @@ async def retrieve_simple_response(
         question: The combined user input (question + context).
         instructions: System instructions for the LLM.
         tools: Optional list of MCP tool definitions for the LLM.
+        model_id: Fully qualified model identifier in provider/model format.
+            When omitted, the configured default model is used.
 
     Returns:
         The LLM-generated response text.
 
     Raises:
         APIConnectionError: If the Llama Stack service is unreachable.
-        HTTPException: 503 if no model is configured.
+        HTTPException: 503 if no default model is configured.
     """
     client = AsyncLlamaStackClientHolder().get_client()
-    model_id = _get_default_model_id()
-
-    logger.debug("Using model %s for rlsapi v1 inference", model_id)
+    resolved_model_id = model_id or _get_default_model_id()
+    logger.debug("Using model %s for rlsapi v1 inference", resolved_model_id)
 
     response = await client.responses.create(
         input=question,
-        model=model_id,
+        model=resolved_model_id,
         instructions=instructions,
         tools=tools or [],
         stream=False,
@@ -203,6 +211,13 @@ async def retrieve_simple_response(
 def _get_cla_version(request: Request) -> str:
     """Extract CLA version from User-Agent header."""
     return request.headers.get("User-Agent", "")
+
+
+def _get_configured_default_model_name() -> str:
+    """Get configured default model name for telemetry payloads."""
+    if configuration.inference is None:
+        return ""
+    return configuration.inference.default_model or ""
 
 
 def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-positional-arguments
@@ -222,11 +237,7 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
         question=infer_request.question,
         response=response_text,
         inference_time=inference_time,
-        model=(
-            (configuration.inference.default_model or "")
-            if configuration.inference
-            else ""
-        ),
+        model=_get_configured_default_model_name(),
         org_id=org_id,
         system_id=system_id,
         request_id=request_id,
@@ -277,6 +288,49 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
     return inference_time
 
 
+def _map_inference_error_to_http_exception(
+    error: Exception, model_id: str, request_id: str
+) -> HTTPException | None:
+    """Map known inference errors to HTTPException.
+
+    Returns None for RuntimeError values that are not context-length related,
+    so callers can preserve existing re-raise behavior for unknown runtime
+    errors.
+    """
+    if isinstance(error, RuntimeError):
+        if "context_length" in str(error).lower():
+            logger.error("Prompt too long for request %s: %s", request_id, error)
+            error_response = PromptTooLongResponse(model=model_id)
+            return HTTPException(**error_response.model_dump())
+        logger.error("Unexpected RuntimeError for request %s: %s", request_id, error)
+        return None
+
+    if isinstance(error, APIConnectionError):
+        logger.error(
+            "Unable to connect to Llama Stack for request %s: %s", request_id, error
+        )
+        error_response = ServiceUnavailableResponse(
+            backend_name="Llama Stack",
+            cause="Unable to connect to the inference backend",
+        )
+        return HTTPException(**error_response.model_dump())
+
+    if isinstance(error, RateLimitError):
+        logger.error("Rate limit exceeded for request %s: %s", request_id, error)
+        error_response = QuotaExceededResponse(
+            response="The quota has been exceeded",
+            cause="Rate limit exceeded, please try again later",
+        )
+        return HTTPException(**error_response.model_dump())
+
+    if isinstance(error, (APIStatusError, OpenAIAPIStatusError)):
+        logger.exception("API error for request %s: %s", request_id, error)
+        error_response = handle_known_apistatus_errors(error, model_id)
+        return HTTPException(**error_response.model_dump())
+
+    return None
+
+
 @router.post("/infer", responses=infer_responses)
 @authorize(Action.RLSAPI_V1_INFER)
 async def infer_endpoint(  # pylint: disable=R0914
@@ -323,86 +377,37 @@ async def infer_endpoint(  # pylint: disable=R0914
     start_time = time.monotonic()
     try:
         response_text = await retrieve_simple_response(
-            input_source, instructions, tools=mcp_tools
+            input_source,
+            instructions,
+            tools=cast(list[Any], mcp_tools),
+            model_id=model_id,
         )
         inference_time = time.monotonic() - start_time
-    except RuntimeError as e:
-        if "context_length" in str(e).lower():
-            _record_inference_failure(
-                background_tasks,
-                infer_request,
-                request,
-                request_id,
-                e,
-                start_time,
-                model,
-                provider,
-            )
-            logger.error("Prompt too long for request %s: %s", request_id, e)
-            error_response = PromptTooLongResponse(model=model_id)
-            raise HTTPException(**error_response.model_dump()) from e
+    except (
+        RuntimeError,
+        APIConnectionError,
+        RateLimitError,
+        APIStatusError,
+        OpenAIAPIStatusError,
+    ) as error:
         _record_inference_failure(
             background_tasks,
             infer_request,
             request,
             request_id,
-            e,
+            error,
             start_time,
             model,
             provider,
         )
-        logger.error("Unexpected RuntimeError for request %s: %s", request_id, e)
+        mapped_error = _map_inference_error_to_http_exception(
+            error,
+            model_id,
+            request_id,
+        )
+        if mapped_error is not None:
+            raise mapped_error from error
         raise
-    except APIConnectionError as e:
-        _record_inference_failure(
-            background_tasks,
-            infer_request,
-            request,
-            request_id,
-            e,
-            start_time,
-            model,
-            provider,
-        )
-        logger.error(
-            "Unable to connect to Llama Stack for request %s: %s", request_id, e
-        )
-        error_response = ServiceUnavailableResponse(
-            backend_name="Llama Stack",
-            cause="Unable to connect to the inference backend",
-        )
-        raise HTTPException(**error_response.model_dump()) from e
-    except RateLimitError as e:
-        _record_inference_failure(
-            background_tasks,
-            infer_request,
-            request,
-            request_id,
-            e,
-            start_time,
-            model,
-            provider,
-        )
-        logger.error("Rate limit exceeded for request %s: %s", request_id, e)
-        error_response = QuotaExceededResponse(
-            response="The quota has been exceeded",
-            cause="Rate limit exceeded, please try again later",
-        )
-        raise HTTPException(**error_response.model_dump()) from e
-    except (APIStatusError, OpenAIAPIStatusError) as e:
-        _record_inference_failure(
-            background_tasks,
-            infer_request,
-            request,
-            request_id,
-            e,
-            start_time,
-            model,
-            provider,
-        )
-        logger.exception("API error for request %s: %s", request_id, e)
-        error_response = handle_known_apistatus_errors(e, model_id)
-        raise HTTPException(**error_response.model_dump()) from e
 
     if not response_text:
         logger.warning("Empty response from LLM for request %s", request_id)
