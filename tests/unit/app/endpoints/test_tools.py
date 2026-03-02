@@ -1079,3 +1079,121 @@ async def test_tools_endpoint_rag_builtin_toolgroup(mocker: MockerFixture) -> No
     assert tool["parameters"][0]["name"] == "query"
     assert tool["parameters"][0]["parameter_type"] == "string"
     assert tool["parameters"][0]["required"] is True
+
+
+@pytest.mark.asyncio
+async def test_tools_endpoint_empty_legacy_fields_overridden(
+    mocker: MockerFixture,
+) -> None:
+    """Test that empty legacy fields are overridden by ToolDef fields.
+
+    Regression variant: when a tool dict contains both new fields (name,
+    input_schema) AND empty legacy fields (identifier="", parameters=[],
+    provider_id="", type=""), the endpoint must populate from the new sources.
+    """
+    mock_config = Configuration(
+        name="test",
+        service=ServiceConfiguration(
+            tls_config=TLSConfiguration(
+                tls_certificate_path=Path("tests/configuration/server.crt"),
+                tls_key_path=Path("tests/configuration/server.key"),
+                tls_key_password=Path("tests/configuration/password"),
+            ),
+            cors=CORSConfiguration(
+                allow_origins=["*"],
+                allow_credentials=False,
+                allow_methods=["*"],
+                allow_headers=["*"],
+            ),
+            host="localhost",
+            port=8080,
+            base_url=".",
+            auth_enabled=False,
+            workers=1,
+            color_log=True,
+            access_log=True,
+            root_path="/.",
+        ),
+        llama_stack=LlamaStackConfiguration(
+            url=AnyHttpUrl("http://localhost:8321"),
+            api_key=SecretStr("xyzzy"),
+            use_as_library_client=False,
+            library_client_config_path=".",
+            timeout=10,
+        ),
+        user_data_collection=UserDataCollection(
+            transcripts_enabled=False,
+            feedback_enabled=False,
+            transcripts_storage=".",
+            feedback_storage=".",
+        ),
+        mcp_servers=[],
+        customization=None,
+        authorization=None,
+        deployment_environment=".",
+    )
+    app_config = AppConfig()
+    app_config._configuration = mock_config
+    mocker.patch("app.endpoints.tools.configuration", app_config)
+    mocker.patch("app.endpoints.tools.authorize", lambda _: lambda func: func)
+
+    mock_client_holder = mocker.patch("app.endpoints.tools.AsyncLlamaStackClientHolder")
+    mock_client = mocker.AsyncMock()
+    mock_client_holder.return_value.get_client.return_value = mock_client
+
+    mock_toolgroup = mocker.Mock()
+    mock_toolgroup.identifier = "builtin::rag"
+    mock_toolgroup.provider_id = "rag-runtime"
+    mock_toolgroup.type = "tool_group"
+    mock_client.toolgroups.list.return_value = [mock_toolgroup]
+
+    # Tool with both new fields AND empty legacy fields
+    rag_tool = _make_tool_def_mock(
+        mocker,
+        {
+            "name": "knowledge_search",
+            "identifier": "",
+            "description": "Search for information in a database.",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "query": {
+                        "type": "string",
+                        "description": "The query to search for.",
+                    }
+                },
+                "required": ["query"],
+            },
+            "parameters": [],
+            "provider_id": "",
+            "type": "",
+            "toolgroup_id": "builtin::rag",
+            "metadata": None,
+            "output_schema": None,
+        },
+    )
+    mock_client.tools.list.return_value = [rag_tool]
+
+    mock_request = mocker.Mock()
+    mock_auth = MOCK_AUTH
+
+    response = await tools.tools_endpoint_handler.__wrapped__(  # pyright: ignore
+        mock_request, mock_auth, {}
+    )
+
+    assert isinstance(response, ToolsResponse)
+    assert len(response.tools) == 1
+
+    tool = response.tools[0]
+    # Empty legacy fields must be overridden by new sources
+    assert tool["identifier"] == "knowledge_search"
+    assert tool["provider_id"] == "rag-runtime"
+    assert tool["type"] == "tool_group"
+    assert tool["server_source"] == "builtin"
+    assert tool["toolgroup_id"] == "builtin::rag"
+
+    # Parameters populated from input_schema, not empty legacy list
+    assert len(tool["parameters"]) == 1
+    assert tool["parameters"][0]["name"] == "query"
+    assert tool["parameters"][0]["parameter_type"] == "string"
+    assert tool["parameters"][0]["required"] is True
