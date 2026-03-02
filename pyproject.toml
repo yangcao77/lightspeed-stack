@@ -221,8 +221,12 @@ disable = ["R0801"]
 [tool.ruff]
 extend-exclude = ["tests/profiles/syntax_error.py"]
 
-[tool.ruff.lint.flake8-tidy-imports]
-banned-api = { "unittest" = { msg = "use pytest instead of unittest" }, "unittest.mock" = { msg = "use pytest-mock instead of unittest.mock" } }
+[tool.ruff.lint]
+extend-select = ["TID251"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+unittest = { msg = "use pytest instead of unittest" }
+"unittest.mock" = { msg = "use pytest-mock instead of unittest.mock" }
 
 [tool.mypy]
 explicit_package_bases = true
