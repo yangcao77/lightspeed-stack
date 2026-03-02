@@ -484,7 +484,7 @@ def extract_provider_and_model_from_model_id(model_id: str) -> tuple[str, str]:
         model_id: The model ID to extract from.
 
     Returns:
-        tuple[str, str]: The model and provider.
+        tuple[str, str]: The provider and model.
     """
     split = model_id.split("/", 1)
     if len(split) == 2:
