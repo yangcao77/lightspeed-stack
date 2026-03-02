@@ -5,7 +5,7 @@ from the RHEL Lightspeed Command Line Assistant (CLA).
 """
 
 import time
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from llama_stack_api.openai_responses import OpenAIResponseObject
@@ -50,6 +50,15 @@ router = APIRouter(tags=["rlsapi-v1"])
 
 # Default values when RH Identity auth is not configured
 AUTH_DISABLED = "auth_disabled"
+# Keep this tuple centralized so infer_endpoint can catch all expected backend
+# failures in one place while preserving a single telemetry/error-mapping path.
+_INFER_HANDLED_EXCEPTIONS = (
+    RuntimeError,
+    APIConnectionError,
+    RateLimitError,
+    APIStatusError,
+    OpenAIAPIStatusError,
+)
 
 
 def _get_rh_identity_context(request: Request) -> tuple[str, str]:
@@ -66,7 +75,7 @@ def _get_rh_identity_context(request: Request) -> tuple[str, str]:
         Tuple of (org_id, system_id). Returns ("auth_disabled", "auth_disabled")
         when RH Identity auth is not configured or data is unavailable.
     """
-    rh_identity: RHIdentityData | None = getattr(
+    rh_identity: Optional[RHIdentityData] = getattr(
         request.state, "rh_identity_data", None
     )
     if rh_identity is None:
@@ -168,8 +177,8 @@ def _get_default_model_id() -> str:
 async def retrieve_simple_response(
     question: str,
     instructions: str,
-    tools: list[Any] | None = None,
-    model_id: str | None = None,
+    tools: Optional[list[Any]] = None,
+    model_id: Optional[str] = None,
 ) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
@@ -203,7 +212,7 @@ async def retrieve_simple_response(
         store=False,
     )
     response = cast(OpenAIResponseObject, response)
-    extract_token_usage(response.usage, model_id)
+    extract_token_usage(response.usage, resolved_model_id)
 
     return extract_text_from_response_items(response.output)
 
@@ -290,7 +299,7 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
 
 def _map_inference_error_to_http_exception(
     error: Exception, model_id: str, request_id: str
-) -> HTTPException | None:
+) -> Optional[HTTPException]:
     """Map known inference errors to HTTPException.
 
     Returns None for RuntimeError values that are not context-length related,
@@ -298,7 +307,8 @@ def _map_inference_error_to_http_exception(
     errors.
     """
     if isinstance(error, RuntimeError):
-        if "context_length" in str(error).lower():
+        error_message = str(error).lower()
+        if "context_length" in error_message or "context length" in error_message:
             logger.error("Prompt too long for request %s: %s", request_id, error)
             error_response = PromptTooLongResponse(model=model_id)
             return HTTPException(**error_response.model_dump())
@@ -369,7 +379,7 @@ async def infer_endpoint(  # pylint: disable=R0914
     instructions = _build_instructions(infer_request.context.systeminfo)
     model_id = _get_default_model_id()
     provider, model = extract_provider_and_model_from_model_id(model_id)
-    mcp_tools = await get_mcp_tools(request_headers=request.headers)
+    mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
@@ -383,13 +393,7 @@ async def infer_endpoint(  # pylint: disable=R0914
             model_id=model_id,
         )
         inference_time = time.monotonic() - start_time
-    except (
-        RuntimeError,
-        APIConnectionError,
-        RateLimitError,
-        APIStatusError,
-        OpenAIAPIStatusError,
-    ) as error:
+    except _INFER_HANDLED_EXCEPTIONS as error:
         _record_inference_failure(
             background_tasks,
             infer_request,
