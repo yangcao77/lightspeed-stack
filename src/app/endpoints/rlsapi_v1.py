@@ -279,7 +279,7 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
 
 @router.post("/infer", responses=infer_responses)
 @authorize(Action.RLSAPI_V1_INFER)
-async def infer_endpoint(
+async def infer_endpoint(  # pylint: disable=R0914
     infer_request: RlsapiV1InferRequest,
     request: Request,
     background_tasks: BackgroundTasks,
@@ -314,7 +314,7 @@ async def infer_endpoint(
     input_source = infer_request.get_input_source()
     instructions = _build_instructions(infer_request.context.systeminfo)
     model_id = _get_default_model_id()
-    model, provider = extract_provider_and_model_from_model_id(model_id)
+    provider, model = extract_provider_and_model_from_model_id(model_id)
     mcp_tools = await get_mcp_tools(request_headers=request.headers)
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
