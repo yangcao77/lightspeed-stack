@@ -31,6 +31,7 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import (
+    INTERRUPTED_RESPONSE_MESSAGE,
     LLM_TOKEN_EVENT,
     LLM_TOOL_CALL_EVENT,
     LLM_TOOL_RESULT_EVENT,
@@ -54,7 +55,7 @@ from models.responses import (
     UnauthorizedResponse,
     UnprocessableEntityResponse,
 )
-from utils.types import RAGChunk, ReferencedDocument
+from utils.types import ReferencedDocument
 from utils.endpoints import (
     check_configuration_loaded,
     validate_and_retrieve_conversation,
@@ -74,6 +75,7 @@ from utils.responses import (
     build_mcp_tool_call_from_arguments_done,
     build_tool_call_summary,
     build_tool_result_from_mcp_output_item_done,
+    deduplicate_referenced_documents,
     extract_token_usage,
     extract_vector_store_ids_from_tools,
     get_topic_summary,
@@ -83,6 +85,7 @@ from utils.responses import (
 from utils.shields import (
     append_turn_to_conversation,
     run_shield_moderation,
+    validate_shield_ids_override,
 )
 from utils.stream_interrupts import get_stream_interrupt_registry
 from utils.suid import get_suid, normalize_conversation_id
@@ -159,6 +162,9 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         query_request.model, query_request.provider, request.state.authorized_actions
     )
 
+    # Validate shield_ids override if provided
+    validate_shield_ids_override(query_request, configuration)
+
     # Validate attachments if provided
     if query_request.attachments:
         validate_attachments_metadata(query_request.attachments)
@@ -179,12 +185,10 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
     client = AsyncLlamaStackClientHolder().get_client()
 
-    pre_rag_chunks: list[RAGChunk] = []
-    doc_ids_from_chunks: list[ReferencedDocument] = []
-
     _, _, doc_ids_from_chunks, pre_rag_chunks = await perform_vector_search(
-        client, query_request, configuration
+        client, query_request.query, query_request.solr
     )
+
     rag_context = format_rag_context_for_injection(pre_rag_chunks)
     if rag_context:
         query_request = query_request.model_copy(deep=True)
@@ -199,6 +203,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         mcp_headers=mcp_headers,
         stream=True,
         store=True,
+        request_headers=request.headers,
     )
 
     # Handle Azure token refresh if needed
@@ -270,6 +275,7 @@ async def retrieve_response_generator(
     Args:
         responses_params: The Responses API parameters
         context: The response generator context
+        doc_ids_from_chunks: List of ReferencedDocument objects extracted from static RAG
 
     Returns:
         tuple[AsyncIterator[str], TurnSummary]: The response generator and turn summary
@@ -278,25 +284,26 @@ async def retrieve_response_generator(
     turn_summary = TurnSummary()
     try:
         moderation_result = await run_shield_moderation(
-            context.client, responses_params.input
+            context.client,
+            cast(str, responses_params.input),
+            context.query_request.shield_ids,
         )
-        if moderation_result.blocked:
-            violation_message = moderation_result.message or ""
-            turn_summary.llm_response = violation_message
+        if moderation_result.decision == "blocked":
+            turn_summary.llm_response = moderation_result.message
             await append_turn_to_conversation(
                 context.client,
                 responses_params.conversation,
-                responses_params.input,
-                violation_message,
+                cast(str, responses_params.input),
+                moderation_result.message,
             )
             media_type = context.query_request.media_type or MEDIA_TYPE_JSON
             return (
-                shield_violation_generator(violation_message, media_type),
+                shield_violation_generator(moderation_result.message, media_type),
                 turn_summary,
             )
         # Retrieve response stream (may raise exceptions)
         response = await context.client.responses.create(
-            **responses_params.model_dump()
+            **responses_params.model_dump(exclude_none=True)
         )
         # Store pre-RAG documents for later merging
         turn_summary.pre_rag_documents = doc_ids_from_chunks
@@ -320,6 +327,110 @@ async def retrieve_response_generator(
         raise HTTPException(**error_response.model_dump()) from e
 
 
+async def _persist_interrupted_turn(
+    context: ResponseGeneratorContext,
+    responses_params: ResponsesApiParams,
+    turn_summary: TurnSummary,
+) -> None:
+    """Persist the user query and an interrupted response into the conversation.
+
+    Called when a streaming request is cancelled so the exchange is not lost.
+    All errors are caught and logged to avoid masking the original
+    cancellation.
+
+    Parameters:
+        context: The response generator context.
+        responses_params: The Responses API parameters.
+        turn_summary: TurnSummary with llm_response already set to the
+            interrupted message.
+    """
+    try:
+        await append_turn_to_conversation(
+            context.client,
+            responses_params.conversation,
+            cast(str, responses_params.input),
+            INTERRUPTED_RESPONSE_MESSAGE,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            "Failed to append interrupted turn to conversation for request %s",
+            context.request_id,
+        )
+
+    try:
+        completed_at = datetime.datetime.now(datetime.UTC).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
+        store_query_results(
+            user_id=context.user_id,
+            conversation_id=context.conversation_id,
+            model=responses_params.model,
+            completed_at=completed_at,
+            started_at=context.started_at,
+            summary=turn_summary,
+            query=context.query_request.query,
+            skip_userid_check=context.skip_userid_check,
+            topic_summary=None,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            "Failed to store interrupted query results for request %s",
+            context.request_id,
+        )
+
+
+def _register_interrupt_callback(
+    context: ResponseGeneratorContext,
+    responses_params: ResponsesApiParams,
+    turn_summary: TurnSummary,
+) -> list[bool]:
+    """Build an interrupt callback and register the stream for cancellation.
+
+    The callback is scheduled as a **separate** asyncio task by
+    ``cancel_stream`` so it executes regardless of where the
+    ``CancelledError`` is raised in the ASGI stack.
+
+    A mutable one-element list is used as a shared guard so the
+    callback and the in-generator ``CancelledError`` handler never
+    both persist the same turn.
+
+    Parameters:
+        context: The response generator context.
+        responses_params: The Responses API parameters.
+        turn_summary: TurnSummary populated during streaming.
+
+    Returns:
+        A mutable list ``[False]`` used as a persist-done guard; the
+        caller should check ``guard[0]`` before persisting and set
+        it to ``True`` afterwards.
+    """
+    guard: list[bool] = [False]
+
+    async def _on_interrupt() -> None:
+        if guard[0]:
+            return
+        guard[0] = True
+        turn_summary.llm_response = INTERRUPTED_RESPONSE_MESSAGE
+        await _persist_interrupted_turn(context, responses_params, turn_summary)
+
+    current_task = asyncio.current_task()
+    if current_task is not None:
+        get_stream_interrupt_registry().register_stream(
+            request_id=context.request_id,
+            user_id=context.user_id,
+            task=current_task,
+            on_interrupt=_on_interrupt,
+        )
+    else:
+        logger.warning(
+            "No current asyncio task for request %s; "
+            "stream interruption will not be available",
+            context.request_id,
+        )
+
+    return guard
+
+
 async def generate_response(
     generator: AsyncIterator[str],
     context: ResponseGeneratorContext,
@@ -330,9 +441,9 @@ async def generate_response(
 
     Re-yields events from the generator, handles errors, and ensures
     persistence and token consumption after completion.  When the
-    stream is interrupted via ``CancelledError``, all post-stream side
-    effects (token consumption, result storage) are skipped and the
-    request is deregistered from the interrupt registry.
+    stream is interrupted via ``CancelledError``, the user query and
+    an interrupted response are persisted to the conversation, but
+    token consumption is skipped (no usage data is available).
 
     Args:
         generator: The base generator to wrap
@@ -343,20 +454,9 @@ async def generate_response(
     Yields:
         SSE-formatted strings from the wrapped generator
     """
-    user_id = context.user_id
-
-    current_task = asyncio.current_task()
-    if current_task is not None:
-        get_stream_interrupt_registry().register_stream(
-            request_id=context.request_id,
-            user_id=user_id,
-            task=current_task,
-        )
-    else:
-        logger.warning(
-            "No current asyncio task for request %s; stream interruption will not be available",
-            context.request_id,
-        )
+    persist_guard = _register_interrupt_callback(
+        context, responses_params, turn_summary
+    )
 
     stream_completed = False
     try:
@@ -390,6 +490,13 @@ async def generate_response(
         yield stream_http_error_event(error_response, context.query_request.media_type)
     except asyncio.CancelledError:
         logger.info("Streaming request %s interrupted by user", context.request_id)
+        current_task = asyncio.current_task()
+        if current_task is not None:
+            current_task.uncancel()
+        if not persist_guard[0]:
+            persist_guard[0] = True
+            turn_summary.llm_response = INTERRUPTED_RESPONSE_MESSAGE
+            await _persist_interrupted_turn(context, responses_params, turn_summary)
         yield stream_interrupted_event(context.request_id)
     finally:
         get_stream_interrupt_registry().deregister_stream(context.request_id)
@@ -441,7 +548,8 @@ async def generate_response(
         completed_at=completed_at,
         started_at=context.started_at,
         summary=turn_summary,
-        query_request=context.query_request,
+        query=context.query_request.query,
+        attachments=context.query_request.attachments,
         skip_userid_check=context.skip_userid_check,
         topic_summary=topic_summary,
     )
@@ -639,19 +747,9 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         rag_id_mapping=context.rag_id_mapping,
     )
 
-    # Merge pre-RAG documents with tool-based documents (similar to query.py)
-    if turn_summary.pre_rag_documents:
-        all_documents = turn_summary.pre_rag_documents + tool_based_documents
-        seen = set()
-        deduplicated_documents = []
-        for doc in all_documents:
-            key = (doc.doc_url, doc.doc_title)
-            if key not in seen:
-                seen.add(key)
-                deduplicated_documents.append(doc)
-        turn_summary.referenced_documents = deduplicated_documents
-    else:
-        turn_summary.referenced_documents = tool_based_documents
+    turn_summary.referenced_documents = deduplicate_referenced_documents(
+        tool_based_documents + turn_summary.pre_rag_documents
+    )
 
 
 def stream_http_error_event(

@@ -33,7 +33,7 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 ## Info for developers
 
-[Contributing guide](https://lightspeed-core.github.io/lightspeed-stack/CONTRIBUTING.html)
+[Contributing guide](https://lightspeed-core.github.io/lightspeed-stack/contributing_guide.html)
 
 
 ## API
@@ -67,6 +67,8 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 ## Testing
 
 [Testing](https://lightspeed-core.github.io/lightspeed-stack/testing.html)
+
+[End-to-End Tests Guide](https://lightspeed-core.github.io/lightspeed-stack/e2e_testing.html)
 
 [List of e2e scenarios](https://lightspeed-core.github.io/lightspeed-stack/e2e_scenarios.html)
 

@@ -9,6 +9,8 @@ from typing import Any, Optional
 import pytest
 from fastapi import HTTPException
 from llama_stack_api.openai_responses import (
+    OpenAIResponseInputToolFileSearch as InputToolFileSearch,
+    OpenAIResponseInputToolMCP as InputToolMCP,
     OpenAIResponseOutputMessageFileSearchToolCall as FileSearchCall,
     OpenAIResponseOutputMessageFunctionToolCall as FunctionCall,
     OpenAIResponseOutputMessageMCPCall as MCPCall,
@@ -28,8 +30,8 @@ from utils.responses import (
     build_tool_call_summary,
     build_tool_result_from_mcp_output_item_done,
     extract_rag_chunks_from_file_search_item,
-    extract_text_from_output_item,
-    extract_text_from_output_items,
+    extract_text_from_response_item,
+    extract_text_from_response_items,
     extract_token_usage,
     extract_vector_store_ids_from_tools,
     get_mcp_tools,
@@ -149,7 +151,7 @@ def test_extract_text_basic_cases(
         expected: Expected extracted text
     """
     output_item = make_output_item(item_type=item_type, role=role, content=content)
-    result = extract_text_from_output_item(output_item)  # type: ignore[arg-type]
+    result = extract_text_from_response_item(output_item)  # type: ignore[arg-type]
     assert result == expected
 
 
@@ -195,7 +197,7 @@ def test_extract_text_list_content(content_parts: list[Any], expected: str) -> N
     output_item = make_output_item(
         item_type="message", role="assistant", content=content_parts
     )
-    result = extract_text_from_output_item(output_item)  # type: ignore[arg-type]
+    result = extract_text_from_response_item(output_item)  # type: ignore[arg-type]
     assert result == expected
 
 
@@ -215,7 +217,7 @@ def test_extract_text_with_real_world_structure() -> None:
     output_item = make_output_item(
         item_type="message", role="assistant", content=content
     )
-    result = extract_text_from_output_item(output_item)  # type: ignore[arg-type]
+    result = extract_text_from_response_item(output_item)  # type: ignore[arg-type]
 
     expected = "I can help you with that. Here's the information you requested: The answer is 42."
     assert result == expected
@@ -236,7 +238,7 @@ def test_extract_text_preserves_order() -> None:
     output_item = make_output_item(
         item_type="message", role="assistant", content=content
     )
-    result = extract_text_from_output_item(output_item)  # type: ignore[arg-type]
+    result = extract_text_from_response_item(output_item)  # type: ignore[arg-type]
 
     assert result == "First Second Third Fourth"
 
@@ -254,68 +256,68 @@ def test_extract_text_with_refusal_content() -> None:
     output_item = make_output_item(
         item_type="message", role="assistant", content=content
     )
-    result = extract_text_from_output_item(output_item)  # type: ignore[arg-type]
+    result = extract_text_from_response_item(output_item)  # type: ignore[arg-type]
 
     assert result == "I understand your request, but I cannot help with that."
 
 
-class TestExtractTextFromOutputItems:
-    """Test cases for extract_text_from_output_items function."""
+class TestExtractTextFromResponseItems:
+    """Test cases for extract_text_from_response_items function."""
 
-    def test_extract_text_from_output_items_none(self) -> None:
-        """Test extract_text_from_output_items returns empty string for None."""
-        result = extract_text_from_output_items(None)
+    def test_extract_text_from_response_items_none(self) -> None:
+        """Test extract_text_from_response_items returns empty string for None."""
+        result = extract_text_from_response_items(None)
         assert result == ""
 
-    def test_extract_text_from_output_items_empty_list(self) -> None:
-        """Test extract_text_from_output_items returns empty string for empty list."""
-        result = extract_text_from_output_items([])
+    def test_extract_text_from_response_items_empty_list(self) -> None:
+        """Test extract_text_from_response_items returns empty string for empty list."""
+        result = extract_text_from_response_items([])
         assert result == ""
 
-    def test_extract_text_from_output_items_single_item(self) -> None:
-        """Test extract_text_from_output_items with a single message item."""
+    def test_extract_text_from_response_items_single_item(self) -> None:
+        """Test extract_text_from_response_items with a single message item."""
         output_item = make_output_item(
             item_type="message", role="assistant", content="Hello world"
         )
-        result = extract_text_from_output_items([output_item])  # type: ignore[arg-type]
+        result = extract_text_from_response_items([output_item])  # type: ignore[arg-type]
         assert result == "Hello world"
 
-    def test_extract_text_from_output_items_multiple_items(self) -> None:
-        """Test extract_text_from_output_items with multiple message items."""
+    def test_extract_text_from_response_items_multiple_items(self) -> None:
+        """Test extract_text_from_response_items with multiple message items."""
         item1 = make_output_item(
             item_type="message", role="assistant", content="First message"
         )
         item2 = make_output_item(
             item_type="message", role="assistant", content="Second message"
         )
-        result = extract_text_from_output_items([item1, item2])  # type: ignore[arg-type]
+        result = extract_text_from_response_items([item1, item2])  # type: ignore[arg-type]
         assert result == "First message Second message"
 
-    def test_extract_text_from_output_items_filters_non_messages(self) -> None:
-        """Test extract_text_from_output_items filters out non-message items."""
+    def test_extract_text_from_response_items_filters_non_messages(self) -> None:
+        """Test extract_text_from_response_items filters out non-message items."""
         item1 = make_output_item(
             item_type="message", role="assistant", content="Valid message"
         )
         item2 = make_output_item(
             item_type="function_call", role="assistant", content="Should be ignored"
         )
-        result = extract_text_from_output_items([item1, item2])  # type: ignore[arg-type]
+        result = extract_text_from_response_items([item1, item2])  # type: ignore[arg-type]
         assert result == "Valid message"
 
-    def test_extract_text_from_output_items_filters_user_messages(self) -> None:
-        """Test extract_text_from_output_items filters out user role messages."""
+    def test_extract_text_from_response_items_filters_user_messages(self) -> None:
+        """Test extract_text_from_response_items filters out user role messages."""
         item1 = make_output_item(
             item_type="message", role="assistant", content="Assistant message"
         )
         item2 = make_output_item(
             item_type="message", role="user", content="User message"
         )
-        result = extract_text_from_output_items([item1, item2])  # type: ignore[arg-type]
+        result = extract_text_from_response_items([item1, item2])  # type: ignore[arg-type]
         # User messages are filtered out - only assistant message is included
         assert result == "Assistant message"
 
-    def test_extract_text_from_output_items_with_list_content(self) -> None:
-        """Test extract_text_from_output_items with list-based content."""
+    def test_extract_text_from_response_items_with_list_content(self) -> None:
+        """Test extract_text_from_response_items with list-based content."""
         content = [
             make_content_part(text="Part 1"),
             make_content_part(text="Part 2"),
@@ -323,7 +325,7 @@ class TestExtractTextFromOutputItems:
         output_item = make_output_item(
             item_type="message", role="assistant", content=content
         )
-        result = extract_text_from_output_items([output_item])  # type: ignore[arg-type]
+        result = extract_text_from_response_items([output_item])  # type: ignore[arg-type]
         assert result == "Part 1 Part 2"
 
 
@@ -339,9 +341,9 @@ class TestGetRAGTools:
         tools = get_rag_tools(["db1", "db2"])
         assert isinstance(tools, list)
         assert len(tools) == 1
-        assert tools[0]["type"] == "file_search"
-        assert tools[0]["vector_store_ids"] == ["db1", "db2"]
-        assert tools[0]["max_num_results"] == 10
+        assert tools[0].type == "file_search"
+        assert tools[0].vector_store_ids == ["db1", "db2"]
+        assert tools[0].max_num_results == 10
 
 
 class TestGetMCPTools:
@@ -364,10 +366,10 @@ class TestGetMCPTools:
 
         tools_no_auth = await get_mcp_tools(token=None)
         assert len(tools_no_auth) == 2
-        assert tools_no_auth[0]["type"] == "mcp"
-        assert tools_no_auth[0]["server_label"] == "fs"
-        assert tools_no_auth[0]["server_url"] == "http://localhost:3000"
-        assert "headers" not in tools_no_auth[0]
+        assert tools_no_auth[0].type == "mcp"
+        assert tools_no_auth[0].server_label == "fs"
+        assert tools_no_auth[0].server_url == "http://localhost:3000"
+        assert tools_no_auth[0].headers is None
 
     @pytest.mark.asyncio
     async def test_get_mcp_tools_with_kubernetes_auth(
@@ -387,7 +389,7 @@ class TestGetMCPTools:
         mocker.patch("utils.responses.configuration", mock_config)
         tools_k8s = await get_mcp_tools(token="user-k8s-token")
         assert len(tools_k8s) == 1
-        assert tools_k8s[0]["headers"] == {"Authorization": "Bearer user-k8s-token"}
+        assert tools_k8s[0].authorization == "Bearer user-k8s-token"
 
     @pytest.mark.asyncio
     async def test_get_mcp_tools_with_mcp_headers(self, mocker: MockerFixture) -> None:
@@ -412,10 +414,10 @@ class TestGetMCPTools:
         }
         tools = await get_mcp_tools(token=None, mcp_headers=mcp_headers)
         assert len(tools) == 1
-        assert tools[0]["headers"] == {
-            "Authorization": "client-provided-token",
+        assert tools[0].headers == {
             "X-Custom": "custom-value",
         }
+        assert tools[0].authorization == "client-provided-token"
 
         # Test with mcp_headers=None (server should be skipped)
         tools_no_headers = await get_mcp_tools(token=None, mcp_headers=None)
@@ -491,7 +493,7 @@ class TestGetMCPTools:
 
         tools = await get_mcp_tools(token=None)
         assert len(tools) == 1
-        assert tools[0]["headers"] == {"Authorization": "static-secret-token"}
+        assert tools[0].authorization == "static-secret-token"
 
     @pytest.mark.asyncio
     async def test_get_mcp_tools_with_mixed_headers(
@@ -525,8 +527,8 @@ class TestGetMCPTools:
 
         tools = await get_mcp_tools(token="k8s-token", mcp_headers=mcp_headers)
         assert len(tools) == 1
-        assert tools[0]["headers"] == {
-            "Authorization": "Bearer k8s-token",
+        assert tools[0].authorization == "Bearer k8s-token"
+        assert tools[0].headers == {
             "X-API-Key": "secret-api-key",
             "X-Custom": "client-custom-value",
         }
@@ -576,8 +578,8 @@ class TestGetMCPTools:
 
         tools = await get_mcp_tools(token=None, mcp_headers=None)
         assert len(tools) == 1
-        assert tools[0]["server_label"] == "public-server"
-        assert "headers" not in tools[0]
+        assert tools[0].server_label == "public-server"
+        assert tools[0].headers is None
 
     @pytest.mark.asyncio
     async def test_get_mcp_tools_oauth_no_headers_raises_401_with_www_authenticate(
@@ -620,6 +622,177 @@ class TestGetMCPTools:
             exc_info.value.headers.get("WWW-Authenticate")
             == 'Bearer error="invalid_token"'
         )
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_with_propagated_headers(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test get_mcp_tools propagates allowlisted headers from the incoming request."""
+        servers = [
+            ModelContextProtocolServer(
+                name="rbac",
+                url="http://rbac:8080",
+                headers=["x-rh-identity", "x-request-id"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        request_headers = {
+            "x-rh-identity": "encoded-identity",
+            "x-request-id": "req-456",
+            "content-type": "application/json",
+        }
+        tools = await get_mcp_tools(
+            token=None, mcp_headers=None, request_headers=request_headers
+        )
+        assert len(tools) == 1
+        assert tools[0].headers == {
+            "x-rh-identity": "encoded-identity",
+            "x-request-id": "req-456",
+        }
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_propagated_headers_do_not_overwrite_auth_headers(
+        self, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """Test that propagated headers do not overwrite authorization_headers."""
+        secret_file = tmp_path / "token.txt"
+        secret_file.write_text("secret-token")
+
+        servers = [
+            ModelContextProtocolServer(
+                name="rbac",
+                url="http://rbac:8080",
+                authorization_headers={"Authorization": str(secret_file)},
+                headers=["Authorization", "x-rh-identity"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        request_headers = {
+            "authorization": "request-auth-value",
+            "x-rh-identity": "identity-value",
+        }
+        tools = await get_mcp_tools(
+            token=None, mcp_headers=None, request_headers=request_headers
+        )
+        assert len(tools) == 1
+        # Authorization from authorization_headers goes to tool's authorization field
+        assert tools[0].authorization == "secret-token"
+        # x-rh-identity from propagated headers should be in headers
+        assert tools[0].headers is not None
+        assert tools[0].headers["x-rh-identity"] == "identity-value"
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_propagated_headers_missing_from_request(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that missing allowlisted headers are simply skipped, server not skipped."""
+        servers = [
+            ModelContextProtocolServer(
+                name="rbac",
+                url="http://rbac:8080",
+                headers=["x-rh-identity", "x-missing"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        request_headers = {
+            "x-rh-identity": "identity-value",
+        }
+        tools = await get_mcp_tools(
+            token=None, mcp_headers=None, request_headers=request_headers
+        )
+        assert len(tools) == 1
+        assert tools[0].headers == {"x-rh-identity": "identity-value"}
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_propagated_headers_no_request_headers(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that propagated headers are skipped when request_headers is None."""
+        servers = [
+            ModelContextProtocolServer(
+                name="rbac",
+                url="http://rbac:8080",
+                headers=["x-rh-identity"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        tools = await get_mcp_tools(token=None, mcp_headers=None, request_headers=None)
+        assert len(tools) == 1
+        assert "headers" not in tools[0]
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_propagated_headers_additive_with_mcp_headers(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that propagated headers work alongside MCP-HEADERS (client mechanism)."""
+        servers = [
+            ModelContextProtocolServer(
+                name="server1",
+                url="http://server1:8080",
+                authorization_headers={"Authorization": "client"},
+                headers=["x-rh-identity"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        mcp_hdrs = {"server1": {"Authorization": "Bearer client-token"}}
+        request_headers = {"x-rh-identity": "identity-value"}
+
+        tools = await get_mcp_tools(
+            token=None, mcp_headers=mcp_hdrs, request_headers=request_headers
+        )
+        assert len(tools) == 1
+        assert tools[0].authorization == "Bearer client-token"
+        assert tools[0].headers == {"x-rh-identity": "identity-value"}
+
+    @pytest.mark.asyncio
+    async def test_get_mcp_tools_mixed_case_precedence(
+        self, tmp_path: Path, mocker: MockerFixture
+    ) -> None:
+        """Test case-insensitive precedence: auth header wins over propagated variant."""
+        secret_file = tmp_path / "token.txt"
+        secret_file.write_text("file-secret")
+
+        servers = [
+            ModelContextProtocolServer(
+                name="rbac",
+                url="http://rbac:8080",
+                authorization_headers={"Authorization": str(secret_file)},
+                headers=["authorization", "x-rh-identity"],
+            ),
+        ]
+        mock_config = mocker.Mock()
+        mock_config.mcp_servers = servers
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        request_headers = {
+            "authorization": "request-value",
+            "x-rh-identity": "identity-value",
+        }
+        tools = await get_mcp_tools(
+            token=None, mcp_headers=None, request_headers=request_headers
+        )
+        assert len(tools) == 1
+        # Auth header goes to tool's authorization field
+        assert tools[0].authorization == "file-secret"
+        # Propagated header should be in headers (Authorization not in headers)
+        assert tools[0].headers is not None
+        assert tools[0].headers["x-rh-identity"] == "identity-value"
+        assert len(tools[0].headers) == 1
 
 
 class TestGetTopicSummary:
@@ -726,8 +899,8 @@ class TestPrepareTools:
         result = await prepare_tools(mock_client, ["vs1", "vs2"], False, "token")
         assert result is not None
         assert len(result) == 1
-        assert result[0]["type"] == "file_search"
-        assert result[0]["vector_store_ids"] == ["vs1", "vs2"]
+        assert result[0].type == "file_search"
+        assert result[0].vector_store_ids == ["vs1", "vs2"]
 
     @pytest.mark.asyncio
     async def test_prepare_tools_fetch_vector_stores(
@@ -749,7 +922,7 @@ class TestPrepareTools:
         result = await prepare_tools(mock_client, None, False, "token")
         assert result is not None
         assert len(result) == 1
-        assert result[0]["vector_store_ids"] == ["vs1", "vs2"]
+        assert result[0].vector_store_ids == ["vs1", "vs2"]
 
     @pytest.mark.asyncio
     async def test_prepare_tools_connection_error(self, mocker: MockerFixture) -> None:
@@ -769,13 +942,16 @@ class TestPrepareTools:
     async def test_prepare_tools_with_mcp_servers(self, mocker: MockerFixture) -> None:
         """Test prepare_tools includes MCP tools."""
         mock_client = mocker.AsyncMock()
-        mock_mcp_tool = {"type": "mcp", "server_label": "test-server"}
+        mock_mcp_tool = InputToolMCP(
+            server_label="test-server",
+            server_url="http://test",
+        )
         mocker.patch("utils.responses.get_mcp_tools", return_value=[mock_mcp_tool])
 
         result = await prepare_tools(mock_client, ["vs1"], False, "token")
         assert result is not None
         assert len(result) == 2  # RAG tool + MCP tool
-        assert any(tool.get("type") == "mcp" for tool in result)
+        assert any(tool.type == "mcp" for tool in result)
 
     @pytest.mark.asyncio
     async def test_prepare_tools_api_status_error(self, mocker: MockerFixture) -> None:
@@ -977,20 +1153,18 @@ class TestPrepareResponsesParams:
 
         # Simulate MCP tools with headers (as returned by prepare_tools/get_mcp_tools)
         mcp_tools_with_headers = [
-            {
-                "type": "mcp",
-                "server_label": "mcp::aap-controller",
-                "server_url": "http://aap.foo.redhat.com:8004/sse",
-                "require_approval": "never",
-                "headers": {"X-Authorization": "client-token"},
-            },
-            {
-                "type": "mcp",
-                "server_label": "mcp::aap-lightspeed",
-                "server_url": "http://aap.foo.redhat.com:8005/sse",
-                "require_approval": "never",
-                "headers": {"X-Authorization": "client-token-2"},
-            },
+            InputToolMCP(
+                server_label="mcp::aap-controller",
+                server_url="http://aap.foo.redhat.com:8004/sse",
+                require_approval="never",
+                headers={"X-Authorization": "client-token"},
+            ),
+            InputToolMCP(
+                server_label="mcp::aap-lightspeed",
+                server_url="http://aap.foo.redhat.com:8005/sse",
+                require_approval="never",
+                headers={"X-Authorization": "client-token-2"},
+            ),
         ]
 
         mock_config = mocker.Mock()
@@ -1817,27 +1991,27 @@ class TestExtractVectorStoreIdsFromTools:
     def test_with_file_search_tool(self) -> None:
         """Test extraction from file_search tool definition."""
         tools = [
-            {"type": "file_search", "vector_store_ids": ["vs-1", "vs-2"]},
-            {"type": "mcp", "server_label": "test"},
+            InputToolFileSearch(vector_store_ids=["vs-1", "vs-2"]),
+            InputToolMCP(server_label="test", server_url="http://test"),
         ]
         result = extract_vector_store_ids_from_tools(tools)
         assert result == ["vs-1", "vs-2"]
 
     def test_with_no_file_search(self) -> None:
         """Test extraction returns empty list when no file_search tool."""
-        tools = [{"type": "mcp", "server_label": "test"}]
+        tools = [InputToolMCP(server_label="test", server_url="http://test")]
         result = extract_vector_store_ids_from_tools(tools)
-        assert result == []
+        assert not result
 
     def test_with_none_tools(self) -> None:
         """Test extraction returns empty list for None tools."""
         result = extract_vector_store_ids_from_tools(None)
-        assert result == []
+        assert not result
 
     def test_with_empty_tools(self) -> None:
         """Test extraction returns empty list for empty tools list."""
         result = extract_vector_store_ids_from_tools([])
-        assert result == []
+        assert not result
 
 
 class TestExtractRagChunksWithIndexResolution:

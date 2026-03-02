@@ -3,7 +3,7 @@
 """Handler for REST API call to provide answer to query using Response API."""
 
 import datetime
-from typing import Annotated, Any, cast
+from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from llama_stack_api.openai_responses import OpenAIResponseObject
@@ -32,7 +32,6 @@ from models.responses import (
     PromptTooLongResponse,
     QueryResponse,
     QuotaExceededResponse,
-    ReferencedDocument,
     ServiceUnavailableResponse,
     UnauthorizedResponse,
     UnprocessableEntityResponse,
@@ -61,10 +60,10 @@ from utils.responses import (
 from utils.shields import (
     append_turn_to_conversation,
     run_shield_moderation,
+    validate_shield_ids_override,
 )
 from utils.suid import normalize_conversation_id
 from utils.types import (
-    RAGChunk,
     ResponsesApiParams,
     TurnSummary,
 )
@@ -133,6 +132,9 @@ async def query_endpoint_handler(
         query_request.model, query_request.provider, request.state.authorized_actions
     )
 
+    # Validate shield_ids override if provided
+    validate_shield_ids_override(query_request, configuration)
+
     # Validate attachments if provided
     if query_request.attachments:
         validate_attachments_metadata(query_request.attachments)
@@ -153,11 +155,8 @@ async def query_endpoint_handler(
 
     client = AsyncLlamaStackClientHolder().get_client()
 
-    doc_ids_from_chunks: list[ReferencedDocument] = []
-    pre_rag_chunks: list[RAGChunk] = []
-
     _, _, doc_ids_from_chunks, pre_rag_chunks = await perform_vector_search(
-        client, query_request, configuration
+        client, query_request.query, query_request.solr
     )
 
     rag_context = format_rag_context_for_injection(pre_rag_chunks)
@@ -175,6 +174,7 @@ async def query_endpoint_handler(
         mcp_headers,
         stream=False,
         store=True,
+        request_headers=request.headers,
     )
 
     # Handle Azure token refresh if needed
@@ -192,7 +192,11 @@ async def query_endpoint_handler(
 
     # Retrieve response using Responses API
     turn_summary = await retrieve_response(
-        client, responses_params, vector_store_ids, rag_id_mapping
+        client,
+        responses_params,
+        query_request.shield_ids,
+        vector_store_ids,
+        rag_id_mapping,
     )
 
     if pre_rag_chunks:
@@ -200,7 +204,7 @@ async def query_endpoint_handler(
 
     if doc_ids_from_chunks:
         turn_summary.referenced_documents = deduplicate_referenced_documents(
-            doc_ids_from_chunks + (turn_summary.referenced_documents or [])
+            doc_ids_from_chunks + turn_summary.referenced_documents
         )
 
     # Get topic summary for new conversation
@@ -237,7 +241,8 @@ async def query_endpoint_handler(
         started_at=started_at,
         completed_at=completed_at,
         summary=turn_summary,
-        query_request=query_request,
+        query=query_request.query,
+        attachments=query_request.attachments,
         skip_userid_check=_skip_userid_check,
         topic_summary=topic_summary,
     )
@@ -260,8 +265,9 @@ async def query_endpoint_handler(
 async def retrieve_response(  # pylint: disable=too-many-locals
     client: AsyncLlamaStackClient,
     responses_params: ResponsesApiParams,
-    vector_store_ids: list[str] | None = None,
-    rag_id_mapping: dict[str, str] | None = None,
+    shield_ids: Optional[list[str]] = None,
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
 ) -> TurnSummary:
     """
     Retrieve response from LLMs and agents.
@@ -272,25 +278,31 @@ async def retrieve_response(  # pylint: disable=too-many-locals
     Parameters:
         client: The AsyncLlamaStackClient to use for the request.
         responses_params: The Responses API parameters.
+        shield_ids: Optional list of shield IDs for moderation.
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
 
     Returns:
         TurnSummary: Summary of the LLM response content
     """
+    response: Optional[OpenAIResponseObject] = None
     try:
-        moderation_result = await run_shield_moderation(client, responses_params.input)
-        if moderation_result.blocked:
+        moderation_result = await run_shield_moderation(
+            client, cast(str, responses_params.input), shield_ids
+        )
+        if moderation_result.decision == "blocked":
             # Handle shield moderation blocking
-            violation_message = moderation_result.message or ""
+            violation_message = moderation_result.message
             await append_turn_to_conversation(
                 client,
                 responses_params.conversation,
-                responses_params.input,
+                cast(str, responses_params.input),
                 violation_message,
             )
             return TurnSummary(llm_response=violation_message)
-        response = await client.responses.create(**responses_params.model_dump())
+        response = await client.responses.create(
+            **responses_params.model_dump(exclude_none=True)
+        )
         response = cast(OpenAIResponseObject, response)
 
     except RuntimeError as e:  # library mode wraps 413 into runtime error

@@ -3,14 +3,16 @@
 # pylint: disable=too-many-lines
 
 import json
-from collections.abc import Sequence
-from typing import Any, cast
+from collections.abc import Mapping, Sequence
+from typing import Any, Optional, cast
 
 from fastapi import HTTPException
 from llama_stack_api.openai_responses import (
     OpenAIResponseContentPartRefusal as ContentPartRefusal,
     OpenAIResponseInputMessageContent as InputMessageContent,
     OpenAIResponseInputMessageContentText as InputTextPart,
+    OpenAIResponseInputToolFileSearch as InputToolFileSearch,
+    OpenAIResponseInputToolMCP as InputToolMCP,
     OpenAIResponseMessage as ResponseMessage,
     OpenAIResponseObject as ResponseObject,
     OpenAIResponseOutput as ResponseOutput,
@@ -24,6 +26,7 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalRequest as MCPApprovalRequest,
     OpenAIResponseMCPApprovalResponse as MCPApprovalResponse,
     OpenAIResponseUsage as ResponseUsage,
+    OpenAIResponseInputTool as InputTool,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
 
@@ -45,12 +48,13 @@ from utils.query import (
     handle_known_apistatus_errors,
     prepare_input,
 )
-from utils.mcp_headers import McpHeaders
+from utils.mcp_headers import McpHeaders, extract_propagated_headers
 from utils.suid import to_llama_stack_conversation_id
 from utils.token_counter import TokenCounter
 from utils.types import (
     RAGChunk,
     ReferencedDocument,
+    ResponseItem,
     ResponsesApiParams,
     ToolCallSummary,
     ToolResultSummary,
@@ -95,16 +99,17 @@ async def get_topic_summary(
         error_response = handle_known_apistatus_errors(e, model_id)
         raise HTTPException(**error_response.model_dump()) from e
 
-    return extract_text_from_output_items(response.output)
+    return extract_text_from_response_items(response.output)
 
 
-async def prepare_tools(
+async def prepare_tools(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     client: AsyncLlamaStackClient,
-    vector_store_ids: list[str] | None,
-    no_tools: bool | None,
+    vector_store_ids: Optional[list[str]],
+    no_tools: Optional[bool],
     token: str,
-    mcp_headers: McpHeaders | None = None,
-) -> list[dict[str, Any]] | None:
+    mcp_headers: Optional[McpHeaders] = None,
+    request_headers: Optional[Mapping[str, str]] = None,
+) -> Optional[list[InputTool]]:
     """Prepare tools for Responses API including RAG and MCP tools.
 
     Args:
@@ -114,6 +119,7 @@ async def prepare_tools(
         no_tools: Whether to skip tool preparation
         token: Authentication token for MCP tools
         mcp_headers: Per-request headers for MCP servers
+        request_headers: Incoming HTTP request headers for allowlist propagation
 
     Returns:
         List of tool configurations, or None if no tools available
@@ -121,7 +127,7 @@ async def prepare_tools(
     if no_tools:
         return None
 
-    toolgroups = []
+    toolgroups: list[InputTool] = []
     # Get all vector stores if vector stores are not restricted by request
     if vector_store_ids is None:
         try:
@@ -143,13 +149,13 @@ async def prepare_tools(
         toolgroups.extend(rag_tools)
 
     # Add MCP server tools
-    mcp_tools = await get_mcp_tools(token, mcp_headers)
+    mcp_tools = await get_mcp_tools(token, mcp_headers, request_headers)
     if mcp_tools:
         toolgroups.extend(mcp_tools)
         logger.debug(
             "Configured %d MCP tools: %s",
             len(mcp_tools),
-            [tool.get("server_label", "unknown") for tool in mcp_tools],
+            [tool.server_label for tool in mcp_tools],
         )
     # Convert empty list to None for consistency with existing behavior
     if not toolgroups:
@@ -159,8 +165,8 @@ async def prepare_tools(
 
 
 def _build_provider_data_headers(
-    tools: list[dict[str, Any]] | None,
-) -> dict[str, str] | None:
+    tools: Optional[list[InputTool]],
+) -> Optional[dict[str, str]]:
     """Build extra HTTP headers containing MCP provider data for Llama Stack.
 
     Extracts per-server auth headers from MCP tool definitions and encodes
@@ -178,9 +184,9 @@ def _build_provider_data_headers(
         return None
 
     mcp_headers: McpHeaders = {
-        tool["server_url"]: tool["headers"]
+        tool.server_url: tool.headers
         for tool in tools
-        if tool.get("type") == "mcp" and tool.get("headers") and tool.get("server_url")
+        if tool.type == "mcp" and tool.headers and tool.server_url
     }
 
     if not mcp_headers:
@@ -192,11 +198,12 @@ def _build_provider_data_headers(
 async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-many-locals,too-many-positional-arguments
     client: AsyncLlamaStackClient,
     query_request: QueryRequest,
-    user_conversation: UserConversation | None,
+    user_conversation: Optional[UserConversation],
     token: str,
-    mcp_headers: McpHeaders | None = None,
+    mcp_headers: Optional[McpHeaders] = None,
     stream: bool = False,
     store: bool = True,
+    request_headers: Optional[Mapping[str, str]] = None,
 ) -> ResponsesApiParams:
     """Prepare API request parameters for Responses API.
 
@@ -208,6 +215,7 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
         mcp_headers: Optional MCP headers for multi-component processing
         stream: Whether to stream the response
         store: Whether to store the response
+        request_headers: Incoming HTTP request headers for allowlist propagation
 
     Returns:
         ResponsesApiParams containing all prepared parameters for the API request
@@ -233,6 +241,7 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
         query_request.no_tools,
         token,
         mcp_headers,
+        request_headers,
     )
 
     # Prepare input for Responses API
@@ -281,25 +290,26 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
 
 
 def extract_vector_store_ids_from_tools(
-    tools: list[dict[str, Any]] | None,
+    tools: Optional[list[InputTool]],
 ) -> list[str]:
     """Extract vector store IDs from prepared tool configurations.
 
     Parameters:
-        tools: The prepared tools list from ResponsesApiParams.
+        tools: The prepared tools list of InputTool objects.
 
     Returns:
         List of vector store IDs used in file_search tools, or empty list.
     """
     if not tools:
         return []
+    vector_store_ids: list[str] = []
     for tool in tools:
-        if tool.get("type") == "file_search":
-            return tool.get("vector_store_ids", [])
-    return []
+        if tool.type == "file_search":
+            vector_store_ids.extend(tool.vector_store_ids)
+    return vector_store_ids
 
 
-def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
+def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[InputToolFileSearch]]:
     """Convert vector store IDs to tools format for Responses API.
 
     Args:
@@ -312,33 +322,36 @@ def get_rag_tools(vector_store_ids: list[str]) -> list[dict[str, Any]] | None:
         return None
 
     return [
-        {
-            "type": "file_search",
-            "vector_store_ids": vector_store_ids,
-            "max_num_results": 10,
-        }
+        InputToolFileSearch(
+            vector_store_ids=vector_store_ids,
+            max_num_results=10,
+        )
     ]
 
 
 async def get_mcp_tools(  # pylint: disable=too-many-return-statements,too-many-locals
-    token: str | None = None,
-    mcp_headers: McpHeaders | None = None,
-) -> list[dict[str, Any]]:
+    token: Optional[str] = None,
+    mcp_headers: Optional[McpHeaders] = None,
+    request_headers: Optional[Mapping[str, str]] = None,
+) -> list[InputToolMCP]:
     """Convert MCP servers to tools format for Responses API.
 
     Args:
         token: Optional authentication token for MCP server authorization
         mcp_headers: Optional per-request headers for MCP servers, keyed by server URL
+        request_headers: Optional incoming HTTP request headers for allowlist propagation
 
     Returns:
-        List of MCP tool definitions with server details and optional auth headers
+        List of MCP tool definitions with server details and optional auth. When
+        present, the Authorization header is set as the tool's "authorization"
+        field; any other resolved headers are set in "headers".
 
     Raises:
         HTTPException: 401 with WWW-Authenticate header when an MCP server uses OAuth,
             no headers are passed, and the server responds with 401 and WWW-Authenticate.
     """
 
-    def _get_token_value(original: str, header: str) -> str | None:
+    def _get_token_value(original: str, header: str) -> Optional[str]:
         """Convert to header value."""
         match original:
             case constants.MCP_AUTH_KUBERNETES:
@@ -366,18 +379,10 @@ async def get_mcp_tools(  # pylint: disable=too-many-return-statements,too-many-
                 # use provided
                 return original
 
-    tools = []
+    tools: list[InputToolMCP] = []
     for mcp_server in configuration.mcp_servers:
-        # Base tool definition
-        tool_def = {
-            "type": "mcp",
-            "server_label": mcp_server.name,
-            "server_url": mcp_server.url,
-            "require_approval": "never",
-        }
-
         # Build headers
-        headers = {}
+        headers: dict[str, str] = {}
         for name, value in mcp_server.resolved_authorization_headers.items():
             # for each defined header
             h_value = _get_token_value(value, name)
@@ -407,18 +412,33 @@ async def get_mcp_tools(  # pylint: disable=too-many-return-statements,too-many-
             )
             continue
 
-        if len(headers) > 0:
-            # add headers to tool definition
-            tool_def["headers"] = headers  # type: ignore[index]
-        # collect tools info
-        tools.append(tool_def)
+        # Propagate allowlisted headers from the incoming request
+        if mcp_server.headers and request_headers is not None:
+            propagated = extract_propagated_headers(mcp_server, request_headers)
+            existing_lower = {name.lower() for name in headers}
+            for h_name, h_value in propagated.items():
+                if h_name.lower() not in existing_lower:
+                    headers[h_name] = h_value
+                    existing_lower.add(h_name.lower())
+
+        # Build Authorization header
+        authorization = headers.pop("Authorization", None)
+        tools.append(
+            InputToolMCP(
+                server_label=mcp_server.name,
+                server_url=mcp_server.url,
+                require_approval="never",
+                headers=headers if headers else None,
+                authorization=authorization,
+            )
+        )
     return tools
 
 
 def parse_referenced_documents(  # pylint: disable=too-many-locals
-    response: ResponseObject | None,
-    vector_store_ids: list[str] | None = None,
-    rag_id_mapping: dict[str, str] | None = None,
+    response: Optional[ResponseObject],
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
 ) -> list[ReferencedDocument]:
     """Parse referenced documents from Responses API response.
 
@@ -432,7 +452,7 @@ def parse_referenced_documents(  # pylint: disable=too-many-locals
     """
     documents: list[ReferencedDocument] = []
     # Use a set to track unique documents by (doc_url, doc_title) tuple
-    seen_docs: set[tuple[str | None, str | None]] = set()
+    seen_docs: set[tuple[Optional[str], Optional[str]]] = set()
 
     # Handle None response (e.g., when agent fails)
     if response is None or not response.output:
@@ -466,7 +486,7 @@ def parse_referenced_documents(  # pylint: disable=too-many-locals
                 doc_title = attributes.get("title")
 
                 if doc_title or doc_url:
-                    # Treat empty string as None for URL to satisfy AnyUrl | None
+                    # Treat empty string as None for URL to satisfy Optional[AnyUrl]
                     final_url = doc_url if doc_url else None
                     if (final_url, doc_title) not in seen_docs:
                         documents.append(
@@ -481,7 +501,7 @@ def parse_referenced_documents(  # pylint: disable=too-many-locals
     return documents
 
 
-def extract_token_usage(usage: ResponseUsage | None, model: str) -> TokenCounter:
+def extract_token_usage(usage: Optional[ResponseUsage], model: str) -> TokenCounter:
     """Extract token usage from Responses API usage object and update metrics.
 
     Args:
@@ -526,9 +546,9 @@ def extract_token_usage(usage: ResponseUsage | None, model: str) -> TokenCounter
 def build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals
     output_item: ResponseOutput,
     rag_chunks: list[RAGChunk],
-    vector_store_ids: list[str] | None = None,
-    rag_id_mapping: dict[str, str] | None = None,
-) -> tuple[ToolCallSummary | None, ToolResultSummary | None]:
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
+) -> tuple[Optional[ToolCallSummary], Optional[ToolResultSummary]]:
     """Translate Responses API tool outputs into ToolCallSummary and ToolResultSummary.
 
     Args:
@@ -559,7 +579,7 @@ def build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-m
         extract_rag_chunks_from_file_search_item(
             file_search_item, rag_chunks, vector_store_ids, rag_id_mapping
         )
-        response_payload: dict[str, Any] | None = None
+        response_payload: Optional[dict[str, Any]] = None
         if file_search_item.results is not None:
             response_payload = {
                 "results": [result.model_dump() for result in file_search_item.results]
@@ -686,7 +706,7 @@ def build_mcp_tool_call_from_arguments_done(
     output_index: int,
     arguments: str,
     mcp_call_items: dict[int, tuple[str, str]],
-) -> ToolCallSummary | None:
+) -> Optional[ToolCallSummary]:
     """Build ToolCallSummary from MCP call arguments completion event.
 
     Args:
@@ -742,7 +762,7 @@ def _resolve_source_for_result(
     result: Any,
     vector_store_ids: list[str],
     rag_id_mapping: dict[str, str],
-) -> str | None:
+) -> Optional[str]:
     """Resolve the human-friendly index name for a file search result.
 
     Uses the vector store mapping to convert internal llama-stack IDs
@@ -762,14 +782,14 @@ def _resolve_source_for_result(
 
     if len(vector_store_ids) > 1:
         attributes = getattr(result, "attributes", {}) or {}
-        attr_store_id: str | None = attributes.get("vector_store_id")
+        attr_store_id: Optional[str] = attributes.get("vector_store_id")
         if attr_store_id:
             return rag_id_mapping.get(attr_store_id, attr_store_id)
 
     return None
 
 
-def _build_chunk_attributes(result: Any) -> dict[str, Any] | None:
+def _build_chunk_attributes(result: Any) -> Optional[dict[str, Any]]:
     """Extract document metadata attributes from a file search result.
 
     Parameters:
@@ -789,8 +809,8 @@ def _build_chunk_attributes(result: Any) -> dict[str, Any] | None:
 def extract_rag_chunks_from_file_search_item(
     item: FileSearchCall,
     rag_chunks: list[RAGChunk],
-    vector_store_ids: list[str] | None = None,
-    rag_id_mapping: dict[str, str] | None = None,
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
 ) -> None:
     """Extract RAG chunks from a file search tool call item.
 
@@ -891,7 +911,7 @@ async def check_model_configured(
 
 async def select_model_for_responses(
     client: AsyncLlamaStackClient,
-    user_conversation: UserConversation | None,
+    user_conversation: Optional[UserConversation],
 ) -> str:
     """Select model for Responses API if not explicitly specified in the request.
 
@@ -956,10 +976,10 @@ async def select_model_for_responses(
 
 
 def build_turn_summary(
-    response: ResponseObject | None,
+    response: Optional[ResponseObject],
     model: str,
-    vector_store_ids: list[str] | None = None,
-    rag_id_mapping: dict[str, str] | None = None,
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
 ) -> TurnSummary:
     """Build a TurnSummary from a ResponseObject.
 
@@ -979,7 +999,7 @@ def build_turn_summary(
         return summary
 
     # Extract text from output items
-    summary.llm_response = extract_text_from_output_items(response.output)
+    summary.llm_response = extract_text_from_response_items(response.output)
 
     # Extract referenced documents and tool calls/results
     summary.referenced_documents = parse_referenced_documents(
@@ -999,42 +1019,42 @@ def build_turn_summary(
     return summary
 
 
-def extract_text_from_output_items(
-    output_items: Sequence[ResponseOutput] | None,
+def extract_text_from_response_items(
+    response_items: Optional[Sequence[ResponseItem]],
 ) -> str:
-    """Extract text from response output items recursively.
+    """Extract text from response items iteratively.
 
     Args:
-        output_items: Sequence of output items from response.output, or None.
+        response_items: Sequence of response items (input or output), or None.
 
     Returns:
         Extracted text content concatenated from all items, or empty string if None.
     """
-    if output_items is None:
+    if response_items is None:
         return ""
 
     text_fragments: list[str] = []
-    for item in output_items:
-        text = extract_text_from_output_item(item)
+    for item in response_items:
+        text = extract_text_from_response_item(item)
         if text:
             text_fragments.append(text)
 
     return " ".join(text_fragments)
 
 
-def extract_text_from_output_item(output_item: ResponseOutput) -> str:
-    """Extract text from a single output item.
+def extract_text_from_response_item(response_item: ResponseItem) -> str:
+    """Extract text from a single response item (input or output).
 
     Args:
-        output_item: A single output item from response.output.
+        response_item: A single item from request input or response output.
 
     Returns:
         Extracted text content, or empty string if not a message or role is user.
     """
-    if output_item.type != "message":
+    if response_item.type != "message":
         return ""
 
-    message_item = cast(ResponseMessage, output_item)
+    message_item = cast(ResponseMessage, response_item)
     if message_item.role == "user":
         return ""
 
@@ -1079,7 +1099,7 @@ def deduplicate_referenced_documents(
     docs: list[ReferencedDocument],
 ) -> list[ReferencedDocument]:
     """Remove duplicate referenced documents based on URL and title."""
-    seen: set[tuple[str | None, str | None]] = set()
+    seen: set[tuple[Optional[str], Optional[str]]] = set()
     out: list[ReferencedDocument] = []
     for d in docs:
         key = (str(d.doc_url) if d.doc_url else None, d.doc_title)
