@@ -8,7 +8,7 @@ This module can be used in two ways:
 import os
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 from azure.core.exceptions import ClientAuthenticationError
@@ -44,7 +44,7 @@ class YamlDumper(yaml.Dumper):  # pylint: disable=too-many-ancestors
 
 
 def setup_azure_entra_id_token(
-    azure_config: dict[str, Any] | None, env_file: str
+    azure_config: Optional[dict[str, Any]], env_file: str
 ) -> None:
     """Generate Azure Entra ID access token and write to .env file.
 
