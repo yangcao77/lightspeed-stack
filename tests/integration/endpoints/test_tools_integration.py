@@ -73,7 +73,9 @@ async def test_tools_endpoint_returns_401_with_www_authenticate_when_mcp_oauth_r
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        await tools.tools_endpoint_handler(request=test_request, auth=test_auth)
+        await tools.tools_endpoint_handler(
+            request=test_request, auth=test_auth, mcp_headers={}
+        )
 
     assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert exc_info.value.headers is not None
@@ -125,7 +127,9 @@ async def test_tools_endpoint_returns_401_when_oauth_probe_times_out(
     )
 
     with pytest.raises(HTTPException) as exc_info:
-        await tools.tools_endpoint_handler(request=test_request, auth=test_auth)
+        await tools.tools_endpoint_handler(
+            request=test_request, auth=test_auth, mcp_headers={}
+        )
 
     assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
     assert (

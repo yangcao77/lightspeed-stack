@@ -257,6 +257,7 @@ def test_streaming_query_v2_endpoint_empty_body_returns_422(
     data = response.json()
     assert "detail" in data
 
+
 @pytest.mark.asyncio
 async def test_streaming_query_endpoint_returns_401_with_www_authenticate_when_mcp_oauth_required(
     test_config: AppConfig,
