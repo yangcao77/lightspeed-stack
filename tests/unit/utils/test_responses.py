@@ -1106,17 +1106,18 @@ class TestPrepareToolsTranslatesVectorStoreIds:
         )
         mocker.patch("utils.responses.get_mcp_tools", return_value=None)
 
-        # Configure BYOK RAG (should NOT be used for the None path)
+        # Configure BYOK RAG whose rag_id matches the fetched ID so that
+        # accidental translation would change the result and fail the assertion
         mock_byok_rag = mocker.Mock()
-        mock_byok_rag.rag_id = "ocp_docs"
-        mock_byok_rag.vector_db_id = "vs-internal"
+        mock_byok_rag.rag_id = "vs-internal"
+        mock_byok_rag.vector_db_id = "vs-translated"
         mock_config = mocker.Mock()
         mock_config.configuration.byok_rag = [mock_byok_rag]
         mocker.patch("utils.responses.configuration", mock_config)
 
         result = await prepare_tools(mock_client, None, False, "token")
         assert result is not None
-        # The IDs from llama-stack should be used as-is
+        # The IDs from llama-stack should be used as-is (no BYOK translation on None path)
         assert result[0].vector_store_ids == ["vs-internal"]
 
 
