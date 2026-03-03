@@ -633,6 +633,7 @@ class TestGetMCPTools:
                 name="rbac",
                 url="http://rbac:8080",
                 headers=["x-rh-identity", "x-request-id"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
@@ -667,6 +668,7 @@ class TestGetMCPTools:
                 url="http://rbac:8080",
                 authorization_headers={"Authorization": str(secret_file)},
                 headers=["Authorization", "x-rh-identity"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
@@ -697,6 +699,7 @@ class TestGetMCPTools:
                 name="rbac",
                 url="http://rbac:8080",
                 headers=["x-rh-identity", "x-missing"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
@@ -722,6 +725,7 @@ class TestGetMCPTools:
                 name="rbac",
                 url="http://rbac:8080",
                 headers=["x-rh-identity"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
@@ -743,6 +747,7 @@ class TestGetMCPTools:
                 url="http://server1:8080",
                 authorization_headers={"Authorization": "client"},
                 headers=["x-rh-identity"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
@@ -773,6 +778,7 @@ class TestGetMCPTools:
                 url="http://rbac:8080",
                 authorization_headers={"Authorization": str(secret_file)},
                 headers=["authorization", "x-rh-identity"],
+                provider_id="provider",
             ),
         ]
         mock_config = mocker.Mock()
