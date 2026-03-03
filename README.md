@@ -377,7 +377,7 @@ The secret files should contain only the header value (tokens are automatically 
 
 ```bash
 # /var/secrets/api-token
-Bearer sk-abc123def456...
+sk-abc123def456...
 
 # /var/secrets/api-key
 my-api-key-value
