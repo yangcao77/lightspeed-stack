@@ -507,7 +507,7 @@ async def test_rlsapi_v1_infer_skip_rag(
     ),
     ids=["question", "stdin", "attachment_contents", "terminal_output"],
 )
-def test_infer_size_limit(integration_http_client: TestClient, json) -> None:
+def test_infer_size_limit(integration_http_client: TestClient, json: dict) -> None:
     """Test that a field exceeding limit is rejected."""
     response = integration_http_client.post("/v1/infer", json=json)
     detail = response.json()["detail"]

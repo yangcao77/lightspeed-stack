@@ -1,7 +1,7 @@
 # pylint: disable=no-member
 """Unit tests for rlsapi v1 request models."""
 
-from typing import Any, Optional
+from typing import Any, Optional, Callable
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -611,7 +611,7 @@ class TestGetInputSourceEdgeCases:
         "infer-request-question",
     ],
 )
-def test_value_max_length(model, field, max_length) -> None:
+def test_value_max_length(model: Callable, field: str, max_length: int) -> None:
     """Test that fields with longer than allowed data are not allowed"""
     value = "a" * max_length
     bad_value = value + "a"
