@@ -3,6 +3,7 @@
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
 
+import re
 from typing import Any, Optional
 
 import pytest
@@ -167,10 +168,11 @@ def test_build_instructions(
     expected_contains: list[str],
     expected_not_contains: list[str],
 ) -> None:
-    """Test _build_instructions with various system info combinations."""
+    """Test _build_instructions includes date and system info."""
     systeminfo = RlsapiV1SystemInfo(**systeminfo_kwargs)
     result = _build_instructions(systeminfo)
 
+    assert re.search(r"Today's date: \w+ \d{2}, \d{4}", result)
     for expected in expected_contains:
         assert expected in result
     for not_expected in expected_not_contains:
@@ -223,7 +225,8 @@ def test_build_instructions_no_customization(mocker: MockerFixture) -> None:
     systeminfo = RlsapiV1SystemInfo()
     result = _build_instructions(systeminfo)
 
-    assert result == constants.DEFAULT_SYSTEM_PROMPT
+    assert result.startswith(constants.DEFAULT_SYSTEM_PROMPT)
+    assert re.search(r"Today's date: \w+ \d{2}, \d{4}", result)
 
 
 # --- Test _get_default_model_id ---

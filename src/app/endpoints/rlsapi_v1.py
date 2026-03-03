@@ -5,6 +5,7 @@ from the RHEL Lightspeed Command Line Assistant (CLA).
 """
 
 import time
+from datetime import datetime
 from typing import Annotated, Any, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
@@ -101,18 +102,20 @@ infer_responses: dict[int | str, dict[str, Any]] = {
 
 
 def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
-    """Build LLM instructions incorporating system context when available.
+    """Build LLM instructions incorporating date and system context.
 
-    Enhances the default system prompt with RHEL system information to provide
-    the LLM with relevant context about the user's environment.
+    Enhances the default system prompt with today's date and RHEL system
+    information to provide the LLM with relevant context about the user's
+    environment and current time.
 
     Args:
         systeminfo: System information from the client (OS, version, arch).
 
     Returns:
-        Instructions string for the LLM, with system context if available.
+        Instructions string for the LLM, with date and system context.
     """
     base_prompt = _get_base_prompt()
+    date_today = datetime.now().strftime("%B %d, %Y")
 
     context_parts = []
     if systeminfo.os:
@@ -123,10 +126,10 @@ def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
         context_parts.append(f"Architecture: {systeminfo.arch}")
 
     if not context_parts:
-        return base_prompt
+        return f"{base_prompt}\n\nToday's date: {date_today}"
 
     system_context = ", ".join(context_parts)
-    return f"{base_prompt}\n\nUser's system: {system_context}"
+    return f"{base_prompt}\n\nToday's date: {date_today}\n\nUser's system: {system_context}"
 
 
 def _get_base_prompt() -> str:
