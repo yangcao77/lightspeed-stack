@@ -323,6 +323,7 @@ def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[InputToolFileSea
 
     return [
         InputToolFileSearch(
+            type="file_search",
             vector_store_ids=vector_store_ids,
             max_num_results=10,
         )
@@ -425,6 +426,7 @@ async def get_mcp_tools(  # pylint: disable=too-many-return-statements,too-many-
         authorization = headers.pop("Authorization", None)
         tools.append(
             InputToolMCP(
+                type="mcp",
                 server_label=mcp_server.name,
                 server_url=mcp_server.url,
                 require_approval="never",
