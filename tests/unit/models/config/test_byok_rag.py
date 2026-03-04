@@ -29,7 +29,7 @@ def test_byok_rag_configuration_default_values() -> None:
     assert byok_rag.embedding_model == DEFAULT_EMBEDDING_MODEL
     assert byok_rag.embedding_dimension == DEFAULT_EMBEDDING_DIMENSION
     assert byok_rag.vector_db_id == "vector_db_id"
-    assert byok_rag.db_path == Path("tests/configuration/rag.txt")
+    assert byok_rag.db_path == "tests/configuration/rag.txt"
 
 
 def test_byok_rag_configuration_nondefault_values() -> None:
@@ -48,7 +48,7 @@ def test_byok_rag_configuration_nondefault_values() -> None:
         embedding_model="embedding_model",
         embedding_dimension=1024,
         vector_db_id="vector_db_id",
-        db_path=Path("tests/configuration/rag.txt"),
+        db_path="tests/configuration/rag.txt",
     )
     assert byok_rag is not None
     assert byok_rag.rag_id == "rag_id"
@@ -56,7 +56,7 @@ def test_byok_rag_configuration_nondefault_values() -> None:
     assert byok_rag.embedding_model == "embedding_model"
     assert byok_rag.embedding_dimension == 1024
     assert byok_rag.vector_db_id == "vector_db_id"
-    assert byok_rag.db_path == Path("tests/configuration/rag.txt")
+    assert byok_rag.db_path == "tests/configuration/rag.txt"
 
 
 def test_byok_rag_configuration_wrong_dimension() -> None:
