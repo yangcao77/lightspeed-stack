@@ -1559,7 +1559,7 @@ class ByokRag(ConfigurationBase):
         description="Vector database identification.",
     )
 
-    db_path: FilePath = Field(
+    db_path: str = Field(
         ...,
         title="DB path",
         description="Path to RAG database.",
