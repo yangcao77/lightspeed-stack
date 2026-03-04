@@ -57,6 +57,7 @@ from models.responses import (
     UnauthorizedResponse,
     UnprocessableEntityResponse,
 )
+from utils.conversations import append_turn_items_to_conversation
 from utils.endpoints import (
     check_configuration_loaded,
     validate_and_retrieve_conversation,
@@ -189,10 +190,22 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
     client = AsyncLlamaStackClientHolder().get_client()
 
+    # Moderation input is the raw user content (query + attachments) without injected RAG
+    # context, to avoid false positives from retrieved document content.
+    moderation_input = prepare_input(query_request)
+    moderation_result = await run_shield_moderation(
+        client, moderation_input, query_request.shield_ids
+    )
+
     # Build RAG context from Inline RAG sources
     inline_rag_context = await build_rag_context(
-        client, query_request.query, query_request.vector_store_ids, query_request.solr
+        client,
+        moderation_result.decision,
+        query_request.query,
+        query_request.vector_store_ids,
+        query_request.solr,
     )
+
     # Prepare API request parameters
     responses_params = await prepare_responses_params(
         client=client,
@@ -203,7 +216,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         stream=True,
         store=True,
         request_headers=request.headers,
-        inline_rag_context=inline_rag_context.context_text or None,
+        inline_rag_context=inline_rag_context.context_text,
     )
 
     # Handle Azure token refresh if needed
@@ -227,6 +240,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         query_request=query_request,
         started_at=started_at,
         client=client,
+        moderation_result=moderation_result,
         vector_store_ids=extract_vector_store_ids_from_tools(responses_params.tools),
         rag_id_mapping=configuration.rag_id_mapping,
     )
@@ -240,8 +254,14 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     generator, turn_summary = await retrieve_response_generator(
         responses_params=responses_params,
         context=context,
-        inline_rag_documents=inline_rag_context.referenced_documents,
+        inline_rag_docs=inline_rag_context.referenced_documents,
     )
+
+    # Combine inline RAG results (BYOK + Solr) with tool-based results
+    if context.moderation_result.decision == "passed":
+        turn_summary.referenced_documents = deduplicate_referenced_documents(
+            inline_rag_context.referenced_documents + turn_summary.referenced_documents
+        )
 
     response_media_type = (
         MEDIA_TYPE_TEXT
@@ -263,7 +283,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 async def retrieve_response_generator(
     responses_params: ResponsesApiParams,
     context: ResponseGeneratorContext,
-    inline_rag_documents: list[ReferencedDocument],
+    inline_rag_docs: list[ReferencedDocument],
 ) -> tuple[AsyncIterator[str], TurnSummary]:
     """
     Retrieve the appropriate response generator.
@@ -275,30 +295,27 @@ async def retrieve_response_generator(
     Args:
         responses_params: The Responses API parameters
         context: The response generator context
-        inline_rag_documents: Referenced documents from inline  RAG (BYOK + Solr)
-
+        inline_rag_docs: Inline RAG (BYOK + Solr) documents
     Returns:
         tuple[AsyncIterator[str], TurnSummary]: The response generator and turn summary
 
     """
     turn_summary = TurnSummary()
     try:
-        moderation_result = await run_shield_moderation(
-            context.client,
-            prepare_input(context.query_request),
-            context.query_request.shield_ids,
-        )
-        if moderation_result.decision == "blocked":
-            turn_summary.llm_response = moderation_result.message
-            await append_turn_to_conversation(
+        if context.moderation_result.decision == "blocked":
+            turn_summary.llm_response = context.moderation_result.message
+            await append_turn_items_to_conversation(
                 context.client,
                 responses_params.conversation,
-                cast(str, responses_params.input),
-                moderation_result.message,
+                responses_params.input,
+                [context.moderation_result.refusal_response],
             )
             media_type = context.query_request.media_type or MEDIA_TYPE_JSON
             return (
-                shield_violation_generator(moderation_result.message, media_type),
+                shield_violation_generator(
+                    context.moderation_result.message,
+                    media_type,
+                ),
                 turn_summary,
             )
         # Retrieve response stream (may raise exceptions)
@@ -306,9 +323,15 @@ async def retrieve_response_generator(
             **responses_params.model_dump(exclude_none=True)
         )
         # Store pre-RAG documents for later merging with tool-based RAG
-        turn_summary.inline_rag_documents = inline_rag_documents
-        return response_generator(response, context, turn_summary), turn_summary
-
+        return (
+            response_generator(
+                response,
+                context,
+                turn_summary,
+                inline_rag_docs,
+            ),
+            turn_summary,
+        )
     # Handle know LLS client errors only at stream creation time and shield execution
     except RuntimeError as e:  # library mode wraps 413 into runtime error
         if "context_length" in str(e).lower():
@@ -559,6 +582,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_response: AsyncIterator[OpenAIResponseObjectStream],
     context: ResponseGeneratorContext,
     turn_summary: TurnSummary,
+    inline_rag_docs: list[ReferencedDocument],
 ) -> AsyncIterator[str]:
     """Generate SSE formatted streaming response.
 
@@ -570,7 +594,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         turn_response: The streaming response from Llama Stack
         context: The response generator context
         turn_summary: TurnSummary to populate during streaming
-
+        inline_rag_docs: Inline RAG (BYOK + Solr) documents
     Yields:
         SSE-formatted strings for tokens, tool calls, tool results,
         turn completion, and error events.
@@ -741,15 +765,15 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_summary.token_usage = extract_token_usage(
         latest_response_object.usage, context.model_id
     )
-    tool_based_documents = parse_referenced_documents(
+    # Parse tool-based referenced documents from the final response object
+    tool_rag_docs = parse_referenced_documents(
         latest_response_object,
         vector_store_ids=context.vector_store_ids,
         rag_id_mapping=context.rag_id_mapping,
     )
-
-    # Merge pre-RAG documents with tool-based documents and deduplicate
+    # Combine inline RAG results (BYOK + Solr) with tool-based results
     turn_summary.referenced_documents = deduplicate_referenced_documents(
-        turn_summary.inline_rag_documents + tool_based_documents
+        inline_rag_docs + tool_rag_docs
     )
 
 

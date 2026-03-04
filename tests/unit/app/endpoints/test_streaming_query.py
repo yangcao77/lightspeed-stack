@@ -52,7 +52,13 @@ from models.requests import Attachment, QueryRequest
 from models.responses import InternalServerErrorResponse
 from utils.token_counter import TokenCounter
 from utils.stream_interrupts import StreamInterruptRegistry
-from utils.types import RAGContext, ReferencedDocument, ResponsesApiParams, TurnSummary
+from utils.types import (
+    RAGContext,
+    ReferencedDocument,
+    ResponsesApiParams,
+    ShieldModerationPassed,
+    TurnSummary,
+)
 
 MOCK_AUTH_STREAMING = (
     "00000001-0001-0001-0001-000000000001",
@@ -354,6 +360,10 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.prepare_responses_params",
             new=mocker.AsyncMock(return_value=mock_responses_params),
         )
+        mocker.patch(
+            "app.endpoints.streaming_query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
 
         mocker.patch("app.endpoints.streaming_query.AzureEntraIDManager")
         mocker.patch(
@@ -436,6 +446,10 @@ class TestStreamingQueryEndpointHandler:
         mocker.patch(
             "app.endpoints.streaming_query.prepare_responses_params",
             new=mocker.AsyncMock(return_value=mock_responses_params),
+        )
+        mocker.patch(
+            "app.endpoints.streaming_query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
         )
 
         mocker.patch("app.endpoints.streaming_query.AzureEntraIDManager")
@@ -531,6 +545,10 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.prepare_responses_params",
             new=mocker.AsyncMock(return_value=mock_responses_params),
         )
+        mocker.patch(
+            "app.endpoints.streaming_query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
 
         mocker.patch("app.endpoints.streaming_query.AzureEntraIDManager")
         mocker.patch(
@@ -622,6 +640,10 @@ class TestStreamingQueryEndpointHandler:
         mocker.patch(
             "app.endpoints.streaming_query.prepare_responses_params",
             new=mocker.AsyncMock(return_value=mock_responses_params),
+        )
+        mocker.patch(
+            "app.endpoints.streaming_query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
         )
 
         mocker.patch("app.endpoints.streaming_query.AzureEntraIDManager")
@@ -725,6 +747,10 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.extract_provider_and_model_from_model_id",
             return_value=("azure", "model1"),
         )
+        mocker.patch(
+            "app.endpoints.streaming_query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
         mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
 
         async def mock_generator() -> AsyncIterator[str]:
@@ -787,14 +813,11 @@ class TestCreateResponseGenerator:
         mock_context.query_request = QueryRequest(
             query="test"
         )  # pyright: ignore[reportCallIssue]
+        mock_context.moderation_result = ShieldModerationPassed()
 
         async def mock_response_gen() -> AsyncIterator[str]:
             yield "test"
 
-        mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mocker.Mock(blocked=False)),
-        )
         mock_client.responses = mocker.Mock()
         mock_client.responses.create = mocker.AsyncMock(
             return_value=mock_response_gen()
@@ -841,12 +864,11 @@ class TestCreateResponseGenerator:
         mock_moderation_result = mocker.Mock()
         mock_moderation_result.decision = "blocked"
         mock_moderation_result.message = "Content blocked"
+        mock_moderation_result.moderation_id = "mod_123"
+        mock_moderation_result.refusal_response = mocker.Mock()
+        mock_context.moderation_result = mock_moderation_result
         mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mock_moderation_result),
-        )
-        mocker.patch(
-            "app.endpoints.streaming_query.append_turn_to_conversation",
+            "app.endpoints.streaming_query.append_turn_items_to_conversation",
             new=mocker.AsyncMock(),
         )
 
@@ -881,11 +903,8 @@ class TestCreateResponseGenerator:
         mock_context.query_request = QueryRequest(
             query="test"
         )  # pyright: ignore[reportCallIssue]
+        mock_context.moderation_result = ShieldModerationPassed()
 
-        mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mocker.Mock(blocked=False)),
-        )
         mock_request_obj = mocker.Mock()
         mock_client.responses = mocker.Mock()
         mock_client.responses.create = mocker.AsyncMock(
@@ -936,11 +955,8 @@ class TestCreateResponseGenerator:
         mock_context.query_request = QueryRequest(
             query="test"
         )  # pyright: ignore[reportCallIssue]
+        mock_context.moderation_result = ShieldModerationPassed()
 
-        mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mocker.Mock(blocked=False)),
-        )
         mock_request_obj = mocker.Mock()
         mock_client.responses = mocker.Mock()
         mock_client.responses.create = mocker.AsyncMock(
@@ -988,11 +1004,8 @@ class TestCreateResponseGenerator:
         mock_context.query_request = QueryRequest(
             query="test"
         )  # pyright: ignore[reportCallIssue]
+        mock_context.moderation_result = ShieldModerationPassed()
 
-        mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mocker.Mock(blocked=False)),
-        )
         mock_client.responses = mocker.Mock()
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=RuntimeError("context_length exceeded")
@@ -1037,11 +1050,8 @@ class TestCreateResponseGenerator:
         mock_context.query_request = QueryRequest(
             query="test"
         )  # pyright: ignore[reportCallIssue]
+        mock_context.moderation_result = ShieldModerationPassed()
 
-        mocker.patch(
-            "app.endpoints.streaming_query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mocker.Mock(blocked=False)),
-        )
         mock_client.responses = mocker.Mock()
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=RuntimeError("Some other error")
@@ -1613,7 +1623,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1642,7 +1652,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1679,7 +1689,7 @@ class TestResponseGenerator:
         )
 
         async for _ in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             pass
 
@@ -1720,7 +1730,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1768,7 +1778,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1818,7 +1828,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1859,7 +1869,7 @@ class TestResponseGenerator:
         )
 
         async for _ in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             pass
 
@@ -1906,7 +1916,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1951,7 +1961,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -1995,7 +2005,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2037,7 +2047,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2080,7 +2090,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2121,7 +2131,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2243,7 +2253,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2305,7 +2315,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2397,7 +2407,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 
@@ -2466,7 +2476,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, []
         ):
             result.append(item)
 

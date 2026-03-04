@@ -18,6 +18,7 @@ from models.responses import QueryResponse
 from utils.token_counter import TokenCounter
 from utils.types import (
     ResponsesApiParams,
+    ShieldModerationPassed,
     ToolCallSummary,
     ToolResultSummary,
     TurnSummary,
@@ -125,6 +126,10 @@ class TestQueryEndpointHandler:
             "app.endpoints.query.get_topic_summary",
             new=mocker.AsyncMock(return_value=None),
         )
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
 
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
         mock_responses_params.model = "provider1/model1"
@@ -214,7 +219,10 @@ class TestQueryEndpointHandler:
             "app.endpoints.query.prepare_responses_params",
             new=mocker.AsyncMock(return_value=mock_responses_params),
         )
-
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
         mocker.patch(
             "app.endpoints.query.retrieve_response",
             new=mocker.AsyncMock(return_value=TurnSummary()),
@@ -275,6 +283,10 @@ class TestQueryEndpointHandler:
             "app.endpoints.query.get_topic_summary",
             new=mocker.AsyncMock(return_value=None),
         )
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
 
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
         mock_responses_params.model = "provider1/model1"
@@ -334,6 +346,10 @@ class TestQueryEndpointHandler:
         mocker.patch(
             "app.endpoints.query.AsyncLlamaStackClientHolder",
             return_value=mock_client_holder,
+        )
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
         )
 
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
@@ -404,6 +420,10 @@ class TestQueryEndpointHandler:
         mocker.patch(
             "app.endpoints.query.get_topic_summary",
             new=mocker.AsyncMock(return_value=None),
+        )
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
         )
 
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
@@ -476,6 +496,7 @@ class TestRetrieveResponse:
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
         mock_responses_params.input = "test query"
         mock_responses_params.model = "provider1/model1"
+        mock_responses_params.tools = None
         mock_responses_params.model_dump.return_value = {
             "input": "test query",
             "model": "provider1/model1",
@@ -492,10 +513,6 @@ class TestRetrieveResponse:
         mock_response.output = [mock_output_item]
         mock_response.usage = mock_usage
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(return_value=mock_response)
 
         mock_summary = TurnSummary()
@@ -506,7 +523,9 @@ class TestRetrieveResponse:
             return_value=mock_summary,
         )
 
-        result = await retrieve_response(mock_client, mock_responses_params)
+        result = await retrieve_response(
+            mock_client, mock_responses_params, ShieldModerationPassed()
+        )
 
         assert isinstance(result, TurnSummary)
         assert result.llm_response == "Response text"
@@ -527,19 +546,20 @@ class TestRetrieveResponse:
             "model": "provider1/model1",
         }
 
+        mock_refusal = mocker.Mock()
         mock_moderation_result = mocker.Mock()
         mock_moderation_result.decision = "blocked"
         mock_moderation_result.message = "Content blocked by moderation"
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            new=mocker.AsyncMock(return_value=mock_moderation_result),
-        )
+        mock_moderation_result.moderation_id = "mod_123"
+        mock_moderation_result.refusal_response = mock_refusal
         mock_append = mocker.patch(
-            "app.endpoints.query.append_turn_to_conversation",
+            "app.endpoints.query.append_turn_items_to_conversation",
             new=mocker.AsyncMock(),
         )
 
-        result = await retrieve_response(mock_client, mock_responses_params)
+        result = await retrieve_response(
+            mock_client, mock_responses_params, mock_moderation_result
+        )
 
         assert isinstance(result, TurnSummary)
         assert result.llm_response == "Content blocked by moderation"
@@ -558,10 +578,6 @@ class TestRetrieveResponse:
             "model": "provider1/model1",
         }
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=APIConnectionError(
                 message="Connection failed", request=mocker.Mock()
@@ -569,7 +585,9 @@ class TestRetrieveResponse:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await retrieve_response(mock_client, mock_responses_params)
+            await retrieve_response(
+                mock_client, mock_responses_params, ShieldModerationPassed()
+            )
 
         assert exc_info.value.status_code == 503
 
@@ -587,10 +605,6 @@ class TestRetrieveResponse:
             "model": "provider1/model1",
         }
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=APIStatusError(
                 message="API error", response=mocker.Mock(request=None), body=None
@@ -607,7 +621,9 @@ class TestRetrieveResponse:
         )
 
         with pytest.raises(HTTPException):
-            await retrieve_response(mock_client, mock_responses_params)
+            await retrieve_response(
+                mock_client, mock_responses_params, ShieldModerationPassed()
+            )
 
     @pytest.mark.asyncio
     async def test_retrieve_response_runtime_error_context_length(
@@ -623,16 +639,14 @@ class TestRetrieveResponse:
             "model": "provider1/model1",
         }
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=RuntimeError("context_length exceeded")
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await retrieve_response(mock_client, mock_responses_params)
+            await retrieve_response(
+                mock_client, mock_responses_params, ShieldModerationPassed()
+            )
 
         assert exc_info.value.status_code == 413
 
@@ -650,16 +664,14 @@ class TestRetrieveResponse:
             "model": "provider1/model1",
         }
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(
             side_effect=RuntimeError("Some other error")
         )
 
         with pytest.raises(RuntimeError):
-            await retrieve_response(mock_client, mock_responses_params)
+            await retrieve_response(
+                mock_client, mock_responses_params, ShieldModerationPassed()
+            )
 
     @pytest.mark.asyncio
     async def test_retrieve_response_with_tool_calls(
@@ -670,6 +682,7 @@ class TestRetrieveResponse:
         mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
         mock_responses_params.input = "test query"
         mock_responses_params.model = "provider1/model1"
+        mock_responses_params.tools = None
         mock_responses_params.model_dump.return_value = {
             "input": "test query",
             "model": "provider1/model1",
@@ -682,10 +695,6 @@ class TestRetrieveResponse:
         mock_response.output = [mocker.Mock(type="message")]
         mock_response.usage = mock_usage
 
-        mocker.patch(
-            "app.endpoints.query.run_shield_moderation",
-            return_value=mocker.Mock(decision="passed"),
-        )
         mock_client.responses.create = mocker.AsyncMock(return_value=mock_response)
 
         mock_tool_call = ToolCallSummary(id="1", name="test", args={})
@@ -702,7 +711,9 @@ class TestRetrieveResponse:
             return_value=mock_summary,
         )
 
-        result = await retrieve_response(mock_client, mock_responses_params)
+        result = await retrieve_response(
+            mock_client, mock_responses_params, ShieldModerationPassed()
+        )
 
         assert result.llm_response == "Response text"
         assert len(result.tool_calls) == 1
@@ -711,4 +722,3 @@ class TestRetrieveResponse:
         assert result.token_usage.output_tokens == 5
         assert result.rag_chunks == []
         assert result.referenced_documents == []
-        assert result.inline_rag_documents == []

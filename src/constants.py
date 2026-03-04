@@ -214,3 +214,5 @@ DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s:%(lineno)d %(message)
 # Environment variable to force StreamHandler instead of RichHandler
 # Set to any non-empty value to disable RichHandler
 LIGHTSPEED_STACK_DISABLE_RICH_HANDLER_ENV_VAR = "LIGHTSPEED_STACK_DISABLE_RICH_HANDLER"
+
+DEFAULT_VIOLATION_MESSAGE = "I cannot process this request due to policy restrictions."
