@@ -23,7 +23,7 @@ from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaSta
 from pydantic import AnyUrl
 from pytest_mock import MockerFixture
 
-from models.config import ModelContextProtocolServer
+from models.config import ByokRag, ModelContextProtocolServer
 from models.requests import QueryRequest
 from utils.responses import (
     build_mcp_tool_call_from_arguments_done,
@@ -41,6 +41,7 @@ from utils.responses import (
     parse_referenced_documents,
     prepare_responses_params,
     prepare_tools,
+    resolve_vector_store_ids,
     _build_chunk_attributes,
     _increment_llm_call_metric,
     _resolve_source_for_result,
@@ -998,6 +999,132 @@ class TestPrepareTools:
         assert result is None
         # Verify that vector_stores.list was not called
         mock_client.vector_stores.list.assert_not_called()
+
+
+class TestResolveVectorStoreIds:
+    """Tests for resolve_vector_store_ids function."""
+
+    @staticmethod
+    def _make_byok_rag(rag_id: str, vector_db_id: str) -> ByokRag:
+        """Create a ByokRag instance for testing."""
+        return ByokRag(
+            rag_id=rag_id,
+            vector_db_id=vector_db_id,
+            db_path="tests/configuration/rag.txt",
+        )
+
+    def test_translates_customer_facing_ids_to_internal(self) -> None:
+        """Test that customer-facing rag_ids are translated to vector_db_ids."""
+        byok_rags = [
+            self._make_byok_rag("ocp_docs", "vs-001"),
+            self._make_byok_rag("knowledge_base", "vs-002"),
+        ]
+        result = resolve_vector_store_ids(["ocp_docs", "knowledge_base"], byok_rags)
+        assert result == ["vs-001", "vs-002"]
+
+    def test_passes_through_unknown_ids(self) -> None:
+        """Test that IDs not matching any rag_id are passed through unchanged."""
+        byok_rags = [self._make_byok_rag("ocp_docs", "vs-001")]
+        result = resolve_vector_store_ids(["unknown-id"], byok_rags)
+        assert result == ["unknown-id"]
+
+    def test_mixed_known_and_unknown_ids(self) -> None:
+        """Test mix of customer-facing IDs and raw llama-stack IDs."""
+        byok_rags = [self._make_byok_rag("ocp_docs", "vs-001")]
+        result = resolve_vector_store_ids(["ocp_docs", "already-internal"], byok_rags)
+        assert result == ["vs-001", "already-internal"]
+
+    def test_empty_vector_store_ids(self) -> None:
+        """Test that empty input returns empty output."""
+        byok_rags = [self._make_byok_rag("ocp_docs", "vs-001")]
+        result = resolve_vector_store_ids([], byok_rags)
+        assert result == []
+
+    def test_empty_byok_rags(self) -> None:
+        """Test that all IDs pass through when no BYOK RAGs are configured."""
+        result = resolve_vector_store_ids(["vs-001", "vs-002"], [])
+        assert result == ["vs-001", "vs-002"]
+
+    def test_preserves_order(self) -> None:
+        """Test that output order matches input order."""
+        byok_rags = [
+            self._make_byok_rag("b_rag", "vs-b"),
+            self._make_byok_rag("a_rag", "vs-a"),
+        ]
+        result = resolve_vector_store_ids(["a_rag", "b_rag"], byok_rags)
+        assert result == ["vs-a", "vs-b"]
+
+
+class TestPrepareToolsTranslatesVectorStoreIds:
+    """Tests that prepare_tools translates BYOK IDs before building RAG tools."""
+
+    @pytest.mark.asyncio
+    async def test_translates_byok_ids_in_prepare_tools(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that prepare_tools translates customer-facing IDs to internal IDs."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        # Configure BYOK RAG mapping
+        mock_byok_rag = mocker.Mock()
+        mock_byok_rag.rag_id = "ocp_docs"
+        mock_byok_rag.vector_db_id = "vs-001"
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = [mock_byok_rag]
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, ["ocp_docs"], False, "token")
+        assert result is not None
+        assert len(result) == 1
+        assert result[0].type == "file_search"
+        assert result[0].vector_store_ids == ["vs-001"]
+
+    @pytest.mark.asyncio
+    async def test_passes_through_unknown_ids_in_prepare_tools(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that prepare_tools passes through IDs not in BYOK config."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        # Configure empty BYOK RAG
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = []
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, ["raw-internal-id"], False, "token")
+        assert result is not None
+        assert result[0].vector_store_ids == ["raw-internal-id"]
+
+    @pytest.mark.asyncio
+    async def test_does_not_translate_when_ids_fetched_from_llama_stack(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that IDs fetched from llama-stack (None path) are not translated."""
+        mock_client = mocker.AsyncMock()
+        mock_vector_store = mocker.Mock()
+        mock_vector_store.id = "vs-internal"
+        mock_vector_stores = mocker.Mock()
+        mock_vector_stores.data = [mock_vector_store]
+        mock_client.vector_stores.list = mocker.AsyncMock(
+            return_value=mock_vector_stores
+        )
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        # Configure BYOK RAG whose rag_id matches the fetched ID so that
+        # accidental translation would change the result and fail the assertion
+        mock_byok_rag = mocker.Mock()
+        mock_byok_rag.rag_id = "vs-internal"
+        mock_byok_rag.vector_db_id = "vs-translated"
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = [mock_byok_rag]
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, None, False, "token")
+        assert result is not None
+        # The IDs from llama-stack should be used as-is (no BYOK translation on None path)
+        assert result[0].vector_store_ids == ["vs-internal"]
 
 
 class TestPrepareResponsesParams:
