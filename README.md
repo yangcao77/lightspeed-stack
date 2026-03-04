@@ -856,8 +856,8 @@ ruff                              Check source code using Ruff linter
 verify                            Run all linters
 distribution-archives             Generate distribution archives to be uploaded into Python registry
 upload-distribution-archives      Upload distribution archives into Python registry
-konflux-requirements              generate hermetic requirements.*.txt file for konflux build
-konflux-rpm-lock 	              generate rpm.lock.yaml file for konflux build
+konflux-requirements              Generate hermetic requirements.*.txt file for konflux build
+konflux-rpm-lock 	              Generate rpm.lock.yaml file for konflux build
 ```
 
 ## Running Linux container image
