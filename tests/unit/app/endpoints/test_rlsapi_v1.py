@@ -4,7 +4,8 @@
 # pylint: disable=unused-argument
 
 import re
-from typing import Any, Optional
+from collections.abc import Callable
+from typing import Any
 
 import pytest
 from fastapi import HTTPException, status
@@ -15,7 +16,9 @@ from pytest_mock import MockerFixture
 import constants
 from app.endpoints.rlsapi_v1 import (
     AUTH_DISABLED,
+    TemplateRenderError,
     _build_instructions,
+    _compile_prompt_template,
     _get_default_model_id,
     _get_rh_identity_context,
     infer_endpoint,
@@ -37,6 +40,26 @@ from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
 
 MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
+
+
+@pytest.fixture(autouse=True)
+def _clear_prompt_template_cache() -> None:
+    """Clear the lru_cache on _compile_prompt_template between tests."""
+    _compile_prompt_template.cache_clear()
+
+
+@pytest.fixture(name="mock_custom_prompt")
+def mock_custom_prompt_fixture(mocker: MockerFixture) -> Callable[[str], None]:
+    """Factory fixture that patches configuration with a custom system prompt."""
+
+    def _set(prompt: str) -> None:
+        mock_customization = mocker.Mock()
+        mock_customization.system_prompt = prompt
+        mock_config = mocker.Mock()
+        mock_config.customization = mock_customization
+        mocker.patch("app.endpoints.rlsapi_v1.configuration", mock_config)
+
+    return _set
 
 
 def _create_mock_request(mocker: MockerFixture, rh_identity: Any = None) -> Any:
@@ -140,71 +163,19 @@ def mock_generic_runtime_error_fixture(mocker: MockerFixture) -> None:
 # --- Test _build_instructions ---
 
 
-@pytest.mark.parametrize(
-    ("systeminfo_kwargs", "expected_contains", "expected_not_contains"),
-    [
-        pytest.param(
-            {"os": "RHEL", "version": "9.3", "arch": "x86_64"},
-            ["OS: RHEL", "Version: 9.3", "Architecture: x86_64"],
-            [],
-            id="full_systeminfo",
-        ),
-        pytest.param(
-            {"os": "RHEL", "version": "", "arch": ""},
-            ["OS: RHEL"],
-            ["Version:", "Architecture:"],
-            id="partial_systeminfo",
-        ),
-        pytest.param(
-            {},
-            [constants.DEFAULT_SYSTEM_PROMPT],
-            ["OS:", "Version:", "Architecture:"],
-            id="empty_systeminfo",
-        ),
-    ],
-)
-def test_build_instructions(
-    systeminfo_kwargs: dict[str, str],
-    expected_contains: list[str],
-    expected_not_contains: list[str],
-) -> None:
-    """Test _build_instructions includes date and system info."""
-    systeminfo = RlsapiV1SystemInfo(**systeminfo_kwargs)
+def test_build_instructions_default_prompt_passes_through() -> None:
+    """Test _build_instructions returns default prompt unchanged when no template vars."""
+    systeminfo = RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64")
     result = _build_instructions(systeminfo)
 
-    assert re.search(r"Today's date: \w+ \d{2}, \d{4}", result)
-    for expected in expected_contains:
-        assert expected in result
-    for not_expected in expected_not_contains:
-        assert not_expected not in result
+    assert result == constants.DEFAULT_SYSTEM_PROMPT
 
 
-# --- Test _build_instructions with customization.system_prompt ---
-
-
-@pytest.mark.parametrize(
-    ("custom_prompt", "expected_prompt"),
-    [
-        pytest.param(
-            "You are a RHEL expert.",
-            "You are a RHEL expert.",
-            id="customization_system_prompt_set",
-        ),
-        pytest.param(
-            None,
-            constants.DEFAULT_SYSTEM_PROMPT,
-            id="customization_system_prompt_none",
-        ),
-    ],
-)
-def test_build_instructions_with_customization(
-    mocker: MockerFixture,
-    custom_prompt: Optional[str],
-    expected_prompt: str,
-) -> None:
-    """Test _build_instructions uses customization.system_prompt when set."""
+def test_build_instructions_with_customization(mocker: MockerFixture) -> None:
+    """Test _build_instructions uses customization.system_prompt with template vars."""
+    template = "Expert assistant.\n\nDate: {{ date }}\nOS: {{ os }}"
     mock_customization = mocker.Mock()
-    mock_customization.system_prompt = custom_prompt
+    mock_customization.system_prompt = template
     mock_config = mocker.Mock()
     mock_config.customization = mock_customization
     mocker.patch("app.endpoints.rlsapi_v1.configuration", mock_config)
@@ -212,12 +183,13 @@ def test_build_instructions_with_customization(
     systeminfo = RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64")
     result = _build_instructions(systeminfo)
 
-    assert expected_prompt in result
+    assert "Expert assistant." in result
     assert "OS: RHEL" in result
+    assert re.search(r"Date: \w+ \d{2}, \d{4}", result)
 
 
 def test_build_instructions_no_customization(mocker: MockerFixture) -> None:
-    """Test _build_instructions falls back when customization is None."""
+    """Test _build_instructions falls back to DEFAULT_SYSTEM_PROMPT."""
     mock_config = mocker.Mock()
     mock_config.customization = None
     mocker.patch("app.endpoints.rlsapi_v1.configuration", mock_config)
@@ -225,8 +197,90 @@ def test_build_instructions_no_customization(mocker: MockerFixture) -> None:
     systeminfo = RlsapiV1SystemInfo()
     result = _build_instructions(systeminfo)
 
-    assert result.startswith(constants.DEFAULT_SYSTEM_PROMPT)
-    assert re.search(r"Today's date: \w+ \d{2}, \d{4}", result)
+    assert result == constants.DEFAULT_SYSTEM_PROMPT
+
+
+# --- Test Jinja2 template rendering ---
+
+
+def test_build_instructions_renders_jinja2_template(
+    mock_custom_prompt: Callable[[str], None],
+) -> None:
+    """Test _build_instructions renders Jinja2 template variables instead of appending."""
+    mock_custom_prompt(
+        "You are an assistant.\n\nDate: {{ date }}\nOS: {{ os }} {{ version }} ({{ arch }})"
+    )
+
+    systeminfo = RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64")
+    result = _build_instructions(systeminfo)
+
+    assert "OS: RHEL 9.3 (x86_64)" in result
+    assert re.search(r"Date: \w+ \d{2}, \d{4}", result)
+    assert "Today's date:" not in result
+    assert "User's system:" not in result
+
+
+def test_build_instructions_jinja2_none_values_render_empty(
+    mock_custom_prompt: Callable[[str], None],
+) -> None:
+    """Test that None system info values render as empty strings, not 'None'."""
+    mock_custom_prompt("Assistant.\nOS={{ os }} VER={{ version }} ARCH={{ arch }}")
+
+    systeminfo = RlsapiV1SystemInfo()
+    result = _build_instructions(systeminfo)
+
+    assert "None" not in result
+    assert "OS= VER= ARCH=" in result
+
+
+def test_build_instructions_jinja2_conditionals(
+    mock_custom_prompt: Callable[[str], None],
+) -> None:
+    """Test that Jinja2 conditionals work in system prompt templates."""
+    mock_custom_prompt(
+        "Assistant.{% if os %} OS: {{ os }}{% endif %}"
+        "{% if version %} VER: {{ version }}{% endif %}"
+    )
+
+    systeminfo = RlsapiV1SystemInfo(os="RHEL")
+    result = _build_instructions(systeminfo)
+
+    assert "OS: RHEL" in result
+    assert "VER:" not in result
+
+
+def test_build_instructions_plain_prompt_passes_through(
+    mock_custom_prompt: Callable[[str], None],
+) -> None:
+    """Test that prompts without Jinja2 syntax pass through unchanged."""
+    plain_prompt = "You are an expert RHEL assistant."
+    mock_custom_prompt(plain_prompt)
+
+    systeminfo = RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64")
+    result = _build_instructions(systeminfo)
+
+    assert result == plain_prompt
+
+
+@pytest.mark.parametrize(
+    "bad_template",
+    [
+        pytest.param("Hello {{ unclosed", id="unclosed_variable"),
+        pytest.param("{% if %}", id="if_without_condition"),
+        pytest.param("{% endfor %}", id="endfor_without_for"),
+    ],
+)
+def test_build_instructions_malformed_template_raises_template_render_error(
+    mock_custom_prompt: Callable[[str], None],
+    bad_template: str,
+) -> None:
+    """Test that invalid Jinja2 syntax in system prompt raises TemplateRenderError."""
+    mock_custom_prompt(bad_template)
+
+    systeminfo = RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64")
+
+    with pytest.raises(TemplateRenderError, match="invalid Jinja2 syntax"):
+        _build_instructions(systeminfo)
 
 
 # --- Test _get_default_model_id ---
@@ -538,6 +592,31 @@ async def test_infer_api_connection_error_returns_503(
         )
 
     assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+async def test_infer_malformed_template_returns_500(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_custom_prompt: Callable[[str], None],
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+) -> None:
+    """Test /infer endpoint returns 500 when system prompt has invalid Jinja2 syntax."""
+    mock_custom_prompt("Hello {{ unclosed")
+
+    infer_request = RlsapiV1InferRequest(question="Test question")
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
+
+    with pytest.raises(HTTPException) as exc_info:
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
+
+    assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 async def test_infer_empty_llm_response_returns_fallback(
