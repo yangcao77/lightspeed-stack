@@ -1,0 +1,18 @@
+@MCPFileAuth
+Feature: MCP file-based authorization tests
+
+  Regression tests for LCORE-1414: MCP authorization tokens configured via
+  file-based authorization_headers must survive model_dump() serialization
+  and reach the MCP server as a valid Bearer token.
+
+  Background:
+    Given The service is started locally
+      And REST API service prefix is /v1
+
+  Scenario: Query succeeds with file-based MCP authorization
+    Given The system is in default state
+    When I use "query" to ask question
+    """
+    {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    """
+    Then The status code of the response is 200
