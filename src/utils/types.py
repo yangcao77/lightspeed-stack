@@ -220,6 +220,27 @@ class ResponsesApiParams(BaseModel):
         description="Extra HTTP headers to send with the request (e.g. x-llamastack-provider-data)",
     )
 
+    def model_dump(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        """Serialize params, re-injecting MCP authorization stripped by exclude=True.
+
+        llama-stack-api marks ``InputToolMCP.authorization`` with
+        ``Field(exclude=True)`` to prevent token leakage in API responses.
+        The base ``model_dump()`` therefore strips the field, but we need it
+        in the request payload so llama-stack server can authenticate with
+        MCP servers.  See LCORE-1414 / GitHub issue #1269.
+        """
+        result = super().model_dump(*args, **kwargs)
+        dumped_tools = result.get("tools")
+        if not self.tools or not isinstance(dumped_tools, list):
+            return result
+        if len(dumped_tools) != len(self.tools):
+            return result
+        for tool, dumped_tool in zip(self.tools, dumped_tools):
+            authorization = getattr(tool, "authorization", None)
+            if authorization is not None and isinstance(dumped_tool, dict):
+                dumped_tool["authorization"] = authorization
+        return result
+
 
 class ToolCallSummary(BaseModel):
     """Model representing a tool call made during response generation (for tool_calls list)."""
