@@ -13,7 +13,7 @@ logger = get_logger(__name__)
 
 async def probe_mcp_oauth_and_raise_401(
     url: str,
-    chain_from: Optional[BaseException] = None,
+    authorization: Optional[str] = None,
 ) -> None:
     """Probe MCP endpoint and raise 401 so the client can perform OAuth.
 
@@ -35,18 +35,23 @@ async def probe_mcp_oauth_and_raise_401(
     """
     cause = f"MCP server at {url} requires OAuth"
     error_response = UnauthorizedResponse(cause=cause)
+    headers: Optional[dict[str, str]] = (
+        {"authorization": authorization} if authorization is not None else None
+    )
     try:
         timeout = aiohttp.ClientTimeout(total=10)
         async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(url) as resp:
+            async with session.get(url, headers=headers) as resp:
+                if resp.status != 401:
+                    return
                 www_auth = resp.headers.get("WWW-Authenticate")
                 if www_auth is None:
                     logger.warning("No WWW-Authenticate header received from %s", url)
-                    raise HTTPException(**error_response.model_dump()) from chain_from
+                    raise HTTPException(**error_response.model_dump())
                 raise HTTPException(
                     **error_response.model_dump(),
                     headers={"WWW-Authenticate": www_auth},
-                ) from chain_from
+                )
     except (aiohttp.ClientError, TimeoutError) as probe_err:
         logger.warning("OAuth probe failed for %s: %s", url, probe_err)
         raise HTTPException(**error_response.model_dump()) from probe_err
