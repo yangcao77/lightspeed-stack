@@ -15,7 +15,8 @@ This document explains how to configure and customize your RAG pipeline using th
 * [Prerequisites](#prerequisites)
    * [Set Up the Vector Database](#set-up-the-vector-database)
    * [Download an Embedding Model](#download-an-embedding-model)
-* [Configure Vector Store and Embedding Model](#configure-vector-store-and-embedding-model)
+* [Automatic Configuration Enrichment](#automatic-configuration-enrichment)
+* [Manual Configuration](#manual-configuration)
 * [Add an Inference Model (LLM)](#add-an-inference-model-llm)
 * [Complete Configuration Reference](#complete-configuration-reference)
 * [System Prompt Guidance for RAG (as a tool)](#system-prompt-guidance-for-rag-as-a-tool)
@@ -60,9 +61,37 @@ Download a local embedding model such as `sentence-transformers/all-mpnet-base-v
 
 ---
 
-## Configure Vector Store and Embedding Model
+## Automatic Configuration Enrichment
 
-Update the `run.yaml` file used by Llama Stack to point to:
+For users with BYOK or OKP/Solr configurations, you can automatically enrich your `run.yaml` file using the `llama_stack_configuration.py` script:
+
+```bash
+# Enrich run.yaml with BYOK and/or Solr configurations from lightspeed-stack.yaml
+python src/llama_stack_configuration.py -c lightspeed-stack.yaml -i run.yaml -o run_enriched.yaml
+```
+
+This script automatically adds the necessary:
+- **Storage backends** for BYOK vector databases
+- **Vector IO providers** for BYOK and Solr
+- **Vector stores** and **embedding models** registration
+- **Solr provider configuration** when `okp` is enabled in your RAG configuration
+
+The script reads your `lightspeed-stack.yaml` configuration and enriches a base `run.yaml` file with all required Llama Stack sections, eliminating the need to manually configure complex vector store setups.
+
+**Command line options:**
+- `-c, --config`: Lightspeed config file (default: `lightspeed-stack.yaml`)
+- `-i, --input`: Input Llama Stack config (default: `run.yaml`)
+- `-o, --output`: Output enriched config (default: `run_.yaml`)
+- `-e, --env-file`: Path to .env file for AZURE_API_KEY (default: `.env`)
+
+> [!TIP]
+> Use this script to generate your initial `run.yaml` configuration, then manually customize as needed for your specific setup.
+
+---
+
+## Manual Configuration
+
+If you prefer to manually configure your `run.yaml` file, update it to point to:
 
 * Your downloaded **embedding model**
 * Your generated **vector database**
