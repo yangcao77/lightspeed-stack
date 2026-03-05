@@ -16,3 +16,4 @@ Feature: MCP file-based authorization tests
     {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
+    And The body of the response contains mock_tool_e2e
