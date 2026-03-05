@@ -674,7 +674,7 @@ class LlamaStackConfiguration(ConfigurationBase):
             if self.library_client_config_path is None:
                 # pylint: disable=line-too-long
                 raise ValueError(
-                    "Llama stack library client mode is enabled but a configuration file path is not specified"  # noqa: E501
+                    "Llama stack library client mode is enabled but a configuration file path is not specified"
                 )
             # the configuration file must exists and be regular readable file
             checks.file_check(

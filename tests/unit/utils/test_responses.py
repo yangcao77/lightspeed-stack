@@ -428,7 +428,7 @@ class TestGetMCPTools:
     async def test_get_mcp_tools_client_auth_no_mcp_headers(
         self, mocker: MockerFixture
     ) -> None:
-        """Test get_mcp_tools skips server when mcp_headers is None and server requires client auth."""  # noqa: E501
+        """Test get_mcp_tools skips server when mcp_headers is None and server requires client auth."""
         servers = [
             ModelContextProtocolServer(
                 name="client-auth-server",
@@ -962,7 +962,7 @@ class TestPrepareTools:
 
     @pytest.mark.asyncio
     async def test_prepare_tools_api_status_error(self, mocker: MockerFixture) -> None:
-        """Test prepare_tools raises HTTPException on API status error when fetching vector stores."""  # noqa: E501
+        """Test prepare_tools raises HTTPException on API status error when fetching vector stores."""
         mock_client = mocker.AsyncMock()
         mock_client.vector_stores.list = mocker.AsyncMock(
             side_effect=APIStatusError(
@@ -1198,7 +1198,7 @@ class TestPrepareResponsesParams:
     async def test_prepare_responses_params_connection_error_on_models(
         self, mocker: MockerFixture
     ) -> None:
-        """Test prepare_responses_params raises HTTPException on connection error when fetching models."""  # noqa: E501
+        """Test prepare_responses_params raises HTTPException on connection error when fetching models."""
         mock_client = mocker.AsyncMock()
         mock_client.models.list = mocker.AsyncMock(
             side_effect=APIConnectionError(
@@ -1219,7 +1219,7 @@ class TestPrepareResponsesParams:
     async def test_prepare_responses_params_connection_error_on_conversation(
         self, mocker: MockerFixture
     ) -> None:
-        """Test prepare_responses_params raises HTTPException on connection error when creating conversation."""  # noqa: E501
+        """Test prepare_responses_params raises HTTPException on connection error when creating conversation."""
         mock_client = mocker.AsyncMock()
         mock_model = mocker.Mock()
         mock_model.id = "provider1/model1"
@@ -1248,7 +1248,7 @@ class TestPrepareResponsesParams:
     async def test_prepare_responses_params_api_status_error_on_models(
         self, mocker: MockerFixture
     ) -> None:
-        """Test prepare_responses_params raises HTTPException on API status error when fetching models."""  # noqa: E501
+        """Test prepare_responses_params raises HTTPException on API status error when fetching models."""
         mock_client = mocker.AsyncMock()
         mock_client.models.list = mocker.AsyncMock(
             side_effect=APIStatusError(
@@ -1366,7 +1366,7 @@ class TestPrepareResponsesParams:
     async def test_prepare_responses_params_api_status_error_on_conversation(
         self, mocker: MockerFixture
     ) -> None:
-        """Test prepare_responses_params raises HTTPException on API status error when creating conversation."""  # noqa: E501
+        """Test prepare_responses_params raises HTTPException on API status error when creating conversation."""
         mock_client = mocker.AsyncMock()
         mock_model = mocker.Mock()
         mock_model.id = "provider1/model1"
