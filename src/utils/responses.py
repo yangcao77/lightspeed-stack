@@ -44,7 +44,6 @@ from models.responses import (
     ServiceUnavailableResponse,
 )
 from utils.mcp_headers import McpHeaders, extract_propagated_headers
-from utils.mcp_oauth_probe import probe_mcp_oauth_and_raise_401
 from utils.prompts import get_system_prompt, get_topic_summary_system_prompt
 from utils.query import (
     extract_provider_and_model_from_model_id,
@@ -460,9 +459,6 @@ async def get_mcp_tools(  # pylint: disable=too-many-return-statements,too-many-
             if h_value is not None:
                 headers[name] = h_value
 
-        if constants.MCP_AUTH_OAUTH in mcp_server.resolved_authorization_headers.values():
-            await probe_mcp_oauth_and_raise_401(mcp_server.url, authorization=headers.get("Authorization", None))
-    
         # Skip server if auth headers were configured but not all could be resolved
         if mcp_server.authorization_headers and len(headers) != len(
             mcp_server.authorization_headers
