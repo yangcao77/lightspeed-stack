@@ -11,21 +11,25 @@ from fastapi import HTTPException
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolFileSearch as InputToolFileSearch,
     OpenAIResponseInputToolMCP as InputToolMCP,
+    OpenAIResponseMCPApprovalRequest as MCPApprovalRequest,
+    OpenAIResponseMCPApprovalResponse as MCPApprovalResponse,
     OpenAIResponseOutputMessageFileSearchToolCall as FileSearchCall,
     OpenAIResponseOutputMessageFunctionToolCall as FunctionCall,
     OpenAIResponseOutputMessageMCPCall as MCPCall,
     OpenAIResponseOutputMessageMCPListTools as MCPListTools,
-    OpenAIResponseMCPApprovalRequest as MCPApprovalRequest,
-    OpenAIResponseMCPApprovalResponse as MCPApprovalResponse,
     OpenAIResponseOutputMessageWebSearchToolCall as WebSearchCall,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
 from pydantic import AnyUrl
 from pytest_mock import MockerFixture
 
+import constants
 from models.config import ByokRag, ModelContextProtocolServer
 from models.requests import QueryRequest
 from utils.responses import (
+    _build_chunk_attributes,
+    _increment_llm_call_metric,
+    _resolve_source_for_result,
     build_mcp_tool_call_from_arguments_done,
     build_tool_call_summary,
     build_tool_result_from_mcp_output_item_done,
@@ -37,14 +41,12 @@ from utils.responses import (
     get_mcp_tools,
     get_rag_tools,
     get_topic_summary,
+    get_vector_store_ids,
     parse_arguments_string,
     parse_referenced_documents,
     prepare_responses_params,
     prepare_tools,
     resolve_vector_store_ids,
-    _build_chunk_attributes,
-    _increment_llm_call_metric,
-    _resolve_source_for_result,
 )
 from utils.types import RAGChunk
 
@@ -334,8 +336,8 @@ class TestGetRAGTools:
     """Test cases for get_rag_tools utility function."""
 
     def test_get_rag_tools_empty_list(self) -> None:
-        """Test get_rag_tools returns None for empty list."""
-        assert get_rag_tools([]) is None
+        """Test get_rag_tools returns empty list for empty vector store IDs."""
+        assert not get_rag_tools([])
 
     def test_get_rag_tools_with_vector_stores(self) -> None:
         """Test get_rag_tools returns correct tool format for vector stores."""
@@ -1119,6 +1121,7 @@ class TestPrepareToolsTranslatesVectorStoreIds:
         mock_byok_rag.vector_db_id = "vs-translated"
         mock_config = mocker.Mock()
         mock_config.configuration.byok_rag = [mock_byok_rag]
+        mock_config.configuration.rag.tool = None
         mocker.patch("utils.responses.configuration", mock_config)
 
         result = await prepare_tools(mock_client, None, False, "token")
@@ -2354,3 +2357,80 @@ class TestParseReferencedDocumentsWithSource:
 
         assert len(docs) == 1
         assert docs[0].source is None
+
+
+class TestGetVectorStoreIds:
+    """Tests for get_vector_store_ids utility function."""
+
+    @pytest.mark.asyncio
+    async def test_returns_provided_ids_directly(self, mocker: MockerFixture) -> None:
+        """Test that provided vector_store_ids are returned without fetching."""
+        client_mock = mocker.AsyncMock()
+        result = await get_vector_store_ids(client_mock, ["vs1", "vs2"])
+        assert result == ["vs1", "vs2"]
+        client_mock.vector_stores.list.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_fetches_all_when_no_ids_provided(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that all vector stores are fetched when no IDs provided."""
+        mock_store1 = mocker.Mock()
+        mock_store1.id = "vs-fetched-1"
+        mock_store2 = mocker.Mock()
+        mock_store2.id = "vs-fetched-2"
+
+        mock_list_result = mocker.Mock()
+        mock_list_result.data = [mock_store1, mock_store2]
+
+        client_mock = mocker.AsyncMock()
+        client_mock.vector_stores.list.return_value = mock_list_result
+
+        result = await get_vector_store_ids(client_mock, None)
+        assert result == ["vs-fetched-1", "vs-fetched-2"]
+        client_mock.vector_stores.list.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_raises_on_connection_error(self, mocker: MockerFixture) -> None:
+        """Test that APIConnectionError raises HTTPException 503."""
+        client_mock = mocker.AsyncMock()
+        client_mock.vector_stores.list.side_effect = APIConnectionError.__new__(
+            APIConnectionError
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await get_vector_store_ids(client_mock, None)
+        assert exc_info.value.status_code == 503
+
+    @pytest.mark.asyncio
+    async def test_raises_on_api_status_error(self, mocker: MockerFixture) -> None:
+        """Test that APIStatusError raises HTTPException 500."""
+        mock_response = mocker.Mock()
+        mock_response.status_code = 500
+        mock_response.headers = {}
+        mock_response.text = "error"
+
+        client_mock = mocker.AsyncMock()
+        client_mock.vector_stores.list.side_effect = APIStatusError(
+            "error", response=mock_response, body=None
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await get_vector_store_ids(client_mock, None)
+        assert exc_info.value.status_code == 500
+
+
+class TestGetRAGToolsWithConfig:
+    """Tests for get_rag_tools with configuration checks."""
+
+    def test_returns_empty_when_no_vector_store_ids(self) -> None:
+        """Test get_rag_tools returns empty list when no vector store IDs are provided."""
+        # pylint: disable-next=use-implicit-booleaness-not-comparison
+        assert get_rag_tools([]) == []
+
+    def test_returns_tools_when_stores_provided(self) -> None:
+        """Test get_rag_tools returns tools when vector store IDs are provided."""
+        tools = get_rag_tools(["vs1"])
+        assert tools is not None
+        assert tools[0].type == constants.DEFAULT_RAG_TOOL
+        assert tools[0].vector_store_ids == ["vs1"]

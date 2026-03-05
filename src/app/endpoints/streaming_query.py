@@ -3,7 +3,6 @@
 import asyncio
 import datetime
 import json
-
 from typing import Annotated, Any, AsyncIterator, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -23,6 +22,7 @@ from llama_stack_client import (
     APIStatusError as LLSApiStatusError,
 )
 from openai._exceptions import APIStatusError as OpenAIAPIStatusError
+
 import metrics
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
@@ -40,6 +40,7 @@ from constants import (
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_TEXT,
 )
+from log import get_logger
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
@@ -55,16 +56,16 @@ from models.responses import (
     UnauthorizedResponse,
     UnprocessableEntityResponse,
 )
-from utils.types import ReferencedDocument
 from utils.endpoints import (
     check_configuration_loaded,
     validate_and_retrieve_conversation,
 )
-from utils.mcp_headers import mcp_headers_dependency, McpHeaders
+from utils.mcp_headers import McpHeaders, mcp_headers_dependency
 from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    prepare_input,
     store_query_results,
     update_azure_token,
     validate_attachments_metadata,
@@ -90,9 +91,8 @@ from utils.shields import (
 from utils.stream_interrupts import get_stream_interrupt_registry
 from utils.suid import get_suid, normalize_conversation_id
 from utils.token_counter import TokenCounter
-from utils.types import ResponsesApiParams, TurnSummary
-from utils.vector_search import format_rag_context_for_injection, perform_vector_search
-from log import get_logger
+from utils.types import ReferencedDocument, ResponsesApiParams, TurnSummary
+from utils.vector_search import build_rag_context
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["streaming_query"])
@@ -185,15 +185,10 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 
     client = AsyncLlamaStackClientHolder().get_client()
 
-    _, _, doc_ids_from_chunks, pre_rag_chunks = await perform_vector_search(
-        client, query_request.query, query_request.solr
+    # Build RAG context from Inline RAG sources
+    inline_rag_context = await build_rag_context(
+        client, query_request.query, query_request.vector_store_ids, query_request.solr
     )
-
-    rag_context = format_rag_context_for_injection(pre_rag_chunks)
-    if rag_context:
-        query_request = query_request.model_copy(deep=True)
-        query_request.query = query_request.query + rag_context
-
     # Prepare API request parameters
     responses_params = await prepare_responses_params(
         client=client,
@@ -204,6 +199,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         stream=True,
         store=True,
         request_headers=request.headers,
+        inline_rag_context=inline_rag_context.context_text or None,
     )
 
     # Handle Azure token refresh if needed
@@ -240,7 +236,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     generator, turn_summary = await retrieve_response_generator(
         responses_params=responses_params,
         context=context,
-        doc_ids_from_chunks=doc_ids_from_chunks,
+        inline_rag_documents=inline_rag_context.referenced_documents,
     )
 
     response_media_type = (
@@ -263,7 +259,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 async def retrieve_response_generator(
     responses_params: ResponsesApiParams,
     context: ResponseGeneratorContext,
-    doc_ids_from_chunks: list[ReferencedDocument],
+    inline_rag_documents: list[ReferencedDocument],
 ) -> tuple[AsyncIterator[str], TurnSummary]:
     """
     Retrieve the appropriate response generator.
@@ -275,7 +271,7 @@ async def retrieve_response_generator(
     Args:
         responses_params: The Responses API parameters
         context: The response generator context
-        doc_ids_from_chunks: List of ReferencedDocument objects extracted from static RAG
+        inline_rag_documents: Referenced documents from inline  RAG (BYOK + Solr)
 
     Returns:
         tuple[AsyncIterator[str], TurnSummary]: The response generator and turn summary
@@ -285,7 +281,7 @@ async def retrieve_response_generator(
     try:
         moderation_result = await run_shield_moderation(
             context.client,
-            cast(str, responses_params.input),
+            prepare_input(context.query_request),
             context.query_request.shield_ids,
         )
         if moderation_result.decision == "blocked":
@@ -305,8 +301,8 @@ async def retrieve_response_generator(
         response = await context.client.responses.create(
             **responses_params.model_dump(exclude_none=True)
         )
-        # Store pre-RAG documents for later merging
-        turn_summary.pre_rag_documents = doc_ids_from_chunks
+        # Store pre-RAG documents for later merging with tool-based RAG
+        turn_summary.inline_rag_documents = inline_rag_documents
         return response_generator(response, context, turn_summary), turn_summary
 
     # Handle know LLS client errors only at stream creation time and shield execution
@@ -747,8 +743,9 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         rag_id_mapping=context.rag_id_mapping,
     )
 
+    # Merge pre-RAG documents with tool-based documents and deduplicate
     turn_summary.referenced_documents = deduplicate_referenced_documents(
-        tool_based_documents + turn_summary.pre_rag_documents
+        turn_summary.inline_rag_documents + tool_based_documents
     )
 
 
