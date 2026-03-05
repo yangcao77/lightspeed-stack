@@ -232,11 +232,15 @@ class ResponsesApiParams(BaseModel):
         MCP servers.  See LCORE-1414 / GitHub issue #1269.
         """
         result = super().model_dump(*args, **kwargs)
-        if self.tools and result.get("tools"):
-            for i, tool in enumerate(self.tools):
-                authorization = getattr(tool, "authorization", None)
-                if authorization is not None:
-                    result["tools"][i]["authorization"] = authorization
+        dumped_tools = result.get("tools")
+        if not self.tools or not isinstance(dumped_tools, list):
+            return result
+        if len(dumped_tools) != len(self.tools):
+            return result
+        for tool, dumped_tool in zip(self.tools, dumped_tools):
+            authorization = getattr(tool, "authorization", None)
+            if authorization is not None and isinstance(dumped_tool, dict):
+                dumped_tool["authorization"] = authorization
         return result
 
 
