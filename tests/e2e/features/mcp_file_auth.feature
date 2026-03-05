@@ -9,11 +9,12 @@ Feature: MCP file-based authorization tests
     Given The service is started locally
       And REST API service prefix is /v1
 
+  @skip-in-library-mode
   Scenario: Query succeeds with file-based MCP authorization
     Given The system is in default state
     When I use "query" to ask question
     """
-    {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "Use the mock_tool_e2e tool to send the message 'hello'", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
     And The body of the response contains mock_tool_e2e
