@@ -405,7 +405,7 @@ def enrich_solr(ls_config: dict[str, Any], solr_config: dict[str, Any]) -> None:
     ]
     if constants.SOLR_PROVIDER_ID not in existing_providers:
         # Build environment variable expressions
-        solr_url_env = "${env.SOLR_URL:=http://localhost:8081/solr}"
+        solr_url_env = "${env.SOLR_URL:=http://localhost:8983/solr}"
         collection_env = (
             f"${{env.SOLR_COLLECTION:={constants.SOLR_DEFAULT_VECTOR_STORE_ID}}}"
         )
