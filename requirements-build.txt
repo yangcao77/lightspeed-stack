@@ -7,13 +7,28 @@
 calver==2025.10.20
     # via trove-classifiers
 coherent-licensed==0.5.2
-    # via importlib-metadata
+    # via
+    #   importlib-metadata
+    #   jaraco-context
+    #   jaraco-functools
+    #   keyring
 dunamai==1.25.0
+cython==3.1.2
+    # via grpcio
     # via uv-dynamic-versioning
+expandvars==1.1.2
+    # via yarl
 flit-core==3.12.0
     # via
     #   coherent-licensed
+    #   docutils
+    #   id
+    #   idna
+    #   jeepney
     #   jinja2
+    #   markdown-it-py
+    #   mdurl
+    #   more-itertools
     #   packaging
     #   pathspec
     #   wheel
@@ -24,6 +39,7 @@ hatch-fancy-pypi-readme==25.1.0
     #   openai
 hatch-vcs==0.5.0
     # via
+    #   chardet
     #   filelock
     #   jsonschema
     #   termcolor
@@ -36,13 +52,27 @@ hatchling==1.26.3
 hatchling==1.28.0
     # via
     #   a2a-sdk
+    #   chardet
     #   einops
+    #   expandvars
     #   filelock
     #   hatch-fancy-pypi-readme
     #   hatch-vcs
     #   jsonschema
     #   mcp
+    #   opentelemetry-api
+    #   opentelemetry-exporter-otlp
+    #   opentelemetry-exporter-otlp-proto-common
+    #   opentelemetry-exporter-otlp-proto-grpc
+    #   opentelemetry-exporter-otlp-proto-http
+    #   opentelemetry-instrumentation
+    #   opentelemetry-proto
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   pydantic-settings
+    #   pygments
     #   python-multipart
+    #   starlette
     #   termcolor
     #   urllib3
     #   uv-dynamic-versioning
@@ -80,10 +110,16 @@ setuptools-scm==9.2.2
     # via
     #   hatch-vcs
     #   importlib-metadata
+    #   jaraco-classes
+    #   jaraco-context
+    #   jaraco-functools
+    #   keyring
     #   llama-stack-api
     #   pluggy
     #   setuptools-rust
+    #   tenacity
     #   tqdm
+    #   twine
     #   urllib3
 tomlkit==0.14.0
     # via uv-dynamic-versioning
@@ -98,6 +134,9 @@ wheel==0.46.3
     #   authlib
     #   azure-identity
     #   cachetools
+    #   google-genai
+    #   grpcio
+    #   grpcio-status
     #   litellm
     #   pycparser
     #   sentence-transformers
@@ -111,10 +150,20 @@ setuptools==80.10.2
     #   cachetools
     #   calver
     #   certifi
+    #   cffi
+    #   cryptography
     #   emoji
     #   google-api-core
+    #   google-cloud-bigquery
+    #   google-genai
     #   greenlet
+    #   grpcio
+    #   grpcio-status
     #   importlib-metadata
+    #   jaraco-classes
+    #   jaraco-context
+    #   jaraco-functools
+    #   keyring
     #   llama-stack
     #   llama-stack-api
     #   markupsafe
@@ -130,13 +179,20 @@ setuptools==80.10.2
     #   pycparser
     #   pycryptodomex
     #   pyjwt
+    #   python-dotenv
+    #   readme-renderer
     #   regex
+    #   secretstorage
     #   semver
     #   sentence-transformers
     #   setuptools-rust
     #   setuptools-scm
     #   sse-starlette
+    #   tenacity
     #   tqdm
     #   tree-sitter
     #   trl
     #   trove-classifiers
+    #   twine
+    #   websockets
+    #   yarl
