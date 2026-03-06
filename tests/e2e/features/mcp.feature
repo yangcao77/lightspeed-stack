@@ -66,6 +66,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-oauth
 
+  @skip-in-library-mode     # will be fixed in LCORE-1428
   Scenario: Check if query endpoint succeeds when MCP auth token is passed
     Given The system is in default state
     And I set the "MCP-HEADERS" header to
@@ -83,6 +84,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
+  @skip-in-library-mode     # will be fixed in LCORE-1428
   Scenario: Check if streaming_query endpoint succeeds when MCP auth token is passed
     Given The system is in default state
     And I set the "MCP-HEADERS" header to

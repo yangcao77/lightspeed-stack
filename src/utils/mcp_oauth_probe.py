@@ -4,6 +4,7 @@ Used by endpoints that call MCP-backed services so clients receive a proper
 401 with WWW-Authenticate when an MCP server requires OAuth.
 """
 
+import asyncio
 from typing import Optional
 
 import aiohttp
@@ -38,6 +39,7 @@ async def check_mcp_auth(configuration: AppConfig, mcp_headers: McpHeaders) -> N
     Raises:
         HTTPException: 401 when an MCP server requires OAuth (from probe_mcp).
     """
+    probes = []
     for mcp_server in configuration.mcp_servers:
         headers = mcp_headers.get(mcp_server.name, {})
         authorization = headers.get("Authorization", None)
@@ -46,7 +48,9 @@ async def check_mcp_auth(configuration: AppConfig, mcp_headers: McpHeaders) -> N
             or constants.MCP_AUTH_OAUTH
             in mcp_server.resolved_authorization_headers.values()
         ):
-            await probe_mcp(mcp_server.url, authorization=authorization)
+            probes.append(probe_mcp(mcp_server.url, authorization=authorization))
+    if probes:
+        await asyncio.gather(*probes)
 
 
 async def probe_mcp(
