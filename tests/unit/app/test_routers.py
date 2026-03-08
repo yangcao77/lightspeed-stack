@@ -1,6 +1,7 @@
 """Unit tests for routers.py."""
 
-from typing import Any, Optional, Sequence, Callable
+from typing import Any, Optional
+from collections.abc import Sequence, Callable
 
 from fastapi import FastAPI
 

@@ -3,9 +3,9 @@
 import asyncio
 import json
 import uuid
-from collections.abc import Mapping
+from collections.abc import Mapping, AsyncIterator, MutableMapping
 from datetime import datetime, timezone
-from typing import Annotated, Any, AsyncIterator, MutableMapping, Optional
+from typing import Annotated, Any, Optional
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.apps import A2AStarletteApplication

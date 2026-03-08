@@ -3,7 +3,8 @@
 """Unit tests for functions defined in authentication/jwk_token.py"""
 
 import time
-from typing import Any, Generator, cast
+from typing import Any, cast
+from collections.abc import Generator
 
 import pytest
 from fastapi import HTTPException, Request
