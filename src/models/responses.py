@@ -2,7 +2,7 @@
 
 """Models for REST API responses."""
 
-from typing import Any, ClassVar, Literal, Optional, Union
+from typing import Any, ClassVar, Literal, Optional
 
 from fastapi import status
 from llama_stack_api.openai_responses import (
@@ -318,11 +318,11 @@ class ProviderResponse(AbstractSuccessfulResponse):
         ...,
         description="The API this provider implements",
     )
-    config: dict[str, Union[bool, float, str, list[Any], object, None]] = Field(
+    config: dict[str, bool | float | str | list[Any] | object | None] = Field(
         ...,
         description="Provider configuration parameters",
     )
-    health: dict[str, Union[bool, float, str, list[Any], object, None]] = Field(
+    health: dict[str, bool | float | str | list[Any] | object | None] = Field(
         ...,
         description="Current health status of the provider",
     )

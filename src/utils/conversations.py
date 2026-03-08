@@ -2,7 +2,7 @@
 
 import json
 from datetime import UTC, datetime
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, cast
 
 from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFileSearchToolCall as FileSearchCall,
@@ -26,7 +26,7 @@ from utils.responses import parse_arguments_string
 from utils.types import ToolCallSummary, ToolResultSummary
 
 
-def _extract_text_from_content(content: Union[str, list[Any]]) -> str:
+def _extract_text_from_content(content: str | list[Any]) -> str:
     """Extract text content from message content.
 
     Args:
