@@ -6,7 +6,7 @@ import re
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Literal, Self
 from re import Pattern
 
 import jsonpath_ng
@@ -26,7 +26,6 @@ from pydantic import (
     model_validator,
 )
 from pydantic.dataclasses import dataclass
-from typing import Literal, Self
 
 import constants
 from log import get_logger
