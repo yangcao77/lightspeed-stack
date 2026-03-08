@@ -3,7 +3,8 @@
 # pylint: disable=too-many-lines
 
 from pathlib import Path
-from typing import Any, Generator
+from typing import Any
+from collections.abc import Generator
 from pydantic import ValidationError
 
 import pytest
