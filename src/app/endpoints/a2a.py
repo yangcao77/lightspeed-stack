@@ -5,7 +5,8 @@ import json
 import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
-from typing import Annotated, Any, AsyncIterator, MutableMapping, Optional
+from typing import Annotated, Any, Optional
+from collections.abc import AsyncIterator, MutableMapping
 
 from a2a.server.agent_execution import AgentExecutor, RequestContext
 from a2a.server.apps import A2AStarletteApplication

@@ -2,7 +2,7 @@
 
 from enum import Enum
 from typing import Optional, Any
-from typing_extensions import Self
+from typing import Self
 
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolChoice as ToolChoice,

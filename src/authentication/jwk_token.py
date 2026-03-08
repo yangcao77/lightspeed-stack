@@ -2,7 +2,8 @@
 
 import json
 from asyncio import Lock
-from typing import Any, Callable
+from typing import Any
+from collections.abc import Callable
 
 import aiohttp
 from authlib.jose import JsonWebKey, Key, KeySet, jwt

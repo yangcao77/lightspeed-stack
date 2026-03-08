@@ -3,7 +3,8 @@
 import asyncio
 import datetime
 import json
-from typing import Annotated, Any, AsyncIterator, Optional, cast
+from typing import Annotated, Any, Optional, cast
+from collections.abc import AsyncIterator
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
