@@ -237,7 +237,7 @@ async def query_endpoint_handler(
         quota_limiters=configuration.quota_limiters, user_id=user_id
     )
 
-    completed_at = datetime.datetime.now(datetime.timezone.utc).strftime(
+    completed_at = datetime.datetime.now(datetime.UTC).strftime(
         "%Y-%m-%dT%H:%M:%SZ"
     )
     conversation_id = normalize_conversation_id(responses_params.conversation)
