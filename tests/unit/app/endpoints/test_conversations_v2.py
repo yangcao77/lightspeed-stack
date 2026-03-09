@@ -2,7 +2,7 @@
 
 """Unit tests for the /conversations REST API endpoints."""
 
-from datetime import datetime, timezone
+from datetime import datetime, UTC
 from typing import Any, cast
 
 import pytest
@@ -361,9 +361,7 @@ class TestGetConversationsListEndpoint:
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
 
         timestamp_str = "2024-01-01T00:00:00Z"
-        timestamp_dt = datetime.fromisoformat(timestamp_str).replace(
-            tzinfo=timezone.utc
-        )
+        timestamp_dt = datetime.fromisoformat(timestamp_str).replace(tzinfo=UTC)
         timestamp = timestamp_dt.timestamp()
 
         mock_configuration.conversation_cache.list.return_value = [
