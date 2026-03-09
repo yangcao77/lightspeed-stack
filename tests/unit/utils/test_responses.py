@@ -61,7 +61,7 @@ class MockOutputItem:  # pylint: disable=too-few-public-methods
         content: Any = None,
     ) -> None:
         # Use setattr to avoid conflict with built-in 'type'
-        setattr(self, "type", item_type)
+        self.type = item_type
         self.role = role
         self.content = content
 
