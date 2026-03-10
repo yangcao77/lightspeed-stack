@@ -1019,6 +1019,11 @@ class Action(str, Enum):
     # RHEL Lightspeed rlsapi v1 compatibility - stateless inference (no history/RAG)
     RLSAPI_V1_INFER = "rlsapi_v1_infer"
 
+    # Dynamic MCP server management
+    REGISTER_MCP_SERVER = "register_mcp_server"
+    LIST_MCP_SERVERS = "list_mcp_servers"
+    DELETE_MCP_SERVER = "delete_mcp_server"
+
     # A2A (Agent-to-Agent) protocol actions
     A2A_AGENT_CARD = "a2a_agent_card"
     A2A_TASK_EXECUTION = "a2a_task_execution"

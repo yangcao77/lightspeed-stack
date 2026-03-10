@@ -64,6 +64,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         self._conversation_cache: Optional[Cache] = None
         self._quota_limiters: list[QuotaLimiter] = []
         self._token_usage_history: Optional[TokenUsageHistory] = None
+        self._dynamic_mcp_server_names: set[str] = set()
 
     def load_configuration(self, filename: str) -> None:
         """Load configuration from YAML file.
@@ -164,6 +165,67 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.mcp_servers
+
+    @property
+    def dynamic_mcp_server_names(self) -> set[str]:
+        """Return the set of dynamically registered MCP server names.
+
+        Returns:
+            set[str]: Names of MCP servers added via the API (not from config file).
+        """
+        return self._dynamic_mcp_server_names
+
+    def add_mcp_server(self, mcp_server: ModelContextProtocolServer) -> None:
+        """Add an MCP server to the runtime configuration.
+
+        Parameters:
+            mcp_server: The MCP server configuration to add.
+
+        Raises:
+            LogicError: If the configuration has not been loaded.
+            ValueError: If an MCP server with the same name already exists.
+        """
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        for existing in self._configuration.mcp_servers:
+            if existing.name == mcp_server.name:
+                raise ValueError(
+                    f"MCP server with name '{mcp_server.name}' already exists"
+                )
+        self._configuration.mcp_servers.append(mcp_server)
+        self._dynamic_mcp_server_names.add(mcp_server.name)
+
+    def remove_mcp_server(self, name: str) -> None:
+        """Remove a dynamically registered MCP server from the runtime configuration.
+
+        Parameters:
+            name: The name of the MCP server to remove.
+
+        Raises:
+            LogicError: If the configuration has not been loaded.
+            ValueError: If the server was not found or was statically configured.
+        """
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        if name not in self._dynamic_mcp_server_names:
+            raise ValueError(
+                f"MCP server '{name}' was not dynamically registered or does not exist"
+            )
+        self._configuration.mcp_servers = [
+            s for s in self._configuration.mcp_servers if s.name != name
+        ]
+        self._dynamic_mcp_server_names.discard(name)
+
+    def is_dynamic_mcp_server(self, name: str) -> bool:
+        """Check if an MCP server was dynamically registered.
+
+        Parameters:
+            name: The name of the MCP server.
+
+        Returns:
+            bool: True if the server was registered via the API.
+        """
+        return name in self._dynamic_mcp_server_names
 
     @property
     def authentication_configuration(self) -> AuthenticationConfiguration:

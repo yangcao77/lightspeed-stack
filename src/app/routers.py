@@ -20,6 +20,7 @@ from app.endpoints import (
     metrics,
     tools,
     mcp_auth,
+    mcp_servers,
     # Query endpoints for Response API support
     query,
     # RHEL Lightspeed rlsapi v1 compatibility
@@ -48,6 +49,7 @@ def include_routers(app: FastAPI) -> None:
     app.include_router(models.router, prefix="/v1")
     app.include_router(tools.router, prefix="/v1")
     app.include_router(mcp_auth.router, prefix="/v1")
+    app.include_router(mcp_servers.router, prefix="/v1")
     app.include_router(shields.router, prefix="/v1")
     app.include_router(providers.router, prefix="/v1")
     app.include_router(rags.router, prefix="/v1")
