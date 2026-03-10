@@ -30,8 +30,6 @@ cffi==2.0.0 \
     --hash=sha256:92f0b76faee1feab91508f8c932b54fd9a9203986b156761a5bf266addd23f25 \
     --hash=sha256:d6f66e891be32d0acc7933c7ff9f55285da5b73a1364e8d222bf1e9241b06a6a \
     --hash=sha256:fe96da20ecfe1e84563b411a2996740d2891d126aeef9e19476563c22dca65d8
-charset-normalizer==3.4.4 \
-    --hash=sha256:ccdd9a2c5c46da6335354acd6a04ef80e2eb2804a8ed58f932b7f5ae345c5891
 chevron==0.14.0 \
     --hash=sha256:215f5e3e7ac75d150eadfc0f8c651b3815dc36813e122484b1ed68e142e5adfb
 click==8.3.1 \
@@ -81,8 +79,6 @@ google-genai==1.59.0 \
     --hash=sha256:388b25b31c0c00307a947690f21528a7b652e329feb3a14d49cbb16765012313
 google-resumable-media==2.8.0 \
     --hash=sha256:bdf13a0ceec8ba97622165ceeb789e6f0fb7c1614665be246b819811ca661f9c
-googleapis-common-protos==1.72.0 \
-    --hash=sha256:b530c484aa7341cab24eda0b801abc608c85da52ff9002d8a485e2f9d9d302c5
 grpc-google-iam-v1==0.14.3 \
     --hash=sha256:b29d3adb3873130b93f289e44449166586cd684bfdaccc8a4c4d35dc0e3ce9df
 grpcio==1.76.0 \
