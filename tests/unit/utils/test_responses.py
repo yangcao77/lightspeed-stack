@@ -2044,6 +2044,69 @@ class TestResolveSourceForResult:
         )
         assert source == "vs-unknown"
 
+    def test_multiple_stores_source_attribute_fallback(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test resolution falls back to source attribute when no vector_store_id."""
+        mock_result = mocker.Mock()
+        mock_result.filename = "file-abc123"
+        mock_result.attributes = {"source": "ocp-documentation"}
+
+        source = _resolve_source_for_result(
+            mock_result,
+            ["vs-001", "vs-002"],
+            {"vs-001": "ocp-4.18-docs"},
+        )
+        assert source == "ocp-documentation"
+
+    def test_multiple_stores_source_attribute_ignores_mapping(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test source attribute is returned directly without rag_id_mapping lookup."""
+        mock_result = mocker.Mock()
+        mock_result.filename = "file-abc123"
+        mock_result.attributes = {"source": "custom-index"}
+
+        source = _resolve_source_for_result(
+            mock_result,
+            ["vs-001", "vs-002"],
+            {"custom-index": "should-not-be-used"},
+        )
+        assert source == "custom-index"
+
+    def test_multiple_stores_source_preferred_over_vector_store_id(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test source attribute takes precedence over vector_store_id."""
+        mock_result = mocker.Mock()
+        mock_result.filename = "file-abc123"
+        mock_result.attributes = {
+            "vector_store_id": "vs-002",
+            "source": "ocp-documentation",
+        }
+
+        source = _resolve_source_for_result(
+            mock_result,
+            ["vs-001", "vs-002"],
+            {"vs-002": "rhel-9-docs"},
+        )
+        assert source == "ocp-documentation"
+
+    def test_multiple_stores_no_vector_store_id_no_source(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test resolution returns None when neither vector_store_id nor source present."""
+        mock_result = mocker.Mock()
+        mock_result.filename = "file-abc123"
+        mock_result.attributes = {"title": "some doc"}
+
+        source = _resolve_source_for_result(
+            mock_result,
+            ["vs-001", "vs-002"],
+            {"vs-001": "ocp-docs"},
+        )
+        assert source is None
+
 
 class TestBuildChunkAttributes:
     """Tests for _build_chunk_attributes function."""

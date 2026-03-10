@@ -842,6 +842,16 @@ def _resolve_source_for_result(
 
     if len(vector_store_ids) > 1:
         attributes = getattr(result, "attributes", {}) or {}
+
+        # Primary: read index name embedded directly by rag-content.
+        # This value is already the user-facing rag_id, not a vector_db_id,
+        # so no mapping is needed.
+        attr_source: Optional[str] = attributes.get("source")
+        if attr_source:
+            return attr_source
+
+        # Fallback: if llama-stack ever populates vector_store_id in results,
+        # use it with the rag_id_mapping.
         attr_store_id: Optional[str] = attributes.get("vector_store_id")
         if attr_store_id:
             return rag_id_mapping.get(attr_store_id, attr_store_id)
