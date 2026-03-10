@@ -91,7 +91,7 @@ async def get_providers_health_statuses() -> list[ProviderHealthStatus]:
             ProviderHealthStatus(
                 provider_id="unknown",
                 status=HealthStatus.ERROR.value,
-                message=f"Failed to initialize health check: {str(e)}",
+                message=f"Failed to initialize health check: {e!s}",
             )
         ]
 

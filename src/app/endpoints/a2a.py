@@ -340,7 +340,7 @@ class A2AAgentExecutor(AgentExecutor):
             stream = await client.responses.create(**responses_params.model_dump())
         except APIConnectionError as e:
             error_message = (
-                f"Unable to connect to Llama Stack backend service: {str(e)}. "
+                f"Unable to connect to Llama Stack backend service: {e!s}. "
                 "The service may be temporarily unavailable. Please try again later."
             )
             logger.error(
