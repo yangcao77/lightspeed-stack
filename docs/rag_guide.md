@@ -67,7 +67,7 @@ For users with BYOK or OKP/Solr configurations, you can automatically enrich you
 
 ```bash
 # Enrich run.yaml with BYOK and/or Solr configurations from lightspeed-stack.yaml
-python src/llama_stack_configuration.py -c lightspeed-stack.yaml -i run.yaml -o run_enriched.yaml
+uv run src/llama_stack_configuration.py -c lightspeed-stack.yaml -i run.yaml -o run_enriched.yaml
 ```
 
 This script automatically adds the necessary:
