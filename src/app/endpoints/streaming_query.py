@@ -698,7 +698,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         # Completed response - capture final text and response object
         elif event_type == "response.completed":
             latest_response_object = cast(
-                OpenAIResponseObject, getattr(chunk, "response")
+                OpenAIResponseObject, chunk.response
             )
             turn_summary.llm_response = turn_summary.llm_response or "".join(text_parts)
             yield stream_event(
@@ -714,7 +714,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         # Incomplete or failed response - emit error
         elif event_type in ("response.incomplete", "response.failed"):
             latest_response_object = cast(
-                OpenAIResponseObject, getattr(chunk, "response")
+                OpenAIResponseObject, chunk.response
             )
             error_message = (
                 latest_response_object.error.message
