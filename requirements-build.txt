@@ -6,6 +6,8 @@
 #
 calver==2025.10.20
     # via trove-classifiers
+cython==3.2.4
+    # via oracledb
 dunamai==1.26.0
     # via uv-dynamic-versioning
 flit-core==3.12.0
@@ -35,6 +37,7 @@ hatchling==1.29.0
     #   hatch-fancy-pypi-readme
     #   hatch-vcs
     #   opentelemetry-api
+    #   opentelemetry-distro
     #   opentelemetry-exporter-otlp
     #   opentelemetry-exporter-otlp-proto-common
     #   opentelemetry-exporter-otlp-proto-grpc
@@ -44,6 +47,7 @@ hatchling==1.29.0
     #   opentelemetry-sdk
     #   opentelemetry-semantic-conventions
     #   pydantic-settings
+    #   pythainlp
     #   uv-dynamic-versioning
     #   uvicorn
     #   wcwidth
@@ -51,7 +55,7 @@ jinja2==3.1.6
     # via uv-dynamic-versioning
 markupsafe==3.0.3
     # via jinja2
-maturin==1.10.2
+maturin==1.12.6
     # via fastuuid
 packaging==26.0
     # via
@@ -77,6 +81,7 @@ setuptools-rust==1.12.0
 setuptools-scm==9.2.2
     # via
     #   hatch-vcs
+    #   llama-stack
     #   llama-stack-api
     #   pluggy
     #   setuptools-rust
@@ -93,6 +98,8 @@ wheel==0.46.3
     #   azure-identity
     #   cachetools
     #   litellm
+    #   oci
+    #   oracledb
     #   sentence-transformers
 
 # The following packages are considered to be unsafe in a requirements file:
@@ -116,6 +123,8 @@ setuptools==82.0.1
     #   markupsafe
     #   maturin
     #   multiprocess
+    #   oci
+    #   oracledb
     #   pathspec
     #   pluggy
     #   polyleven
