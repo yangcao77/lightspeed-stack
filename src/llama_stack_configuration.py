@@ -251,8 +251,7 @@ def construct_models_section(
 
         # Strip sentence-transformers/ prefix if present
         provider_model_id = embedding_model
-        if provider_model_id.startswith("sentence-transformers/"):
-            provider_model_id = provider_model_id[len("sentence-transformers/") :]
+        provider_model_id = provider_model_id.removeprefix("sentence-transformers/")
 
         # Skip if embedding model already registered
         existing_model_ids = [m.get("provider_model_id") for m in output]
@@ -489,8 +488,7 @@ def enrich_solr(ls_config: dict[str, Any], solr_config: dict[str, Any]) -> None:
 
     # Strip sentence-transformers/ prefix from constant for provider_model_id
     provider_model_id = constants.SOLR_DEFAULT_EMBEDDING_MODEL
-    if provider_model_id.startswith("sentence-transformers/"):
-        provider_model_id = provider_model_id[len("sentence-transformers/") :]
+    provider_model_id = provider_model_id.removeprefix("sentence-transformers/")
 
     # Check if already registered
     registered_models = ls_config["registered_resources"]["models"]

@@ -40,7 +40,7 @@ def check_suid(suid: str) -> bool:
         return False
 
     # Strip 'conv_' prefix if present
-    hex_part = suid[5:] if suid.startswith("conv_") else suid
+    hex_part = suid.removeprefix("conv_")
 
     # Check for 48-char hex string (llama-stack conversation ID format)
     if len(hex_part) == 48:
