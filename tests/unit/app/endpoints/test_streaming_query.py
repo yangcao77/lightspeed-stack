@@ -2369,8 +2369,7 @@ class TestResponseGeneratorMCPCalls:
             # Remove item from dict to simulate real behavior
             # arguments parameter is required by function signature but unused here
             _ = arguments
-            if output_index in mcp_call_items:
-                del mcp_call_items[output_index]
+            mcp_call_items.pop(output_index, None)
             return mock_tool_call
 
         mocker.patch(
