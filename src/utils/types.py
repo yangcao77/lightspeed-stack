@@ -1,6 +1,6 @@
 """Common types for the project."""
 
-from typing import Annotated, Any, Literal, Optional, TypeAlias
+from typing import Annotated, Any, Literal, Optional
 
 from llama_stack_api import ImageContentItem, TextContentItem
 from llama_stack_api.openai_responses import (
@@ -131,7 +131,7 @@ ShieldModerationResult = Annotated[
     Field(discriminator="decision"),
 ]
 
-IncludeParameter: TypeAlias = Literal[
+type IncludeParameter = Literal[
     "web_search_call.action.sources",
     "code_interpreter_call.outputs",
     "computer_call_output.output.image_url",
@@ -141,7 +141,7 @@ IncludeParameter: TypeAlias = Literal[
     "reasoning.encrypted_content",
 ]
 
-ResponseItem: TypeAlias = (
+type ResponseItem = (
     ResponseMessage
     | WebSearchToolCall
     | FileSearchToolCall
@@ -153,7 +153,7 @@ ResponseItem: TypeAlias = (
     | McpApprovalResponse
 )
 
-ResponseInput: TypeAlias = str | list[ResponseItem]
+type ResponseInput = str | list[ResponseItem]
 
 
 class ResponsesApiParams(BaseModel):
