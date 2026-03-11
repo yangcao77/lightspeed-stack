@@ -503,8 +503,7 @@ class FeedbackRequest(BaseModel):
         if len(value) == 0:
             return None  # Convert empty list to None for consistency
 
-        unique_categories = list(dict.fromkeys(value))  # don't lose ordering
-        return unique_categories
+        return list(dict.fromkeys(value))  # don't lose ordering
 
     @model_validator(mode="after")
     def check_feedback_provided(self) -> Self:

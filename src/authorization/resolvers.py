@@ -148,8 +148,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
             # No claims for guests
             return {}
 
-        jwt_claims = unsafe_get_claims(token)
-        return jwt_claims
+        return unsafe_get_claims(token)
 
     @staticmethod
     def _evaluate_operator(

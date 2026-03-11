@@ -287,5 +287,4 @@ def replace_placeholders(context: Context, text: str) -> str:
     """
     result = text.replace("{MODEL}", context.default_model)
     result = result.replace("{PROVIDER}", context.default_provider)
-    result = result.replace("{VECTOR_STORE_ID}", context.faiss_vector_store_id)
-    return result
+    return result.replace("{VECTOR_STORE_ID}", context.faiss_vector_store_id)
