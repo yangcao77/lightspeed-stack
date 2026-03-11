@@ -98,8 +98,7 @@ def make_output_item(
     Returns:
         MockOutputItem: Mock object with type, role, and content attributes
     """
-    mock_item = MockOutputItem(item_type=item_type, role=role, content=content)
-    return mock_item
+    return MockOutputItem(item_type=item_type, role=role, content=content)
 
 
 def make_content_part(
