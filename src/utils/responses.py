@@ -997,8 +997,7 @@ async def select_model_for_responses(
         and user_conversation.last_used_model
         and user_conversation.last_used_provider
     ):
-        model_id = f"{user_conversation.last_used_provider}/{user_conversation.last_used_model}"
-        return model_id
+        return f"{user_conversation.last_used_provider}/{user_conversation.last_used_model}"
 
     # 2. Select default model from configuration
     if configuration.inference is not None:
