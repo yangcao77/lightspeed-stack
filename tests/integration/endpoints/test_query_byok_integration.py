@@ -19,6 +19,7 @@ from app.endpoints.query import query_endpoint_handler
 from authentication.interface import AuthTuple
 from configuration import AppConfig
 from models.requests import QueryRequest
+from models.responses import QueryResponse
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -609,7 +610,7 @@ async def test_query_byok_inline_rag_error_is_handled_gracefully(
     )
 
     # Query should succeed despite BYOK RAG failure, but with no chunks
-    assert response.response is not None
+    assert isinstance(response, QueryResponse)
     assert not response.rag_chunks
 
 
