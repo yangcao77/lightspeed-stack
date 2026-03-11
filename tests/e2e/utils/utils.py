@@ -268,7 +268,7 @@ def restart_container(container_name: str) -> None:
             check=True,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        print(f"Failed to restart container {container_name}: {str(e.stderr)}")
+        print(f"Failed to restart container {container_name}: {e.stderr!s}")
         raise
 
     # Wait for container to be healthy
