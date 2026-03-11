@@ -442,6 +442,7 @@ def enrich_solr(ls_config: dict[str, Any], solr_config: dict[str, Any]) -> None:
                         "parent_total_chunks_field": "total_chunks",
                         "parent_total_tokens_field": "total_tokens",
                         "chunk_filter_query": chunk_filter_query,
+                        "chunk_family_fields": ["headings"],
                     },
                     "persistence": {
                         "namespace": constants.SOLR_DEFAULT_VECTOR_STORE_ID,
