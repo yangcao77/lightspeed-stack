@@ -15,6 +15,7 @@ flit-core==3.12.0
     #   jinja2
     #   packaging
     #   pathspec
+    #   pip
     #   wheel
 hatch-fancy-pypi-readme==25.1.0
     # via
@@ -55,7 +56,7 @@ jinja2==3.1.6
     # via uv-dynamic-versioning
 markupsafe==3.0.3
     # via jinja2
-maturin==1.12.6
+maturin==1.10.2
     # via fastuuid
 packaging==26.0
     # via
@@ -72,8 +73,10 @@ poetry-core==2.3.1
     # via
     #   dunamai
     #   litellm
+    #   pybuild-deps
     #   rich
     #   tomlkit
+    #   xdg
 semantic-version==2.10.0
     # via setuptools-rust
 setuptools-rust==1.12.0
@@ -83,6 +86,7 @@ setuptools-scm==9.2.2
     #   hatch-vcs
     #   llama-stack
     #   llama-stack-api
+    #   pip-tools
     #   pluggy
     #   setuptools-rust
     #   tenacity
@@ -101,6 +105,7 @@ wheel==0.46.3
     #   oci
     #   oracledb
     #   sentence-transformers
+    #   tornado
 
 # The following packages are considered to be unsafe in a requirements file:
 setuptools==82.0.0
@@ -126,6 +131,7 @@ setuptools==82.0.1
     #   oci
     #   oracledb
     #   pathspec
+    #   pip-tools
     #   pluggy
     #   polyleven
     #   proto-plus
@@ -140,5 +146,6 @@ setuptools==82.0.1
     #   setuptools-scm
     #   sse-starlette
     #   tenacity
+    #   tornado
     #   trl
     #   trove-classifiers
