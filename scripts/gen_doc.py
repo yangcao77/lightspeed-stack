@@ -31,7 +31,7 @@ def generate_docfile(directory):
         for file in files:
             if file.endswith(".py"):
                 print(f"## [{file}]({file})", file=indexfile)
-                with open(file, "r", encoding="utf-8") as fin:
+                with open(file, encoding="utf-8") as fin:
                     source = fin.read()
                 try:
                     mod = ast.parse(source)
