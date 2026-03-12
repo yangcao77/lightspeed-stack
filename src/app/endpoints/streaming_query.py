@@ -243,6 +243,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
         moderation_result=moderation_result,
         vector_store_ids=extract_vector_store_ids_from_tools(responses_params.tools),
         rag_id_mapping=configuration.rag_id_mapping,
+        inline_rag_context=inline_rag_context,
     )
 
     # Update metrics for the LLM call
@@ -254,7 +255,6 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     generator, turn_summary = await retrieve_response_generator(
         responses_params=responses_params,
         context=context,
-        inline_rag_docs=inline_rag_context.referenced_documents,
     )
 
     # Combine inline RAG results (BYOK + Solr) with tool-based results
@@ -283,7 +283,6 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 async def retrieve_response_generator(
     responses_params: ResponsesApiParams,
     context: ResponseGeneratorContext,
-    inline_rag_docs: list[ReferencedDocument],
 ) -> tuple[AsyncIterator[str], TurnSummary]:
     """
     Retrieve the appropriate response generator.
@@ -295,7 +294,6 @@ async def retrieve_response_generator(
     Args:
         responses_params: The Responses API parameters
         context: The response generator context
-        inline_rag_docs: Inline RAG (BYOK + Solr) documents
     Returns:
         tuple[AsyncIterator[str], TurnSummary]: The response generator and turn summary
 
@@ -328,7 +326,6 @@ async def retrieve_response_generator(
                 response,
                 context,
                 turn_summary,
-                inline_rag_docs,
             ),
             turn_summary,
         )
@@ -582,7 +579,6 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_response: AsyncIterator[OpenAIResponseObjectStream],
     context: ResponseGeneratorContext,
     turn_summary: TurnSummary,
-    inline_rag_docs: list[ReferencedDocument],
 ) -> AsyncIterator[str]:
     """Generate SSE formatted streaming response.
 
@@ -594,7 +590,6 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         turn_response: The streaming response from Llama Stack
         context: The response generator context
         turn_summary: TurnSummary to populate during streaming
-        inline_rag_docs: Inline RAG (BYOK + Solr) documents
     Yields:
         SSE-formatted strings for tokens, tool calls, tool results,
         turn completion, and error events.
@@ -773,7 +768,11 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     )
     # Combine inline RAG results (BYOK + Solr) with tool-based results
     turn_summary.referenced_documents = deduplicate_referenced_documents(
-        inline_rag_docs + tool_rag_docs
+        context.inline_rag_context.referenced_documents + tool_rag_docs
+    )
+    # Combine inline RAG chunks (BYOK + Solr) with tool-based chunks
+    turn_summary.rag_chunks = (
+        context.inline_rag_context.rag_chunks + turn_summary.rag_chunks
     )
 
 

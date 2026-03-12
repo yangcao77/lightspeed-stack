@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from llama_stack_client import AsyncLlamaStackClient
 
 from models.requests import QueryRequest
-from utils.types import ShieldModerationResult
+from utils.types import RAGContext, ShieldModerationResult
 
 
 @dataclass
@@ -25,6 +25,7 @@ class ResponseGeneratorContext:  # pylint: disable=too-many-instance-attributes
         started_at: Timestamp when the request started (ISO 8601 format)
         client: The Llama Stack client for API interactions
         moderation_result: The moderation result
+        inline_rag_context: Inline RAG context
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
     """
@@ -47,5 +48,6 @@ class ResponseGeneratorContext:  # pylint: disable=too-many-instance-attributes
     moderation_result: ShieldModerationResult
 
     # RAG index identification
+    inline_rag_context: RAGContext
     vector_store_ids: list[str] = field(default_factory=list)
     rag_id_mapping: dict[str, str] = field(default_factory=dict)

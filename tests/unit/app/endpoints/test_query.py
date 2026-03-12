@@ -17,6 +17,9 @@ from models.requests import Attachment, QueryRequest
 from models.responses import QueryResponse
 from utils.token_counter import TokenCounter
 from utils.types import (
+    RAGChunk,
+    RAGContext,
+    ReferencedDocument,
     ResponsesApiParams,
     ShieldModerationPassed,
     ToolCallSummary,
@@ -173,6 +176,93 @@ class TestQueryEndpointHandler:
         assert isinstance(response, QueryResponse)
         assert response.conversation_id == "123"
         assert response.response == "Kubernetes is a container orchestration platform"
+
+    @pytest.mark.asyncio
+    async def test_query_merges_inline_and_tool_rag_chunks_and_documents(
+        self,
+        dummy_request: Request,
+        setup_configuration: AppConfig,
+        mocker: MockerFixture,
+    ) -> None:
+        """Test that inline RAG and tool-based RAG chunks/docs are correctly merged."""
+        query_request = QueryRequest(
+            query="What is Kubernetes?"
+        )  # pyright: ignore[reportCallIssue]
+
+        mocker.patch("app.endpoints.query.configuration", setup_configuration)
+        mocker.patch("app.endpoints.query.check_configuration_loaded")
+        mocker.patch("app.endpoints.query.check_tokens_available")
+        mocker.patch("app.endpoints.query.validate_model_provider_override")
+
+        mock_client = mocker.AsyncMock(spec=AsyncLlamaStackClient)
+        mock_response_obj = mocker.Mock()
+        mock_response_obj.output = []
+        mock_client.responses = mocker.Mock()
+        mock_client.responses.create = mocker.AsyncMock(return_value=mock_response_obj)
+        mock_client_holder = mocker.Mock()
+        mock_client_holder.get_client.return_value = mock_client
+        mocker.patch(
+            "app.endpoints.query.AsyncLlamaStackClientHolder",
+            return_value=mock_client_holder,
+        )
+        mocker.patch(
+            "app.endpoints.query.run_shield_moderation",
+            new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+        )
+
+        inline_chunk = RAGChunk(content="inline chunk content", source="byok")
+        inline_doc = ReferencedDocument(doc_title="Inline Doc")
+        inline_rag = RAGContext(
+            context_text="",
+            rag_chunks=[inline_chunk],
+            referenced_documents=[inline_doc],
+        )
+        mocker.patch(
+            "app.endpoints.query.build_rag_context",
+            new=mocker.AsyncMock(return_value=inline_rag),
+        )
+
+        mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
+        mock_responses_params.model = "provider1/model1"
+        mock_responses_params.conversation = "conv_123"
+        mock_responses_params.tools = None
+        mock_responses_params.model_dump.return_value = {
+            "input": "test",
+            "model": "provider1/model1",
+        }
+        mocker.patch(
+            "app.endpoints.query.prepare_responses_params",
+            new=mocker.AsyncMock(return_value=mock_responses_params),
+        )
+
+        tool_chunk = RAGChunk(content="tool chunk content", source="vs-1")
+        tool_doc = ReferencedDocument(doc_title="Tool Doc")
+        mock_turn_summary = TurnSummary()
+        mock_turn_summary.rag_chunks = [tool_chunk]
+        mock_turn_summary.referenced_documents = [tool_doc]
+
+        mocker.patch(
+            "app.endpoints.query.retrieve_response",
+            new=mocker.AsyncMock(return_value=mock_turn_summary),
+        )
+        mocker.patch("app.endpoints.query.store_query_results")
+        mocker.patch("app.endpoints.query.consume_query_tokens")
+        mocker.patch("app.endpoints.query.get_available_quotas", return_value={})
+
+        response = await query_endpoint_handler(
+            request=dummy_request,
+            query_request=query_request,
+            auth=MOCK_AUTH,
+            mcp_headers={},
+        )
+
+        assert isinstance(response, QueryResponse)
+        assert len(response.rag_chunks) == 2
+        assert response.rag_chunks[0].content == "inline chunk content"
+        assert response.rag_chunks[1].content == "tool chunk content"
+        assert len(response.referenced_documents) == 2
+        assert response.referenced_documents[0].doc_title == "Inline Doc"
+        assert response.referenced_documents[1].doc_title == "Tool Doc"
 
     @pytest.mark.asyncio
     async def test_successful_query_with_conversation(
