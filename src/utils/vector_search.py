@@ -493,6 +493,7 @@ async def _fetch_solr_rag(
 
 async def build_rag_context(
     client: AsyncLlamaStackClient,
+    moderation_decision: str,
     query: str,
     vector_store_ids: Optional[list[str]],
     solr: Optional[dict[str, Any]] = None,
@@ -503,12 +504,17 @@ async def build_rag_context(
 
     Args:
         client: The AsyncLlamaStackClient to use for the request
-        query_request: The user's query request
-        configuration: Application configuration
+        moderation_decision: The moderation decision
+        query: The user's query
+        vector_store_ids: The vector store IDs to query
+        solr: The Solr query parameters
 
     Returns:
         RAGContext containing formatted context text and referenced documents
     """
+    if moderation_decision == "blocked":
+        return RAGContext()
+
     # Fetch from all enabled RAG sources in parallel
     byok_chunks_task = _fetch_byok_rag(client, query, vector_store_ids)
     solr_chunks_task = _fetch_solr_rag(client, query, solr)

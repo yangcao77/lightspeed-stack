@@ -332,7 +332,6 @@ class TurnSummary(BaseModel):
     tool_results: list[ToolResultSummary] = Field(default_factory=list)
     rag_chunks: list[RAGChunk] = Field(default_factory=list)
     referenced_documents: list[ReferencedDocument] = Field(default_factory=list)
-    inline_rag_documents: list[ReferencedDocument] = Field(default_factory=list)
     token_usage: TokenCounter = Field(default_factory=TokenCounter)
 
 
