@@ -31,9 +31,12 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseInputTool as InputTool,
     OpenAIResponseUsageInputTokensDetails as UsageInputTokensDetails,
     OpenAIResponseUsageOutputTokensDetails as UsageOutputTokensDetails,
+    OpenAIResponseInputToolChoiceMode as ToolChoiceMode,
+    OpenAIResponseInputToolChoice as ToolChoice,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
 
+from client import AsyncLlamaStackClientHolder
 import constants
 import metrics
 from configuration import configuration
@@ -380,6 +383,29 @@ def resolve_vector_store_ids(
         constants.SOLR_DEFAULT_VECTOR_STORE_ID
     )
     return [rag_id_to_vector_db_id.get(vs_id, vs_id) for vs_id in vector_store_ids]
+
+
+def translate_tools_vector_store_ids(
+    tools: list[InputTool], byok_rags: list[ByokRag]
+) -> list[InputTool]:
+    """Translate user-facing vector_store_ids to llama-stack IDs in each file_search tool.
+
+    Parameters:
+        tools: List of request tools (may contain file_search with user-facing IDs).
+        byok_rags: BYOK RAG configuration for ID resolution.
+
+    Returns:
+        New list of tools with file_search vector_store_ids translated; other tools
+        unchanged.
+    """
+    result: list[InputTool] = []
+    for tool in tools:
+        if tool.type == "file_search":
+            resolved_ids = resolve_vector_store_ids(tool.vector_store_ids, byok_rags)
+            result.append(tool.model_copy(update={"vector_store_ids": resolved_ids}))
+        else:
+            result.append(tool)
+    return result
 
 
 def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[InputToolFileSearch]]:
@@ -1248,3 +1274,63 @@ def extract_attachments_text(response_input: ResponseInput) -> str:
                 if file_part.file_data:
                     file_data_parts.append(file_part.file_data)
     return "\n\n".join(file_data_parts)
+
+
+async def resolve_tool_choice(
+    tools: Optional[list[InputTool]],
+    tool_choice: Optional[ToolChoice],
+    token: str,
+    mcp_headers: Optional[McpHeaders] = None,
+    request_headers: Optional[Mapping[str, str]] = None,
+) -> tuple[Optional[list[InputTool]], Optional[ToolChoice], Optional[list[str]]]:
+    """Resolve tools and tool_choice for the Responses API.
+
+    If the request includes tools, uses them as-is and derives vector_store_ids
+    from tool configs; otherwise loads tools via prepare_tools (using all
+    configured vector stores) and honors tool_choice "none" via the no_tools
+    flag. When no tools end up configured, tool_choice is cleared to None.
+
+    Args:
+        tools: Tools from the request, or None to use LCORE-configured tools.
+        tool_choice: Requested tool choice (e.g. auto, required, none) or None.
+        token: User token for MCP/auth.
+        mcp_headers: Optional MCP headers to propagate.
+        request_headers: Optional request headers for tool resolution.
+
+    Returns:
+        A tuple of (prepared_tools, prepared_tool_choice, vector_store_ids):
+        prepared_tools is the list of tools to use, or None if none configured;
+        prepared_tool_choice is the resolved tool choice, or None when there
+        are no tools; vector_store_ids is extracted from tools (in user-facing format)
+        when provided, otherwise None.
+    """
+    prepared_tools: Optional[list[InputTool]] = None
+    client = AsyncLlamaStackClientHolder().get_client()
+    if tools:  # explicitly specified in request
+        # Per-request override of vector stores (user-facing rag_ids)
+        vector_store_ids = extract_vector_store_ids_from_tools(tools)
+        # Translate user-facing rag_ids to llama-stack vector_store_ids in each file_search tool
+        byok_rags = configuration.configuration.byok_rag
+        prepared_tools = translate_tools_vector_store_ids(tools, byok_rags)
+        prepared_tool_choice = tool_choice or ToolChoiceMode.auto
+    else:
+        # Vector stores were not overwritten in request, use all configured vector stores
+        vector_store_ids = None
+        # Get all tools configured in LCORE (returns None or non-empty list)
+        no_tools = (
+            isinstance(tool_choice, ToolChoiceMode)
+            and tool_choice == ToolChoiceMode.none
+        )
+        # Vector stores are prepared in llama-stack format
+        prepared_tools = await prepare_tools(
+            client=client,
+            vector_store_ids=vector_store_ids,  # allow all configured vector stores
+            no_tools=no_tools,
+            token=token,
+            mcp_headers=mcp_headers,
+            request_headers=request_headers,
+        )
+        # If there are no tools, tool_choice cannot be set at all - LLS implicit behavior
+        prepared_tool_choice = tool_choice if prepared_tools else None
+
+    return prepared_tools, prepared_tool_choice, vector_store_ids
