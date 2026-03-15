@@ -34,9 +34,11 @@ chevron==0.14.0 \
     --hash=sha256:215f5e3e7ac75d150eadfc0f8c651b3815dc36813e122484b1ed68e142e5adfb
 click==8.3.1 \
     --hash=sha256:a87f0253ce1fb7747cdde1674d73f34241bb4de9fca7a31bc866fb0a8a5f4307
-cryptography==46.0.4 \
-    --hash=sha256:26ffa7666abe41b7b75905f7353c43ff4e812cf7f5b2b253ec3bcddd0d29e7a1 \
-    --hash=sha256:b1352b1c73e908b825c91e8fe23f24775fcebca7d59f66a6864e4dcf6fdd6323
+cryptography==46.0.5 \
+    --hash=sha256:2b44c9fd892f763465b2d7782bf310d65c04dab741b1241f5be203ccf022368d \
+    --hash=sha256:661cf199efa488e0c5fb4987d36214e11c1fe2dfb842a1a330b1854ff069f8d3 \
+    --hash=sha256:88347ad17f60b60e31e5f2b58e37339d88fa90bfa4f0d35528b3bd18d464427b \
+    --hash=sha256:bb1b90386c7b5d3d8c9d8d53b207cfbe5c3e639457ff9ebe84f2131918b785a9
 datasets==4.5.0 \
     --hash=sha256:afc7c4ccba966970c71e264f0eb7977bdc7ca8ea9a946e331cf9d3d1d072cb2f
 dill==0.4.0 \
