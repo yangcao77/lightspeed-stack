@@ -46,8 +46,7 @@ class MCPMockHandler(BaseHTTPRequestHandler):
         last_headers.clear()
 
         # Capture all headers for debugging
-        for header_name, value in self.headers.items():
-            last_headers[header_name] = value
+        last_headers.update(dict(self.headers.items()))
 
         # Log the request
         request_log.append(
