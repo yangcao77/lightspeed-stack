@@ -6,7 +6,7 @@ provider, model). This triple is also used as a primary key to this table.
 """
 
 import sqlite3
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 
 import psycopg2
@@ -135,7 +135,7 @@ class TokenUsageHistory:
             return
 
         # timestamp to be used
-        updated_at = datetime.now()
+        updated_at = datetime.now(tz=UTC)
 
         # it is not possible to use context manager there, because SQLite does
         # not support it
