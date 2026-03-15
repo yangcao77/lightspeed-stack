@@ -2,39 +2,38 @@
 
 from typing import Any, Optional
 
+import yaml
+
 # We want to support environment variable replacement in the configuration
 # similarly to how it is done in llama-stack, so we use their function directly
 from llama_stack.core.stack import replace_env_vars
 
-import yaml
 import constants
+from cache.cache import Cache
+from cache.cache_factory import CacheFactory
+from log import get_logger
 from models.config import (
     A2AStateConfiguration,
+    AuthenticationConfiguration,
     AuthorizationConfiguration,
     AzureEntraIdConfiguration,
     Configuration,
-    Customization,
-    LlamaStackConfiguration,
-    OkpConfiguration,
-    RagConfiguration,
-    UserDataCollection,
-    ServiceConfiguration,
-    ModelContextProtocolServer,
-    AuthenticationConfiguration,
-    InferenceConfiguration,
-    DatabaseConfiguration,
     ConversationHistoryConfiguration,
+    Customization,
+    DatabaseConfiguration,
+    InferenceConfiguration,
+    LlamaStackConfiguration,
+    ModelContextProtocolServer,
+    OkpConfiguration,
     QuotaHandlersConfiguration,
+    RagConfiguration,
+    ServiceConfiguration,
     SplunkConfiguration,
+    UserDataCollection,
 )
-
-from cache.cache import Cache
-from cache.cache_factory import CacheFactory
-
 from quota.quota_limiter import QuotaLimiter
-from quota.token_usage_history import TokenUsageHistory
 from quota.quota_limiter_factory import QuotaLimiterFactory
-from log import get_logger
+from quota.token_usage_history import TokenUsageHistory
 
 logger = get_logger(__name__)
 
@@ -382,18 +381,28 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
     @property
     def rag_id_mapping(self) -> dict[str, str]:
-        """Return mapping from vector_db_id to rag_id from BYOK RAG config.
+        """Return mapping from vector_db_id to rag_id from BYOK and OKP RAG config.
 
         Returns:
-            dict[str, str]: Mapping where keys are llama-stack vector_db_ids
-            and values are user-facing rag_ids from configuration.
+            dict[str, str]: Mapping where keys are llama-stack vector_store_ids
+            (old vector_db_id) and values are user-facing rag_ids from configuration.
 
         Raises:
             LogicError: If the configuration has not been loaded.
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
-        return {brag.vector_db_id: brag.rag_id for brag in self._configuration.byok_rag}
+        byok_mapping = {
+            brag.vector_db_id: brag.rag_id for brag in self._configuration.byok_rag
+        }
+
+        rag = self._configuration.rag
+        okp_id = constants.OKP_RAG_ID
+        okp_enabled = okp_id in (rag.inline or []) or okp_id in (rag.tool or [])
+        okp_mapping = (
+            {constants.SOLR_DEFAULT_VECTOR_STORE_ID: okp_id} if okp_enabled else {}
+        )
+        return {**byok_mapping, **okp_mapping}
 
     @property
     def score_multiplier_mapping(self) -> dict[str, float]:
