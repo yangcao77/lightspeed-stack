@@ -15,7 +15,6 @@ flit-core==3.12.0
     #   jinja2
     #   packaging
     #   pathspec
-    #   pip
     #   wheel
 hatch-fancy-pypi-readme==25.1.0
     # via
@@ -73,10 +72,8 @@ poetry-core==2.3.1
     # via
     #   dunamai
     #   litellm
-    #   pybuild-deps
     #   rich
     #   tomlkit
-    #   xdg
 semantic-version==2.10.0
     # via setuptools-rust
 setuptools-rust==1.12.0
@@ -86,7 +83,6 @@ setuptools-scm==9.2.2
     #   hatch-vcs
     #   llama-stack
     #   llama-stack-api
-    #   pip-tools
     #   pluggy
     #   setuptools-rust
     #   tenacity
@@ -99,6 +95,7 @@ uv-dynamic-versioning==0.13.0
 wheel==0.46.3
     # via
     #   authlib
+    #   azure-core
     #   azure-identity
     #   cachetools
     #   litellm
@@ -113,6 +110,7 @@ setuptools==82.0.0
 setuptools==82.0.1
     # via
     #   authlib
+    #   azure-core
     #   azure-identity
     #   blobfile
     #   cachetools
@@ -131,7 +129,6 @@ setuptools==82.0.1
     #   oci
     #   oracledb
     #   pathspec
-    #   pip-tools
     #   pluggy
     #   polyleven
     #   proto-plus
