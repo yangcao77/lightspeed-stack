@@ -6,7 +6,7 @@ from the RHEL Lightspeed Command Line Assistant (CLA).
 
 import functools
 import time
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Annotated, Any, Optional, cast
 
 import jinja2
@@ -123,7 +123,7 @@ def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
     Returns:
         The rendered instructions string for the LLM.
     """
-    date_today = datetime.now().strftime("%B %d, %Y")
+    date_today = datetime.now(tz=UTC).strftime("%B %d, %Y")
 
     return _get_prompt_template().render(
         date=date_today,

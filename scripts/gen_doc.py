@@ -25,7 +25,7 @@ def generate_docfile(directory):
             f"# List of source files stored in `{directory}` directory",
             file=indexfile,
         )
-        print("", file=indexfile)
+        print(file=indexfile)
         files = sorted(os.listdir())
 
         for file in files:

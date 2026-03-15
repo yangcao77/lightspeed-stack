@@ -1,6 +1,6 @@
 """Simple quota limiter where quota can be revoked."""
 
-from datetime import datetime
+from datetime import datetime, UTC
 
 from models.config import QuotaHandlersConfiguration
 from log import get_logger
@@ -140,7 +140,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
                               revoked.
         """
         # timestamp to be used
-        revoked_at = datetime.now()
+        revoked_at = datetime.now(tz=UTC)
 
         cursor = self.connection.cursor()
         cursor.execute(
@@ -188,7 +188,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             subject_id (str): Identifier of the subject whose quota will be increased.
         """
         # timestamp to be used
-        updated_at = datetime.now()
+        updated_at = datetime.now(tz=UTC)
 
         cursor = self.connection.cursor()
         cursor.execute(
@@ -286,7 +286,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             change.
         """
         # timestamp to be used
-        updated_at = datetime.now()
+        updated_at = datetime.now(tz=UTC)
 
         to_be_consumed = input_tokens + output_tokens
 
@@ -329,7 +329,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             initialize. Defaults to empty string.
         """
         # timestamp to be used
-        revoked_at = datetime.now()
+        revoked_at = datetime.now(tz=UTC)
 
         if self.sqlite_connection_config is not None:
             cursor = self.connection.cursor()
