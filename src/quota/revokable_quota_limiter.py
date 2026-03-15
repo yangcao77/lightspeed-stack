@@ -1,24 +1,24 @@
 """Simple quota limiter where quota can be revoked."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 
-from models.config import QuotaHandlersConfiguration
 from log import get_logger
-from utils.connection_decorator import connection
+from models.config import QuotaHandlersConfiguration
 from quota.quota_exceed_error import QuotaExceedError
 from quota.quota_limiter import QuotaLimiter
 from quota.sql import (
     CREATE_QUOTA_TABLE_PG,
     CREATE_QUOTA_TABLE_SQLITE,
-    UPDATE_AVAILABLE_QUOTA_PG,
-    UPDATE_AVAILABLE_QUOTA_SQLITE,
+    INIT_QUOTA_PG,
+    INIT_QUOTA_SQLITE,
     SELECT_QUOTA_PG,
     SELECT_QUOTA_SQLITE,
     SET_AVAILABLE_QUOTA_PG,
     SET_AVAILABLE_QUOTA_SQLITE,
-    INIT_QUOTA_PG,
-    INIT_QUOTA_SQLITE,
+    UPDATE_AVAILABLE_QUOTA_PG,
+    UPDATE_AVAILABLE_QUOTA_SQLITE,
 )
+from utils.connection_decorator import connection
 
 logger = get_logger(__name__)
 
