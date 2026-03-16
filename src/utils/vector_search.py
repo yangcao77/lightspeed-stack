@@ -320,7 +320,7 @@ def _process_solr_chunks_for_documents(
 async def _fetch_byok_rag(
     client: AsyncLlamaStackClient,
     query: str,
-    vector_store_ids: Optional[list[str]] = None,
+    vector_store_ids: Optional[list[str]] = None,  # User-facing
 ) -> tuple[list[RAGChunk], list[ReferencedDocument]]:
     """Fetch chunks and documents from BYOK RAG sources.
 
@@ -342,22 +342,23 @@ async def _fetch_byok_rag(
 
     # Determine which BYOK vector stores to query for inline RAG.
     # Per-request override takes precedence; otherwise use config-based inline list.
-    if vector_store_ids is not None:
-        # Request-level override: filter out Solr store, use the rest
-        vector_store_ids_to_query = [
-            vs_id
-            for vs_id in vector_store_ids
-            if vs_id != constants.SOLR_DEFAULT_VECTOR_STORE_ID
-        ]
-    else:
-        inline_rag_ids = [
-            rid
-            for rid in configuration.configuration.rag.inline
-            if rid != constants.OKP_RAG_ID
-        ]
-        vector_store_ids_to_query = resolve_vector_store_ids(
-            inline_rag_ids, configuration.configuration.byok_rag
-        )
+    rag_ids_to_query = (
+        configuration.configuration.rag.inline
+        if vector_store_ids is None
+        else vector_store_ids
+    )
+
+    # Translate user-facing rag_ids to llama-stack ids
+    vector_store_ids_to_query: list[str] = resolve_vector_store_ids(
+        rag_ids_to_query, configuration.configuration.byok_rag
+    )
+
+    # Request-level override: filter out Solr store, use the rest
+    vector_store_ids_to_query = [
+        vs_id
+        for vs_id in vector_store_ids_to_query
+        if vs_id != constants.SOLR_DEFAULT_VECTOR_STORE_ID
+    ]
 
     # If inline byok stores are not defined, we disable the inline RAG for backward compatibility
     if not vector_store_ids_to_query:
