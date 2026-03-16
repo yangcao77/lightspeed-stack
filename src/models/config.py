@@ -6,8 +6,8 @@ import re
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional, Literal, Self
 from re import Pattern
+from typing import Any, Literal, Optional, Self
 
 import jsonpath_ng
 import yaml
@@ -1704,8 +1704,10 @@ class RagConfiguration(ConfigurationBase):
 
     Backward compatibility:
         - ``inline`` defaults to ``[]`` (no inline RAG).
-        - ``tool`` defaults to ``None`` which means all registered vector stores
-          are used (identical to the previous ``tool.byok.enabled = True`` default).
+        - ``tool`` defaults to ``[]`` (no tool RAG).
+
+    If no RAG strategy is defined (inline and tool are empty),
+    the RAG tool will register all stores available to llama-stack.
     """
 
     inline: list[str] = Field(
@@ -1715,8 +1717,8 @@ class RagConfiguration(ConfigurationBase):
         f"Use '{constants.OKP_RAG_ID}' to enable OKP inline RAG. Empty by default (no inline RAG).",
     )
 
-    tool: Optional[list[str]] = Field(
-        default=None,
+    tool: list[str] = Field(
+        default_factory=list,
         title="Tool RAG IDs",
         description="RAG IDs made available to the LLM as a file_search tool. "
         f"Use '{constants.OKP_RAG_ID}' to include the OKP vector store. "
