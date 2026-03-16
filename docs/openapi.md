@@ -3804,6 +3804,7 @@ BYOK (Bring Your Own Knowledge) RAG configuration.
 | embedding_dimension | integer | Dimensionality of embedding vectors. |
 | vector_db_id | string | Vector database identification. |
 | db_path | string | Path to RAG database. |
+| score_multiplier | number | Multiplier applied to relevance scores from this vector store. Used to weight results when querying multiple knowledge sources. Values > 1 boost this store's results; values < 1 reduce them. |
 
 
 ## CORSConfiguration
@@ -3868,7 +3869,8 @@ Global service configuration.
 | azure_entra_id |  |  |
 | splunk |  | Splunk HEC configuration for sending telemetry events. |
 | deployment_environment | string | Deployment environment name (e.g., 'development', 'staging', 'production'). Used in telemetry events. |
-| solr |  | Configuration for Solr vector search operations. |
+| rag |  | Configuration for all RAG strategies (inline and tool-based). |
+| okp |  | OKP provider settings. Only used when 'okp' is listed in rag.inline or rag.tool. |
 
 
 ## ConfigurationResponse
@@ -4523,12 +4525,14 @@ Model representing a message in a conversation turn.
 Attributes:
     content: The message content.
     type: The type of message.
+    referenced_documents: Optional list of documents referenced in an assistant response.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
 | content | string | The message content |
 | type | string | The type of message |
+| referenced_documents |  | List of documents referenced in the response (assistant messages only) |
 
 
 ## ModelContextProtocolServer
@@ -4620,6 +4624,21 @@ Defines the configuration for the supported OAuth 2.0 flows.
 | clientCredentials |  |  |
 | implicit |  |  |
 | password |  |  |
+
+
+## OkpConfiguration
+
+
+OKP (Offline Knowledge Portal) provider configuration.
+
+Controls provider-specific behaviour for the OKP vector store.
+Only relevant when ``"okp"`` is listed in ``rag.inline`` or ``rag.tool``.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| offline | boolean | When True, use parent_id for OKP chunk source URLs. When False, use reference_url for chunk source URLs. |
+| chunk_filter_query | string | OKP filter query applied to every OKP search request. Defaults to 'is_chunk:true' to restrict results to chunk documents. To add extra constraints, extend the expression using boolean syntax, e.g. 'is_chunk:true AND product:*openshift*'. |
 
 
 ## OpenIdConnectSecurityScheme
@@ -4769,7 +4788,7 @@ Example:
 | generate_topic_summary |  | Whether to generate topic summary for new conversations |
 | media_type |  | Media type for the response format |
 | vector_store_ids |  | Optional list of specific vector store IDs to query for RAG. If not provided, all available vector stores will be queried. |
-| shield_ids |  | Optional list of safety shield IDs to apply. If None, all configured shields are used. If provided, must contain at least one valid shield ID (empty list raises 422 error). |
+| shield_ids |  | Optional list of safety shield IDs to apply. If None, all configured shields are used.  |
 | solr |  | Solr-specific query parameters including filter queries |
 
 
@@ -4936,6 +4955,28 @@ Red Hat Identity authentication configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | required_entitlements |  | List of all required entitlements. |
+
+
+## RagConfiguration
+
+
+RAG strategy configuration.
+
+Controls which RAG sources are used for inline and tool-based retrieval.
+
+Each strategy lists RAG IDs to include. The special ID ``"okp"`` defined in constants,
+activates the OKP provider; all other IDs refer to entries in ``byok_rag``.
+
+Backward compatibility:
+    - ``inline`` defaults to ``[]`` (no inline RAG).
+    - ``tool`` defaults to ``None`` which means all registered vector stores
+      are used (identical to the previous ``tool.byok.enabled = True`` default).
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| inline | array | RAG IDs whose sources are injected as context before the LLM call. Use 'okp' to enable OKP inline RAG. Empty by default (no inline RAG). |
+| tool |  | RAG IDs made available to the LLM as a file_search tool. Use 'okp' to include the OKP vector store. When omitted, all registered BYOK vector stores are used (backward compatibility). |
 
 
 ## ReadinessResponse
@@ -5198,21 +5239,6 @@ Model representing a response to shields request.
 | Field | Type | Description |
 |-------|------|-------------|
 | shields | array | List of shields available |
-
-
-## SolrConfiguration
-
-
-Solr configuration for vector search queries.
-
-Controls whether to use offline or online mode when building document URLs
-from vector search results, and enables/disables Solr vector IO functionality.
-
-
-| Field | Type | Description |
-|-------|------|-------------|
-| enabled | boolean | When True, enables Solr vector IO functionality for vector search queries. When False, disables Solr vector search processing. |
-| offline | boolean | When True, use parent_id for chunk source URLs. When False, use reference_url for chunk source URLs. |
 
 
 ## SplunkConfiguration
