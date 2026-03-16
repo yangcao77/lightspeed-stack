@@ -169,8 +169,8 @@ Each JIRA includes an agentic tool instruction that an assignee can optionally f
 **Agentic tool instruction**:
 
 ```
-Read the "Token estimation" subsection under "How conversations work today" in
-docs/design/conversation-compaction/conversation-compaction-spike.md.
+Read the "Token estimation" and "Configuration" sections in
+docs/design/conversation-compaction/conversation-compaction.md.
 Key files: pyproject.toml, src/models/config.py, src/utils/ (new module).
 Add config fields following the pattern in models/config.py around line 1418
 (ConversationHistoryConfiguration).
@@ -198,10 +198,10 @@ Add config fields following the pattern in models/config.py around line 1418
 **Agentic tool instruction**:
 
 ```
-Read the "Design alternatives for lightspeed-stack" section (Alternative A) in
-docs/design/conversation-compaction/conversation-compaction-spike.md.
+Read the "Architecture" section (especially "Additive summarization",
+"Conversation partitioning", and "Summarization prompt") in
+docs/design/conversation-compaction/conversation-compaction.md.
 Key files: src/utils/ (new module), src/models/config.py.
-Use additive summarization (see Decision 2 in the doc).
 ```
 
 ### LCORE-????: Extend conversation cache for summaries
@@ -225,8 +225,8 @@ Use additive summarization (see Decision 2 in the doc).
 **Agentic tool instruction**:
 
 ```
-Read Decision 8 (summary storage) in
-docs/design/conversation-compaction/conversation-compaction-spike.md.
+Read the "Summary storage" section in
+docs/design/conversation-compaction/conversation-compaction.md.
 Key files: src/cache/, src/models/.
 Follow existing cache backend patterns (test_sqlite_cache.py, test_postgres_cache.py).
 ```
@@ -251,8 +251,8 @@ Follow existing cache backend patterns (test_sqlite_cache.py, test_postgres_cach
 **Agentic tool instruction**:
 
 ```
-Read "Context building (changed flow)" under Alternative A in
-docs/design/conversation-compaction/conversation-compaction-spike.md.
+Read the "Changed request flow after compaction" and "Implementation Suggestions"
+sections in docs/design/conversation-compaction/conversation-compaction.md.
 Key files: src/utils/responses.py (around line 292), src/app/endpoints/query.py,
 src/app/endpoints/streaming_query.py.
 The insertion point is in prepare_responses_params(), after conversation_id is
@@ -278,7 +278,8 @@ resolved but before ResponsesApiParams is built.
 **Agentic tool instruction**:
 
 ```
-Read Decision 7 in docs/design/conversation-compaction/conversation-compaction-spike.md.
+Read the "API response changes" section in
+docs/design/conversation-compaction/conversation-compaction.md.
 Key files: src/models/responses.py (around line 410, the existing truncated field).
 ```
 
@@ -302,8 +303,9 @@ Key files: src/models/responses.py (around line 410, the existing truncated fiel
 **Agentic tool instruction**:
 
 ```
-Read "PoC results" in docs/design/conversation-compaction/conversation-compaction-spike.md
-for the scenarios to cover.
+Read the "Appendix A: PoC Evidence" section in
+docs/design/conversation-compaction/conversation-compaction.md
+and the full experiment data in docs/design/conversation-compaction/poc-results/.
 Key test files: tests/unit/utils/, tests/integration/endpoints/,
 tests/e2e/features/.
 ```
