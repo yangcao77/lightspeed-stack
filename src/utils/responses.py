@@ -174,18 +174,26 @@ async def prepare_tools(  # pylint: disable=too-many-arguments,too-many-position
         return None
 
     toolgroups: list[InputTool] = []
+    effective_ids: list[str] = []
 
-    # Priority: per-request IDs > rag.tool config > all registered stores.
-    # In all cases, customer-facing rag_ids are translated to internal vector_db_ids.
-    # IDs fetched from llama-stack are already internal and need no translation.
+    # Vector store ID resolution priority:
+    #   1. Per-request IDs: highest prio; customer-facing rag_ids are translated to vector_db_ids.
+    #   2. rag.tool config IDs: used when no per-request IDs provided, and rag.tool is configured.
+    #      If rag.inline is configured, but not rag.tool, tool RAG is disabled.
+    #   3. All registered vector DBs: fallback when neither rag.tool nor rag.inline are configured.
+    #      IDs fetched from llama-stack are already internal and need no translation.
     byok_rags = configuration.configuration.byok_rag
+
+    is_tool_rag_enabled = len(configuration.configuration.rag.tool) > 0
+    is_inline_rag_enabled = len(configuration.configuration.rag.inline) > 0
+
     if vector_store_ids is not None:
-        effective_ids: list[str] = resolve_vector_store_ids(vector_store_ids, byok_rags)
-    elif configuration.configuration.rag.tool is not None:
+        effective_ids = resolve_vector_store_ids(vector_store_ids, byok_rags)
+    elif is_tool_rag_enabled:
         effective_ids = resolve_vector_store_ids(
             configuration.configuration.rag.tool, byok_rags
         )
-    else:
+    elif not is_inline_rag_enabled:
         effective_ids = await get_vector_store_ids(client, None)
 
     # Add RAG tools if vector stores are available

@@ -1026,6 +1026,8 @@ class TestPrepareToolsTranslatesVectorStoreIds:
         mock_byok_rag.vector_db_id = "vs-001"
         mock_config = mocker.Mock()
         mock_config.configuration.byok_rag = [mock_byok_rag]
+        mock_config.configuration.rag.tool = []
+        mock_config.configuration.rag.inline = []
         mocker.patch("utils.responses.configuration", mock_config)
 
         result = await prepare_tools(mock_client, ["ocp_docs"], False, "token")
@@ -1045,6 +1047,8 @@ class TestPrepareToolsTranslatesVectorStoreIds:
         # Configure empty BYOK RAG
         mock_config = mocker.Mock()
         mock_config.configuration.byok_rag = []
+        mock_config.configuration.rag.tool = []
+        mock_config.configuration.rag.inline = []
         mocker.patch("utils.responses.configuration", mock_config)
 
         result = await prepare_tools(mock_client, ["raw-internal-id"], False, "token")
@@ -1073,13 +1077,128 @@ class TestPrepareToolsTranslatesVectorStoreIds:
         mock_byok_rag.vector_db_id = "vs-translated"
         mock_config = mocker.Mock()
         mock_config.configuration.byok_rag = [mock_byok_rag]
-        mock_config.configuration.rag.tool = None
+        mock_config.configuration.rag.tool = []
+        mock_config.configuration.rag.inline = []
         mocker.patch("utils.responses.configuration", mock_config)
 
         result = await prepare_tools(mock_client, None, False, "token")
         assert result is not None
         # The IDs from llama-stack should be used as-is (no BYOK translation on None path)
         assert result[0].vector_store_ids == ["vs-internal"]
+
+
+class TestPrepareToolsVectorStoreResolution:
+    """Tests for vector store ID resolution priority in prepare_tools."""
+
+    @pytest.mark.asyncio
+    async def test_uses_rag_tool_config_when_no_per_request_ids(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that rag.tool config IDs are used when no per-request IDs are provided."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = []
+        mock_config.configuration.rag.tool = ["rag-tool-id-1", "rag-tool-id-2"]
+        mock_config.configuration.rag.inline = []
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, None, False, "token")
+
+        assert result is not None
+        assert len(result) == 1
+        assert result[0].type == "file_search"
+        assert result[0].vector_store_ids == ["rag-tool-id-1", "rag-tool-id-2"]
+        mock_client.vector_stores.list.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_rag_tool_config_ids_are_translated(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that rag.tool config IDs are translated from rag_ids to vector_db_ids."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        mock_byok_rag = mocker.Mock()
+        mock_byok_rag.rag_id = "ocp_docs"
+        mock_byok_rag.vector_db_id = "vs-001"
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = [mock_byok_rag]
+        mock_config.configuration.rag.tool = ["ocp_docs"]
+        mock_config.configuration.rag.inline = []
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, None, False, "token")
+
+        assert result is not None
+        assert result[0].vector_store_ids == ["vs-001"]
+        mock_client.vector_stores.list.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_inline_rag_disables_tool_rag(self, mocker: MockerFixture) -> None:
+        """Test that configuring rag.inline without rag.tool disables tool RAG."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = []
+        mock_config.configuration.rag.tool = []
+        mock_config.configuration.rag.inline = [
+            "inline-store-id"
+        ]  # inline is configured
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, None, False, "token")
+
+        # Tool RAG should be disabled — no RAG tool in result, no llama-stack fetch
+        assert result is None
+        mock_client.vector_stores.list.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_per_request_ids_override_rag_tool_config(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that per-request vector_store_ids take priority over rag.tool config."""
+        mock_client = mocker.AsyncMock()
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = []
+        mock_config.configuration.rag.tool = ["config-id-1"]
+        mock_config.configuration.rag.inline = []
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, ["request-id-1"], False, "token")
+
+        assert result is not None
+        assert result[0].vector_store_ids == ["request-id-1"]
+        mock_client.vector_stores.list.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_all_registered_dbs_used_when_neither_tool_nor_inline_configured(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test fallback to all registered vector DBs when neither rag.tool nor rag.inline are set."""
+        mock_client = mocker.AsyncMock()
+        mock_vs = mocker.Mock()
+        mock_vs.id = "vs-registered"
+        mock_list = mocker.Mock()
+        mock_list.data = [mock_vs]
+        mock_client.vector_stores.list = mocker.AsyncMock(return_value=mock_list)
+        mocker.patch("utils.responses.get_mcp_tools", return_value=None)
+
+        mock_config = mocker.Mock()
+        mock_config.configuration.byok_rag = []
+        mock_config.configuration.rag.tool = []
+        mock_config.configuration.rag.inline = []
+        mocker.patch("utils.responses.configuration", mock_config)
+
+        result = await prepare_tools(mock_client, None, False, "token")
+
+        assert result is not None
+        assert result[0].vector_store_ids == ["vs-registered"]
+        mock_client.vector_stores.list.assert_called_once()
 
 
 class TestPrepareResponsesParams:
