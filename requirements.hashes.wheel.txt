@@ -175,8 +175,6 @@ pyarrow==23.0.0 \
     --hash=sha256:5c8077c77ed2d0ef9ec150cc2e47dd98e3e49e6f7d5e3ee84e718ee31b45cf85 \
     --hash=sha256:f5af9838bbfefa2535c3ae9bf4fbfaab63367994c1e65243b1830e41b943b366 \
     --hash=sha256:f8eea464a5138cfe7b32b5422caedaca6a9fe4b20af1ed917f2a6cf9ec802d94
-pyasn1==0.6.2 \
-    --hash=sha256:dad757598fe812256782cbf67535fef02cf245bec157dfa1d82ceee62151cd65
 pyasn1-modules==0.4.2 \
     --hash=sha256:cda22a851735d664e92c8354a30405d88c5a1aa7d6313ba6c583bc3034654937
 pycparser==3.0 \

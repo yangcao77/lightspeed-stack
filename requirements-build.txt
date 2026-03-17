@@ -133,6 +133,7 @@ setuptools==82.0.1
     #   polyleven
     #   proto-plus
     #   psutil
+    #   pyasn1
     #   pycryptodomex
     #   pyjwt
     #   python-dotenv
