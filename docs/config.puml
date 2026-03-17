@@ -202,7 +202,7 @@ class "RHIdentityConfiguration" as src.models.config.RHIdentityConfiguration {
 }
 class "RagConfiguration" as src.models.config.RagConfiguration {
   inline : list[str]
-  tool : Optional[list[str]]
+  tool : list[str]
 }
 class "SQLiteDatabaseConfiguration" as src.models.config.SQLiteDatabaseConfiguration {
   db_path : str

@@ -1399,9 +1399,9 @@ retrieval.</p>
 other IDs refer to entries in <code>byok_rag</code>.</p>
     <p>Backward compatibility: - <code>inline</code> defaults to
 <code>[]</code> (no inline RAG). - <code>tool</code> defaults to
-<code>None</code> which means all registered vector stores are used
-(identical to the previous <code>tool.byok.enabled = True</code>
-default).</p>
+<code>[]</code> (no tool RAG).</p>
+    <p>If no RAG strategy is defined (inline and tool are empty), the RAG
+tool will register all stores available to llama-stack.</p>
     <table>
       <colgroup>
         <col style="width: 26%"/>

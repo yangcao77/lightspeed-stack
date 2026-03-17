@@ -4969,14 +4969,16 @@ activates the OKP provider; all other IDs refer to entries in ``byok_rag``.
 
 Backward compatibility:
     - ``inline`` defaults to ``[]`` (no inline RAG).
-    - ``tool`` defaults to ``None`` which means all registered vector stores
-      are used (identical to the previous ``tool.byok.enabled = True`` default).
+    - ``tool`` defaults to ``[]`` (no tool RAG).
+
+If no RAG strategy is defined (inline and tool are empty),
+the RAG tool will register all stores available to llama-stack.
 
 
 | Field | Type | Description |
 |-------|------|-------------|
 | inline | array | RAG IDs whose sources are injected as context before the LLM call. Use 'okp' to enable OKP inline RAG. Empty by default (no inline RAG). |
-| tool |  | RAG IDs made available to the LLM as a file_search tool. Use 'okp' to include the OKP vector store. When omitted, all registered BYOK vector stores are used (backward compatibility). |
+| tool | array | RAG IDs made available to the LLM as a file_search tool. Use 'okp' to include the OKP vector store. When omitted, all registered BYOK vector stores are used (backward compatibility). |
 
 
 ## ReadinessResponse
@@ -5027,6 +5029,161 @@ Attributes:
 | doc_url |  | URL of the referenced document |
 | doc_title |  | Title of the referenced document |
 | source |  | Index name identifying the knowledge source from configuration |
+
+
+## ResponseInput
+
+
+
+
+
+## ResponseItem
+
+
+
+
+
+## ResponsesRequest
+
+
+Model representing a request for the Responses API following LCORE specification.
+
+Attributes:
+    input: Input text or structured input items containing the query.
+    model: Model identifier in format "provider/model". Auto-selected if not provided.
+    conversation: Conversation ID linking to an existing conversation. Accepts both
+        OpenAI and LCORE formats. Mutually exclusive with previous_response_id.
+    include: Explicitly specify output item types that are excluded by default but
+        should be included in the response.
+    instructions: System instructions or guidelines provided to the model (acts as
+        the system prompt).
+    max_infer_iters: Maximum number of inference iterations the model can perform.
+    max_output_tokens: Maximum number of tokens allowed in the response.
+    max_tool_calls: Maximum number of tool calls allowed in a single response.
+    metadata: Custom metadata dictionary with key-value pairs for tracking or logging.
+    parallel_tool_calls: Whether the model can make multiple tool calls in parallel.
+    previous_response_id: Identifier of the previous response in a multi-turn
+        conversation. Mutually exclusive with conversation.
+    prompt: Prompt object containing a template with variables for dynamic
+        substitution.
+    reasoning: Reasoning configuration for the response.
+    safety_identifier: Safety identifier for the response.
+    store: Whether to store the response in conversation history. Defaults to True.
+    stream: Whether to stream the response as it is generated. Defaults to False.
+    temperature: Sampling temperature controlling randomness (typically 0.0–2.0).
+    text: Text response configuration specifying output format constraints (JSON
+        schema, JSON object, or plain text).
+    tool_choice: Tool selection strategy ("auto", "required", "none", or specific
+        tool configuration).
+    tools: List of tools available to the model (file search, web search, function
+        calls, MCP tools). Defaults to all tools available to the model.
+    generate_topic_summary: LCORE-specific flag indicating whether to generate a
+        topic summary for new conversations. Defaults to True.
+    shield_ids: LCORE-specific list of safety shield IDs to apply. If None, all
+        configured shields are used.
+    solr: LCORE-specific Solr vector_io provider query parameters (e.g. filter
+        queries). Optional.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| input |  |  |
+| model |  |  |
+| conversation |  |  |
+| include |  |  |
+| instructions |  |  |
+| max_infer_iters |  |  |
+| max_output_tokens |  |  |
+| max_tool_calls |  |  |
+| metadata |  |  |
+| parallel_tool_calls |  |  |
+| previous_response_id |  |  |
+| prompt |  |  |
+| reasoning |  |  |
+| safety_identifier |  |  |
+| store | boolean |  |
+| stream | boolean |  |
+| temperature |  |  |
+| text |  |  |
+| tool_choice |  |  |
+| tools |  |  |
+| generate_topic_summary |  |  |
+| shield_ids |  |  |
+| solr |  |  |
+
+
+## ResponsesResponse
+
+
+Model representing a response from the Responses API following LCORE specification.
+
+Attributes:
+    created_at: Unix timestamp when the response was created.
+    completed_at: Unix timestamp when the response was completed, if applicable.
+    error: Error details if the response failed or was blocked.
+    id: Unique identifier for this response.
+    model: Model identifier in "provider/model" format used for generation.
+    object: Object type identifier, always "response".
+    output: List of structured output items containing messages, tool calls, and
+        other content. This is the primary response content.
+    parallel_tool_calls: Whether the model can make multiple tool calls in parallel.
+    previous_response_id: Identifier of the previous response in a multi-turn
+        conversation.
+    prompt: The input prompt object that was sent to the model.
+    status: Current status of the response (e.g., "completed", "blocked",
+        "in_progress").
+    temperature: Temperature parameter used for generation (controls randomness).
+    text: Text response configuration object used for OpenAI responses.
+    top_p: Top-p sampling parameter used for generation.
+    tools: List of tools available to the model during generation.
+    tool_choice: Tool selection strategy used (e.g., "auto", "required", "none").
+    truncation: Strategy used for handling content that exceeds context limits.
+    usage: Token usage statistics including input_tokens, output_tokens, and
+        total_tokens.
+    instructions: System instructions or guidelines provided to the model.
+    max_tool_calls: Maximum number of tool calls allowed in a single response.
+    reasoning: Reasoning configuration (effort level) used for the response.
+    max_output_tokens: Upper bound for tokens generated in the response.
+    safety_identifier: Safety/guardrail identifier applied to the request.
+    metadata: Additional metadata dictionary with custom key-value pairs.
+    store: Whether the response was stored.
+    conversation: Conversation ID linking this response to a conversation thread
+        (LCORE-specific).
+    available_quotas: Remaining token quotas for the user (LCORE-specific).
+    output_text: Aggregated text output from all output_text items in the
+        output array.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| created_at | integer |  |
+| completed_at |  |  |
+| error |  |  |
+| id | string |  |
+| model | string |  |
+| object | string |  |
+| output | array |  |
+| parallel_tool_calls | boolean |  |
+| previous_response_id |  |  |
+| prompt |  |  |
+| status | string |  |
+| temperature |  |  |
+| text |  |  |
+| top_p |  |  |
+| tools |  |  |
+| tool_choice |  |  |
+| truncation |  |  |
+| usage |  |  |
+| instructions |  |  |
+| max_tool_calls |  |  |
+| reasoning |  |  |
+| max_output_tokens |  |  |
+| safety_identifier |  |  |
+| metadata |  |  |
+| store |  |  |
+| conversation |  |  |
+| available_quotas | object |  |
+| output_text | string |  |
 
 
 ## RlsapiV1Attachment
@@ -5185,6 +5342,62 @@ SQLite database configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | db_path | string | Path to file where SQLite database is stored |
+
+
+## SearchRankingOptions
+
+
+Options for ranking and filtering search results.
+
+This class configures how search results are ranked and filtered. You can use algorithm-based
+rerankers (weighted, RRF) or neural rerankers. Defaults from VectorStoresConfig are
+used when parameters are not provided.
+
+Examples:
+    # Weighted ranker with custom alpha
+    SearchRankingOptions(ranker="weighted", alpha=0.7)
+
+    # RRF ranker with custom impact factor
+    SearchRankingOptions(ranker="rrf", impact_factor=50.0)
+
+    # Use config defaults (just specify ranker type)
+    SearchRankingOptions(ranker="weighted")  # Uses alpha from VectorStoresConfig
+
+    # Score threshold filtering
+    SearchRankingOptions(ranker="weighted", score_threshold=0.5)
+
+:param ranker: (Optional) Name of the ranking algorithm to use. Supported values:
+    - "weighted": Weighted combination of vector and keyword scores
+    - "rrf": Reciprocal Rank Fusion algorithm
+    - "neural": Neural reranking model (requires model parameter, Part II)
+    Note: For OpenAI API compatibility, any string value is accepted, but only the above values are supported.
+:param score_threshold: (Optional) Minimum relevance score threshold for results. Default: 0.0
+:param alpha: (Optional) Weight factor for weighted ranker (0-1).
+    - 0.0 = keyword only
+    - 0.5 = equal weight (default)
+    - 1.0 = vector only
+    Only used when ranker="weighted" and weights is not provided.
+    Falls back to VectorStoresConfig.chunk_retrieval_params.weighted_search_alpha if not provided.
+:param impact_factor: (Optional) Impact factor (k) for RRF algorithm.
+    Lower values emphasize higher-ranked results. Default: 60.0 (optimal from research).
+    Only used when ranker="rrf".
+    Falls back to VectorStoresConfig.chunk_retrieval_params.rrf_impact_factor if not provided.
+:param weights: (Optional) Dictionary of weights for combining different signal types.
+    Keys can be "vector", "keyword", "neural". Values should sum to 1.0.
+    Used when combining algorithm-based reranking with neural reranking (Part II).
+    Example: {"vector": 0.3, "keyword": 0.3, "neural": 0.4}
+:param model: (Optional) Model identifier for neural reranker (e.g., "vllm/Qwen3-Reranker-0.6B").
+    Required when ranker="neural" or when weights contains "neural" (Part II).
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| ranker |  |  |
+| score_threshold |  |  |
+| alpha |  | Weight factor for weighted ranker |
+| impact_factor |  | Impact factor for RRF algorithm |
+| weights |  | Weights for combining vector, keyword, and neural scores. Keys: 'vector', 'keyword', 'neural' |
+| model |  | Model identifier for neural reranker |
 
 
 ## SecurityScheme

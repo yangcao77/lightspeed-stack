@@ -529,8 +529,10 @@ activates the OKP provider; all other IDs refer to entries in ``byok_rag``.
 
 Backward compatibility:
     - ``inline`` defaults to ``[]`` (no inline RAG).
-    - ``tool`` defaults to ``None`` which means all registered vector stores
-      are used (identical to the previous ``tool.byok.enabled = True`` default).
+    - ``tool`` defaults to ``[]`` (no tool RAG).
+
+If no RAG strategy is defined (inline and tool are empty),
+the RAG tool will register all stores available to llama-stack.
 
 
 | Field | Type | Description |
