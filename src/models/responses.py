@@ -161,6 +161,98 @@ class MCPClientAuthOptionsResponse(AbstractSuccessfulResponse):
     }
 
 
+class MCPServerInfo(BaseModel):
+    """Information about a registered MCP server.
+
+    Attributes:
+        name: Unique name of the MCP server.
+        url: URL of the MCP server endpoint.
+        provider_id: MCP provider identification.
+        source: Whether the server was registered statically (config) or dynamically (api).
+    """
+
+    name: str = Field(..., description="MCP server name")
+    url: str = Field(..., description="MCP server URL")
+    provider_id: str = Field(..., description="MCP provider identification")
+    source: str = Field(
+        ...,
+        description="How the server was registered: 'config' (static) or 'api' (dynamic)",
+        examples=["config", "api"],
+    )
+
+
+class MCPServerRegistrationResponse(AbstractSuccessfulResponse):
+    """Response for a successful MCP server registration."""
+
+    name: str = Field(..., description="Registered MCP server name")
+    url: str = Field(..., description="Registered MCP server URL")
+    provider_id: str = Field(..., description="MCP provider identification")
+    message: str = Field(..., description="Status message")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "mcp-integration-tools",
+                    "url": "http://host.docker.internal:7008/api/mcp-actions/v1",
+                    "provider_id": "model-context-protocol",
+                    "message": "MCP server 'mcp-integration-tools' registered successfully",
+                }
+            ]
+        }
+    }
+
+
+class MCPServerListResponse(AbstractSuccessfulResponse):
+    """Response listing all registered MCP servers."""
+
+    servers: list[MCPServerInfo] = Field(
+        default_factory=list,
+        description="List of all registered MCP servers (static and dynamic)",
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "servers": [
+                        {
+                            "name": "mcp-integration-tools",
+                            "url": "http://host.docker.internal:7008/api/mcp-actions/v1",
+                            "provider_id": "model-context-protocol",
+                            "source": "config",
+                        },
+                        {
+                            "name": "test-mcp-server",
+                            "url": "http://host.docker.internal:8888/mcp",
+                            "provider_id": "model-context-protocol",
+                            "source": "api",
+                        },
+                    ]
+                }
+            ]
+        }
+    }
+
+
+class MCPServerDeleteResponse(AbstractSuccessfulResponse):
+    """Response for a successful MCP server deletion."""
+
+    name: str = Field(..., description="Deleted MCP server name")
+    message: str = Field(..., description="Status message")
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "name": "test-mcp-server",
+                    "message": "MCP server 'test-mcp-server' unregistered successfully",
+                }
+            ]
+        }
+    }
+
+
 class ShieldsResponse(AbstractSuccessfulResponse):
     """Model representing a response to shields request."""
 
@@ -1999,6 +2091,13 @@ class NotFoundResponse(AbstractErrorResponse):
                         ),
                     },
                 },
+                {
+                    "label": "mcp server",
+                    "detail": {
+                        "response": "Mcp Server not found",
+                        "cause": "Mcp Server with ID test-mcp-server does not exist",
+                    },
+                },
             ]
         }
     }
@@ -2019,6 +2118,43 @@ class NotFoundResponse(AbstractErrorResponse):
             cause = f"{resource.title()} with ID {resource_id} does not exist"
         super().__init__(
             response=response, cause=cause, status_code=status.HTTP_404_NOT_FOUND
+        )
+
+
+CONFLICT_DESCRIPTION = "Resource already exists"
+
+
+class ConflictResponse(AbstractErrorResponse):
+    """409 Conflict - Resource already exists."""
+
+    description: ClassVar[str] = CONFLICT_DESCRIPTION
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "label": "mcp server",
+                    "detail": {
+                        "response": "Mcp Server already exists",
+                        "cause": (
+                            "Mcp Server with name 'test-mcp-server' is already registered"
+                        ),
+                    },
+                },
+            ]
+        }
+    }
+
+    def __init__(self, *, resource: str, resource_id: str):
+        """Create a 409 Conflict response for a duplicate resource.
+
+        Parameters:
+            resource: Type of the resource (e.g., "MCP server").
+            resource_id: The identifier of the conflicting resource.
+        """
+        response = f"{resource.title()} already exists"
+        cause = f"{resource.title()} with name '{resource_id}' is already registered"
+        super().__init__(
+            response=response, cause=cause, status_code=status.HTTP_409_CONFLICT
         )
 
 

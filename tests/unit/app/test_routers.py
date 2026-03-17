@@ -25,6 +25,7 @@ from app.endpoints import (
     metrics,
     tools,
     mcp_auth,
+    mcp_servers,
     rlsapi_v1,
     a2a,
     query,
@@ -109,12 +110,13 @@ def test_include_routers() -> None:
     include_routers(app)
 
     # are all routers added?
-    assert len(app.routers) == 21
+    assert len(app.routers) == 22
     assert root.router in app.get_routers()
     assert info.router in app.get_routers()
     assert models.router in app.get_routers()
     assert tools.router in app.get_routers()
     assert mcp_auth.router in app.get_routers()
+    assert mcp_servers.router in app.get_routers()
     assert shields.router in app.get_routers()
     assert providers.router in app.get_routers()
     assert query.router in app.get_routers()
@@ -147,12 +149,13 @@ def test_check_prefixes() -> None:
     include_routers(app)
 
     # are all routers added?
-    assert len(app.routers) == 21
+    assert len(app.routers) == 22
     assert app.get_router_prefix(root.router) == ""
     assert app.get_router_prefix(info.router) == "/v1"
     assert app.get_router_prefix(models.router) == "/v1"
     assert app.get_router_prefix(tools.router) == "/v1"
     assert app.get_router_prefix(mcp_auth.router) == "/v1"
+    assert app.get_router_prefix(mcp_servers.router) == "/v1"
     assert app.get_router_prefix(shields.router) == "/v1"
     assert app.get_router_prefix(providers.router) == "/v1"
     assert app.get_router_prefix(rags.router) == "/v1"
