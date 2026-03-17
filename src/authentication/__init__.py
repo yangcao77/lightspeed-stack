@@ -4,12 +4,12 @@ import os
 
 import constants
 from authentication import (
+    api_key_token,
     jwk_token,
     k8s,
     noop,
     noop_with_token,
     rh_identity,
-    api_key_token,
 )
 from authentication.interface import AuthInterface
 from configuration import LogicError, configuration
