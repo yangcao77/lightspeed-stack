@@ -701,6 +701,51 @@ async def test_infer_include_metadata_returns_verbose_response(
     assert response.data.output_tokens == 18
 
 
+async def test_infer_include_metadata_ignored_when_verbose_infer_disabled(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_auth_resolvers: None,
+) -> None:
+    """Metadata should remain excluded unless both request and config opt in."""
+    custom_mock = mocker.Mock()
+    custom_mock.allow_verbose_infer = False
+    custom_mock.system_prompt = "You are a helpful assistant."
+    config_mock = mocker.Mock()
+    config_mock.inference = mock_configuration.inference
+    config_mock.customization = custom_mock
+    mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
+
+    mock_response = mocker.Mock()
+    mock_response.output = [
+        _create_mock_response_output(mocker, "Response with metadata disabled.")
+    ]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 99
+    mock_usage.output_tokens = 11
+    mock_response.usage = mock_usage
+    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
+
+    infer_request = RlsapiV1InferRequest(
+        question="How do I list files?", include_metadata=True
+    )
+    mock_request = _create_mock_request(mocker)
+    mock_background_tasks = _create_mock_background_tasks(mocker)
+
+    response = await infer_endpoint(
+        infer_request=infer_request,
+        request=mock_request,
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    assert response.data.tool_calls is None
+    assert response.data.tool_results is None
+    assert response.data.rag_chunks is None
+    assert response.data.referenced_documents is None
+    assert response.data.input_tokens is None
+    assert response.data.output_tokens is None
+
+
 # --- Test Splunk integration ---
 
 
