@@ -1,8 +1,8 @@
 """Authorization middleware and decorators."""
 
+from collections.abc import Callable
 from functools import lru_cache, wraps
 from typing import Any, Optional
-from collections.abc import Callable
 
 from fastapi import HTTPException
 from starlette.requests import Request
