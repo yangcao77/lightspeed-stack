@@ -2,8 +2,8 @@
 
 import json
 from asyncio import Lock
-from typing import Any
 from collections.abc import Callable
+from typing import Any
 
 import aiohttp
 from authlib.jose import JsonWebKey, Key, KeySet, jwt
@@ -21,9 +21,9 @@ from authentication.utils import extract_user_token
 from constants import (
     DEFAULT_VIRTUAL_PATH,
 )
+from log import get_logger
 from models.config import JwkConfiguration
 from models.responses import UnauthorizedResponse
-from log import get_logger
 
 logger = get_logger(__name__)
 
