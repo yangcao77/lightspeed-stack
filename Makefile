@@ -67,17 +67,20 @@ docs/config.puml:	src/models/config.py ## Generate PlantUML class diagram for co
 	pyreverse src/models/config.py --output puml --output-directory=docs/
 	mv docs/classes.puml docs/config.puml
 
+# Omit --theme rose on the CLI: it fails with some plantuml.jar builds on pyreverse output.
+# To use rose, add a line after @startuml: !theme rose  (requires a recent JAR).
+# PNG is capped at 4096px per side by default; pyreverse class diagrams are often wider—raise the limit.
 docs/config.png:	docs/config.puml ## Generate an image with configuration graph
 	pushd docs && \
-	java -jar ${PATH_TO_PLANTUML}/plantuml.jar --theme rose config.puml && \
+	java -DPLANTUML_LIMIT_SIZE=16384 -jar ${PATH_TO_PLANTUML}/plantuml.jar config.puml && \
 	mv classes.png config.png && \
 	popd
 
 docs/config.svg:	docs/config.puml ## Generate an SVG with configuration graph
 	pushd docs && \
-	java -jar ${PATH_TO_PLANTUML}/plantuml.jar --theme rose config.puml -tsvg && \
+	java -jar ${PATH_TO_PLANTUML}/plantuml.jar config.puml -tsvg && \
 	xmllint --format classes.svg > config.svg && \
-	rm classes.svg && \
+	rm -f classes.svg && \
 	popd
 
 shellcheck: ## Run shellcheck

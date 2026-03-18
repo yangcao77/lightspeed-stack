@@ -1,6 +1,8 @@
 """Unit tests for vector search utilities."""
 
 import pytest
+from pydantic import AnyUrl
+from pytest_mock import MockerFixture
 
 import constants
 from configuration import AppConfig
@@ -14,6 +16,7 @@ from utils.vector_search import (
     _fetch_byok_rag,
     _fetch_solr_rag,
     _format_rag_context,
+    _get_okp_base_url,
     _get_solr_vector_store_ids,
     _is_solr_enabled,
     build_rag_context,
@@ -233,16 +236,40 @@ class TestExtractSolrDocumentMetadata:
         assert reference_url is None
 
 
+class TestGetOkpBaseUrl:
+    """Tests for _get_okp_base_url function (config rhokp_url vs default)."""
+
+    def test_returns_custom_host_when_rhokp_url_configured(
+        self, mocker: MockerFixture
+    ) -> None:
+        """When rhokp_url is set in config, returned base URL uses that value."""
+        custom = "https://custom.okp.example.com"
+        config_mock = mocker.Mock()
+        config_mock.okp.rhokp_url = custom
+        mocker.patch("utils.vector_search.configuration", config_mock)
+        assert _get_okp_base_url() == AnyUrl(custom)
+
+    def test_returns_default_when_rhokp_url_unset(self, mocker: MockerFixture) -> None:
+        """When rhokp_url is missing or empty, returned base URL uses default."""
+        config_mock = mocker.Mock()
+        config_mock.okp.rhokp_url = None
+        mocker.patch("utils.vector_search.configuration", config_mock)
+        assert _get_okp_base_url() == AnyUrl(constants.RH_SERVER_OKP_DEFAULT_URL)
+        assert str(_get_okp_base_url()).startswith("http://")
+
+
 class TestBuildDocumentUrl:
     """Tests for _build_document_url function."""
 
-    def test_offline_mode_with_doc_id(self) -> None:
+    def test_offline_mode_with_doc_id(self, mocker) -> None:  # type: ignore[no-untyped-def]
         """Test URL building in offline mode with doc_id."""
+        config_mock = mocker.Mock()
+        config_mock.okp.rhokp_url = "https://mimir.test"
+        mocker.patch("utils.vector_search.configuration", config_mock)
         doc_url, reference_doc = _build_document_url(
             offline=True, doc_id="doc_123", reference_url=None
         )
-
-        assert doc_url == constants.MIMIR_DOC_URL + "doc_123"
+        assert doc_url == "https://mimir.test/doc_123"
         assert reference_doc == "doc_123"
 
     def test_online_mode_with_reference_url(self) -> None:
@@ -256,13 +283,15 @@ class TestBuildDocumentUrl:
         assert doc_url == "https://docs.example.com/page"
         assert reference_doc == "https://docs.example.com/page"
 
-    def test_online_mode_without_http(self) -> None:
+    def test_online_mode_without_http(self, mocker) -> None:  # type: ignore[no-untyped-def]
         """Test online mode when reference_url doesn't start with http."""
+        config_mock = mocker.Mock()
+        config_mock.okp.rhokp_url = "https://mimir.test"
+        mocker.patch("utils.vector_search.configuration", config_mock)
         doc_url, reference_doc = _build_document_url(
             offline=False, doc_id="doc_123", reference_url="relative/path"
         )
-
-        assert doc_url == constants.MIMIR_DOC_URL + "relative/path"
+        assert doc_url == "https://mimir.test/relative/path"
         assert reference_doc == "relative/path"
 
     def test_offline_mode_without_doc_id(self) -> None:
@@ -508,6 +537,7 @@ class TestFetchSolrRag:
         config_mock = mocker.Mock(spec=AppConfig)
         config_mock.inline_solr_enabled = True
         config_mock.okp.offline = True
+        config_mock.okp.rhokp_url = "https://okp.test"
         mocker.patch("utils.vector_search.configuration", config_mock)
 
         # Mock chunk
