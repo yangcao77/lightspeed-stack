@@ -6,7 +6,7 @@ User and System identity types with optional entitlement validation.
 
 import base64
 import json
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import HTTPException, Request
 
@@ -84,6 +84,8 @@ class RHIdentityData:
                     "Identity validation failed: missing 'username' in user data"
                 )
                 raise HTTPException(status_code=400, detail="Invalid identity data")
+            self._validate_string_field("user_id", user["user_id"])
+            self._validate_string_field("username", user["username"])
         elif identity_type == "System":
             if "system" not in identity:
                 logger.warning(
@@ -102,8 +104,55 @@ class RHIdentityData:
                     "missing 'account_number' for System type"
                 )
                 raise HTTPException(status_code=400, detail="Invalid identity data")
+            self._validate_string_field("cn", system["cn"])
+            self._validate_string_field("account_number", identity["account_number"])
         else:
             logger.warning("Identity validation failed: unsupported identity type")
+            raise HTTPException(status_code=400, detail="Invalid identity data")
+
+        # Validate org_id if present and non-empty
+        org_id = identity.get("org_id")
+        if org_id is not None and org_id != "":
+            self._validate_string_field("org_id", org_id)
+
+    def _validate_string_field(
+        self, field_name: str, value: Any, max_length: int = 256
+    ) -> None:
+        """Validate that a field value is a well-formed string.
+
+        Args:
+            field_name: Name of the field being validated (for error messages)
+            value: The value to validate
+            max_length: Maximum allowed string length
+
+        Raises:
+            HTTPException: 400 if validation fails
+        """
+        if not isinstance(value, str):
+            logger.warning(
+                "Identity validation failed: %s must be a string, got %s",
+                field_name,
+                type(value).__name__,
+            )
+            raise HTTPException(status_code=400, detail="Invalid identity data")
+        if not value.strip():
+            logger.warning(
+                "Identity validation failed: %s must not be empty",
+                field_name,
+            )
+            raise HTTPException(status_code=400, detail="Invalid identity data")
+        if len(value) > max_length:
+            logger.warning(
+                "Identity validation failed: %s exceeds maximum length of %d",
+                field_name,
+                max_length,
+            )
+            raise HTTPException(status_code=400, detail="Invalid identity data")
+        if any(ord(c) < 32 or ord(c) == 127 for c in value):
+            logger.warning(
+                "Identity validation failed: %s contains control characters",
+                field_name,
+            )
             raise HTTPException(status_code=400, detail="Invalid identity data")
 
     def _get_identity_type(self) -> str:
