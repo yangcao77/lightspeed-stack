@@ -2,10 +2,12 @@
 
 import json
 from collections.abc import Mapping
+from typing import Optional
 from urllib.parse import urlparse
 
 from fastapi import Request
 
+import constants
 from configuration import AppConfig
 from log import get_logger
 from models.config import ModelContextProtocolServer
@@ -121,3 +123,132 @@ def extract_propagated_headers(
         if value is not None:
             propagated[header_name] = value
     return propagated
+
+
+def find_unresolved_auth_headers(
+    configured: Mapping[str, str],
+    resolved: Mapping[str, str],
+) -> list[str]:
+    """Return configured auth header names that are absent from the resolved headers.
+
+    Comparison is case-insensitive so that ``Authorization`` and ``authorization``
+    are treated as the same header name.
+
+    Args:
+        configured: The server's ``authorization_headers`` configuration mapping
+            (header name → secret path or keyword).
+        resolved: The fully resolved headers that will be sent to the MCP server.
+
+    Returns:
+        List of header names from ``configured`` that could not be resolved, i.e.
+        are not present as a key in ``resolved``. An empty list means all headers
+        were resolved successfully.
+    """
+    resolved_lower = {k.lower() for k in resolved}
+    return [h for h in configured if h.lower() not in resolved_lower]
+
+
+def build_server_headers(
+    mcp_server: ModelContextProtocolServer,
+    client_headers: dict[str, str],
+    request_headers: Optional[Mapping[str, str]],
+    token: Optional[str],
+) -> dict[str, str]:
+    """Build the complete set of headers for a single MCP server.
+
+    Merges client-supplied headers, resolved authorization headers, and propagated
+    request headers in priority order (highest first):
+
+    1. Client-supplied headers (already present in ``client_headers``).
+    2. Statically resolved authorization headers from configuration.
+    3. Kubernetes Bearer token for headers configured with the ``kubernetes`` keyword.
+       ``client`` and ``oauth`` keywords are skipped — those values are already
+       provided by the client in source 1.
+    4. Headers propagated from the incoming request via the server's allowlist.
+
+    Args:
+        mcp_server: MCP server configuration.
+        client_headers: Headers already supplied by the client for this server.
+        request_headers: Headers from the incoming HTTP request, or ``None``.
+        token: Optional Kubernetes service-account token.
+
+    Returns:
+        Merged headers dictionary for the server. May be empty if no headers apply.
+    """
+    server_headers: dict[str, str] = dict(client_headers)
+    existing_lower = {k.lower() for k in server_headers}
+
+    for (
+        header_name,
+        resolved_value,
+    ) in mcp_server.resolved_authorization_headers.items():
+        if header_name.lower() in existing_lower:
+            continue
+        match resolved_value:
+            case constants.MCP_AUTH_KUBERNETES:
+                if token:
+                    server_headers[header_name] = f"Bearer {token}"
+                    existing_lower.add(header_name.lower())
+            case constants.MCP_AUTH_CLIENT | constants.MCP_AUTH_OAUTH:
+                pass  # client-provided; already included via the initial client_headers copy
+            case _:
+                server_headers[header_name] = resolved_value
+                existing_lower.add(header_name.lower())
+
+    if mcp_server.headers and request_headers is not None:
+        propagated = extract_propagated_headers(mcp_server, request_headers)
+        for h_name, h_value in propagated.items():
+            if h_name.lower() not in existing_lower:
+                server_headers[h_name] = h_value
+                existing_lower.add(h_name.lower())
+
+    return server_headers
+
+
+def build_mcp_headers(
+    config: AppConfig,
+    mcp_headers: McpHeaders,
+    request_headers: Optional[Mapping[str, str]],
+    token: Optional[str] = None,
+) -> McpHeaders:
+    """Build complete MCP headers by merging all header sources for each MCP server.
+
+    For each configured MCP server, combines four header sources (in priority order,
+    highest first):
+
+    1. Client-supplied headers from the ``MCP-HEADERS`` request header (keyed by server name).
+    2. Statically resolved authorization headers from configuration (e.g. file-based secrets).
+    3. Kubernetes Bearer token: when a header is configured with the ``kubernetes`` keyword,
+       the supplied ``token`` is formatted as ``Bearer <token>`` and used as its value.
+       ``client`` and ``oauth`` keywords are not resolved here — those values are already
+       provided by the client in source 1.
+    4. Headers propagated from the incoming request via the server's configured allowlist.
+
+    Args:
+        config: Application configuration containing mcp_servers.
+        mcp_headers: Per-request headers from the client, keyed by MCP server name.
+        request_headers: Headers from the incoming HTTP request used for allowlist
+            propagation, or ``None`` when not available.
+        token: Optional Kubernetes service-account token used to resolve headers
+            configured with the ``kubernetes`` keyword.
+
+    Returns:
+        McpHeaders keyed by MCP server name with the complete merged set of headers.
+        Servers that end up with no headers are omitted from the result.
+    """
+    if not config.mcp_servers:
+        return {}
+
+    complete: McpHeaders = {}
+
+    for mcp_server in config.mcp_servers:
+        server_headers = build_server_headers(
+            mcp_server,
+            dict(mcp_headers.get(mcp_server.name, {})),
+            request_headers,
+            token,
+        )
+        if server_headers:
+            complete[mcp_server.name] = server_headers
+
+    return complete
