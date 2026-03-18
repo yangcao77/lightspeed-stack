@@ -6,9 +6,6 @@ PATH_TO_PLANTUML := ~/bin
 # Python registry to where the package should be uploaded
 PYTHON_REGISTRY = pypi
 
-# PyTorch version
-TORCH_VERSION := 2.9.0
-
 
 # Default configuration files (override with: make run CONFIG=myconfig.yaml)
 CONFIG ?= lightspeed-stack.yaml
@@ -62,10 +59,6 @@ openapi-doc:	docs/openapi.json scripts/fix_openapi_doc.py	## Generate OpenAPI do
 
 generate-documentation:	## Generate documentation
 	scripts/gen_doc.py
-
-# TODO uv migration
-requirements.txt:	pyproject.toml pdm.lock ## Generate requirements.txt file containing hashes for all non-devel packages
-	pdm export --prod --format requirements --output requirements.txt --no-extras --without evaluation
 
 doc:	## Generate documentation for developers
 	scripts/gen_doc.py
