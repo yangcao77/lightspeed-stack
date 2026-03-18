@@ -543,5 +543,11 @@ async def infer_endpoint(  # pylint: disable=R0914
         data=RlsapiV1InferData(
             text=response_text,
             request_id=request_id,
+            tool_calls=None,
+            tool_results=None,
+            rag_chunks=None,
+            referenced_documents=None,
+            input_tokens=None,
+            output_tokens=None,
         )
     )

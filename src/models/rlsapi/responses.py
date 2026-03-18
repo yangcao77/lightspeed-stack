@@ -1,6 +1,6 @@
 """Models for rlsapi v1 REST API responses."""
 
-from typing import Any, Optional
+from typing import Optional
 from pydantic import Field
 
 from models.config import ConfigurationBase

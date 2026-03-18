@@ -519,6 +519,9 @@ async def test_infer_minimal_request(
     assert response.data.referenced_documents is None
     assert response.data.input_tokens is None
     assert response.data.output_tokens is None
+    # Serialized payload must contain only text and request_id (response_model_exclude_none=True)
+    data_keys = set(response.model_dump(exclude_none=True)["data"].keys())
+    assert data_keys == {"text", "request_id"}, f"Expected only text and request_id, got {data_keys}"
 
 
 async def test_infer_full_context_request(

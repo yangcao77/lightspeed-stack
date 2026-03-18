@@ -1317,7 +1317,7 @@ class Customization(ConfigurationBase):
     # (tool_calls, rag_chunks, token_usage, etc.) from the /v1/infer endpoint
     # by including "include_metadata": true in the request body.
     #
-    # If this feature were wanted in production, consider implementing RBAC-based access control instead:
+    # If this feature were wanted in production, consider RBAC-based access control instead:
     # 1. Add Action.RLSAPI_V1_INFER_VERBOSE to models/config.py Action enum
     # 2. Check authorization in infer_endpoint:
     #    if infer_request.include_metadata:

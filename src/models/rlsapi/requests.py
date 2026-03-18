@@ -160,7 +160,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
         question: User question string.
         context: Context with system info, terminal output, etc. (defaults provided).
         skip_rag: Reserved for future use. RAG retrieval is not yet implemented.
-        include_metadata: Request extended response with debugging metadata (development/testing only).
+        include_metadata: Request extended response with debugging metadata (dev/testing only).
 
     Example:
         ```python
@@ -192,8 +192,11 @@ class RlsapiV1InferRequest(ConfigurationBase):
     )
     include_metadata: bool = Field(
         default=False,
-        description="[Development/Testing Only] Return extended response with debugging metadata (tool_calls, rag_chunks, tokens). "
-        "Only honored when allow_verbose_infer is enabled in configuration. Not available in production.",
+        description=(
+            "[Development/Testing Only] Return extended response with debugging metadata "
+            "(tool_calls, rag_chunks, tokens). Only honored when allow_verbose_infer is enabled. "
+            "Not available in production."
+        ),
         examples=[False, True],
     )
 
