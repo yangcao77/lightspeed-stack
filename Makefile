@@ -56,7 +56,8 @@ schema:	## Generate OpenAPI schema file
 
 openapi-doc:	docs/openapi.json scripts/fix_openapi_doc.py	## Generate OpenAPI documentation
 	openapi-to-markdown --input_file docs/openapi.json --output_file output.md
-	python3 scripts/fix_openapi_doc.py <  output.md > docs/openapi.md
+	# LCORE-1494: don't overwrite the original docs/output.md for now
+	python3 scripts/fix_openapi_doc.py < output.md > openapi2.md
 	rm output.md
 
 generate-documentation:	## Generate documentation
