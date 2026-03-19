@@ -33,8 +33,8 @@ Evidence: `query.py:321-325`, `streaming_query.py:312-317`.
 R1  
 When estimated input tokens exceed a configurable threshold (default 70% of the model's context window), lightspeed-stack must summarize older conversation turns before sending the request to the LLM.
 
-R2  
-Recent turns (configurable, default last 4 turns or 30% of context window, whichever is smaller) must be preserved verbatim — not summarized.
+R2
+Recent turns must be preserved verbatim — not summarized. The buffer zone uses a degrading guard: start at N turns (default 4), but if those N turns exceed the token budget, degrade to N-1, then N-2, down to 0. This prevents compaction from producing output that still doesn't fit.
 
 R3  
 Summarization must be additive: each chunk's summary is generated once and kept. Summaries are only re-summarized when the total summary size itself approaches the context limit.
@@ -57,8 +57,14 @@ Token estimation must run on every request using tiktoken. Cost is ~1-5ms, negli
 R9  
 Compaction configuration must be admin-configurable via YAML: threshold ratio, fixed token floor, and buffer zone size.
 
-R10  
-After compaction, lightspeed-stack must build the LLM input explicitly (`[summaries] + [recent turns] + [query]`) instead of using the Llama Stack `conversation` parameter. This gives lightspeed-stack full control over what the LLM sees while preserving the original conversation in Llama Stack.
+R10
+After compaction, lightspeed-stack injects the summary as a marked item into the existing Llama Stack conversation. When building context for the LLM, lightspeed-stack selects only items from the last summary marker onward. This preserves a single continuous conversation identity in Llama Stack while giving lightspeed-stack control over what the LLM sees.
+
+R11
+Compaction must be blocking per conversation. If a request triggers compaction, concurrent requests on the same conversation must wait until compaction completes. This prevents race conditions (e.g., two requests both triggering compaction, or a new message being appended mid-compaction).
+
+R12
+The streaming endpoint must emit a compaction event (e.g., `{"event": "compaction_started"}`) before the summarization LLM call begins, so the client can display a progress indicator. Non-streaming requests have no mid-request notification mechanism.
 
 # Use Cases
 
@@ -85,24 +91,27 @@ As a developer integrating with the API, I want to know whether the response was
 User Query → lightspeed-stack
   1. Resolve model, system prompt, tools
   2. Build input (query + RAG + attachments)
-  3. Estimate total tokens (tiktoken): system + history + new query
-  4. If first compaction needed (tokens > threshold):
-     a. Retrieve conversation history from Llama Stack
-     b. Split into "old" (summarize) and "recent" (keep)
-     c. Summarize old turns → store summary chunk in conversation cache
-  5. If subsequent compaction needed:
-     a. Retrieve new turns since last summary
-     b. Summarize only the new chunk → append to existing summary chunks
-  6. Build explicit input: [summary chunks] + [recent turns] + [query]
-  7. Call Llama Stack with explicit input (NOT conversation parameter)
+  3. Acquire per-conversation lock (blocks concurrent requests)
+  4. Estimate total tokens (tiktoken): system + history + new query
+  5. If compaction needed (tokens > threshold):
+     a. Emit compaction event on streaming endpoint
+     b. Retrieve conversation history from Llama Stack
+     c. Split into "old" (summarize) and "recent" (keep)
+        — degrading guard: reduce recent turns if they exceed token budget
+     d. Summarize old turns → inject summary as marked item into conversation
+     e. Store summary chunk in conversation cache
+  6. Build context: select items from last summary marker onward + new query
+  7. Call Llama Stack Responses API with conversation parameter
+     (Llama Stack loads items from marker onward)
   ↓
 Llama Stack
-  8. Processes explicit input (no history retrieval)
+  8. Processes conversation (summary marker + recent turns + new query)
   ↓
 lightspeed-stack
-  9. Store response in Llama Stack conversation (full history preserved)
-  10. Update conversation cache with new turn
-  11. Return QueryResponse with context_status="summarized" (or "full")
+  9. Response stored in same conversation (continuous history)
+  10. Update conversation cache
+  11. Release per-conversation lock
+  12. Return QueryResponse with context_status="summarized" (or "full")
 ```
 
 ## Token estimation
@@ -159,7 +168,7 @@ When triggered, split conversation into:
 - **Summary zone**: Oldest turns that will be summarized.
 - **Buffer zone**: Most recent turns kept verbatim.
 
-Buffer zone uses hybrid calculation: keep the last N turns (default 4), capped at 30% of the context window (whichever is smaller). This prevents pathological cases where 4 large turns consume most of the context.
+Buffer zone uses a degrading guard: start with N turns (default 4), estimate their token count. If they exceed the available budget (context window minus summary minus new query), reduce to N-1 turns and re-estimate. Continue degrading (4→3→2→1→0) until the buffer fits. This handles pathological cases where a few large turns (e.g., with tool results) consume most of the context.
 
 ## Additive summarization
 
@@ -209,19 +218,11 @@ A conversation may have multiple summary chunks (one per compaction event). All 
 
 ## Changed request flow after compaction
 
-After compaction, lightspeed-stack stops using Llama Stack's `conversation` parameter and builds the full input itself:
+After compaction, lightspeed-stack injects the summary as a marked conversation item into the existing Llama Stack conversation. The summary item has a recognizable marker (e.g., metadata tag or content prefix) so that lightspeed-stack can identify it when loading history.
 
-``` python
-ResponsesApiParams(
-    input=[*summary_messages, *recent_turn_messages, user_query],
-    model=model,
-    instructions=system_prompt,
-    # conversation parameter NOT set — we build input explicitly
-    ...
-)
-```
+When building context for subsequent requests, lightspeed-stack fetches conversation items and selects only those from the last summary marker onward. The `conversation` parameter continues to be used — Llama Stack still manages the conversation. lightspeed-stack just controls *which items* form the LLM context.
 
-The original Llama Stack conversation still receives the response (for full history preservation), but lightspeed-stack controls what the LLM sees.
+This preserves a single continuous conversation identity. The user sees one conversation in the UI, and the Conversations API returns the full history including summary items.
 
 ## API response changes
 
@@ -316,18 +317,7 @@ At the insertion point (after line 297), the following are available:
 - `input_text` — the user's query with RAG context
 - `user_conversation` — DB metadata including `message_count`
 
-After compaction, instead of returning:
-
-``` python
-ResponsesApiParams(input=input_text, conversation=llama_stack_conv_id, ...)
-```
-
-Return:
-
-``` python
-ResponsesApiParams(input=[*summary_msgs, *recent_msgs, input_text], ...)
-# conversation parameter omitted — we build input explicitly
-```
+After compaction, the summary is injected as a conversation item in Llama Stack. When building the next request, lightspeed-stack fetches items from the conversation, filters to only those after the last summary marker, and passes them as input alongside the `conversation` parameter. The `conversation` parameter is still used — the conversation identity is preserved.
 
 ## Fetching conversation history
 
@@ -374,7 +364,7 @@ Compaction adds latency only on the trigger turn. In PoC testing, compaction tur
 - **Tiered memory**: Add a recall storage tier (searchable vector DB of full conversation history) so the LLM can retrieve old context on demand. High complexity, defer unless long-running conversations become a key use case.
 - **Provider-native compaction**: Use OpenAI's or Anthropic's native compaction APIs as an opt-in optimization. Not recommended as primary approach (breaks provider-agnostic principle).
 - **Smaller model for summarization**: Allow configuring a cheaper model for the summarization call. Current design uses the same model for simplicity.
-- **UI compaction indicator**: The `context_status` field enables the UI to display "conversation context was summarized." Coordinate with the UI team.
+- **UI compaction indicator**: The `context_status` response field and the streaming compaction event (R12) provide the data. Coordinate with the UI team on how to display it.
 
 # Appendix A: PoC Evidence
 
