@@ -44,6 +44,7 @@ Lightspeed Core Service (LCS) service API specification.
 | DELETE | `/v2/conversations/{conversation_id}` | Delete a conversation identified by its ID                                                                                                           |
 | PUT    | `/v2/conversations/{conversation_id}` | Update a conversation topic summary by ID                                                                                                            |
 | POST   | `/v1/infer`                           | Serves requests from the RHEL Lightspeed Command Line Assistant (CLA)                                                                                |
+| POST   | `/v1/responses`                       | Handle request to the /responses endpoint using Responses API (LCORE specification)                                                                  |
 | GET    | `/readiness`                          | Returns service readiness state                                                                                                                      |
 | GET    | `/liveness`                           | Returns liveness status of the service                                                                                                               |
 | POST   | `/authorized`                         | Returns the authenticated user's ID and username                                                                                                     |
