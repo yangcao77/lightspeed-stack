@@ -1524,6 +1524,71 @@ class TestGenerateResponse:
         )
 
     @pytest.mark.asyncio
+    async def test_generate_response_cancelled_topic_summary_none_when_get_fails(
+        self,
+        mocker: MockerFixture,
+        isolate_stream_interrupt_registry: Any,
+    ) -> None:
+        """Test cancelled stream persists with topic_summary=None when get_topic_summary raises."""
+
+        async def mock_generator() -> AsyncIterator[str]:
+            yield "data: token\n\n"
+            raise asyncio.CancelledError()
+
+        test_request_id = "123e4567-e89b-12d3-a456-426614174001"
+        mock_context = mocker.Mock(spec=ResponseGeneratorContext)
+        mock_context.conversation_id = "conv_new_456"
+        mock_context.user_id = "user_123"
+        mock_context.query_request = QueryRequest(
+            query="What is Kubernetes?",
+            media_type=MEDIA_TYPE_JSON,
+            conversation_id=None,  # New conversation
+            generate_topic_summary=True,
+        )  # pyright: ignore[reportCallIssue]
+        mock_context.started_at = "2024-01-01T00:00:00Z"
+        mock_context.skip_userid_check = False
+        mock_context.client = mocker.AsyncMock(spec=AsyncLlamaStackClient)
+        mock_context.request_id = test_request_id
+
+        mock_responses_params = mocker.Mock(spec=ResponsesApiParams)
+        mock_responses_params.model = "provider1/model1"
+        mock_responses_params.conversation = "conv_new_456"
+        mock_responses_params.input = "What is Kubernetes?"
+
+        mock_turn_summary = TurnSummary()
+        mock_turn_summary.token_usage = TokenCounter(input_tokens=10, output_tokens=5)
+
+        mocker.patch("app.endpoints.streaming_query.consume_query_tokens")
+        mocker.patch(
+            "app.endpoints.streaming_query.get_topic_summary",
+            new=mocker.AsyncMock(side_effect=Exception("err")),
+        )
+        store_query_results_mock = mocker.patch(
+            "app.endpoints.streaming_query.store_query_results"
+        )
+        mocker.patch(
+            "app.endpoints.streaming_query.append_turn_to_conversation",
+            new_callable=mocker.AsyncMock,
+        )
+
+        result = []
+        async for item in generate_response(
+            mock_generator(),
+            mock_context,
+            mock_responses_params,
+            mock_turn_summary,
+        ):
+            result.append(item)
+
+        assert any('"event": "interrupted"' in item for item in result)
+        store_query_results_mock.assert_called_once()
+        call_kwargs = store_query_results_mock.call_args[1]
+        assert call_kwargs["topic_summary"] is None
+        isolate_stream_interrupt_registry.deregister_stream.assert_called_once_with(
+            test_request_id
+        )
+
+    @pytest.mark.asyncio
     async def test_generate_response_cancelled_topic_summary_none_when_generate_disabled(
         self,
         mocker: MockerFixture,
