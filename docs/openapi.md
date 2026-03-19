@@ -3655,7 +3655,9 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful response | [ReadinessResponse](#readinessresponse) |
-| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse) |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse) |
+| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
 
 Examples
 
@@ -3683,10 +3685,6 @@ Examples
   }
 }
 ```
- |
-| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
-
-Examples
 
 
 
@@ -3700,10 +3698,6 @@ Examples
   }
 }
 ```
- |
-| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse)
-
-Examples
 
 
 
@@ -3717,7 +3711,7 @@ Examples
   }
 }
 ```
- |
+
 ## GET `/liveness`
 
 > **Liveness Probe Get Method**
@@ -3805,9 +3799,8 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful response | [AuthorizedResponse](#authorizedresponse) |
-| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
-
-Examples
+| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse) |
+| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse) |
 
 
 
@@ -3833,11 +3826,6 @@ Examples
   }
 }
 ```
- |
-| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
-
-Examples
-
 
 
 
@@ -3850,7 +3838,7 @@ Examples
   }
 }
 ```
- |
+
 ## GET `/metrics`
 
 > **Metrics Endpoint Handler**
