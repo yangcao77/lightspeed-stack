@@ -21,6 +21,9 @@ Lightspeed Core Service (LCS) service API specification.
 | GET    | `/v1/models`                          | List of available models                                                                                                                             |
 | GET    | `/v1/tools`                           | Consolidated list of available tools from all configured MCP servers                                                                                 |
 | GET    | `/v1/mcp-auth/client-options`         | List of MCP servers configured to accept client-provided authorization tokens, along with the header names where clients should provide these tokens |
+| GET    | `/v1/mcp-servers`                     | List all registered MCP servers                                                                                                                      |
+| POST   | `/v1/mcp-servers`                     | Register an MCP server dynamically at runtime                                                                                                        |
+| DELETE | `/v1/mcp-servers/{name}`              | Unregister a dynamically registered MCP server                                                                                                       |
 | GET    | `/v1/shields`                         | List of available shields from the Llama Stack service                                                                                               |
 | GET    | `/v1/providers`                       | List all available providers grouped by API type                                                                                                     |
 | GET    | `/v1/providers/{provider_id}`         | Retrieve a single provider identified by its unique ID                                                                                               |
@@ -110,8 +113,8 @@ Examples
 
 Handle request to the /info endpoint.
 
-Process GET requests to the /info endpoint, returning the service name, version
-and Llama-stack version.
+Process GET requests to the /info endpoint, returning the
+service name, version and Llama-stack version.
 
 Raises:
     HTTPException: with status 500 and a detail object
@@ -472,6 +475,299 @@ Examples
   "detail": {
     "cause": "Lightspeed Stack configuration has not been initialized.",
     "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+## GET `/v1/mcp-servers`
+
+> **List Mcp Servers Handler**
+
+List all registered MCP servers.
+
+Returns both statically configured (from YAML) and dynamically
+registered (via API) MCP servers.
+
+Raises:
+    HTTPException: If configuration is not loaded.
+
+Returns:
+    MCPServerListResponse: List of all registered MCP servers with source info.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [MCPServerListResponse](#mcpserverlistresponse)             |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+
+Examples
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+## POST `/v1/mcp-servers`
+
+> **Register Mcp Server Handler**
+
+Register an MCP server dynamically at runtime.
+
+Adds the MCP server to the runtime configuration and registers it
+as a toolgroup with Llama Stack so it becomes available for queries.
+
+Raises:
+    HTTPException: On duplicate name, Llama Stack connection error,
+        or registration failure.
+
+Returns:
+    MCPServerRegistrationResponse: Details of the newly registered server.
+
+
+
+
+
+### 📦 Request Body 
+
+[MCPServerRegistrationRequest](#mcpserverregistrationrequest)
+
+### ✅ Responses
+
+| Status Code | Description             | Component                                                       |
+|-------------|-------------------------|-----------------------------------------------------------------|
+| 201         | Successful response     | [MCPServerRegistrationResponse](#mcpserverregistrationresponse) |
+| 401         | Unauthorized            | [UnauthorizedResponse](#unauthorizedresponse)                   |
+| 403         | Permission denied       | [ForbiddenResponse](#forbiddenresponse)                         |
+| 409         | Resource already exists | [ConflictResponse](#conflictresponse)                           |
+| 500         | Internal server error   | [InternalServerErrorResponse](#internalservererrorresponse)     |
+| 503         | Service unavailable     | [ServiceUnavailableResponse](#serviceunavailableresponse)       |
+| 422         | Validation Error        | [HTTPValidationError](#httpvalidationerror)                     |
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Mcp Server with name 'test-mcp-server' is already registered",
+    "response": "Mcp Server already exists"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+
+## DELETE `/v1/mcp-servers/{name}`
+
+> **Delete Mcp Server Handler**
+
+Unregister a dynamically registered MCP server.
+
+Removes the MCP server from the runtime configuration and unregisters
+its toolgroup from Llama Stack. Only servers registered via the API
+can be deleted; statically configured servers cannot be removed.
+
+Raises:
+    HTTPException: If the server is not found, is statically configured,
+        or Llama Stack unregistration fails.
+
+Returns:
+    MCPServerDeleteResponse: Confirmation of the deletion.
+
+
+
+### 🔗 Parameters
+
+| Name | Type   | Required | Description |
+|------|--------|----------|-------------|
+| name | string | True     |             |
+
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [MCPServerDeleteResponse](#mcpserverdeleteresponse)         |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 404         | Resource not found    | [NotFoundResponse](#notfoundresponse)                       |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+| 422         | Validation Error      | [HTTPValidationError](#httpvalidationerror)                 |
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Mcp Server with ID test-mcp-server does not exist",
+    "response": "Mcp Server not found"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
   }
 }
 ```
@@ -4955,6 +5251,7 @@ Red Hat Identity authentication configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | required_entitlements |  | List of all required entitlements. |
+| max_header_size | integer | Maximum allowed size in bytes for the base64-encoded x-rh-identity header. Headers exceeding this size are rejected before decoding. |
 
 
 ## RagConfiguration
@@ -5248,12 +5545,24 @@ Response data for rlsapi v1 /infer endpoint.
 Attributes:
     text: The generated response text.
     request_id: Unique identifier for the request.
+    tool_calls: MCP tool calls made during inference (verbose mode only).
+    tool_results: Results from MCP tool calls (verbose mode only).
+    rag_chunks: RAG chunks retrieved from documentation (verbose mode only).
+    referenced_documents: Source documents referenced (verbose mode only).
+    input_tokens: Number of input tokens consumed (verbose mode only).
+    output_tokens: Number of output tokens generated (verbose mode only).
 
 
 | Field | Type | Description |
 |-------|------|-------------|
 | text | string | Generated response text |
 | request_id |  | Unique request identifier |
+| tool_calls |  | Tool calls made during inference (requires include_metadata=true) |
+| tool_results |  | Results from tool calls (requires include_metadata=true) |
+| rag_chunks |  | Retrieved RAG documentation chunks (requires include_metadata=true) |
+| referenced_documents |  | Source documents referenced in answer (requires include_metadata=true) |
+| input_tokens |  | Number of input tokens consumed (requires include_metadata=true) |
+| output_tokens |  | Number of output tokens generated (requires include_metadata=true) |
 
 
 ## RlsapiV1InferRequest
@@ -5265,6 +5574,7 @@ Attributes:
     question: User question string.
     context: Context with system info, terminal output, etc. (defaults provided).
     skip_rag: Reserved for future use. RAG retrieval is not yet implemented.
+    include_metadata: Request extended response with debugging metadata (dev/testing only).
 
 Example:
     ```python
@@ -5283,6 +5593,7 @@ Example:
 | question | string | User question |
 | context |  | Optional context (system info, terminal output, stdin, attachments) |
 | skip_rag | boolean | Reserved for future use. RAG retrieval is not yet implemented. |
+| include_metadata | boolean | [Development/Testing Only] Return extended response with debugging metadata (tool_calls, rag_chunks, tokens). Only honored when allow_verbose_infer is enabled. Not available in production. |
 
 
 ## RlsapiV1InferResponse
