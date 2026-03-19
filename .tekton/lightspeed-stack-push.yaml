@@ -37,6 +37,10 @@ spec:
           "path": "."
         },
         {
+          "type": "generic",
+          "path": "."
+        },
+        {
           "type": "pip",
           "path": ".",
           "requirements_files": [
