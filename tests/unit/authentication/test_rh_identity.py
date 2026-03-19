@@ -547,3 +547,50 @@ class TestRHIdentityHealthProbeSkip:
         with pytest.raises(HTTPException) as exc_info:
             await auth_dep(request)
         assert exc_info.value.status_code == 401
+
+
+class TestRHIdentityHeaderSizeLimit:
+    """Test suite for x-rh-identity header size limit enforcement."""
+
+    @pytest.mark.asyncio
+    async def test_header_at_exact_limit_accepted(
+        self, mocker: MockerFixture, user_identity_data: dict
+    ) -> None:
+        """Test that a header at exactly the size limit is accepted."""
+        header_value = create_auth_header(user_identity_data)
+        auth_dep = RHIdentityAuthDependency(max_header_size=len(header_value))
+        request = create_request_with_header(mocker, header_value)
+
+        user_id, username, _, _ = await auth_dep(request)
+
+        assert user_id == "abc123"
+        assert username == "user@redhat.com"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "header_size,max_size",
+        [
+            (9000, 8192),  # Well over default limit
+            (101, 100),  # One byte over custom limit
+            (200, 100),  # Well over custom limit
+        ],
+    )
+    async def test_header_exceeding_limit_rejected(
+        self,
+        mocker: MockerFixture,
+        header_size: int,
+        max_size: int,
+    ) -> None:
+        """Test oversized headers rejected with HTTP 400 and a warning logged."""
+        mock_warning = mocker.patch("authentication.rh_identity.logger.warning")
+        auth_dep = RHIdentityAuthDependency(max_header_size=max_size)
+        request = create_request_with_header(mocker, "x" * header_size)
+
+        with pytest.raises(HTTPException) as exc_info:
+            await auth_dep(request)
+
+        assert exc_info.value.status_code == 400
+        assert "exceeds maximum" in str(exc_info.value.detail)
+        mock_warning.assert_called_once()
+        assert mock_warning.call_args.args[1] == header_size
+        assert mock_warning.call_args.args[2] == max_size

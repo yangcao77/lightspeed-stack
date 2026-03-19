@@ -12,7 +12,11 @@ from fastapi import HTTPException, Request
 
 from authentication.interface import NO_AUTH_TUPLE, AuthInterface, AuthTuple
 from configuration import configuration
-from constants import DEFAULT_VIRTUAL_PATH, NO_USER_TOKEN
+from constants import (
+    DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE,
+    DEFAULT_VIRTUAL_PATH,
+    NO_USER_TOKEN,
+)
 from log import get_logger
 
 logger = get_logger(__name__)
@@ -198,15 +202,20 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
         self,
         required_entitlements: Optional[list[str]] = None,
         virtual_path: str = DEFAULT_VIRTUAL_PATH,
+        max_header_size: int = DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE,
     ) -> None:
         """Initialize RH Identity authentication dependency.
 
         Args:
             required_entitlements: Services to require (ALL must be present)
             virtual_path: Virtual path for authorization checks
+            max_header_size: Maximum allowed size in bytes for the base64-encoded
+                x-rh-identity header. Headers exceeding this size are rejected
+                before decoding.
         """
         self.required_entitlements = required_entitlements
         self.virtual_path = virtual_path
+        self.max_header_size = max_header_size
         self.skip_userid_check = False
 
     async def __call__(self, request: Request) -> AuthTuple:
@@ -233,6 +242,18 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
                     return NO_AUTH_TUPLE
             logger.warning("Missing x-rh-identity header")
             raise HTTPException(status_code=401, detail="Missing x-rh-identity header")
+
+        # Enforce header size limit before decoding
+        if len(identity_header) > self.max_header_size:
+            logger.warning(
+                "x-rh-identity header size %d exceeds maximum allowed size %d",
+                len(identity_header),
+                self.max_header_size,
+            )
+            raise HTTPException(
+                status_code=400,
+                detail="x-rh-identity header exceeds maximum allowed size",
+            )
 
         # Decode base64
         try:
