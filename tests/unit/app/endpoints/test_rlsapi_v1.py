@@ -2,6 +2,7 @@
 
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
+# pylint: disable=too-many-lines
 
 import re
 from collections.abc import Callable
@@ -750,6 +751,77 @@ async def test_infer_include_metadata_ignored_when_verbose_infer_disabled(
     assert response.data.referenced_documents is None
     assert response.data.input_tokens is None
     assert response.data.output_tokens is None
+
+
+def _setup_config_mock(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    verbose_enabled: bool,
+) -> None:
+    """Helper to set up configuration mock with verbose setting."""
+    custom_mock = mocker.Mock()
+    custom_mock.allow_verbose_infer = verbose_enabled
+    custom_mock.system_prompt = "You are a helpful assistant."
+    config_mock = mocker.Mock()
+    config_mock.inference = mock_configuration.inference
+    config_mock.customization = custom_mock
+    mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
+
+
+async def test_infer_verbose_extract_token_usage_on_text_extraction_failure(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_auth_resolvers: None,
+) -> None:
+    """Verify extract_token_usage called in except block when text extraction fails."""
+    _setup_config_mock(mocker, mock_configuration, verbose_enabled=True)
+    mock_response = mocker.Mock()
+    mock_response.output = [_create_mock_response_output(mocker, "Response")]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 50
+    mock_usage.output_tokens = 25
+    mock_response.usage = mock_usage
+    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.extract_text_from_response_items",
+        side_effect=RuntimeError("text extraction failed"),
+    )
+    mock_extract = mocker.patch("app.endpoints.rlsapi_v1.extract_token_usage")
+    with pytest.raises(RuntimeError):
+        await infer_endpoint(
+            infer_request=RlsapiV1InferRequest(
+                question="How do I list files?", include_metadata=True
+            ),
+            request=_create_mock_request(mocker),
+            background_tasks=_create_mock_background_tasks(mocker),
+            auth=MOCK_AUTH,
+        )
+    mock_extract.assert_called_once()
+    call_args = mock_extract.call_args
+    assert call_args[0][0] == mock_usage
+    assert call_args[0][1] == "openai/gpt-4-turbo"
+
+
+async def test_infer_non_verbose_no_extract_token_usage_on_failure(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_auth_resolvers: None,
+) -> None:
+    """Verify extract_token_usage NOT called in except block for non-verbose."""
+    _setup_config_mock(mocker, mock_configuration, verbose_enabled=False)
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.retrieve_simple_response",
+        side_effect=RuntimeError("retrieval failed"),
+    )
+    mock_extract = mocker.patch("app.endpoints.rlsapi_v1.extract_token_usage")
+    with pytest.raises(RuntimeError):
+        await infer_endpoint(
+            infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+            request=_create_mock_request(mocker),
+            background_tasks=_create_mock_background_tasks(mocker),
+            auth=MOCK_AUTH,
+        )
+    mock_extract.assert_not_called()
 
 
 # --- Test Splunk integration ---

@@ -457,6 +457,7 @@ async def infer_endpoint(  # pylint: disable=R0914
         and infer_request.include_metadata
     )
 
+    response = None
     try:
         instructions = _build_instructions(infer_request.context.systeminfo)
 
@@ -474,7 +475,6 @@ async def infer_endpoint(  # pylint: disable=R0914
             response = cast(OpenAIResponseObject, response)
             response_text = extract_text_from_response_items(response.output)
         else:
-            response = None
             response_text = await retrieve_simple_response(
                 input_source,
                 instructions,
@@ -483,6 +483,8 @@ async def infer_endpoint(  # pylint: disable=R0914
             )
         inference_time = time.monotonic() - start_time
     except _INFER_HANDLED_EXCEPTIONS as error:
+        if verbose_enabled and response is not None:
+            extract_token_usage(response.usage, model_id)  # type: ignore[arg-type]
         _record_inference_failure(
             background_tasks,
             infer_request,
