@@ -3,6 +3,8 @@
 # pylint: disable=protected-access
 # pylint: disable=unused-argument
 # pylint: disable=too-many-lines
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
 
 import re
 from collections.abc import Callable
