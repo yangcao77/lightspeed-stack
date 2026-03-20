@@ -430,48 +430,44 @@ async def test_retrieve_simple_response_api_connection_error(
 # --- Test _get_rh_identity_context ---
 
 
-def test_get_rh_identity_context_with_rh_identity(
-    mocker: MockerFixture, mock_request_factory: Callable[..., Any]
-) -> None:
-    """Test extraction of org_id and system_id from RH Identity data."""
-    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
-    mock_rh_identity.get_org_id.return_value = "12345678"
-    mock_rh_identity.get_user_id.return_value = "system-cn-abc123"
-
-    mock_request = mock_request_factory(rh_identity=mock_rh_identity)
-
-    org_id, system_id = _get_rh_identity_context(mock_request)
-
-    assert org_id == "12345678"
-    assert system_id == "system-cn-abc123"
-
-
-def test_get_rh_identity_context_without_rh_identity(
+@pytest.mark.parametrize(
+    ("rh_identity_setup", "expected_org_id", "expected_system_id"),
+    [
+        pytest.param(
+            {"org_id": "12345678", "user_id": "system-cn-abc123"},
+            "12345678",
+            "system-cn-abc123",
+            id="with_identity",
+        ),
+        pytest.param(None, AUTH_DISABLED, AUTH_DISABLED, id="without_identity"),
+        pytest.param(
+            {"org_id": "", "user_id": ""},
+            AUTH_DISABLED,
+            AUTH_DISABLED,
+            id="empty_values",
+        ),
+    ],
+)
+def test_get_rh_identity_context(
+    mocker: MockerFixture,
     mock_request_factory: Callable[..., Any],
+    rh_identity_setup: dict[str, str] | None,
+    expected_org_id: str,
+    expected_system_id: str,
 ) -> None:
-    """Test auth_disabled defaults when RH Identity is not configured."""
-    mock_request = mock_request_factory(rh_identity=None)
+    """Test _get_rh_identity_context extracts or defaults org/system IDs."""
+    if rh_identity_setup is not None:
+        mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+        mock_rh_identity.get_org_id.return_value = rh_identity_setup["org_id"]
+        mock_rh_identity.get_user_id.return_value = rh_identity_setup["user_id"]
+        mock_request = mock_request_factory(rh_identity=mock_rh_identity)
+    else:
+        mock_request = mock_request_factory()
 
     org_id, system_id = _get_rh_identity_context(mock_request)
 
-    assert org_id == AUTH_DISABLED
-    assert system_id == AUTH_DISABLED
-
-
-def test_get_rh_identity_context_with_empty_values(
-    mocker: MockerFixture, mock_request_factory: Callable[..., Any]
-) -> None:
-    """Test auth_disabled fallback when RH Identity returns empty strings."""
-    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
-    mock_rh_identity.get_org_id.return_value = ""
-    mock_rh_identity.get_user_id.return_value = ""
-
-    mock_request = mock_request_factory(rh_identity=mock_rh_identity)
-
-    org_id, system_id = _get_rh_identity_context(mock_request)
-
-    assert org_id == AUTH_DISABLED
-    assert system_id == AUTH_DISABLED
+    assert org_id == expected_org_id
+    assert system_id == expected_system_id
 
 
 # --- Test infer_endpoint ---
