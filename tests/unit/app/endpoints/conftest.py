@@ -9,7 +9,7 @@ from pytest_mock import MockerFixture
 
 @pytest.fixture(name="mock_request_factory")
 def mock_request_factory_fixture(mocker: MockerFixture) -> Callable[..., Any]:
-    """Factory fixture that creates a mock FastAPI Request with optional RH Identity.
+    """Create a mock FastAPI Request with optional RH Identity.
 
     Returns:
         Callable that accepts an optional rh_identity argument and returns a Mock request.
