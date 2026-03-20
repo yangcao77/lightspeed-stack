@@ -63,26 +63,6 @@ def mock_custom_prompt_fixture(mocker: MockerFixture) -> Callable[[str], None]:
     return _set
 
 
-def _create_mock_request(mocker: MockerFixture, rh_identity: Any = None) -> Any:
-    """Create a mock FastAPI Request with optional RH Identity data."""
-    mock_request = mocker.Mock()
-    mock_request.headers = {"User-Agent": "CLA/0.4.2"}
-
-    if rh_identity is not None:
-        mock_request.state = mocker.Mock()
-        mock_request.state.rh_identity_data = rh_identity
-    else:
-        # Use spec=[] to create a Mock with no attributes, simulating absent rh_identity_data
-        mock_request.state = mocker.Mock(spec=[])
-
-    return mock_request
-
-
-def _create_mock_background_tasks(mocker: MockerFixture) -> Any:
-    """Create a mock BackgroundTasks object."""
-    return mocker.Mock()
-
-
 def _setup_responses_mock(mocker: MockerFixture, create_behavior: Any) -> None:
     """Set up responses.create mock with custom behavior."""
     mock_responses = mocker.Mock()
@@ -450,13 +430,15 @@ async def test_retrieve_simple_response_api_connection_error(
 # --- Test _get_rh_identity_context ---
 
 
-def test_get_rh_identity_context_with_rh_identity(mocker: MockerFixture) -> None:
+def test_get_rh_identity_context_with_rh_identity(
+    mocker: MockerFixture, mock_request_factory: Callable[..., Any]
+) -> None:
     """Test extraction of org_id and system_id from RH Identity data."""
     mock_rh_identity = mocker.Mock(spec=RHIdentityData)
     mock_rh_identity.get_org_id.return_value = "12345678"
     mock_rh_identity.get_user_id.return_value = "system-cn-abc123"
 
-    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
+    mock_request = mock_request_factory(rh_identity=mock_rh_identity)
 
     org_id, system_id = _get_rh_identity_context(mock_request)
 
@@ -464,9 +446,11 @@ def test_get_rh_identity_context_with_rh_identity(mocker: MockerFixture) -> None
     assert system_id == "system-cn-abc123"
 
 
-def test_get_rh_identity_context_without_rh_identity(mocker: MockerFixture) -> None:
+def test_get_rh_identity_context_without_rh_identity(
+    mock_request_factory: Callable[..., Any],
+) -> None:
     """Test auth_disabled defaults when RH Identity is not configured."""
-    mock_request = _create_mock_request(mocker, rh_identity=None)
+    mock_request = mock_request_factory(rh_identity=None)
 
     org_id, system_id = _get_rh_identity_context(mock_request)
 
@@ -474,13 +458,15 @@ def test_get_rh_identity_context_without_rh_identity(mocker: MockerFixture) -> N
     assert system_id == AUTH_DISABLED
 
 
-def test_get_rh_identity_context_with_empty_values(mocker: MockerFixture) -> None:
+def test_get_rh_identity_context_with_empty_values(
+    mocker: MockerFixture, mock_request_factory: Callable[..., Any]
+) -> None:
     """Test auth_disabled fallback when RH Identity returns empty strings."""
     mock_rh_identity = mocker.Mock(spec=RHIdentityData)
     mock_rh_identity.get_org_id.return_value = ""
     mock_rh_identity.get_user_id.return_value = ""
 
-    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
+    mock_request = mock_request_factory(rh_identity=mock_rh_identity)
 
     org_id, system_id = _get_rh_identity_context(mock_request)
 
@@ -496,11 +482,12 @@ async def test_infer_minimal_request(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint returns valid response with LLM text."""
     infer_request = RlsapiV1InferRequest(question="How do I list files?")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
@@ -533,6 +520,8 @@ async def test_infer_full_context_request(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint handles full context (stdin, attachments, terminal)."""
     infer_request = RlsapiV1InferRequest(
@@ -544,8 +533,7 @@ async def test_infer_full_context_request(
             systeminfo=RlsapiV1SystemInfo(os="RHEL", version="9.3", arch="x86_64"),
         ),
     )
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
@@ -564,11 +552,12 @@ async def test_infer_generates_unique_request_ids(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that each /infer call generates a unique request_id."""
     infer_request = RlsapiV1InferRequest(question="How do I list files?")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response1 = await infer_endpoint(
         infer_request=infer_request,
@@ -591,11 +580,12 @@ async def test_infer_api_connection_error_returns_503(
     mock_configuration: AppConfig,
     mock_api_connection_error: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint returns 503 when LLM service is unavailable."""
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     with pytest.raises(HTTPException) as exc_info:
         await infer_endpoint(
@@ -614,13 +604,14 @@ async def test_infer_malformed_template_returns_500(
     mock_custom_prompt: Callable[[str], None],
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint returns 500 when system prompt has invalid Jinja2 syntax."""
     mock_custom_prompt("Hello {{ unclosed")
 
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     with pytest.raises(HTTPException) as exc_info:
         await infer_endpoint(
@@ -638,11 +629,12 @@ async def test_infer_empty_llm_response_returns_fallback(
     mock_configuration: AppConfig,
     mock_empty_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint returns fallback text when LLM returns empty response."""
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
@@ -659,6 +651,8 @@ async def test_infer_include_metadata_returns_verbose_response(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer with include_metadata=True and allow_verbose_infer returns metadata."""
     # Enable verbose infer (dual opt-in: config + request). customization is a
@@ -685,8 +679,7 @@ async def test_infer_include_metadata_returns_verbose_response(
     infer_request = RlsapiV1InferRequest(
         question="How do I list files?", include_metadata=True
     )
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
@@ -712,6 +705,8 @@ async def test_infer_include_metadata_ignored_when_verbose_infer_disabled(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Metadata should remain excluded unless both request and config opt in."""
     custom_mock = mocker.Mock()
@@ -735,8 +730,7 @@ async def test_infer_include_metadata_ignored_when_verbose_infer_disabled(
     infer_request = RlsapiV1InferRequest(
         question="How do I list files?", include_metadata=True
     )
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
@@ -772,6 +766,8 @@ async def test_infer_verbose_extract_token_usage_on_text_extraction_failure(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Verify extract_token_usage called in except block when text extraction fails."""
     _setup_config_mock(mocker, mock_configuration, verbose_enabled=True)
@@ -792,8 +788,8 @@ async def test_infer_verbose_extract_token_usage_on_text_extraction_failure(
             infer_request=RlsapiV1InferRequest(
                 question="How do I list files?", include_metadata=True
             ),
-            request=_create_mock_request(mocker),
-            background_tasks=_create_mock_background_tasks(mocker),
+            request=mock_request_factory(),
+            background_tasks=mock_background_tasks,
             auth=MOCK_AUTH,
         )
     mock_extract.assert_called_once()
@@ -806,6 +802,8 @@ async def test_infer_non_verbose_no_extract_token_usage_on_failure(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Verify extract_token_usage NOT called in except block for non-verbose."""
     _setup_config_mock(mocker, mock_configuration, verbose_enabled=False)
@@ -817,8 +815,8 @@ async def test_infer_non_verbose_no_extract_token_usage_on_failure(
     with pytest.raises(RuntimeError):
         await infer_endpoint(
             infer_request=RlsapiV1InferRequest(question="How do I list files?"),
-            request=_create_mock_request(mocker),
-            background_tasks=_create_mock_background_tasks(mocker),
+            request=mock_request_factory(),
+            background_tasks=mock_background_tasks,
             auth=MOCK_AUTH,
         )
     mock_extract.assert_not_called()
@@ -832,11 +830,12 @@ async def test_infer_queues_splunk_event_on_success(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that successful inference queues a Splunk event via BackgroundTasks."""
     infer_request = RlsapiV1InferRequest(question="How do I list files?")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     await infer_endpoint(
         infer_request=infer_request,
@@ -856,11 +855,12 @@ async def test_infer_queues_splunk_error_event_on_failure(
     mock_configuration: AppConfig,
     mock_api_connection_error: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that failed inference queues a Splunk error event."""
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     with pytest.raises(HTTPException):
         await infer_endpoint(
@@ -880,6 +880,8 @@ async def test_infer_splunk_event_includes_rh_identity_context(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that Splunk event includes org_id and system_id from RH Identity."""
     mock_rh_identity = mocker.Mock(spec=RHIdentityData)
@@ -887,8 +889,7 @@ async def test_infer_splunk_event_includes_rh_identity_context(
     mock_rh_identity.get_user_id.return_value = "system456"
 
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker, rh_identity=mock_rh_identity)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory(rh_identity=mock_rh_identity)
 
     await infer_endpoint(
         infer_request=infer_request,
@@ -984,6 +985,8 @@ async def test_infer_endpoint_calls_get_mcp_tools(
     mock_configuration: AppConfig,
     mock_llm_response: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that infer_endpoint calls get_mcp_tools with configuration.mcp_servers."""
     mock_get_mcp_tools = mocker.patch(
@@ -993,8 +996,7 @@ async def test_infer_endpoint_calls_get_mcp_tools(
     )
 
     infer_request = RlsapiV1InferRequest(question="How do I list files?")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     await infer_endpoint(
         infer_request=infer_request,
@@ -1013,11 +1015,12 @@ async def test_infer_generic_runtime_error_reraises(
     mock_configuration: AppConfig,
     mock_generic_runtime_error: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test /infer endpoint re-raises non-context-length RuntimeErrors."""
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     with pytest.raises(RuntimeError, match="something went wrong"):
         await infer_endpoint(
@@ -1033,11 +1036,12 @@ async def test_infer_generic_runtime_error_records_failure(
     mock_configuration: AppConfig,
     mock_generic_runtime_error: None,
     mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
 ) -> None:
     """Test that non-context-length RuntimeErrors record inference failure metrics."""
     infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = _create_mock_request(mocker)
-    mock_background_tasks = _create_mock_background_tasks(mocker)
+    mock_request = mock_request_factory()
 
     with pytest.raises(RuntimeError):
         await infer_endpoint(
