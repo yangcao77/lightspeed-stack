@@ -124,6 +124,9 @@ konflux-requirements:	## Generate hermetic requirements.*.txt file for konflux b
 konflux-rpm-lock:	## Generate rpm.lock.yaml file for konflux build
 	./scripts/generate-rpm-lock.sh
 
+konflux-artifacts-lock: ## Regenerate artifacts.lock.yaml file for konflux build
+	./scripts/generate-artifacts-lock.sh
+
 help: ## Show this help screen
 	@echo 'Usage: make <OPTIONS> ... <TARGETS>'
 	@echo ''
