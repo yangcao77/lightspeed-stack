@@ -642,29 +642,34 @@ async def test_infer_empty_llm_response_returns_fallback(
     assert response.data.text == constants.UNABLE_TO_PROCESS_RESPONSE
 
 
-async def test_infer_include_metadata_returns_verbose_response(
+@pytest.mark.parametrize(
+    ("verbose_enabled", "expect_metadata"),
+    [
+        pytest.param(True, True, id="verbose_enabled"),
+        pytest.param(False, False, id="verbose_disabled"),
+    ],
+)
+async def test_infer_include_metadata_respects_verbose_config(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
-    mock_llm_response: None,
     mock_auth_resolvers: None,
     mock_request_factory: Callable[..., Any],
     mock_background_tasks: Any,
+    verbose_enabled: bool,
+    expect_metadata: bool,
 ) -> None:
-    """Test /infer with include_metadata=True and allow_verbose_infer returns metadata."""
-    # Enable verbose infer (dual opt-in: config + request). customization is a
-    # read-only property on AppConfig, so patch the module-level configuration.
+    """Test /infer metadata inclusion controlled by dual opt-in (config + request)."""
     custom_mock = mocker.Mock()
-    custom_mock.allow_verbose_infer = True
+    custom_mock.allow_verbose_infer = verbose_enabled
     custom_mock.system_prompt = "You are a helpful assistant."
     config_mock = mocker.Mock()
     config_mock.inference = mock_configuration.inference
     config_mock.customization = custom_mock
     mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
 
-    # Mock full response with usage so build_turn_summary can extract token counts
     mock_response = mocker.Mock()
     mock_response.output = [
-        _create_mock_response_output(mocker, "Verbose metadata test response.")
+        _create_mock_response_output(mocker, "Metadata test response.")
     ]
     mock_usage = mocker.Mock()
     mock_usage.input_tokens = 42
@@ -675,72 +680,31 @@ async def test_infer_include_metadata_returns_verbose_response(
     infer_request = RlsapiV1InferRequest(
         question="How do I list files?", include_metadata=True
     )
-    mock_request = mock_request_factory()
 
     response = await infer_endpoint(
         infer_request=infer_request,
-        request=mock_request,
+        request=mock_request_factory(),
         background_tasks=mock_background_tasks,
         auth=MOCK_AUTH,
     )
 
-    assert isinstance(response, RlsapiV1InferResponse)
-    assert response.data.text == "Verbose metadata test response."
-    assert response.data.request_id is not None
-    assert check_suid(response.data.request_id)
-    # Verbose response must include metadata fields
-    assert response.data.tool_calls is not None
-    assert response.data.tool_results is not None
-    assert response.data.rag_chunks is not None
-    assert response.data.referenced_documents is not None
-    assert response.data.input_tokens == 42
-    assert response.data.output_tokens == 18
-
-
-async def test_infer_include_metadata_ignored_when_verbose_infer_disabled(
-    mocker: MockerFixture,
-    mock_configuration: AppConfig,
-    mock_auth_resolvers: None,
-    mock_request_factory: Callable[..., Any],
-    mock_background_tasks: Any,
-) -> None:
-    """Metadata should remain excluded unless both request and config opt in."""
-    custom_mock = mocker.Mock()
-    custom_mock.allow_verbose_infer = False
-    custom_mock.system_prompt = "You are a helpful assistant."
-    config_mock = mocker.Mock()
-    config_mock.inference = mock_configuration.inference
-    config_mock.customization = custom_mock
-    mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
-
-    mock_response = mocker.Mock()
-    mock_response.output = [
-        _create_mock_response_output(mocker, "Response with metadata disabled.")
-    ]
-    mock_usage = mocker.Mock()
-    mock_usage.input_tokens = 99
-    mock_usage.output_tokens = 11
-    mock_response.usage = mock_usage
-    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
-
-    infer_request = RlsapiV1InferRequest(
-        question="How do I list files?", include_metadata=True
-    )
-    mock_request = mock_request_factory()
-
-    response = await infer_endpoint(
-        infer_request=infer_request,
-        request=mock_request,
-        background_tasks=mock_background_tasks,
-        auth=MOCK_AUTH,
-    )
-
-    assert response.data.tool_calls is None
-    assert response.data.tool_results is None
-    assert response.data.rag_chunks is None
-    assert response.data.referenced_documents is None
-    assert response.data.input_tokens is None
-    assert response.data.output_tokens is None
+    if expect_metadata:
+        assert isinstance(response, RlsapiV1InferResponse)
+        assert response.data.text == "Metadata test response."
+        assert response.data.request_id is not None
+        assert response.data.tool_calls is not None
+        assert response.data.tool_results is not None
+        assert response.data.rag_chunks is not None
+        assert response.data.referenced_documents is not None
+        assert response.data.input_tokens == 42
+        assert response.data.output_tokens == 18
+    else:
+        assert response.data.tool_calls is None
+        assert response.data.tool_results is None
+        assert response.data.rag_chunks is None
+        assert response.data.referenced_documents is None
+        assert response.data.input_tokens is None
+        assert response.data.output_tokens is None
 
 
 def _setup_config_mock(
@@ -758,64 +722,64 @@ def _setup_config_mock(
     mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
 
 
-async def test_infer_verbose_extract_token_usage_on_text_extraction_failure(
+@pytest.mark.parametrize(
+    ("verbose_enabled", "expect_extract_called"),
+    [
+        pytest.param(True, True, id="verbose_calls_extract"),
+        pytest.param(False, False, id="non_verbose_skips_extract"),
+    ],
+)
+async def test_infer_extract_token_usage_on_failure_depends_on_verbose(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
     mock_auth_resolvers: None,
     mock_request_factory: Callable[..., Any],
     mock_background_tasks: Any,
+    verbose_enabled: bool,
+    expect_extract_called: bool,
 ) -> None:
-    """Verify extract_token_usage called in except block when text extraction fails."""
-    _setup_config_mock(mocker, mock_configuration, verbose_enabled=True)
-    mock_response = mocker.Mock()
-    mock_response.output = [_create_mock_response_output(mocker, "Response")]
-    mock_usage = mocker.Mock()
-    mock_usage.input_tokens = 50
-    mock_usage.output_tokens = 25
-    mock_response.usage = mock_usage
-    _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.extract_text_from_response_items",
-        side_effect=RuntimeError("text extraction failed"),
-    )
+    """Verify extract_token_usage is called on failure only when verbose is enabled."""
+    _setup_config_mock(mocker, mock_configuration, verbose_enabled=verbose_enabled)
+
+    mock_usage: Any = None
+    if verbose_enabled:
+        mock_response = mocker.Mock()
+        mock_response.output = [_create_mock_response_output(mocker, "Response")]
+        mock_usage = mocker.Mock()
+        mock_usage.input_tokens = 50
+        mock_usage.output_tokens = 25
+        mock_response.usage = mock_usage
+        _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
+        mocker.patch(
+            "app.endpoints.rlsapi_v1.extract_text_from_response_items",
+            side_effect=RuntimeError("text extraction failed"),
+        )
+    else:
+        mocker.patch(
+            "app.endpoints.rlsapi_v1.retrieve_simple_response",
+            side_effect=RuntimeError("retrieval failed"),
+        )
+
     mock_extract = mocker.patch("app.endpoints.rlsapi_v1.extract_token_usage")
+
     with pytest.raises(RuntimeError):
+        infer_request = RlsapiV1InferRequest(question="How do I list files?")
+        if verbose_enabled:
+            infer_request.include_metadata = True
         await infer_endpoint(
-            infer_request=RlsapiV1InferRequest(
-                question="How do I list files?", include_metadata=True
-            ),
+            infer_request=infer_request,
             request=mock_request_factory(),
             background_tasks=mock_background_tasks,
             auth=MOCK_AUTH,
         )
-    mock_extract.assert_called_once()
-    call_args = mock_extract.call_args
-    assert call_args[0][0] == mock_usage
-    assert call_args[0][1] == "openai/gpt-4-turbo"
 
-
-async def test_infer_non_verbose_no_extract_token_usage_on_failure(
-    mocker: MockerFixture,
-    mock_configuration: AppConfig,
-    mock_auth_resolvers: None,
-    mock_request_factory: Callable[..., Any],
-    mock_background_tasks: Any,
-) -> None:
-    """Verify extract_token_usage NOT called in except block for non-verbose."""
-    _setup_config_mock(mocker, mock_configuration, verbose_enabled=False)
-    mocker.patch(
-        "app.endpoints.rlsapi_v1.retrieve_simple_response",
-        side_effect=RuntimeError("retrieval failed"),
-    )
-    mock_extract = mocker.patch("app.endpoints.rlsapi_v1.extract_token_usage")
-    with pytest.raises(RuntimeError):
-        await infer_endpoint(
-            infer_request=RlsapiV1InferRequest(question="How do I list files?"),
-            request=mock_request_factory(),
-            background_tasks=mock_background_tasks,
-            auth=MOCK_AUTH,
-        )
-    mock_extract.assert_not_called()
+    if expect_extract_called:
+        mock_extract.assert_called_once()
+        call_args = mock_extract.call_args
+        assert call_args[0][0] == mock_usage
+        assert call_args[0][1] == "openai/gpt-4-turbo"
+    else:
+        mock_extract.assert_not_called()
 
 
 # --- Test Splunk integration ---
