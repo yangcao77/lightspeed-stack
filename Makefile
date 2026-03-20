@@ -64,7 +64,7 @@ doc:	## Generate documentation for developers
 	scripts/gen_doc.py
 
 docs/config.puml:	src/models/config.py ## Generate PlantUML class diagram for configuration
-	pyreverse src/models/config.py --output puml --output-directory=docs/
+	uv run pyreverse src/models/config.py --output puml --output-directory=docs/
 	mv docs/classes.puml docs/config.puml
 
 # Omit --theme rose on the CLI: it fails with some plantuml.jar builds on pyreverse output.

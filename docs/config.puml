@@ -166,7 +166,7 @@ class "ModelContextProtocolServer" as src.models.config.ModelContextProtocolServ
 class "OkpConfiguration" as src.models.config.OkpConfiguration {
   chunk_filter_query : Optional[str]
   offline : Optional[bool]
-  rhokp_url : Optional[str]
+  rhokp_url : Optional[AnyHttpUrl]
 }
 class "PostgreSQLDatabaseConfiguration" as src.models.config.PostgreSQLDatabaseConfiguration {
   ca_cert_path : Optional[FilePath]
