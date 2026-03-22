@@ -6,12 +6,12 @@ from the RHEL Lightspeed Command Line Assistant (CLA).
 
 import functools
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Annotated, Any, Optional, cast
 
 import jinja2
-from jinja2.sandbox import SandboxedEnvironment
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from jinja2.sandbox import SandboxedEnvironment
 from llama_stack_api.openai_responses import OpenAIResponseObject
 from llama_stack_client import APIConnectionError, APIStatusError, RateLimitError
 from openai._exceptions import APIStatusError as OpenAIAPIStatusError
@@ -24,6 +24,7 @@ from authentication.rh_identity import RHIdentityData
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
+from log import get_logger
 from models.config import Action
 from models.responses import (
     ForbiddenResponse,
@@ -48,7 +49,6 @@ from utils.responses import (
     get_mcp_tools,
 )
 from utils.suid import get_suid
-from log import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["rlsapi-v1"])
