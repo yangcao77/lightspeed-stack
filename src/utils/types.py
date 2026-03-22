@@ -5,19 +5,45 @@ from typing import Annotated, Any, Literal, Optional
 from llama_stack_api import ImageContentItem, TextContentItem
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputFunctionToolCallOutput as FunctionToolCallOutput,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputTool as InputTool,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolChoice as ToolChoice,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalRequest as McpApprovalRequest,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalResponse as McpApprovalResponse,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMessage as ResponseMessage,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFileSearchToolCall as FileSearchToolCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFunctionToolCall as FunctionToolCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPCall as McpCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools as McpListTools,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageWebSearchToolCall as WebSearchToolCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponsePrompt as Prompt,
-    OpenAIResponseText as Text,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseReasoning as Reasoning,
+)
+from llama_stack_api.openai_responses import (
+    OpenAIResponseText as Text,
 )
 from pydantic import AnyUrl, BaseModel, ConfigDict, Field
 
