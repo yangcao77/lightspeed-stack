@@ -203,7 +203,6 @@ Feature: MCP tests
     """
 
 # Client-provided
-  @skip #TODO: LCORE-1462
   @MCPClientAuthConfig
   Scenario: Check if tools endpoint succeeds by skipping when MCP client-provided auth token is omitted
     Given The system is in default state

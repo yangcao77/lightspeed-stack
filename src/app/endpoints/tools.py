@@ -20,7 +20,12 @@ from models.responses import (
     UnauthorizedResponse,
 )
 from utils.endpoints import check_configuration_loaded
-from utils.mcp_headers import McpHeaders, build_mcp_headers, mcp_headers_dependency
+from utils.mcp_headers import (
+    McpHeaders,
+    build_mcp_headers,
+    find_unresolved_auth_headers,
+    mcp_headers_dependency,
+)
 from utils.mcp_oauth_probe import check_mcp_auth
 from utils.tool_formatter import format_tools_list
 
@@ -146,9 +151,33 @@ async def tools_endpoint_handler(  # pylint: disable=too-many-locals,too-many-st
     )
 
     for toolgroup in toolgroups_response:
+        mcp_server = None
+        if toolgroup.identifier in mcp_server_names:
+            mcp_server = next(
+                (
+                    s
+                    for s in configuration.mcp_servers
+                    if s.name == toolgroup.identifier
+                ),
+                None,
+            )
+
+        headers = complete_mcp_headers.get(toolgroup.identifier, {})
+        if mcp_server is not None:
+            unresolved = find_unresolved_auth_headers(
+                mcp_server.authorization_headers, headers
+            )
+            if unresolved:
+                logger.warning(
+                    "Skipping MCP server %s: required %d auth headers "
+                    "but only resolved %d",
+                    mcp_server.name,
+                    len(mcp_server.authorization_headers),
+                    len(mcp_server.authorization_headers) - len(unresolved),
+                )
+                continue
+
         try:
-            # Get tools for each toolgroup
-            headers = complete_mcp_headers.get(toolgroup.identifier, {})
             authorization = headers.pop("Authorization", None)
 
             tools_response = await client.tools.list(
@@ -176,19 +205,8 @@ async def tools_endpoint_handler(  # pylint: disable=too-many-locals,too-many-st
             _normalize_tool_dict(tool_dict, toolgroup)
 
             # Determine server source based on toolgroup type
-            if toolgroup.identifier in mcp_server_names:
-                # This is an MCP server toolgroup
-                mcp_server = next(
-                    (
-                        s
-                        for s in configuration.mcp_servers
-                        if s.name == toolgroup.identifier
-                    ),
-                    None,
-                )
-                tool_dict["server_source"] = (
-                    mcp_server.url if mcp_server else toolgroup.identifier
-                )
+            if mcp_server:
+                tool_dict["server_source"] = mcp_server.url or toolgroup.identifier
             else:
                 # This is a built-in toolgroup
                 tool_dict["server_source"] = "builtin"
