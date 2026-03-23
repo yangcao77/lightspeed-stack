@@ -49,6 +49,7 @@ from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import (
     INTERRUPTED_RESPONSE_MESSAGE,
+    TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
     LLM_TOKEN_EVENT,
     LLM_TOOL_CALL_EVENT,
     LLM_TOOL_RESULT_EVENT,
@@ -87,6 +88,7 @@ from utils.query import (
     prepare_input,
     store_query_results,
     update_azure_token,
+    update_conversation_topic_summary,
     validate_attachments_metadata,
     validate_model_provider_override,
 )
@@ -364,6 +366,43 @@ async def retrieve_response_generator(
         raise HTTPException(**error_response.model_dump()) from e
 
 
+async def _background_update_topic_summary(
+    context: ResponseGeneratorContext,
+    model: str,
+) -> None:
+    """Generate topic summary and update DB/cache in the background.
+
+    Runs as a fire-and-forget task after an interrupted turn is persisted.
+    All errors are caught and logged.
+    """
+    try:
+        topic_summary = await asyncio.wait_for(
+            get_topic_summary(
+                context.query_request.query,
+                context.client,
+                model,
+            ),
+            timeout=TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
+        )
+        if topic_summary:
+            update_conversation_topic_summary(
+                context.conversation_id,
+                topic_summary,
+                user_id=context.user_id,
+                skip_userid_check=context.skip_userid_check,
+            )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "Topic summary timed out for interrupted turn, request %s",
+            context.request_id,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            "Failed to generate topic summary for interrupted turn, request %s",
+            context.request_id,
+        )
+
+
 async def _persist_interrupted_turn(
     context: ResponseGeneratorContext,
     responses_params: ResponsesApiParams,
@@ -372,8 +411,9 @@ async def _persist_interrupted_turn(
     """Persist the user query and an interrupted response into the conversation.
 
     Called when a streaming request is cancelled so the exchange is not lost.
-    All errors are caught and logged to avoid masking the original
-    cancellation.
+    Persists immediately with topic_summary=None so the conversation exists
+    when the client fetches. Topic summary is generated in a background task
+    and updated when ready.
 
     Parameters:
         context: The response generator context.
@@ -395,27 +435,6 @@ async def _persist_interrupted_turn(
         )
 
     try:
-        topic_summary = None
-        if not context.query_request.conversation_id:
-            should_generate = context.query_request.generate_topic_summary
-            if should_generate:
-                try:
-                    logger.debug(
-                        "Generating topic summary for interrupted new conversation"
-                    )
-                    topic_summary = await get_topic_summary(
-                        context.query_request.query,
-                        context.client,
-                        responses_params.model,
-                    )
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.warning(
-                        "Failed to generate topic summary for interrupted turn, "
-                        "request %s: %s",
-                        context.request_id,
-                        e,
-                    )
-
         completed_at = datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
@@ -428,8 +447,19 @@ async def _persist_interrupted_turn(
             summary=turn_summary,
             query=context.query_request.query,
             skip_userid_check=context.skip_userid_check,
-            topic_summary=topic_summary,
+            topic_summary=None,
         )
+
+        if (
+            not context.query_request.conversation_id
+            and context.query_request.generate_topic_summary
+        ):
+            asyncio.create_task(
+                _background_update_topic_summary(
+                    context=context,
+                    model=responses_params.model,
+                )
+            )
     except Exception:  # pylint: disable=broad-except
         logger.exception(
             "Failed to store interrupted query results for request %s",
@@ -444,8 +474,8 @@ def _register_interrupt_callback(
 ) -> list[bool]:
     """Build an interrupt callback and register the stream for cancellation.
 
-    The callback is scheduled as a **separate** asyncio task by
-    ``cancel_stream`` so it executes regardless of where the
+    The callback is invoked by ``cancel_stream`` when the client
+    interrupts, so persistence runs regardless of where the
     ``CancelledError`` is raised in the ASGI stack.
 
     A mutable one-element list is used as a shared guard so the

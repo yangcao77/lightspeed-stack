@@ -1497,6 +1497,9 @@ class TestGenerateResponse:
         store_query_results_mock = mocker.patch(
             "app.endpoints.streaming_query.store_query_results"
         )
+        update_topic_summary_mock = mocker.patch(
+            "app.endpoints.streaming_query.update_conversation_topic_summary"
+        )
         mocker.patch(
             "app.endpoints.streaming_query.append_turn_to_conversation",
             new_callable=mocker.AsyncMock,
@@ -1511,14 +1514,22 @@ class TestGenerateResponse:
         ):
             result.append(item)
 
+        await asyncio.sleep(0.1)
+
         assert any('"event": "interrupted"' in item for item in result)
+        call_kwargs = store_query_results_mock.call_args[1]
+        assert call_kwargs["topic_summary"] is None
         get_topic_summary_mock.assert_called_once_with(
             "What is Kubernetes?",
             mock_context.client,
             "provider1/model1",
         )
-        call_kwargs = store_query_results_mock.call_args[1]
-        assert call_kwargs["topic_summary"] == "Kubernetes container orchestration"
+        update_topic_summary_mock.assert_called_once_with(
+            "conv_new_456",
+            "Kubernetes container orchestration",
+            user_id="user_123",
+            skip_userid_check=False,
+        )
         isolate_stream_interrupt_registry.deregister_stream.assert_called_once_with(
             test_request_id
         )
@@ -1579,6 +1590,8 @@ class TestGenerateResponse:
             mock_turn_summary,
         ):
             result.append(item)
+
+        await asyncio.sleep(0.1)
 
         assert any('"event": "interrupted"' in item for item in result)
         store_query_results_mock.assert_called_once()

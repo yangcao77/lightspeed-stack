@@ -9,6 +9,9 @@ UNABLE_TO_PROCESS_RESPONSE = "Unable to process this request"
 # Response stored in the conversation when the user interrupts a streaming request
 INTERRUPTED_RESPONSE_MESSAGE = "You interrupted this request."
 
+# Max seconds to wait for topic summary in background task after interrupt persist.
+TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS = 30.0
+
 # Supported attachment types
 ATTACHMENT_TYPES = frozenset(
     {
