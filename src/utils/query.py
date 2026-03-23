@@ -489,6 +489,13 @@ def update_conversation_topic_summary(
             existing.topic_summary = topic_summary
             session.commit()
             logger.debug("Updated topic summary for conversation %s", normalized_id)
+        else:
+            logger.debug(
+                "No conversation found for topic summary update: id=%s, "
+                "topic_summary_len=%d",
+                normalized_id,
+                len(topic_summary),
+            )
 
     if (
         user_id

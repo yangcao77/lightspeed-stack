@@ -118,6 +118,9 @@ from utils.vector_search import build_rag_context
 logger = get_logger(__name__)
 router = APIRouter(tags=["streaming_query"])
 
+# Tracks background topic summary tasks for graceful shutdown.
+_background_topic_summary_tasks: list[asyncio.Task[None]] = []
+
 streaming_query_responses: dict[int | str, dict[str, Any]] = {
     200: StreamingQueryResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
@@ -403,6 +406,24 @@ async def _background_update_topic_summary(
         )
 
 
+async def shutdown_background_topic_summary_tasks() -> None:
+    """Cancel and await outstanding background topic summary tasks on shutdown.
+
+    Ensures graceful shutdown so in-flight topic summary generation can be
+    cleaned up. Called from the application lifespan shutdown phase.
+    """
+    tasks = list(_background_topic_summary_tasks)
+    if not tasks:
+        return
+    logger.debug(
+        "Shutting down %d outstanding background topic summary task(s)",
+        len(tasks),
+    )
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 async def _persist_interrupted_turn(
     context: ResponseGeneratorContext,
     responses_params: ResponsesApiParams,
@@ -454,12 +475,14 @@ async def _persist_interrupted_turn(
             not context.query_request.conversation_id
             and context.query_request.generate_topic_summary
         ):
-            asyncio.create_task(
+            task = asyncio.create_task(
                 _background_update_topic_summary(
                     context=context,
                     model=responses_params.model,
                 )
             )
+            _background_topic_summary_tasks.append(task)
+            task.add_done_callback(_background_topic_summary_tasks.remove)
     except Exception:  # pylint: disable=broad-except
         logger.exception(
             "Failed to store interrupted query results for request %s",
