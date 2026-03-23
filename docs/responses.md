@@ -119,7 +119,7 @@ The following table maps LCORE query request fields to the OpenResponses request
 | `system_prompt` | `instructions` | Same meaning. Only change in attribute's name |
 | `attachments` | `input` items | Attachments can be passed as input messages with content of type `input_file` |
 | `no_tools` | `tool_choice` | `no_tools=true` mapped to `tool_choice="none"` |
-| `vector_store_ids` | `tools` + `tool_choice` | Vector stores can be explicitly specified and restricted by `file_search` tool type's `vector_store_ids` attribute |
+| `vector_store_ids` | `tools` + `tool_choice` | Restrict via `file_search.vector_store_ids` in **LCORE format**; translated to Llama Stack internally. |
 | `generate_topic_summary` | N/A | Exposed directly (LCORE-specific) |
 | `shield_ids` | N/A | Exposed directly (LCORE-specific) |
 | `solr` | N/A | Exposed directly (LCORE-specific) |
@@ -332,7 +332,7 @@ Each item in `tools` declares one capability: search a set of vector stores (**f
 
 **Tool types (each object has a required `type`):**
 
-- `file_search`: Search within given vector stores. `vector_store_ids` (required): list of vector store IDs. Optional: `max_num_results` (1–50, default 10), `filters`, `ranking_options`.
+- `file_search`: Search within given vector stores. `vector_store_ids` (required): **LCORE format** IDs (mapped to Llama Stack internally). Optional: `max_num_results` (1–50, default 10), `filters`, `ranking_options`.
 - `web_search`: Web search. `type` can be `"web_search"`, `"web_search_preview"`, or other variants. Optional: `search_context_size` (`"low"`, `"medium"`, `"high"`).
 - `function`: Call a named function. `name` (required). Optional: `description`, `parameters` (JSON schema), `strict`.
 - `mcp`: Use tools from an MCP server. `server_label` (required), `server_url` (required). Optional: `headers`, `require_approval`, `allowed_tools`.
@@ -514,6 +514,8 @@ Fields such as `media_type`, `tool_calls`, `tool_results`, `rag_chunks`, and `re
 ### Tool Configuration Differences
 
 Vector store IDs are configured within the `tools` as `file_search` tools rather than through separate parameters. MCP tools are configurable under `mcp` tool type. By default **all** tools that are configured in LCORE are used to support the response. The set of available tools can be maintained per-request by `tool_choice` or `tools` attributes.
+
+**Vector store IDs:** Accepts **LCORE format** in requests and also outputs it in responses; LCORE translates to/from Llama Stack format internally.
 
 ### LCORE-Specific Extensions
 

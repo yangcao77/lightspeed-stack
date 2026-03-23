@@ -1,5 +1,6 @@
 """Utility functions for formatting and parsing MCP tool descriptions."""
 
+from collections.abc import Mapping
 from typing import Any
 
 from log import get_logger
@@ -130,3 +131,30 @@ def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
                               fields and cleaned descriptions.
     """
     return [format_tool_response(tool) for tool in tools]
+
+
+def translate_vector_store_ids_to_user_facing(
+    tools: list[dict[str, Any]],
+    rag_id_mapping: Mapping[str, str],
+) -> list[dict[str, Any]]:
+    """
+    Rewrite file_search tool dicts so vector_store_ids use user-facing RAG IDs.
+
+    Parameters:
+        tools: Serialized tool dicts.
+        rag_id_mapping: Llama Stack vector_db_id -> user-facing RAG id.
+
+    Returns:
+        list[dict[str, Any]]: New list of tool dicts; file_search entries get
+            updated vector_store_ids.
+    """
+    if not rag_id_mapping:
+        return list(tools)
+    out: list[dict[str, Any]] = []
+    for tool in tools:
+        if tool["type"] == "file_search":
+            mapped = [rag_id_mapping.get(vid, vid) for vid in tool["vector_store_ids"]]
+            out.append({**tool, "vector_store_ids": mapped})
+        else:
+            out.append(tool)
+    return out

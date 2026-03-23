@@ -66,6 +66,7 @@ from utils.query import (
     validate_model_provider_override,
 )
 from utils.quota import check_tokens_available, get_available_quotas
+from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.responses import (
     build_tool_call_summary,
     build_turn_summary,
@@ -480,9 +481,16 @@ async def response_generator(
         chunk_dict["sequence_number"] = sequence_number
         sequence_number += 1
 
-        # Add conversation attribute to the response if chunk has it
         if "response" in chunk_dict:
             chunk_dict["response"]["conversation"] = normalized_conv_id
+            tools = chunk_dict["response"].get("tools")
+            if tools is not None:
+                chunk_dict["response"]["tools"] = (
+                    translate_vector_store_ids_to_user_facing(
+                        tools,
+                        configuration.rag_id_mapping,
+                    )
+                )
 
         # Intermediate response - no quota consumption and text yet
         if event_type == "response.in_progress":
@@ -724,9 +732,16 @@ async def handle_non_streaming_response(
             skip_userid_check=skip_userid_check,
             topic_summary=topic_summary,
         )
+    response_dict = api_response.model_dump(exclude_none=True)
+    tools = response_dict.get("tools")
+    if tools is not None:
+        response_dict["tools"] = translate_vector_store_ids_to_user_facing(
+            tools,
+            configuration.rag_id_mapping,
+        )
     response = ResponsesResponse.model_validate(
         {
-            **api_response.model_dump(exclude_none=True),
+            **response_dict,
             "available_quotas": available_quotas,
             "conversation": normalize_conversation_id(api_params.conversation),
             "completed_at": int(completed_at.timestamp()),
