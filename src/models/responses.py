@@ -2431,6 +2431,27 @@ class InternalServerErrorResponse(AbstractErrorResponse):
                         "cause": "Failed to query the database",
                     },
                 },
+                {
+                    "label": "cluster version not found",
+                    "detail": {
+                        "response": "Internal server error",
+                        "cause": "ClusterVersion 'version' resource not found in OpenShift cluster",
+                    },
+                },
+                {
+                    "label": "cluster version permission denied",
+                    "detail": {
+                        "response": "Internal server error",
+                        "cause": "Insufficient permissions to read ClusterVersion resource",
+                    },
+                },
+                {
+                    "label": "invalid cluster version",
+                    "detail": {
+                        "response": "Internal server error",
+                        "cause": "ClusterVersion missing required field: 'clusterID'",
+                    },
+                },
             ]
         }
     }
@@ -2554,7 +2575,17 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
                         "response": "Unable to connect to Llama Stack",
                         "cause": "Connection error while trying to reach backend service.",
                     },
-                }
+                },
+                {
+                    "label": "kubernetes api",
+                    "detail": {
+                        "response": "Unable to connect to Kubernetes API",
+                        "cause": (
+                            "Failed to connect to Kubernetes API: "
+                            "Service Unavailable (status 503)"
+                        ),
+                    },
+                },
             ]
         }
     }
