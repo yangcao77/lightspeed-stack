@@ -318,7 +318,6 @@ async def test_auth_dependency_no_token_readiness_liveness_endpoints_2(
     For this test the skip_for_health_probes configuration parameter is set to
     False.
     """
-
     config_dict = {
         "name": "test",
         "service": {
