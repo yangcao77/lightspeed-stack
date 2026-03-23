@@ -50,6 +50,8 @@ from pydantic import AnyUrl, BaseModel, ConfigDict, Field
 from models.database.conversations import UserConversation
 from utils.token_counter import TokenCounter
 
+type SingletonInstances = dict[type, Any]
+
 
 def content_to_str(content: Any) -> str:
     """Convert content (str, TextContentItem, ImageContentItem, or list) to string.
@@ -77,9 +79,9 @@ def content_to_str(content: Any) -> str:
 class Singleton(type):
     """Metaclass for Singleton support."""
 
-    _instances = {}  # type: ignore
+    _instances: SingletonInstances = {}
 
-    def __call__(cls, *args, **kwargs):  # type: ignore
+    def __call__(cls, *args: Any, **kwargs: Any) -> Any:
         """
         Return the single cached instance of the class, creating and caching it on first call.
 
