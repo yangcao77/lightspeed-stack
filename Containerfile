@@ -45,7 +45,7 @@ RUN set -eux; \
     if [ -f "/cachi2/output/deps/generic/lightspeed-providers.zip" ]; then \
         cp "/cachi2/output/deps/generic/lightspeed-providers.zip" "${ZIP_PATH}"; \
     else \
-        curl -fL "https://github.com/lightspeed-core/lightspeed-providers/archive/${LIGHTSPEED_PROVIDERS_COMMIT}.zip" -o "${ZIP_PATH}"; \
+        curl -fL --retry 2 --retry-delay 5 "https://github.com/lightspeed-core/lightspeed-providers/archive/${LIGHTSPEED_PROVIDERS_COMMIT}.zip" -o "${ZIP_PATH}"; \
     fi; \
     \
     # Extract zip (stdlib zipfile — no unzip RPM; works on minimal Konflux builders)
