@@ -2214,7 +2214,7 @@ class PromptTooLongResponse(AbstractErrorResponse):
         super().__init__(
             response=response,
             cause=cause,
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
         )
 
 
