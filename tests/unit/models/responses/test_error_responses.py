@@ -687,7 +687,7 @@ class TestPromptTooLongResponse:
             cause="The prompt exceeds the maximum allowed length."
         )
         assert isinstance(response, AbstractErrorResponse)
-        assert response.status_code == status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+        assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
         assert isinstance(response.detail, DetailModel)
         assert response.detail.response == "Prompt is too long"
         assert response.detail.cause == "The prompt exceeds the maximum allowed length."
