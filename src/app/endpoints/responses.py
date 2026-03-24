@@ -61,6 +61,7 @@ from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
     store_query_results,
     update_azure_token,
     validate_model_provider_override,
@@ -335,7 +336,7 @@ async def handle_streaming_response(
                 inline_rag_context=inline_rag_context,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
-            if "context_length" in str(e).lower():
+            if is_context_length_error(str(e)):
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e
@@ -696,7 +697,7 @@ async def handle_non_streaming_response(
                 )
 
         except RuntimeError as e:
-            if "context_length" in str(e).lower():
+            if is_context_length_error(str(e)):
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e

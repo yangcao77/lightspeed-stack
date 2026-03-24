@@ -41,6 +41,7 @@ from observability import InferenceEventData, build_inference_event, send_splunk
 from utils.query import (
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
 )
 from utils.responses import (
     build_turn_summary,
@@ -531,8 +532,7 @@ def _map_inference_error_to_http_exception(  # pylint: disable=too-many-return-s
         return HTTPException(**error_response.model_dump())
 
     if isinstance(error, RuntimeError):
-        error_message = str(error).lower()
-        if "context_length" in error_message or "context length" in error_message:
+        if is_context_length_error(str(error)):
             logger.error("Prompt too long for request %s: %s", request_id, error)
             error_response = PromptTooLongResponse(model=model_id)
             return HTTPException(**error_response.model_dump())
