@@ -301,8 +301,11 @@ def restart_container(container_name: str) -> None:
         print(f"Failed to restart container {container_name}: {e.stderr!s}")
         raise
 
-    # Wait for container to be healthy
-    wait_for_container_health(container_name)
+    # Wait for container to be healthy.
+    # Library mode embeds llama-stack, so the container takes longer to start
+    # (~45-60s vs ~10s in server mode).  Use a generous attempt count so
+    # MCP-auth scenarios that restart the container don't time out.
+    wait_for_container_health(container_name, max_attempts=12)
 
 
 def replace_placeholders(context: Context, text: str) -> str:
