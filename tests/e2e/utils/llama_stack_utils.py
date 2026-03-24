@@ -15,8 +15,8 @@ from typing import Optional
 
 from llama_stack_client import (
     APIConnectionError,
-    AsyncLlamaStackClient,
     APIStatusError,
+    AsyncLlamaStackClient,
 )
 
 

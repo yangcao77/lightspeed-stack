@@ -2,11 +2,10 @@
 
 import pytest
 
-from authentication.interface import AuthTuple
-
-from configuration import AppConfig
 from app.endpoints.authorized import authorized_endpoint_handler
-from constants import DEFAULT_USER_UID, DEFAULT_USER_NAME, DEFAULT_SKIP_USER_ID_CHECK
+from authentication.interface import AuthTuple
+from configuration import AppConfig
+from constants import DEFAULT_SKIP_USER_ID_CHECK, DEFAULT_USER_NAME, DEFAULT_USER_UID
 
 
 @pytest.mark.asyncio

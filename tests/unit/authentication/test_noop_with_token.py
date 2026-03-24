@@ -1,8 +1,9 @@
 """Unit tests for functions defined in authentication/noop_with_token.py"""
 
 from typing import cast
-from fastapi import Request, HTTPException
+
 import pytest
+from fastapi import HTTPException, Request
 
 from authentication.noop_with_token import NoopWithTokenAuthDependency
 from constants import DEFAULT_USER_NAME, DEFAULT_USER_UID

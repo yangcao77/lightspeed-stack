@@ -2,9 +2,9 @@
 
 """Unit tests for all error response models."""
 
-from pydantic_core import SchemaError
 import pytest
 from fastapi import status
+from pydantic_core import SchemaError
 
 from models.responses import (
     BAD_REQUEST_DESCRIPTION,

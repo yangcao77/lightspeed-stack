@@ -1,6 +1,6 @@
 """rlsapi v1 endpoint test steps."""
 
-from behave import then, step  # pyright: ignore[reportAttributeAccessIssue]
+from behave import step, then  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
 

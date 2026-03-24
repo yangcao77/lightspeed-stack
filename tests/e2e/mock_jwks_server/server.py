@@ -6,7 +6,7 @@ No external dependencies - uses only Python stdlib.
 """
 
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any
 
 # Static JWKS - pre-generated RSA public key

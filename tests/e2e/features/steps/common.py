@@ -1,8 +1,9 @@
 """Implementation of common test steps."""
 
+import os
+
 from behave import given  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
-import os
 
 
 @given("The service is started locally")

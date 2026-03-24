@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 
 import app.database
 import app.endpoints.query
+import utils.query
 from app.endpoints.query import query_endpoint_handler
 from authentication.interface import AuthTuple
 from configuration import AppConfig
@@ -25,7 +26,6 @@ from tests.integration.conftest import (
     TEST_NON_EXISTENT_ID,
     create_mock_llm_response,
 )
-import utils.query
 
 # File-specific test constants
 SPECIFIC_CONV_ID = "c9d40813-d64d-41eb-8060-3b2446929a02"

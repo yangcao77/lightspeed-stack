@@ -1,17 +1,15 @@
 """Unit tests for quota limiter factory class."""
 
 import pytest
+from pydantic import SecretStr
 from pytest_mock import MockerFixture
 
-from pydantic import SecretStr
-
 import constants
-
 from models.config import (
-    QuotaLimiterConfiguration,
     PostgreSQLDatabaseConfiguration,
-    SQLiteDatabaseConfiguration,
     QuotaHandlersConfiguration,
+    QuotaLimiterConfiguration,
+    SQLiteDatabaseConfiguration,
 )
 from quota.cluster_quota_limiter import ClusterQuotaLimiter
 from quota.quota_limiter_factory import QuotaLimiterFactory

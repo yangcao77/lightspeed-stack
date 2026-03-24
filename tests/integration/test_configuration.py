@@ -1,8 +1,8 @@
 """Integration tests for configuration loading and handling."""
 
 import pytest
-from configuration import configuration
 
+from configuration import configuration
 from models.config import ModelContextProtocolServer
 
 

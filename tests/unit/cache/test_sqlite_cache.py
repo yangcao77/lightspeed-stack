@@ -1,22 +1,19 @@
 """Unit tests for SQLite cache implementation."""
 
+import sqlite3
 from pathlib import Path
-
 from typing import Any
 
-import sqlite3
-
-from pydantic import AnyUrl
 import pytest
-
-from models.config import SQLiteDatabaseConfiguration
-from models.cache_entry import CacheEntry
-from models.responses import ConversationData
-from utils import suid
-from utils.types import ReferencedDocument, ToolCallSummary, ToolResultSummary
+from pydantic import AnyUrl
 
 from cache.cache_error import CacheError
 from cache.sqlite_cache import SQLiteCache
+from models.cache_entry import CacheEntry
+from models.config import SQLiteDatabaseConfiguration
+from models.responses import ConversationData
+from utils import suid
+from utils.types import ReferencedDocument, ToolCallSummary, ToolResultSummary
 
 USER_ID_1 = suid.get_suid()
 USER_ID_2 = suid.get_suid()

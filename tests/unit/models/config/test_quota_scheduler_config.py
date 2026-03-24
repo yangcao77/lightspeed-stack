@@ -1,7 +1,6 @@
 """Unit tests for QuotaSchedulerConfig model."""
 
 import pytest
-
 from pydantic import ValidationError
 
 from models.config import QuotaSchedulerConfiguration

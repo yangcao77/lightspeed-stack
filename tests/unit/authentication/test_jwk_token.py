@@ -3,14 +3,14 @@
 """Unit tests for functions defined in authentication/jwk_token.py"""
 
 import time
-from typing import Any, cast
 from collections.abc import Generator
+from typing import Any, cast
 
 import pytest
+from authlib.jose import JsonWebKey, JsonWebToken
 from fastapi import HTTPException, Request
 from pydantic import AnyHttpUrl
 from pytest_mock import MockerFixture
-from authlib.jose import JsonWebKey, JsonWebToken
 
 from authentication.jwk_token import JwkTokenAuthDependency, _jwk_cache
 from models.config import JwkConfiguration, JwtConfiguration

@@ -3,12 +3,12 @@
 import pytest
 
 from models.config import (
+    QuotaHandlersConfiguration,
     QuotaLimiterConfiguration,
     SQLiteDatabaseConfiguration,
-    QuotaHandlersConfiguration,
 )
-from quota.user_quota_limiter import UserQuotaLimiter
 from quota.quota_exceed_error import QuotaExceedError
+from quota.user_quota_limiter import UserQuotaLimiter
 
 # pylint: disable=protected-access
 

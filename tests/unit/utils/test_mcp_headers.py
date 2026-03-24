@@ -1,9 +1,8 @@
 """Unit tests for MCP headers utility functions."""
 
-from pytest_mock import MockerFixture
 import pytest
-
 from fastapi import Request
+from pytest_mock import MockerFixture
 
 import constants
 from models.config import ModelContextProtocolServer

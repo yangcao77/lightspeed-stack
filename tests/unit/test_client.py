@@ -4,9 +4,9 @@
 
 import json
 
+import pytest
 from pydantic import AnyHttpUrl
 
-import pytest
 from client import AsyncLlamaStackClientHolder
 from models.config import LlamaStackConfiguration
 from utils.types import Singleton

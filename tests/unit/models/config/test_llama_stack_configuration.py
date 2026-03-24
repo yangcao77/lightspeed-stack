@@ -1,11 +1,10 @@
 """Unit tests for LlamaStackConfiguration model."""
 
 import pytest
-from pydantic import ValidationError, AnyHttpUrl
-
-from utils.checks import InvalidConfigurationError
+from pydantic import AnyHttpUrl, ValidationError
 
 from models.config import LlamaStackConfiguration
+from utils.checks import InvalidConfigurationError
 
 
 def test_llama_stack_configuration_constructor() -> None:

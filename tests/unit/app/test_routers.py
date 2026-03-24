@@ -1,36 +1,35 @@
 """Unit tests for routers.py."""
 
+from collections.abc import Callable, Sequence
 from typing import Any, Optional
-from collections.abc import Sequence, Callable
 
 from fastapi import FastAPI
 
-from app.routers import include_routers
-
 from app.endpoints import (
-    conversations_v2,
-    conversations_v1,
-    root,
-    info,
-    models,
-    shields,
-    rags,
-    providers,
-    health,
-    config,
-    feedback,
-    stream_interrupt,
-    streaming_query,
+    a2a,
     authorized,
-    metrics,
-    tools,
+    config,
+    conversations_v1,
+    conversations_v2,
+    feedback,
+    health,
+    info,
     mcp_auth,
     mcp_servers,
-    rlsapi_v1,
-    a2a,
+    metrics,
+    models,
+    providers,
     query,
+    rags,
     responses,
+    rlsapi_v1,
+    root,
+    shields,
+    stream_interrupt,
+    streaming_query,
+    tools,
 )
+from app.routers import include_routers
 
 
 class MockFastAPI(FastAPI):

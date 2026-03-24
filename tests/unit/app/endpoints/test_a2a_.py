@@ -163,7 +163,9 @@ class TestConvertResponsesContentToA2AParts:
         result = _convert_responses_content_to_a2a_parts([mock_output_item])
         assert len(result) == 1
         assert result[0].root is not None
-        text = result[0].root.text  # pyright: ignore[reportAttributeAccessIssue]
+        assert isinstance(result[0].rootext, TextPart)
+        text = result[0].root.text
+        # pyright: ignore[reportAttributeAccessIssue]
         assert text == "Hello, world!"
 
     def test_convert_multiple_output_items(self, mocker: MockerFixture) -> None:

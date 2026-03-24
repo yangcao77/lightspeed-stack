@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from models.requests import FeedbackRequest, FeedbackCategory
+from models.requests import FeedbackCategory, FeedbackRequest
 
 
 class TestFeedbackRequest:

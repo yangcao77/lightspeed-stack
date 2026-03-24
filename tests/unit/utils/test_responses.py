@@ -10,13 +10,29 @@ import pytest
 from fastapi import HTTPException
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolFileSearch as InputToolFileSearch,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP as InputToolMCP,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalRequest as MCPApprovalRequest,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseMCPApprovalResponse as MCPApprovalResponse,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFileSearchToolCall as FileSearchCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageFunctionToolCall as FunctionCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPCall as MCPCall,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPListTools as MCPListTools,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageWebSearchToolCall as WebSearchCall,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient

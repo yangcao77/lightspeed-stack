@@ -3,7 +3,7 @@
 """Unit tests for all successful response models."""
 
 import pytest
-from pydantic import AnyUrl, AnyHttpUrl, ValidationError, ConfigDict
+from pydantic import AnyHttpUrl, AnyUrl, ConfigDict, ValidationError
 from pydantic_core import SchemaError
 
 from models.config import (
@@ -16,7 +16,9 @@ from models.responses import (
     AbstractSuccessfulResponse,
     AuthorizedResponse,
     ConfigurationResponse,
+    ConversationData,
     ConversationDeleteResponse,
+    ConversationDetails,
     ConversationResponse,
     ConversationsListResponse,
     ConversationsListResponseV2,
@@ -28,6 +30,7 @@ from models.responses import (
     MCPClientAuthOptionsResponse,
     MCPServerAuthInfo,
     ModelsResponse,
+    ProviderHealthStatus,
     ProviderResponse,
     ProvidersListResponse,
     QueryResponse,
@@ -39,7 +42,6 @@ from models.responses import (
     StreamingQueryResponse,
     ToolsResponse,
 )
-from models.responses import ConversationData, ConversationDetails, ProviderHealthStatus
 from utils.types import ReferencedDocument, ToolCallSummary, ToolResultSummary
 
 

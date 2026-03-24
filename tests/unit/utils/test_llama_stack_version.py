@@ -3,21 +3,18 @@
 from typing import Any
 
 import pytest
-
-from semver import Version
+from llama_stack_client.types import VersionInfo
 from pytest_mock import MockerFixture
 from pytest_subtests import SubTests
-
-from llama_stack_client.types import VersionInfo
-
-from utils.llama_stack_version import (
-    check_llama_stack_version,
-    InvalidLlamaStackVersionException,
-)
+from semver import Version
 
 from constants import (
-    MINIMAL_SUPPORTED_LLAMA_STACK_VERSION,
     MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION,
+    MINIMAL_SUPPORTED_LLAMA_STACK_VERSION,
+)
+from utils.llama_stack_version import (
+    InvalidLlamaStackVersionException,
+    check_llama_stack_version,
 )
 
 

@@ -2,6 +2,7 @@
 
 import json
 import re
+
 from behave import then  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 

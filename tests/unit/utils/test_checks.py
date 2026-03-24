@@ -5,9 +5,8 @@ from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-from pytest_mock import MockerFixture
-
 import pytest
+from pytest_mock import MockerFixture
 
 from utils import checks
 

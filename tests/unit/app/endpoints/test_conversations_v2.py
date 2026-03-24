@@ -2,7 +2,7 @@
 
 """Unit tests for the /conversations REST API endpoints."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import pytest

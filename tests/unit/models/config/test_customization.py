@@ -1,10 +1,10 @@
 """Unit tests for Customization model."""
 
 from pathlib import Path
-import pytest
-from pytest_subtests import SubTests
 
+import pytest
 from pydantic import ValidationError
+from pytest_subtests import SubTests
 
 from models.config import Customization
 

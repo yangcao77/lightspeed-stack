@@ -14,7 +14,6 @@ from typing import Optional
 
 import requests
 from behave.model import Feature, Scenario
-from tests.e2e.utils.prow_utils import restore_llama_stack_pod
 from behave.runner import Context
 
 from tests.e2e.utils.llama_stack_utils import (
@@ -22,6 +21,7 @@ from tests.e2e.utils.llama_stack_utils import (
     unregister_mcp_toolgroups,
     unregister_shield,
 )
+from tests.e2e.utils.prow_utils import restore_llama_stack_pod
 from tests.e2e.utils.utils import (
     clear_llama_stack_storage,
     create_config_backup,

@@ -1,7 +1,7 @@
 """Unit tests for RAGChunk and RAGContext models."""
 
-from utils.types import RAGChunk, RAGContext
 from models.responses import ReferencedDocument
+from utils.types import RAGChunk, RAGContext
 
 
 class TestRAGChunk:

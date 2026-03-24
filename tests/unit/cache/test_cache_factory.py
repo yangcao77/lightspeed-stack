@@ -3,28 +3,26 @@
 from pathlib import Path
 
 import pytest
-from pytest_mock import MockerFixture
 from pydantic import SecretStr
+from pytest_mock import MockerFixture
 
+from cache.cache_factory import CacheFactory
+from cache.in_memory_cache import InMemoryCache
+from cache.noop_cache import NoopCache
+from cache.postgres_cache import PostgresCache
+from cache.sqlite_cache import SQLiteCache
 from constants import (
-    CACHE_TYPE_NOOP,
     CACHE_TYPE_MEMORY,
-    CACHE_TYPE_SQLITE,
+    CACHE_TYPE_NOOP,
     CACHE_TYPE_POSTGRES,
+    CACHE_TYPE_SQLITE,
 )
-
 from models.config import (
     ConversationHistoryConfiguration,
     InMemoryCacheConfig,
-    SQLiteDatabaseConfiguration,
     PostgreSQLDatabaseConfiguration,
+    SQLiteDatabaseConfiguration,
 )
-
-from cache.cache_factory import CacheFactory
-from cache.noop_cache import NoopCache
-from cache.in_memory_cache import InMemoryCache
-from cache.sqlite_cache import SQLiteCache
-from cache.postgres_cache import PostgresCache
 
 
 @pytest.fixture(scope="module", name="noop_cache_config_fixture")

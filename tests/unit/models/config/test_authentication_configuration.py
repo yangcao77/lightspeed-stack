@@ -4,27 +4,25 @@ from contextlib import AbstractContextManager, nullcontext
 from pathlib import Path
 
 import pytest
+from pydantic import AnyHttpUrl, SecretStr, ValidationError
 
-from pydantic import ValidationError, SecretStr, AnyHttpUrl
-
+from constants import (
+    AUTH_MOD_APIKEY_TOKEN,
+    AUTH_MOD_JWK_TOKEN,
+    AUTH_MOD_K8S,
+    AUTH_MOD_NOOP,
+    AUTH_MOD_RH_IDENTITY,
+    DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE,
+)
 from models.config import (
+    APIKeyTokenConfiguration,
     AuthenticationConfiguration,
     Configuration,
     JwkConfiguration,
-    RHIdentityConfiguration,
     LlamaStackConfiguration,
+    RHIdentityConfiguration,
     ServiceConfiguration,
     UserDataCollection,
-    APIKeyTokenConfiguration,
-)
-
-from constants import (
-    AUTH_MOD_NOOP,
-    AUTH_MOD_K8S,
-    AUTH_MOD_JWK_TOKEN,
-    AUTH_MOD_RH_IDENTITY,
-    AUTH_MOD_APIKEY_TOKEN,
-    DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE,
 )
 
 

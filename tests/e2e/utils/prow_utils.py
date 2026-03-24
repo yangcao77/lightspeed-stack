@@ -7,7 +7,6 @@ and are only used when running tests in the Prow CI environment.
 import os
 import subprocess
 import tempfile
-
 from typing import Optional
 
 

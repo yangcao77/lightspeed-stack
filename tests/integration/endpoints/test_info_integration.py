@@ -1,17 +1,17 @@
 """Integration tests for the /info endpoint."""
 
-from typing import Any
 from collections.abc import Generator
-import pytest
-from pytest_mock import MockerFixture, AsyncMockType
+from typing import Any
 
+import pytest
 from fastapi import HTTPException, Request, status
 from llama_stack_client import APIConnectionError
 from llama_stack_client.types import VersionInfo
-from authentication.interface import AuthTuple
+from pytest_mock import AsyncMockType, MockerFixture
 
-from configuration import AppConfig
 from app.endpoints.info import info_endpoint_handler
+from authentication.interface import AuthTuple
+from configuration import AppConfig
 from version import __version__
 
 

@@ -2,14 +2,13 @@
 
 # pylint: disable=protected-access
 
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
-from collections.abc import Generator
 
 import pytest
+from a2a.server.tasks import DatabaseTaskStore, InMemoryTaskStore
 from pytest_mock import MockerFixture
-
-from a2a.server.tasks import InMemoryTaskStore, DatabaseTaskStore
 
 from a2a_storage import A2AStorageFactory
 from a2a_storage.in_memory_context_store import InMemoryA2AContextStore

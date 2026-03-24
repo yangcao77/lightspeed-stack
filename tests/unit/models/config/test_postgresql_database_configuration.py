@@ -3,15 +3,13 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 from pytest_subtests import SubTests
 
-from pydantic import ValidationError
-
 from constants import (
-    POSTGRES_DEFAULT_SSL_MODE,
     POSTGRES_DEFAULT_GSS_ENCMODE,
+    POSTGRES_DEFAULT_SSL_MODE,
 )
-
 from models.config import PostgreSQLDatabaseConfiguration
 
 

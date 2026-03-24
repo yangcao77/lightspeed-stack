@@ -18,7 +18,6 @@ from app.endpoints.conversations_v1 import (
     get_conversations_list_endpoint_handler,
     update_conversation_endpoint_handler,
 )
-from utils.conversations import build_conversation_turns_from_items
 from configuration import AppConfig
 from models.config import Action
 from models.database.conversations import UserConversation, UserTurn
@@ -32,6 +31,7 @@ from models.responses import (
     InternalServerErrorResponse,
 )
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
+from utils.conversations import build_conversation_turns_from_items
 
 MOCK_AUTH = ("mock_user_id", "mock_username", False, "mock_token")
 VALID_CONVERSATION_ID = "123e4567-e89b-12d3-a456-426614174000"

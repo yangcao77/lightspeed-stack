@@ -1,7 +1,7 @@
 """Unit tests for the /health REST API endpoint."""
 
-from llama_stack_client import APIConnectionError
 import pytest
+from llama_stack_client import APIConnectionError
 from pytest_mock import MockerFixture
 
 from app.endpoints.health import (
