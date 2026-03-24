@@ -740,6 +740,11 @@ stored.</td>
           <td/>
           <td/>
         </tr>
+        <tr class="odd">
+          <td>allow_verbose_infer</td>
+          <td>boolean</td>
+          <td/>
+        </tr>
       </tbody>
     </table>
     <h2 id="databaseconfiguration">DatabaseConfiguration</h2>
@@ -1127,18 +1132,24 @@ relevant when <code>"okp"</code> is listed in <code>rag.inline</code> or
       </thead>
       <tbody>
         <tr class="odd">
+          <td>rhokp_url</td>
+          <td>string</td>
+          <td>Base URL for the OKP server (http or https). Set to
+<code>${env.RH_SERVER_OKP}</code> in YAML to use the environment
+variable. When unset, the default from constants is used.</td>
+        </tr>
+        <tr class="even">
           <td>offline</td>
           <td>boolean</td>
           <td>When True, use parent_id for OKP chunk source URLs. When False, use
 reference_url for chunk source URLs.</td>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>chunk_filter_query</td>
           <td>string</td>
-          <td>OKP filter query applied to every OKP search request. Defaults to
-&#x2018;is_chunk:true&#x2019; to restrict results to chunk documents. To add extra
-constraints, extend the expression using boolean syntax,
-e.g.&#xA0;&#x2018;is_chunk:true AND product:<em>openshift</em>&#x2019;.</td>
+          <td>Additional OKP filter query applied to every OKP search request. Use
+Solr boolean syntax, e.g.&#xA0;&#x2018;product:ansible AND
+product:<em>openshift</em>&#x2019;.</td>
         </tr>
       </tbody>
     </table>
@@ -1375,6 +1386,11 @@ times with specified delay.</td>
     <h2 id="rhidentityconfiguration">RHIdentityConfiguration</h2>
     <p>Red Hat Identity authentication configuration.</p>
     <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
       <thead>
         <tr class="header">
           <th>Field</th>
@@ -1387,6 +1403,12 @@ times with specified delay.</td>
           <td>required_entitlements</td>
           <td>array</td>
           <td>List of all required entitlements.</td>
+        </tr>
+        <tr class="even">
+          <td>max_header_size</td>
+          <td>integer</td>
+          <td>Maximum allowed size in bytes for the base64-encoded x-rh-identity
+header. Headers exceeding this size are rejected before decoding.</td>
         </tr>
       </tbody>
     </table>
@@ -1689,3 +1711,4 @@ further processing.</td>
     </table>
   </body>
 </html>
+
