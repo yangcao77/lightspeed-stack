@@ -110,22 +110,6 @@ Microsoft Entra ID authentication attributes for Azure.
 
 BYOK (Bring Your Own Knowledge) RAG configuration.
 
-Each entry registers a local vector store. The `rag_id` is the
-identifier used in `rag.inline` and `rag.tool` to select which stores to use.
-
-Example:
-
-```yaml
-byok_rag:
-  - rag_id: my-docs          # referenced in rag.inline / rag.tool
-    rag_type: inline::faiss
-    embedding_model: sentence-transformers/all-MiniLM-L6-v2
-    embedding_dimension: 384
-    vector_db_id: vs_abc123
-    db_path: /path/to/faiss_store.db
-    score_multiplier: 1.0
-```
-
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -233,6 +217,7 @@ Service customization.
 | agent_card_path | string |  |
 | agent_card_config | object |  |
 | custom_profile |  |  |
+| allow_verbose_infer | boolean |  |
 
 
 ## DatabaseConfiguration
@@ -407,9 +392,9 @@ Only relevant when ``"okp"`` is listed in ``rag.inline`` or ``rag.tool``.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| rhokp_url | string | Base URL for the OKP server. Set to `${env.RH_SERVER_OKP}` in YAML to use the environment variable. When missing or empty, the application default is used. |
+| rhokp_url | string | Base URL for the OKP server (http or https). Set to `${env.RH_SERVER_OKP}` in YAML to use the environment variable. When unset, the default from constants is used. |
 | offline | boolean | When True, use parent_id for OKP chunk source URLs. When False, use reference_url for chunk source URLs. |
-| chunk_filter_query | string | Additional OKP filter query applied to every OKP search request. Use Solr boolean syntax, e.g. 'product:\*ansible\* AND product:\*openshift\*'. |
+| chunk_filter_query | string | Additional OKP filter query applied to every OKP search request. Use Solr boolean syntax, e.g. 'product:ansible AND product:*openshift*'. |
 
 
 ## PostgreSQLDatabaseConfiguration
@@ -516,6 +501,7 @@ Red Hat Identity authentication configuration.
 | Field | Type | Description |
 |-------|------|-------------|
 | required_entitlements | array | List of all required entitlements. |
+| max_header_size | integer | Maximum allowed size in bytes for the base64-encoded x-rh-identity header. Headers exceeding this size are rejected before decoding. |
 
 
 ## RagConfiguration
