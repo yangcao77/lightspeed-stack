@@ -79,169 +79,140 @@ def mock_llama_stack_streaming_fixture(
 # Attachment tests (mirror query integration)
 # ==========================================
 
+STREAMING_ATTACHMENT_TEST_CASES = [
+    pytest.param(
+        {
+            "attachments": None,
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="empty_payload",
+    ),
+    pytest.param(
+        {
+            "attachments": [],
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="empty_attachments_list",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="log",
+                    content_type="text/plain",
+                    content="log content",
+                ),
+                Attachment(
+                    attachment_type="configuration",
+                    content_type="application/json",
+                    content='{"key": "value"}',
+                ),
+            ],
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="multiple_attachments",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="unknown_type",
+                    content_type="text/plain",
+                    content="content",
+                )
+            ],
+            "expected_status": 422,
+            "expected_error": "unknown_type",
+        },
+        id="attachment_unknown_type_returns_422",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="log",
+                    content_type="unknown/type",
+                    content="content",
+                )
+            ],
+            "expected_status": 422,
+            "expected_error": "unknown/type",
+        },
+        id="attachment_unknown_content_type_returns_422",
+    ),
+]
+
 
 @pytest.mark.asyncio
-async def test_streaming_query_v2_endpoint_empty_payload(
+@pytest.mark.parametrize("test_case", STREAMING_ATTACHMENT_TEST_CASES)
+async def test_streaming_query_v2_endpoint_attachment_handling(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    test_case: dict,
     test_config: AppConfig,
     mock_streaming_llama_stack_client: AsyncMockType,
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test streaming_query with minimal payload (no attachments)."""
+    """Tests for streaming_query v2 endpoint attachment validation.
+
+    Tests various attachment scenarios using parameterized test data including:
+    - No attachments (None)
+    - Empty attachments list
+    - Multiple attachments
+    - Unknown attachment type (422 error)
+    - Unknown content type (422 error)
+
+    Parameters:
+        test_case: Dictionary containing test parameters (attachments,
+            expected_status, expected_error)
+        test_config: Test configuration
+        mock_streaming_llama_stack_client: Mocked Llama Stack client
+        test_request: FastAPI request
+        test_auth: noop authentication tuple
+    """
     _ = test_config
     _ = mock_streaming_llama_stack_client
 
-    query_request = QueryRequest(query="what is kubernetes?")
+    attachments = test_case["attachments"]
+    expected_status = test_case["expected_status"]
+    expected_error = test_case["expected_error"]
 
-    response = await streaming_query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
+    # Build query request with or without attachments
+    if attachments is None:
+        query_request = QueryRequest(query="what is kubernetes?")
+    else:
+        query_request = QueryRequest(
+            query="what is kubernetes?",
+            attachments=attachments,
+        )
 
-    assert response.status_code == status.HTTP_200_OK
-    assert isinstance(response, StreamingResponse)
-    assert response.media_type == "text/event-stream"
-
-
-@pytest.mark.asyncio
-async def test_streaming_query_v2_endpoint_empty_attachments_list(
-    test_config: AppConfig,
-    mock_streaming_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test streaming_query accepts empty attachment list."""
-    _ = test_config
-    _ = mock_streaming_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[],
-    )
-
-    response = await streaming_query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    assert isinstance(response, StreamingResponse)
-    assert response.media_type == "text/event-stream"
-
-
-@pytest.mark.asyncio
-async def test_streaming_query_v2_endpoint_multiple_attachments(
-    test_config: AppConfig,
-    mock_streaming_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test streaming_query with multiple attachments (log + configuration)."""
-    _ = test_config
-    _ = mock_streaming_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="log",
-                content_type="text/plain",
-                content="log content",
-            ),
-            Attachment(
-                attachment_type="configuration",
-                content_type="application/json",
-                content='{"key": "value"}',
-            ),
-        ],
-    )
-
-    response = await streaming_query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
-
-    assert response.status_code == status.HTTP_200_OK
-    assert isinstance(response, StreamingResponse)
-    assert response.media_type == "text/event-stream"
-
-
-@pytest.mark.asyncio
-async def test_streaming_query_v2_endpoint_attachment_unknown_type_returns_422(
-    test_config: AppConfig,
-    mock_streaming_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test streaming_query returns 422 for unknown attachment type."""
-    _ = test_config
-    _ = mock_streaming_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="unknown_type",
-                content_type="text/plain",
-                content="content",
-            )
-        ],
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        await streaming_query_endpoint_handler(
+    if expected_status == 200:
+        # Success case - verify streaming response
+        response = await streaming_query_endpoint_handler(
             request=test_request,
             query_request=query_request,
             auth=test_auth,
             mcp_headers={},
         )
-
-    assert exc_info.value.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-    assert isinstance(exc_info.value.detail, dict)
-    assert "unknown_type" in exc_info.value.detail["cause"]
-    assert "Invalid" in exc_info.value.detail["response"]
-
-
-@pytest.mark.asyncio
-async def test_streaming_query_v2_endpoint_attachment_unknown_content_type_returns_422(
-    test_config: AppConfig,
-    mock_streaming_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test streaming_query returns 422 for unknown attachment content type."""
-    _ = test_config
-    _ = mock_streaming_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="log",
-                content_type="unknown/type",
-                content="content",
+        assert response.status_code == expected_status
+        assert isinstance(response, StreamingResponse)
+        assert response.media_type == "text/event-stream"
+    else:
+        # Error case - verify exception
+        with pytest.raises(HTTPException) as exc_info:
+            await streaming_query_endpoint_handler(
+                request=test_request,
+                query_request=query_request,
+                auth=test_auth,
+                mcp_headers={},
             )
-        ],
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        await streaming_query_endpoint_handler(
-            request=test_request,
-            query_request=query_request,
-            auth=test_auth,
-            mcp_headers={},
-        )
-
-    assert exc_info.value.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-    assert isinstance(exc_info.value.detail, dict)
-    assert "unknown/type" in exc_info.value.detail["cause"]
-    assert "Invalid" in exc_info.value.detail["response"]
+        assert exc_info.value.status_code == expected_status
+        assert isinstance(exc_info.value.detail, dict)
+        if expected_error:
+            assert expected_error in exc_info.value.detail["cause"]
+            assert "Invalid" in exc_info.value.detail["response"]
 
 
 def test_streaming_query_v2_endpoint_empty_body_returns_422(
@@ -258,30 +229,65 @@ def test_streaming_query_v2_endpoint_empty_body_returns_422(
     assert "detail" in data
 
 
+STREAMING_OAUTH_401_TEST_CASES = [
+    pytest.param(
+        {
+            "www_authenticate": 'Bearer realm="oauth"',
+            "expect_www_authenticate": True,
+        },
+        id="with_www_authenticate_when_mcp_oauth_required",
+    ),
+    pytest.param(
+        {
+            "www_authenticate": None,
+            "expect_www_authenticate": False,
+        },
+        id="without_www_authenticate_when_oauth_probe_times_out",
+    ),
+]
+
+
 @pytest.mark.asyncio
-async def test_streaming_query_endpoint_returns_401_with_www_authenticate_when_mcp_oauth_required(
+@pytest.mark.parametrize("test_case", STREAMING_OAUTH_401_TEST_CASES)
+async def test_streaming_query_endpoint_returns_401_for_mcp_oauth(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    test_case: dict,
     test_config: AppConfig,
     mock_streaming_llama_stack_client: Any,
     test_request: Request,
     test_auth: AuthTuple,
     mocker: MockerFixture,
 ) -> None:
-    """Test streaming_query returns 401 with WWW-Authenticate when MCP server requires OAuth.
+    """Tests for streaming_query endpoint MCP OAuth 401 responses.
 
-    When prepare_responses_params calls get_mcp_tools and an MCP server is
-    configured for OAuth without client-provided headers, get_mcp_tools raises
-    401 with WWW-Authenticate. This test verifies the streaming handler
-    propagates that response to the client.
+    Tests different OAuth failure scenarios:
+    - MCP server requires OAuth with WWW-Authenticate header
+    - OAuth probe times out without WWW-Authenticate header
+
+    When get_mcp_tools raises 401 (with or without WWW-Authenticate),
+    the streaming handler should propagate that response to the client.
+
+    Parameters:
+        test_case: Dictionary containing test parameters (www_authenticate,
+            expect_www_authenticate)
+        test_config: Test configuration
+        mock_streaming_llama_stack_client: Mocked Llama Stack client
+        test_request: FastAPI request
+        test_auth: noop authentication tuple
+        mocker: pytest-mock fixture
     """
     _ = test_config
     _ = mock_streaming_llama_stack_client
 
-    expected_www_auth = 'Bearer realm="oauth"'
+    www_authenticate = test_case["www_authenticate"]
+    expect_www_authenticate = test_case["expect_www_authenticate"]
+
+    # Build 401 exception with or without WWW-Authenticate header
     oauth_401 = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail={"cause": "MCP server at http://example.com requires OAuth"},
-        headers={"WWW-Authenticate": expected_www_auth},
+        headers={"WWW-Authenticate": www_authenticate} if www_authenticate else None,
     )
+
     mocker.patch(
         "utils.responses.get_mcp_tools",
         new_callable=mocker.AsyncMock,
@@ -299,52 +305,12 @@ async def test_streaming_query_endpoint_returns_401_with_www_authenticate_when_m
         )
 
     assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-    assert exc_info.value.headers is not None
-    assert exc_info.value.headers.get("WWW-Authenticate") == expected_www_auth
 
-
-@pytest.mark.asyncio
-async def test_streaming_query_returns_401_when_oauth_probe_times_out(
-    test_config: AppConfig,
-    mock_streaming_llama_stack_client: Any,
-    test_request: Request,
-    test_auth: AuthTuple,
-    mocker: MockerFixture,
-) -> None:
-    """Test streaming_query returns 401 when OAuth probe times out.
-
-    When prepare_responses_params calls get_mcp_tools and the MCP OAuth probe
-    times out (TimeoutError), get_mcp_tools raises 401 without a
-    WWW-Authenticate header. This test verifies the streaming handler
-    propagates that response.
-    """
-    _ = test_config
-    _ = mock_streaming_llama_stack_client
-
-    # Probe timed out: 401 without WWW-Authenticate (same as real probe on TimeoutError)
-    oauth_probe_timeout_401 = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"cause": "MCP server at http://example.com requires OAuth"},
-        headers=None,
-    )
-    mocker.patch(
-        "utils.responses.get_mcp_tools",
-        new_callable=mocker.AsyncMock,
-        side_effect=oauth_probe_timeout_401,
-    )
-
-    query_request = QueryRequest(query="What is Ansible?")
-
-    with pytest.raises(HTTPException) as exc_info:
-        await streaming_query_endpoint_handler(
-            request=test_request,
-            query_request=query_request,
-            auth=test_auth,
-            mcp_headers={},
+    if expect_www_authenticate:
+        assert exc_info.value.headers is not None
+        assert exc_info.value.headers.get("WWW-Authenticate") == www_authenticate
+    else:
+        assert (
+            exc_info.value.headers is None
+            or exc_info.value.headers.get("WWW-Authenticate") is None
         )
-
-    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-    assert (
-        exc_info.value.headers is None
-        or exc_info.value.headers.get("WWW-Authenticate") is None
-    )

@@ -135,22 +135,47 @@ async def test_query_v2_endpoint_handles_connection_error(
     assert "cause" in exc_info.value.detail
 
 
+OAUTH_401_TEST_CASES = [
+    pytest.param(
+        {
+            "www_authenticate": 'Bearer realm="oauth"',
+            "expect_www_authenticate": True,
+        },
+        id="with_www_authenticate_when_mcp_oauth_required",
+    ),
+    pytest.param(
+        {
+            "www_authenticate": None,
+            "expect_www_authenticate": False,
+        },
+        id="without_www_authenticate_when_oauth_probe_times_out",
+    ),
+]
+
+
 @pytest.mark.asyncio
-async def test_query_v2_endpoint_returns_401_with_www_authenticate_when_mcp_oauth_required(
+@pytest.mark.parametrize("test_case", OAUTH_401_TEST_CASES)
+async def test_query_v2_endpoint_returns_401_for_mcp_oauth(
+    test_case: dict,
     test_config: AppConfig,
     mock_llama_stack_client: AsyncMockType,
     test_request: Request,
     test_auth: AuthTuple,
     mocker: MockerFixture,
 ) -> None:
-    """Test query endpoint returns 401 with WWW-Authenticate when MCP server requires OAuth.
+    """Test for query endpoint MCP OAuth 401 responses.
 
-    When prepare_tools calls get_mcp_tools and an MCP server is configured for OAuth
-    without client-provided headers, get_mcp_tools raises 401 with WWW-Authenticate.
-    This test verifies the query handler propagates that response to the client.
+    Tests different OAuth failure scenarios:
+    - MCP server requires OAuth with WWW-Authenticate header
+    - OAuth probe times out without WWW-Authenticate header
+
+    When get_mcp_tools raises 401 (with or without WWW-Authenticate),
+    the query handler should propagate that response to the client.
 
     Parameters:
     ----------
+        test_case: Dictionary containing test parameters (www_authenticate,
+            expect_www_authenticate)
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -160,12 +185,16 @@ async def test_query_v2_endpoint_returns_401_with_www_authenticate_when_mcp_oaut
     _ = test_config
     _ = mock_llama_stack_client
 
-    expected_www_auth = 'Bearer realm="oauth"'
+    www_authenticate = test_case["www_authenticate"]
+    expect_www_authenticate = test_case["expect_www_authenticate"]
+
+    # Build 401 exception with or without WWW-Authenticate header
     oauth_401 = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail={"cause": "MCP server at http://example.com requires OAuth"},
-        headers={"WWW-Authenticate": expected_www_auth},
+        headers={"WWW-Authenticate": www_authenticate} if www_authenticate else None,
     )
+
     mocker.patch(
         "utils.responses.get_mcp_tools",
         new_callable=mocker.AsyncMock,
@@ -183,63 +212,15 @@ async def test_query_v2_endpoint_returns_401_with_www_authenticate_when_mcp_oaut
         )
 
     assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-    assert exc_info.value.headers is not None
-    assert exc_info.value.headers.get("WWW-Authenticate") == expected_www_auth
 
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_returns_401_when_oauth_probe_times_out(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-    mocker: MockerFixture,
-) -> None:
-    """Test query endpoint returns 401 when OAuth probe times out.
-
-    When prepare_responses_params calls get_mcp_tools and the MCP OAuth probe
-    times out (TimeoutError), get_mcp_tools raises 401 without a
-    WWW-Authenticate header. This test verifies the query handler propagates
-    that response.
-
-    Parameters:
-    ----------
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-        mocker: pytest-mock fixture
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    # Probe timed out: 401 without WWW-Authenticate (same as real probe on TimeoutError)
-    oauth_probe_timeout_401 = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail={"cause": "MCP server at http://example.com requires OAuth"},
-        headers=None,
-    )
-    mocker.patch(
-        "utils.responses.get_mcp_tools",
-        new_callable=mocker.AsyncMock,
-        side_effect=oauth_probe_timeout_401,
-    )
-
-    query_request = QueryRequest(query="What is Ansible?")
-
-    with pytest.raises(HTTPException) as exc_info:
-        await query_endpoint_handler(
-            request=test_request,
-            query_request=query_request,
-            auth=test_auth,
-            mcp_headers={},
+    if expect_www_authenticate:
+        assert exc_info.value.headers is not None
+        assert exc_info.value.headers.get("WWW-Authenticate") == www_authenticate
+    else:
+        assert (
+            exc_info.value.headers is None
+            or exc_info.value.headers.get("WWW-Authenticate") is None
         )
-
-    assert exc_info.value.status_code == status.HTTP_401_UNAUTHORIZED
-    assert (
-        exc_info.value.headers is None
-        or exc_info.value.headers.get("WWW-Authenticate") is None
-    )
 
 
 @pytest.mark.asyncio
@@ -286,23 +267,113 @@ async def test_query_v2_endpoint_empty_query(
 # Request/Input Handling Tests
 # ==========================================
 
+ATTACHMENT_TEST_CASES = [
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="configuration",
+                    content_type="application/yaml",
+                    content=(
+                        "---\n- name: Test playbook\n"
+                        "  hosts: all\n  tasks:\n    - debug: msg='test'"
+                    ),
+                )
+            ],
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="with_attachments",
+    ),
+    pytest.param(
+        {
+            "attachments": None,
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="empty_payload",
+    ),
+    pytest.param(
+        {
+            "attachments": [],
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="empty_attachments_list",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="log",
+                    content_type="text/plain",
+                    content="log content",
+                ),
+                Attachment(
+                    attachment_type="configuration",
+                    content_type="application/json",
+                    content='{"key": "value"}',
+                ),
+            ],
+            "expected_status": 200,
+            "expected_error": None,
+        },
+        id="multiple_attachments",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="unknown_type",
+                    content_type="text/plain",
+                    content="content",
+                )
+            ],
+            "expected_status": 422,
+            "expected_error": "unknown_type",
+        },
+        id="attachment_unknown_type_returns_422",
+    ),
+    pytest.param(
+        {
+            "attachments": [
+                Attachment(
+                    attachment_type="log",
+                    content_type="unknown/type",
+                    content="content",
+                )
+            ],
+            "expected_status": 422,
+            "expected_error": "unknown/type",
+        },
+        id="attachment_unknown_content_type_returns_422",
+    ),
+]
+
 
 @pytest.mark.asyncio
-async def test_query_v2_endpoint_with_attachments(
+@pytest.mark.parametrize("test_case", ATTACHMENT_TEST_CASES)
+async def test_query_v2_endpoint_attachment_handling(
+    test_case: dict,
     test_config: AppConfig,
     mock_llama_stack_client: AsyncMockType,
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test query v2 endpoint with attachments.
+    """Tests for query v2 endpoint attachment validation.
 
-    This integration test verifies:
-    - Attachments are properly validated
-    - Attachment content is included in request
-    - Response handles attachments correctly
+    Tests various attachment scenarios using parameterized test data including:
+    - Single attachment
+    - No attachments (None)
+    - Empty attachments list
+    - Multiple attachments
+    - Unknown attachment type (422 error)
+    - Unknown content type (422 error)
 
     Parameters:
     ----------
+        test_case: Dictionary containing test parameters (attachments,
+            expected_status, expected_error)
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -311,205 +382,43 @@ async def test_query_v2_endpoint_with_attachments(
     _ = test_config
     _ = mock_llama_stack_client
 
-    query_request = QueryRequest(
-        query="Analyze this playbook",
-        attachments=[
-            Attachment(
-                attachment_type="configuration",
-                content_type="application/yaml",
-                content=(
-                    "---\n- name: Test playbook\n"
-                    "  hosts: all\n  tasks:\n    - debug: msg='test'"
-                ),
-            )
-        ],
-    )
+    attachments = test_case["attachments"]
+    expected_status = test_case["expected_status"]
+    expected_error = test_case["expected_error"]
 
-    response = await query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
+    # Build query request with or without attachments
+    if attachments is None:
+        query_request = QueryRequest(query="what is kubernetes?")
+    else:
+        query_request = QueryRequest(
+            query="what is kubernetes?",
+            attachments=attachments,
+        )
 
-    assert response.conversation_id is not None
-    assert response.response is not None
-
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_empty_payload(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test query v2 endpoint with minimal payload (no attachments).
-
-    Verifies that a request with only the required query and no attachments
-    field does not break the handler and returns 200.
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    query_request = QueryRequest(query="what is kubernetes?")
-
-    response = await query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
-
-    assert getattr(response, "status_code", status.HTTP_200_OK) == status.HTTP_200_OK
-    assert response.conversation_id is not None
-    assert response.response is not None
-
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_empty_attachments_list(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test query v2 endpoint accepts empty attachment list.
-
-    Verifies that POST /v1/query with attachments=[] returns 200 and
-    application/json response.
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[],
-    )
-
-    response = await query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
-
-    assert getattr(response, "status_code", status.HTTP_200_OK) == status.HTTP_200_OK
-    assert response.conversation_id is not None
-    assert response.response is not None
-
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_multiple_attachments(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test query v2 endpoint with multiple attachments.
-
-    Verifies that two attachments (log + configuration) are accepted
-    and processed.
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="log",
-                content_type="text/plain",
-                content="log content",
-            ),
-            Attachment(
-                attachment_type="configuration",
-                content_type="application/json",
-                content='{"key": "value"}',
-            ),
-        ],
-    )
-
-    response = await query_endpoint_handler(
-        request=test_request,
-        query_request=query_request,
-        auth=test_auth,
-        mcp_headers={},
-    )
-
-    assert getattr(response, "status_code", status.HTTP_200_OK) == status.HTTP_200_OK
-    assert response.conversation_id is not None
-    assert response.response is not None
-
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_attachment_unknown_type_returns_422(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test query v2 endpoint returns 422 for unknown attachment type."""
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="unknown_type",
-                content_type="text/plain",
-                content="content",
-            )
-        ],
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        await query_endpoint_handler(
+    if expected_status == 200:
+        # Success case - verify response
+        response = await query_endpoint_handler(
             request=test_request,
             query_request=query_request,
             auth=test_auth,
             mcp_headers={},
         )
-
-    assert exc_info.value.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-    assert isinstance(exc_info.value.detail, dict)
-    assert "unknown_type" in exc_info.value.detail["cause"]
-    assert "Invalid" in exc_info.value.detail["response"]
-
-
-@pytest.mark.asyncio
-async def test_query_v2_endpoint_attachment_unknown_content_type_returns_422(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test query v2 endpoint returns 422 for unknown attachment content type."""
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    query_request = QueryRequest(
-        query="what is kubernetes?",
-        attachments=[
-            Attachment(
-                attachment_type="log",
-                content_type="unknown/type",
-                content="content",
+        assert response.conversation_id is not None
+        assert response.response is not None
+    else:
+        # Error case - verify exception
+        with pytest.raises(HTTPException) as exc_info:
+            await query_endpoint_handler(
+                request=test_request,
+                query_request=query_request,
+                auth=test_auth,
+                mcp_headers={},
             )
-        ],
-    )
-
-    with pytest.raises(HTTPException) as exc_info:
-        await query_endpoint_handler(
-            request=test_request,
-            query_request=query_request,
-            auth=test_auth,
-            mcp_headers={},
-        )
-
-    assert exc_info.value.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
-    assert isinstance(exc_info.value.detail, dict)
-    assert "unknown/type" in exc_info.value.detail["cause"]
-    assert "Invalid" in exc_info.value.detail["response"]
+        assert exc_info.value.status_code == expected_status
+        assert isinstance(exc_info.value.detail, dict)
+        if expected_error:
+            assert expected_error in exc_info.value.detail["cause"]
+            assert "Invalid" in exc_info.value.detail["response"]
 
 
 # ==========================================
