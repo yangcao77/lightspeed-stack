@@ -7,7 +7,7 @@ import aiohttp
 import pytest
 from pytest_mock import MockerFixture
 
-from observability.splunk import send_splunk_event, _read_token_from_file
+from observability.splunk import _read_token_from_file, send_splunk_event
 
 
 @pytest.fixture(name="mock_splunk_config")

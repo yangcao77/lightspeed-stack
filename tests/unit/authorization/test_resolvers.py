@@ -1,17 +1,17 @@
 """Unit tests for the authorization resolvers."""
 
-import json
 import base64
+import json
 import re
 from contextlib import nullcontext as does_not_raise
-
 from typing import Any
+
 import pytest
 
-from authentication.interface import AuthTuple
-from authorization.resolvers import JwtRolesResolver, GenericAccessResolver
-from models.config import JwtRoleRule, AccessRule, JsonPathOperator, Action
 import constants
+from authentication.interface import AuthTuple
+from authorization.resolvers import GenericAccessResolver, JwtRolesResolver
+from models.config import AccessRule, Action, JsonPathOperator, JwtRoleRule
 
 
 def claims_to_token(claims: dict) -> str:

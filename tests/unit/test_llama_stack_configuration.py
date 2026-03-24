@@ -7,19 +7,19 @@ import pytest
 import yaml
 
 from llama_stack_configuration import (
-    generate_configuration,
-    construct_vector_stores_section,
-    construct_vector_io_providers_section,
-    construct_storage_backends_section,
     construct_models_section,
+    construct_storage_backends_section,
+    construct_vector_io_providers_section,
+    construct_vector_stores_section,
     enrich_solr,
+    generate_configuration,
 )
 from models.config import (
     Configuration,
-    ServiceConfiguration,
-    LlamaStackConfiguration,
-    UserDataCollection,
     InferenceConfiguration,
+    LlamaStackConfiguration,
+    ServiceConfiguration,
+    UserDataCollection,
 )
 
 # =============================================================================

@@ -1,8 +1,8 @@
 """Integration tests for the /config endpoint."""
 
 from typing import cast
-import pytest
 
+import pytest
 from fastapi import HTTPException, Request, status
 
 from app.endpoints.config import config_endpoint_handler

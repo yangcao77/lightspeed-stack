@@ -1,7 +1,6 @@
 """Unit tests for SplunkConfiguration model."""
 
 from pathlib import Path
-
 from typing import Optional
 
 import pytest

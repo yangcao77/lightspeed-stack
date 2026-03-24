@@ -1,12 +1,12 @@
 """Fixtures used by benchmarks."""
 
 from pathlib import Path
-import pytest
 
 import psycopg2
+import pytest
 
 from app import database
-from configuration import configuration, AppConfig
+from configuration import AppConfig, configuration
 
 
 @pytest.fixture(name="configuration_filename_sqlite")

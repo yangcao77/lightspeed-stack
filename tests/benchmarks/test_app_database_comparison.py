@@ -4,12 +4,12 @@ import pytest
 from pytest_benchmark.fixture import BenchmarkFixture
 
 from .db_benchmarks import (
-    benchmark_store_new_user_conversations,
-    benchmark_update_user_conversation,
     benchmark_list_conversations_for_all_users,
     benchmark_list_conversations_for_one_user,
     benchmark_retrieve_conversation,
     benchmark_retrieve_conversation_for_one_user,
+    benchmark_store_new_user_conversations,
+    benchmark_update_user_conversation,
 )
 
 # number of records to be stored in database before benchmarks

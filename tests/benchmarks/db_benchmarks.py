@@ -1,18 +1,18 @@
 """Database benchmarks implementations."""
 
-from typing import Optional
-from sqlalchemy.orm import Session
 from datetime import UTC, datetime
+from typing import Optional
+
 from pytest_benchmark.fixture import BenchmarkFixture
+from sqlalchemy.orm import Session
 
 from app.database import get_session
+from models.database.conversations import UserConversation
 from utils.suid import get_suid
 
-from models.database.conversations import UserConversation
-
 from .data_generators import (
-    generate_provider,
     generate_model_for_provider,
+    generate_provider,
     generate_topic_summary,
 )
 

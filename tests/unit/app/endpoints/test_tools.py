@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pydantic import SecretStr, AnyHttpUrl
 from fastapi import HTTPException
 from llama_stack_client import APIConnectionError, BadRequestError
+from pydantic import AnyHttpUrl, SecretStr
 from pytest_mock import MockerFixture, MockType
 
 # Import the function directly to bypass decorators
@@ -18,12 +18,12 @@ from authentication.interface import AuthTuple
 from configuration import AppConfig
 from models.config import (
     Configuration,
+    CORSConfiguration,
     LlamaStackConfiguration,
     ModelContextProtocolServer,
     ServiceConfiguration,
-    UserDataCollection,
     TLSConfiguration,
-    CORSConfiguration,
+    UserDataCollection,
 )
 from models.responses import ToolsResponse
 

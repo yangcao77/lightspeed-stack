@@ -4,8 +4,8 @@ from sqlite3 import OperationalError
 
 import pytest
 
-from quota.connect_sqlite import connect_sqlite
 from models.config import SQLiteDatabaseConfiguration
+from quota.connect_sqlite import connect_sqlite
 
 
 def test_connect_sqlite_when_connection_established() -> None:

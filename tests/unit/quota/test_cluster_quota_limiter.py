@@ -3,9 +3,9 @@
 import pytest
 
 from models.config import (
+    QuotaHandlersConfiguration,
     QuotaLimiterConfiguration,
     SQLiteDatabaseConfiguration,
-    QuotaHandlersConfiguration,
 )
 from quota.cluster_quota_limiter import ClusterQuotaLimiter
 from quota.quota_exceed_error import QuotaExceedError

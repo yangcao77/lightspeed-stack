@@ -6,11 +6,11 @@ from typing import Any
 import pytest
 from pydantic import BaseModel, ValidationError
 
+from models.responses import AbstractSuccessfulResponse
 from models.rlsapi.responses import (
     RlsapiV1InferData,
     RlsapiV1InferResponse,
 )
-from models.responses import AbstractSuccessfulResponse
 
 # ---------------------------------------------------------------------------
 # Fixtures

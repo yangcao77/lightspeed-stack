@@ -4,8 +4,8 @@
 
 import logging
 import time
-from typing import Any
 from collections.abc import Generator
+from typing import Any
 
 import pytest
 from azure.core.credentials import AccessToken
@@ -15,8 +15,8 @@ from pytest_mock import MockerFixture
 
 from authorization import azure_token_manager
 from authorization.azure_token_manager import (
-    AzureEntraIDManager,
     TOKEN_EXPIRATION_LEEWAY,
+    AzureEntraIDManager,
 )
 from configuration import AzureEntraIdConfiguration
 

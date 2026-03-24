@@ -1,12 +1,12 @@
 """Unit tests for conversation utility functions."""
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
+import pytest
 from fastapi import HTTPException
 from llama_stack_api import OpenAIResponseMessage
 from llama_stack_client import APIConnectionError, APIStatusError
-import pytest
 from pytest_mock import MockerFixture
 
 from constants import DEFAULT_RAG_TOOL

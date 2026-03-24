@@ -1,8 +1,8 @@
 # pylint: disable=no-member
 """Unit tests for rlsapi v1 request models."""
 
-from typing import Any, Optional
 from collections.abc import Callable
+from typing import Any, Optional
 
 import pytest
 from pydantic import BaseModel, ValidationError

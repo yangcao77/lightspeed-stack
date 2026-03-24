@@ -3,16 +3,15 @@
 from pathlib import Path
 
 import pytest
-from pytest_subtests import SubTests
-
 from pydantic import ValidationError
+from pytest_subtests import SubTests
 
 import constants
 from models.config import (
     ConversationHistoryConfiguration,
     InMemoryCacheConfig,
-    SQLiteDatabaseConfiguration,
     PostgreSQLDatabaseConfiguration,
+    SQLiteDatabaseConfiguration,
 )
 
 

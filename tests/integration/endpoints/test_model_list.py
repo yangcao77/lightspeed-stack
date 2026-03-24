@@ -1,18 +1,18 @@
 """Integration tests for the /models endpoint (using Responses API)."""
 
-from typing import Any
 from collections.abc import Generator
+from typing import Any
 
 import pytest
 from fastapi import Request
 from fastapi.exceptions import HTTPException
-from pytest_mock import AsyncMockType, MockerFixture
 from llama_stack_client import APIConnectionError
+from pytest_mock import AsyncMockType, MockerFixture
 
-from models.requests import ModelFilter
 from app.endpoints.models import models_endpoint_handler
 from authentication.interface import AuthTuple
 from configuration import AppConfig
+from models.requests import ModelFilter
 
 
 @pytest.fixture(name="mock_llama_stack_client")

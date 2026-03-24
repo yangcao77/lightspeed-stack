@@ -4,8 +4,8 @@ import json
 from typing import cast
 
 import pytest
-from pytest_mock import MockerFixture
 from fastapi import HTTPException, status
+from pytest_mock import MockerFixture
 from starlette.types import Message, Receive, Scope, Send
 
 from app.main import GlobalExceptionMiddleware, RestApiMetricsMiddleware

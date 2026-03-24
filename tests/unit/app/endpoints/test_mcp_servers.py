@@ -6,9 +6,9 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from pydantic import SecretStr, AnyHttpUrl
 from fastapi import HTTPException
 from llama_stack_client import APIConnectionError
+from pydantic import AnyHttpUrl, SecretStr
 from pytest_mock import MockerFixture
 
 from app.endpoints import mcp_servers
@@ -16,18 +16,18 @@ from authentication.interface import AuthTuple
 from configuration import AppConfig
 from models.config import (
     Configuration,
+    CORSConfiguration,
     LlamaStackConfiguration,
     ModelContextProtocolServer,
     ServiceConfiguration,
-    UserDataCollection,
     TLSConfiguration,
-    CORSConfiguration,
+    UserDataCollection,
 )
 from models.requests import MCPServerRegistrationRequest
 from models.responses import (
-    MCPServerRegistrationResponse,
-    MCPServerListResponse,
     MCPServerDeleteResponse,
+    MCPServerListResponse,
+    MCPServerRegistrationResponse,
 )
 
 MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")

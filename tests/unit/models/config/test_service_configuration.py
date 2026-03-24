@@ -1,7 +1,6 @@
 """Unit tests for ServiceConfiguration model."""
 
 import pytest
-
 from pydantic import ValidationError
 
 from models.config import ServiceConfiguration, TLSConfiguration

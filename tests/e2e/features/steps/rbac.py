@@ -1,6 +1,7 @@
 """Step definitions for RBAC E2E tests."""
 
 import os
+
 import requests
 from behave import given  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context

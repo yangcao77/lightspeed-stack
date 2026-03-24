@@ -24,7 +24,6 @@ from models.responses import (
     PromptTooLongResponse,
     QuotaExceededResponse,
 )
-
 from tests.unit import config_dict
 from utils.query import (
     consume_query_tokens,

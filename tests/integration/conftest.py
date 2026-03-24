@@ -1,28 +1,25 @@
 """Shared fixtures for integration tests."""
 
 import os
-from pathlib import Path
 from collections.abc import Generator
+from pathlib import Path
 from typing import Any
 
 import pytest
 from fastapi import Request, Response
 from fastapi.testclient import TestClient
 from pytest_mock import MockerFixture
-
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, Session
 from sqlalchemy.engine import Engine
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from authentication.noop import NoopAuthDependency
+import app.database
 from authentication.interface import AuthTuple
-
+from authentication.noop import NoopAuthDependency
 from configuration import configuration
 from models.config import Action
 from models.database.base import Base
-
-import app.database
 
 # ==========================================
 # Common Test Constants

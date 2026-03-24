@@ -30,6 +30,7 @@ from app.endpoints.rlsapi_v1 import (
 from authentication.interface import AuthTuple
 from authentication.rh_identity import RHIdentityData
 from configuration import AppConfig
+from models.responses import ServiceUnavailableResponse
 from models.rlsapi.requests import (
     RlsapiV1Attachment,
     RlsapiV1Context,
@@ -37,7 +38,6 @@ from models.rlsapi.requests import (
     RlsapiV1SystemInfo,
     RlsapiV1Terminal,
 )
-from models.responses import ServiceUnavailableResponse
 from models.rlsapi.responses import RlsapiV1InferResponse
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid

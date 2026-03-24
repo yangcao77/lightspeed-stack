@@ -4,12 +4,13 @@ import json
 
 import requests
 from behave import (
+    given,
+    step,
     then,
     when,
-    step,
-    given,
 )  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
+
 from tests.e2e.utils.utils import (
     normalize_endpoint,
     replace_placeholders,

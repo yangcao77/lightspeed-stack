@@ -1,10 +1,9 @@
 """Unit tests for JwtRoleRule model."""
 
 import pytest
-
 from pydantic import ValidationError
 
-from models.config import JwtRoleRule, JsonPathOperator
+from models.config import JsonPathOperator, JwtRoleRule
 
 
 def test_jwt_role_rule_missing_attributes() -> None:

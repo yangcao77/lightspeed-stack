@@ -3,14 +3,13 @@
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 from pytest_subtests import SubTests
 
-from pydantic import ValidationError
-
 from models.config import (
+    DatabaseConfiguration,
     PostgreSQLDatabaseConfiguration,
     SQLiteDatabaseConfiguration,
-    DatabaseConfiguration,
 )
 
 

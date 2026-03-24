@@ -7,7 +7,7 @@ Uses only Python stdlib.
 """
 
 import json
-from http.server import HTTPServer, BaseHTTPRequestHandler
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Optional
 
 # Standard OAuth-style challenge so the client can drive an OAuth flow

@@ -1,6 +1,7 @@
 """Unit tests for functions defined in authentication/utils.py"""
 
 from typing import cast
+
 from fastapi import HTTPException
 from starlette.datastructures import Headers
 

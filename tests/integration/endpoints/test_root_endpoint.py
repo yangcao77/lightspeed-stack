@@ -1,16 +1,16 @@
 """Integration tests for the /root endpoint."""
 
-from typing import Any
 from collections.abc import Generator
-import pytest
-from pytest_mock import MockerFixture
+from typing import Any
 
+import pytest
 from fastapi import Request, status
 from llama_stack_client.types import VersionInfo
-from authentication.interface import AuthTuple
+from pytest_mock import MockerFixture
 
-from configuration import AppConfig
 from app.endpoints.root import root_endpoint_handler
+from authentication.interface import AuthTuple
+from configuration import AppConfig
 
 
 @pytest.fixture(name="mock_llama_stack_client")

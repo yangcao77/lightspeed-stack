@@ -18,12 +18,11 @@ from authentication.k8s import (
     ClusterVersionPermissionError,
     InvalidClusterVersionError,
     K8sAPIConnectionError,
-    K8sConfigurationError,
     K8SAuthDependency,
     K8sClientSingleton,
+    K8sConfigurationError,
     get_user_info,
 )
-
 from configuration import AppConfig
 
 

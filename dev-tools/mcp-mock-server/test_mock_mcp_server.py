@@ -12,8 +12,8 @@ import json
 import subprocess
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import Any, Optional
 
 import pytest

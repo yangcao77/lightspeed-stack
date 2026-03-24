@@ -1,12 +1,13 @@
 """Unit tests for functions and types defined in utils/types.py."""
 
 import pytest
-from llama_stack_api import ImageContentItem, TextContentItem, URL, _URLOrData
+from llama_stack_api import URL, ImageContentItem, TextContentItem, _URLOrData
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolFileSearch as InputToolFileSearch,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolMCP as InputToolMCP,
 )
-
 from pydantic import AnyUrl, ValidationError
 
 from utils.types import (

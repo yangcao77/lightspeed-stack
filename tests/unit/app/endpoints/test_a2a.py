@@ -7,10 +7,8 @@ from typing import Any
 
 import httpx
 import pytest
-from fastapi import HTTPException, Request
-from llama_stack_client import APIConnectionError
-from pytest_mock import MockerFixture
-
+from a2a.server.agent_execution import RequestContext
+from a2a.server.events import EventQueue
 from a2a.types import (
     AgentCard,
     Artifact,
@@ -21,19 +19,20 @@ from a2a.types import (
     TaskStatusUpdateEvent,
     TextPart,
 )
-from a2a.server.agent_execution import RequestContext
-from a2a.server.events import EventQueue
 from a2a.utils import new_agent_text_message
+from fastapi import HTTPException, Request
+from llama_stack_client import APIConnectionError
+from pytest_mock import MockerFixture
 
 from app.endpoints.a2a import (
-    _convert_responses_content_to_a2a_parts,
-    get_lightspeed_agent_card,
     A2AAgentExecutor,
     TaskResultAggregator,
-    _get_task_store,
+    _convert_responses_content_to_a2a_parts,
     _get_context_store,
+    _get_task_store,
     a2a_health_check,
     get_agent_card,
+    get_lightspeed_agent_card,
 )
 from configuration import AppConfig
 from models.config import Action

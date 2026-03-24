@@ -9,10 +9,10 @@ import base64
 import json
 import time
 
+import jwt
+from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.backends import default_backend
-import jwt
 
 # Generate RSA key pair
 private_key = rsa.generate_private_key(

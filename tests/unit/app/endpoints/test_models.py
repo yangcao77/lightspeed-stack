@@ -8,10 +8,10 @@ from llama_stack_client import APIConnectionError
 from pytest_mock import MockerFixture
 from pytest_subtests import SubTests
 
-from models.requests import ModelFilter
 from app.endpoints.models import models_endpoint_handler
 from authentication.interface import AuthTuple
 from configuration import AppConfig
+from models.requests import ModelFilter
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 
 

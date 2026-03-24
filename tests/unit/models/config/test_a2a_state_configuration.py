@@ -6,11 +6,10 @@ import pytest
 from pydantic import SecretStr, ValidationError
 
 import constants
-
 from models.config import (
     A2AStateConfiguration,
-    SQLiteDatabaseConfiguration,
     PostgreSQLDatabaseConfiguration,
+    SQLiteDatabaseConfiguration,
 )
 
 

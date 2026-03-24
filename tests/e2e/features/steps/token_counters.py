@@ -1,7 +1,6 @@
 """Step definitions for token counter validation."""
 
 import json
-
 from typing import Optional
 
 import requests

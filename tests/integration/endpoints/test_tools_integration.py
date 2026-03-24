@@ -1,7 +1,7 @@
 """Integration tests for the /tools endpoint."""
 
-from typing import Any
 from collections.abc import Generator
+from typing import Any
 
 import pytest
 from fastapi import HTTPException, Request, status

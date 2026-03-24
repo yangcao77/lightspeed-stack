@@ -7,10 +7,10 @@ import sys
 
 from fastapi.openapi.utils import get_openapi
 
+from client import AsyncLlamaStackClientHolder
+
 # it is needed to read proper configuration in order to start the app to generate schema
 from configuration import configuration
-
-from client import AsyncLlamaStackClientHolder
 
 cfg_file = "lightspeed-stack.yaml"
 configuration.load_configuration(cfg_file)

@@ -2,16 +2,17 @@
 
 # pylint: disable=protected-access
 
+import tempfile
 from collections.abc import Generator
 from pathlib import Path
-import tempfile
+
 import pytest
 from pytest_mock import MockerFixture, MockType
 from sqlalchemy.engine.base import Engine
 from sqlalchemy.orm import Session
 
 from app import database
-from models.config import SQLiteDatabaseConfiguration, PostgreSQLDatabaseConfiguration
+from models.config import PostgreSQLDatabaseConfiguration, SQLiteDatabaseConfiguration
 
 
 @pytest.fixture(name="reset_database_state")

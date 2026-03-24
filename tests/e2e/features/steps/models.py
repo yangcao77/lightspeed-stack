@@ -1,8 +1,7 @@
 """Steps for /models endpoint."""
 
 import requests
-
-from behave import when, then  # pyright: ignore[reportAttributeAccessIssue]
+from behave import then, when  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
 

@@ -13,14 +13,32 @@ from fastapi.responses import StreamingResponse
 from llama_stack_api.openai_responses import (
     OpenAIResponseObject,
     OpenAIResponseObjectStream,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseCompleted as CompletedChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseFailed as FailedChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseIncomplete as IncompleteChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseMcpCallArgumentsDone as MCPArgsDoneChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputItemAdded as OutputItemAddedChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputItemDone as OutputItemDoneChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputTextDelta as TextDeltaChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseObjectStreamResponseOutputTextDone as TextDoneChunk,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseOutputMessageMCPCall as MCPCall,
 )
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
@@ -29,8 +47,8 @@ from pytest_mock import MockerFixture
 
 from app.endpoints.streaming_query import (
     generate_response,
-    retrieve_response_generator,
     response_generator,
+    retrieve_response_generator,
     shield_violation_generator,
     stream_end_event,
     stream_event,
@@ -50,8 +68,8 @@ from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import Attachment, QueryRequest
 from models.responses import InternalServerErrorResponse
-from utils.token_counter import TokenCounter
 from utils.stream_interrupts import StreamInterruptRegistry
+from utils.token_counter import TokenCounter
 from utils.types import (
     RAGChunk,
     RAGContext,

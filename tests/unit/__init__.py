@@ -1,6 +1,7 @@
 """Unit tests."""
 
 from typing import Any
+
 from configuration import configuration
 
 config_dict: dict[str, Any] = {
