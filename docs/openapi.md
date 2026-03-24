@@ -5377,9 +5377,9 @@ Only relevant when ``"okp"`` is listed in ``rag.inline`` or ``rag.tool``.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| rhokp_url | string | Base URL for the OKP server. Set to `${env.RH_SERVER_OKP}` in YAML to use the environment variable. When missing or empty, the application default is used. |
+| rhokp_url |  | Base URL for the OKP server (http or https). Set to `${env.RH_SERVER_OKP}` in YAML to use the environment variable. When unset, the default from constants is used. |
 | offline | boolean | When True, use parent_id for OKP chunk source URLs. When False, use reference_url for chunk source URLs. |
-| chunk_filter_query | string | OKP filter query applied to every OKP search request. Defaults to 'is_chunk:true' to restrict results to chunk documents. To add extra constraints, extend the expression using boolean syntax, e.g. 'is_chunk:true AND product:*openshift*'. |
+| chunk_filter_query |  | Additional OKP filter query applied to every OKP search request. Use Solr boolean syntax, e.g. 'product:ansible AND product:*openshift*'. |
 
 
 ## OpenAIResponseAnnotationCitation
