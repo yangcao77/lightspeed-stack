@@ -2449,7 +2449,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
                     "label": "invalid cluster version",
                     "detail": {
                         "response": "Internal server error",
-                        "cause": "ClusterVersion missing required field: 'clusterID'",
+                        "cause": "Missing or invalid 'clusterID' in ClusterVersion",
                     },
                 },
             ]

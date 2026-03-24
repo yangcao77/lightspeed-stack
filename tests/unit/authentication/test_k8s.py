@@ -909,7 +909,7 @@ async def test_kube_admin_invalid_cluster_version_returns_500(
     mocker.patch(
         "authentication.k8s.K8sClientSingleton.get_cluster_id",
         side_effect=InvalidClusterVersionError(
-            "ClusterVersion missing required field: 'clusterID'"
+            "Missing or invalid 'clusterID' in ClusterVersion"
         ),
     )
 
@@ -920,7 +920,7 @@ async def test_kube_admin_invalid_cluster_version_returns_500(
     assert exc_info.value.status_code == 500
     detail = cast(dict[str, str], exc_info.value.detail)
     assert detail["response"] == "Internal server error"
-    assert "ClusterVersion missing required field" in detail["cause"]
+    assert "Missing or invalid 'clusterID' in ClusterVersion" in detail["cause"]
 
 
 @pytest.mark.parametrize(
