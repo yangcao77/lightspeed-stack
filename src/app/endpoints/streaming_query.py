@@ -99,6 +99,7 @@ from utils.responses import (
     extract_token_usage,
     extract_vector_store_ids_from_tools,
     get_topic_summary,
+    parse_rag_chunks,
     parse_referenced_documents,
     prepare_responses_params,
 )
@@ -733,10 +734,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
                 # For all other types (and mcp_call when arguments.done didn't happen),
                 # emit both call and result together
                 tool_call, tool_result = build_tool_call_summary(
-                    output_item_done_chunk.item,
-                    turn_summary.rag_chunks,
-                    vector_store_ids=context.vector_store_ids,
-                    rag_id_mapping=context.rag_id_mapping,
+                    output_item_done_chunk.item
                 )
                 if tool_call:
                     turn_summary.tool_calls.append(tool_call)
@@ -809,10 +807,12 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_summary.referenced_documents = deduplicate_referenced_documents(
         context.inline_rag_context.referenced_documents + tool_rag_docs
     )
-    # Combine inline RAG chunks (BYOK + Solr) with tool-based chunks
-    turn_summary.rag_chunks = (
-        context.inline_rag_context.rag_chunks + turn_summary.rag_chunks
+    tool_rag_chunks = parse_rag_chunks(
+        latest_response_object,
+        vector_store_ids=context.vector_store_ids,
+        rag_id_mapping=context.rag_id_mapping,
     )
+    turn_summary.rag_chunks = context.inline_rag_context.rag_chunks + tool_rag_chunks
 
 
 def stream_http_error_event(

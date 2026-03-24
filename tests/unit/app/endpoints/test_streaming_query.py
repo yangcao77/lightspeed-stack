@@ -2081,6 +2081,7 @@ class TestResponseGenerator:
         """Test response generator processes response completed events."""
         mock_response_obj = mocker.Mock(spec=OpenAIResponseObject)
         mock_response_obj.usage = mocker.Mock(input_tokens=10, output_tokens=5)
+        mock_response_obj.output = []
 
         async def mock_turn_response() -> AsyncIterator[OpenAIResponseObjectStream]:
             chunk = mocker.Mock(spec=CompletedChunk)
@@ -2122,6 +2123,7 @@ class TestResponseGenerator:
         """Test response generator uses text_parts when llm_response is empty."""
         mock_response_obj = mocker.Mock(spec=OpenAIResponseObject)
         mock_response_obj.usage = mocker.Mock(input_tokens=10, output_tokens=5)
+        mock_response_obj.output = []
 
         async def mock_turn_response() -> AsyncIterator[OpenAIResponseObjectStream]:
             # Add text delta first
@@ -2420,11 +2422,13 @@ class TestResponseGenerator:
         mock_context.inline_rag_context = inline_rag
 
         mock_turn_summary = TurnSummary()
-        mock_turn_summary.rag_chunks = [tool_chunk]
-        mock_turn_summary.referenced_documents = [tool_ref_doc]
         mocker.patch(
             "app.endpoints.streaming_query.parse_referenced_documents",
             return_value=[tool_ref_doc],
+        )
+        mocker.patch(
+            "app.endpoints.streaming_query.parse_rag_chunks",
+            return_value=[tool_chunk],
         )
 
         async for _ in response_generator(
