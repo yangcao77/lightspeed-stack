@@ -142,6 +142,10 @@ registered_resources:
 # Without it, llama-stack's rag-runtime silently fails all file_search operations
 # with no error logged.
 vector_stores:
+  # LCORE-1498: Disables Llama Stack RAG annotation generation
+  # causing unwanted citation/file markers in model output.
+  annotation_prompt_params:
+    enable_annotations: false
   default_provider_id: faiss
   default_embedding_model: # Define the default embedding model for RAG
     provider_id: sentence-transformers

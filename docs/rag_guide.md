@@ -20,6 +20,7 @@ This document explains how to configure and customize your RAG pipeline using th
 * [Add an Inference Model (LLM)](#add-an-inference-model-llm)
 * [Complete Configuration Reference](#complete-configuration-reference)
 * [System Prompt Guidance for RAG (as a tool)](#system-prompt-guidance-for-rag-as-a-tool)
+* [Llama Stack RAG annotations](#llama-stack-rag-annotations)
 * [References](#references)
 
 
@@ -493,6 +494,12 @@ When using RAG, the `knowledge_search` tool must be explicitly referenced in you
 ```text
 You are a helpful assistant with access to a 'knowledge_search' tool. When users ask questions, ALWAYS use the knowledge_search tool first to find accurate information from the documentation before answering.
 ```
+
+---
+# Llama Stack RAG annotations
+
+The top-level `vector_stores` block in  Llama Stack configuration may include `annotation_prompt_params` to control whether Llama Stack injects extra RAG annotation instructions into the model prompt (for example, citation-style markers). The [`run.yaml`](../run.yaml) in this repository sets `enable_annotations: false` under that block to avoid unwanted annotations. For a configuration that enables annotations and customizes the instruction template, see [`examples/run.yaml`](../examples/run.yaml).
+
 ---
 
 # References
