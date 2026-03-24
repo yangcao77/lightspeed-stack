@@ -613,6 +613,37 @@ def parse_referenced_documents(  # pylint: disable=too-many-locals
     return documents
 
 
+def parse_rag_chunks(
+    response: Optional[ResponseObject],
+    vector_store_ids: Optional[list[str]] = None,
+    rag_id_mapping: Optional[dict[str, str]] = None,
+) -> list[RAGChunk]:
+    """Extract RAG chunks from file_search_call items in a Responses API response.
+
+    Args:
+        response: The OpenAI Response API response object
+        vector_store_ids: Vector store IDs used in the query for source resolution.
+        rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+    Returns:
+        List of RAG chunks derived from tool file search results (not mutated in place).
+    """
+    if response is None or not response.output:
+        return []
+
+    rag_chunks: list[RAGChunk] = []
+    for output_item in response.output:
+        if output_item.type == "file_search_call":
+            rag_chunks.extend(
+                extract_rag_chunks_from_file_search_item(
+                    cast(FileSearchCall, output_item),
+                    vector_store_ids,
+                    rag_id_mapping,
+                )
+            )
+
+    return rag_chunks
+
+
 def extract_token_usage(usage: Optional[ResponseUsage], model: str) -> TokenCounter:
     """Extract token usage from Responses API usage object and update metrics.
 
@@ -657,17 +688,11 @@ def extract_token_usage(usage: Optional[ResponseUsage], model: str) -> TokenCoun
 
 def build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-many-branches,too-many-locals
     output_item: ResponseOutput,
-    rag_chunks: list[RAGChunk],
-    vector_store_ids: Optional[list[str]] = None,
-    rag_id_mapping: Optional[dict[str, str]] = None,
 ) -> tuple[Optional[ToolCallSummary], Optional[ToolResultSummary]]:
     """Translate Responses API tool outputs into ToolCallSummary and ToolResultSummary.
 
     Args:
         output_item: A ResponseOutput item from the response.output array
-        rag_chunks: List to append extracted RAG chunks to (from file_search_call items)
-        vector_store_ids: Vector store IDs used in the query for source resolution.
-        rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
 
     Returns:
         Tuple of (ToolCallSummary, ToolResultSummary), one may be None
@@ -688,9 +713,6 @@ def build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-m
 
     if item_type == "file_search_call":
         file_search_item = cast(FileSearchCall, output_item)
-        extract_rag_chunks_from_file_search_item(
-            file_search_item, rag_chunks, vector_store_ids, rag_id_mapping
-        )
         response_payload: Optional[dict[str, Any]] = None
         if file_search_item.results is not None:
             response_payload = {
@@ -930,31 +952,36 @@ def _build_chunk_attributes(result: Any) -> Optional[dict[str, Any]]:
 
 def extract_rag_chunks_from_file_search_item(
     item: FileSearchCall,
-    rag_chunks: list[RAGChunk],
     vector_store_ids: Optional[list[str]] = None,
     rag_id_mapping: Optional[dict[str, str]] = None,
-) -> None:
+) -> list[RAGChunk]:
     """Extract RAG chunks from a file search tool call item.
 
     Args:
         item: The file search tool call item
-        rag_chunks: List to append extracted RAG chunks to
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
+    Returns:
+        List of RAG chunks extracted from the file search tool call item.
     """
-    if item.results is not None:
-        for result in item.results:
-            source = _resolve_source_for_result(
-                result, vector_store_ids or [], rag_id_mapping or {}
-            )
-            attributes = _build_chunk_attributes(result)
-            rag_chunk = RAGChunk(
-                content=result.text,
-                source=source,
-                score=result.score,
-                attributes=attributes,
-            )
-            rag_chunks.append(rag_chunk)
+    if item.results is None:
+        return []
+
+    rag_chunks: list[RAGChunk] = []
+    for result in item.results:
+        source = _resolve_source_for_result(
+            result, vector_store_ids or [], rag_id_mapping or {}
+        )
+        attributes = _build_chunk_attributes(result)
+        rag_chunk = RAGChunk(
+            content=result.text,
+            source=source,
+            score=result.score,
+            attributes=attributes,
+        )
+        rag_chunks.append(rag_chunk)
+    return rag_chunks
 
 
 def _increment_llm_call_metric(provider: str, model: str) -> None:
@@ -1129,14 +1156,13 @@ def build_turn_summary(
     )
 
     for item in response.output:
-        tool_call, tool_result = build_tool_call_summary(
-            item, summary.rag_chunks, vector_store_ids, rag_id_mapping
-        )
+        tool_call, tool_result = build_tool_call_summary(item)
         if tool_call:
             summary.tool_calls.append(tool_call)
         if tool_result:
             summary.tool_results.append(tool_result)
 
+    summary.rag_chunks = parse_rag_chunks(response, vector_store_ids, rag_id_mapping)
     summary.token_usage = extract_token_usage(response.usage, model)
     return summary
 
