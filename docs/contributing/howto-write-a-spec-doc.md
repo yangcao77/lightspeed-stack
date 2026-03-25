@@ -4,6 +4,8 @@ A spec doc is the permanent in-repo feature specification.  It is the single
 source of truth for what the feature does and how it works.  All implementation
 JIRAs reference it.  Agentic coding tools read it for guidance.
 
+**Claude Code shortcut**: `/spec-doc` creates one interactively.
+
 ## When to write one
 
 - As part of a spike (see [howto-run-a-spike.md](howto-run-a-spike.md), step 6).

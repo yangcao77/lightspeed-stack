@@ -149,6 +149,10 @@ Templates for all of the above are in
 the spike, see
 [how to organize PoC output](contributing/howto-organize-poc-output.md).
 
+**Claude Code shortcuts**: `/spike`, `/spec-doc`, and `/file-jiras` automate
+parts of this process.  Use `dev-tools/file-jiras.sh` directly for JIRA filing
+without Claude Code.
+
 ## AI assistants
 
 ### “Mark” code with substantial AI-generated portions.
