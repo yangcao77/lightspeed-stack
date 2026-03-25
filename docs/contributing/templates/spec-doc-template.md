@@ -1,4 +1,6 @@
-Reference: [conversation-compaction.md](../../design/conversation-compaction/conversation-compaction.md) (LCORE-1311)
+TODO (example, delete): [conversation-compaction.md](../../design/conversation-compaction/conversation-compaction.md) (LCORE-1311)
+
+# Feature design for TODO: feature name
 
 |                    |                                           |
 |--------------------|-------------------------------------------|

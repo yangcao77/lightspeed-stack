@@ -1,4 +1,6 @@
-Reference: [conversation-compaction-spike.md](../../design/conversation-compaction/conversation-compaction-spike.md) (LCORE-1314)
+TODO (example, delete): [conversation-compaction-spike.md](../../design/conversation-compaction/conversation-compaction-spike.md) (LCORE-1314)
+
+# Spike for TODO: feature name
 
 # Overview
 

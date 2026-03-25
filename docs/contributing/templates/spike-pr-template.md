@@ -1,4 +1,4 @@
-Reference: [LCORE-1314 PR](https://github.com/lightspeed-core/lightspeed-stack/pull/1328)
+TODO (example, delete): [LCORE-1314 PR](https://github.com/lightspeed-core/lightspeed-stack/pull/1328)
 
 ## LCORE-XXXX: TODO spike title
 
