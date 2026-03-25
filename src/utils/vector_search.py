@@ -54,7 +54,7 @@ def _get_solr_vector_store_ids() -> list[str]:
 
 def _build_query_params(solr: Optional[dict[str, Any]] = None) -> dict[str, Any]:
     """Build query parameters for vector search."""
-    params = {
+    params: dict[str, Any] = {
         "k": constants.SOLR_VECTOR_SEARCH_DEFAULT_K,
         "score_threshold": constants.SOLR_VECTOR_SEARCH_DEFAULT_SCORE_THRESHOLD,
         "mode": constants.SOLR_VECTOR_SEARCH_DEFAULT_MODE,
@@ -62,7 +62,7 @@ def _build_query_params(solr: Optional[dict[str, Any]] = None) -> dict[str, Any]
     logger.debug("Initial params: %s", params)
     logger.debug("query_request.solr: %s", solr)
 
-    if solr:
+    if solr is not None:
         params["solr"] = solr
         logger.debug("Final params with solr filters: %s", params)
     else:
