@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env bash
 # File JIRA sub-tickets from a spike doc.
 #
 # Usage:
@@ -16,7 +16,7 @@
 #   3. Opens an interactive menu: view, edit, drop, file
 #   4. Files selected tickets via Jira REST API
 
-set -e
+set -euo pipefail
 
 CREDS="$HOME/.config/jira/credentials.json"
 JIRA_DIR="/tmp/jiras"
@@ -143,9 +143,9 @@ file_ticket() {
     local url_title
     url_title=$(python3 -c "import urllib.parse,sys; print(urllib.parse.quote(sys.argv[1]))" "$title")
     local dup_check
-    dup_check=$(curl -s \
+    dup_check=$(curl -sS --connect-timeout 10 --max-time 30 \
         -u "$JIRA_EMAIL:$JIRA_TOKEN" \
-        "$JIRA_INSTANCE/rest/api/3/search/jql?jql=project%3D${project_key}%20AND%20summary~%22${url_title}%22&fields=key,summary&maxResults=5")
+        "$JIRA_INSTANCE/rest/api/3/search/jql?jql=project%3D${project_key}%20AND%20summary~%22${url_title}%22&fields=key,summary&maxResults=5" 2>/dev/null || echo "{}")
 
     local dup_count_file
     dup_count_file=$(mktemp)
@@ -163,14 +163,19 @@ try:
         print(f'  {instance}/browse/{i[\"key\"]}')
     with open(count_file, 'w') as f:
         f.write(str(len(exact)))
-except Exception:
+except Exception as e:
+    print(f'  Duplicate check failed: {e}')
     with open(count_file, 'w') as f:
-        f.write('0')
+        f.write('-1')
 " "$title" "$JIRA_INSTANCE" "$dup_check" "$dup_count_file" >&2
     local dup_count
     dup_count=$(cat "$dup_count_file")
     rm -f "$dup_count_file"
 
+    if [ "$dup_count" -lt 0 ] 2>/dev/null; then
+        echo "  Duplicate check failed; skipping ticket for safety." >&2
+        return 1
+    fi
     if [ "$dup_count" -gt 0 ] 2>/dev/null; then
         printf "  File anyway? (y/n): " >&2
         read -r confirm < /dev/tty
@@ -289,28 +294,32 @@ ADFEOF
 
     # Create the issue
     local payload
-    payload=$(python3 -c "
+    payload=$(python3 - "${PARENT_TICKET%%-*}" "$title" "$adf_desc" "$PARENT_TICKET" << 'PAYEOF'
 import json
+import sys
+
+project_key, summary, adf_desc_json, parent_ticket = sys.argv[1:5]
 print(json.dumps({
-    'fields': {
-        'project': {'key': '${PARENT_TICKET%%-*}'},
-        'issuetype': {'name': 'Task'},
-        'summary': '''$title''',
-        'description': $adf_desc
+    "fields": {
+        "project": {"key": project_key},
+        "issuetype": {"name": "Task"},
+        "summary": summary,
+        "description": json.loads(adf_desc_json),
     },
-    'update': {
-        'issuelinks': [{
-            'add': {
-                'type': {'name': 'Blocks'},
-                'outwardIssue': {'key': '$PARENT_TICKET'}
+    "update": {
+        "issuelinks": [{
+            "add": {
+                "type": {"name": "Blocks"},
+                "outwardIssue": {"key": parent_ticket},
             }
         }]
     }
 }))
-")
+PAYEOF
+)
 
     local response
-    response=$(curl -s -w "\n%{http_code}" \
+    response=$(curl -sS --connect-timeout 10 --max-time 30 -w "\n%{http_code}" \
         -u "$JIRA_EMAIL:$JIRA_TOKEN" \
         -H "Content-Type: application/json" \
         -X POST "$JIRA_INSTANCE/rest/api/3/issue" \
@@ -341,7 +350,8 @@ show_summary
 
 while true; do
     printf "Command (view|v, edit|e, drop|d, file|f, quit|q): "
-    read -r cmd args
+    read -r cmd args || exit 0
+    args="${args:-}"
 
     case "$cmd" in
         view|v)
