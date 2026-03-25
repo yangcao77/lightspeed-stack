@@ -12,7 +12,7 @@
 
 **Agentic tool instruction**: TODO
 
-```
+```text
 Read the "[section]" section in docs/design/<feature>/<feature>.md.
 Key files: [files].
 ```

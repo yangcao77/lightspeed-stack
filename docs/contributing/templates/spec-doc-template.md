@@ -37,7 +37,7 @@ TODO: User stories in "As a [role], I want [X], so that [Y]" format.
 
 TODO: Flow diagram showing the request/response path with the new feature.
 
-```
+```text
 TODO: flow diagram
 ```
 

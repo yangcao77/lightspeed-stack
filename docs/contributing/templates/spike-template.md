@@ -46,15 +46,15 @@ TODO: Use the format from `docs/contributing/templates/jira-ticket-template.md`.
 
 **Scope**: TODO
 
--
+- TODO
 
 **Acceptance criteria**: TODO
 
--
+- TODO
 
 **Agentic tool instruction**: TODO
 
-```
+```text
 Read the "[section]" section in docs/design/<feature>/<feature>.md.
 Key files: [files].
 ```
@@ -66,7 +66,7 @@ TODO: If a PoC was built, document what it does, what it proved, and how it dive
 ## What the PoC does
 
 **Important**: The PoC diverges from the production design in these ways:
--
+- TODO
 
 ## Results
 

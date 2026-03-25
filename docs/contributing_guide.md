@@ -10,6 +10,7 @@
 * [PR description](#pr-description)
 * [Definition of Done](#definition-of-done)
     * [A deliverable is to be considered “done” when](#a-deliverable-is-to-be-considered-done-when)
+* [Feature design process](#feature-design-process)
 * [AI assistants](#ai-assistants)
     * [“Mark” code with substantial AI-generated portions.](#mark-code-with-substantial-ai-generated-portions)
     * [Copyright and licence notices](#copyright-and-licence-notices)

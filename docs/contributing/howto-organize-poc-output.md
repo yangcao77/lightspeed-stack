@@ -11,7 +11,7 @@ Place results in `docs/design/<feature>/poc-results/`.
 Name files with a numeric prefix that reflects reading order.  Order them by
 usefulness for the human reviewer:
 
-```
+```text
 poc-results/
 ├── 01-poc-report.txt       — findings, methodology, implications
 ├── 02-conversation-log.txt  — human-readable record of the PoC
