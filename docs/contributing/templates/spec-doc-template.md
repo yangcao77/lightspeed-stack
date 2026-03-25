@@ -11,31 +11,31 @@ TODO (example, delete): [conversation-compaction.md](../../design/conversation-c
 | **Spike**          | TODO: [LCORE-XXXX](https://redhat.atlassian.net/browse/LCORE-XXXX) |
 | **Links**          | TODO                                      |
 
-# What
+## What
 
 TODO: What does this feature do?
 
-# Why
+## Why
 
 TODO: What problem does this solve? What happens today without it?
 
-# Requirements
+## Requirements
 
 TODO: Numbered, testable requirements. For each, it should be easy to provide clear acceptance criteria.
 
 - **R1:**
 - **R2:**
 
-# Use Cases
+## Use Cases
 
 TODO: User stories in "As a [role], I want [X], so that [Y]" format.
 
 - **U1:**
 - **U2:**
 
-# Architecture
+## Architecture
 
-## Overview
+### Overview
 
 TODO: Flow diagram showing the request/response path with the new feature.
 
@@ -45,15 +45,15 @@ TODO: flow diagram
 
 TODO: Add subsections below for each relevant component. Delete any that don't apply, add feature-specific ones.
 
-## Trigger mechanism
+### Trigger mechanism
 
 TODO: When and how the feature activates.
 
-## Storage / data model changes
+### Storage / data model changes
 
 TODO: Schema changes, which backends need updates.
 
-## Configuration
+### Configuration
 
 TODO: YAML config example and configuration class.
 
@@ -65,25 +65,25 @@ TODO: config example
 TODO: configuration class
 ```
 
-## API changes
+### API changes
 
 TODO: New or changed fields in request/response models.
 
-## Error handling
+### Error handling
 
 TODO: How errors are surfaced — new error types, HTTP status codes, recovery behavior.
 
-## Security considerations
+### Security considerations
 
 TODO: Auth, access control, data sensitivity implications. Remove if not applicable.
 
-## Migration / backwards compatibility
+### Migration / backwards compatibility
 
 TODO: Schema migrations, API versioning, feature flags for gradual rollout. Remove if not applicable.
 
-# Implementation Suggestions
+## Implementation Suggestions
 
-## Key files and insertion points
+### Key files and insertion points
 
 TODO: Table of files to create or modify.
 
@@ -91,11 +91,11 @@ TODO: Table of files to create or modify.
 |------|------------|
 | TODO | TODO       |
 
-## Insertion point detail
+### Insertion point detail
 
 TODO: Where the feature hooks into existing code — function name, what's available at that point, what the code should do.
 
-## Config pattern
+### Config pattern
 
 All config classes extend `ConfigurationBase` which sets `extra="forbid"`.
 Use `Field()` with defaults, title, and description.  Add
@@ -103,7 +103,7 @@ Use `Field()` with defaults, title, and description.  Add
 
 Example config files go in `examples/`.
 
-## Test patterns
+### Test patterns
 
 - Framework: pytest + pytest-asyncio + pytest-mock.  unittest is banned by ruff.
 - Mock Llama Stack client: `mocker.AsyncMock(spec=AsyncLlamaStackClient)`.
@@ -113,14 +113,14 @@ Example config files go in `examples/`.
 
 TODO: Describe any feature-specific test considerations (e.g., tests that need a running service, special fixtures, concurrency testing).
 
-# Open Questions for Future Work
+## Open Questions for Future Work
 
 TODO: Things explicitly deferred and why.
 
--
--
+- TODO
+- TODO
 
-# Changelog
+## Changelog
 
 TODO: Record significant changes after initial creation.
 
@@ -128,6 +128,6 @@ TODO: Record significant changes after initial creation.
 |------|--------|--------|
 |      | Initial version |        |
 
-# Appendix A
+## Appendix A
 
 TODO: Supporting material — PoC evidence, API comparisons, reference sources. Add appendices as needed.

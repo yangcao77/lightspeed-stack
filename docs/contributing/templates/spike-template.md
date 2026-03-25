@@ -2,7 +2,7 @@ TODO (example, delete): [conversation-compaction-spike.md](../../design/conversa
 
 # Spike for TODO: feature name
 
-# Overview
+## Overview
 
 **The problem**: TODO
 
@@ -10,12 +10,12 @@ TODO (example, delete): [conversation-compaction-spike.md](../../design/conversa
 
 **PoC validation**: TODO
 
-# Decisions for TODO specify reviewer(s)
+## Decisions for TODO specify reviewer(s)
 
 These are the high-level decisions that determine scope, approach, and cost.
 Each has a recommendation — please confirm or override.
 
-## Decision 1: TODO title
+### Decision 1: TODO title
 
 TODO: Context, options table, recommendation. Link to the relevant background section(s) below.
 
@@ -26,17 +26,17 @@ TODO: Context, options table, recommendation. Link to the relevant background se
 
 **Recommendation**: TODO
 
-# Technical decisions for TODO specify reviewer(s)
+## Technical decisions for TODO specify reviewer(s)
 
 Architecture-level and implementation-level decisions.
 
-## Decision N: TODO title
+### Decision N: TODO title
 
 TODO: Context, options table, recommendation. Link to the relevant background section(s) below.
 
 **Recommendation**: TODO
 
-# Proposed JIRAs
+## Proposed JIRAs
 
 TODO: One subsection per JIRA. Each JIRA's agentic tool instruction should point to the spec doc (the permanent reference), not this spike doc.
 
@@ -61,23 +61,23 @@ Read the "[section]" section in docs/design/<feature>/<feature>.md.
 Key files: [files].
 ```
 
-# PoC results
+## PoC results
 
 TODO: If a PoC was built, document what it does, what it proved, and how it diverges from the production design.
 
-## What the PoC does
+### What the PoC does
 
 **Important**: The PoC diverges from the production design in these ways:
 - TODO
 
-## Results
+### Results
 
 TODO
 
-# Background sections
+## Background sections
 
 TODO: Research and analysis that supports the decisions above. These sections are linked from the decisions, not read front-to-back. Common topics: current architecture, existing approaches, design alternatives. Add or remove as needed.
 
-# Appendix A
+## Appendix A
 
 TODO: Supporting material — external references, responses to suggestions from team members. Add appendices as needed.
