@@ -15,7 +15,6 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-file
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPFileAuthConfig
   Scenario: Check if query endpoint succeeds when MCP file-based auth token is passed
     Given The system is in default state
@@ -31,7 +30,6 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPFileAuthConfig
   Scenario: Check if streaming_query endpoint succeeds when MCP file-based auth token is passed
     Given The system is in default state
@@ -113,7 +111,6 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-kubernetes
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPKubernetesAuthConfig
   Scenario: Check if query endpoint succeeds when MCP kubernetes auth token is passed
     Given The system is in default state
@@ -129,7 +126,6 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPKubernetesAuthConfig
   Scenario: Check if streaming_query endpoint succeeds when MCP kubernetes auth token is passed
     Given The system is in default state
@@ -252,7 +248,6 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-client
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPClientAuthConfig
   Scenario: Check if query endpoint succeeds when MCP client-provided auth token is passed
     Given The system is in default state
@@ -271,7 +266,6 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPClientAuthConfig
   Scenario: Check if streaming_query endpoint succeeds when MCP client-provided auth token is passed
     Given The system is in default state
@@ -421,7 +415,6 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-oauth
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPOAuthAuthConfig
   Scenario: Check if query endpoint succeeds when MCP OAuth auth token is passed
     Given The system is in default state
@@ -440,7 +433,6 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @skip-in-library-mode #TODO: LCORE-1428
   @MCPOAuthAuthConfig
   Scenario: Check if streaming_query endpoint succeeds when MCP OAuth auth token is passed
     Given The system is in default state
