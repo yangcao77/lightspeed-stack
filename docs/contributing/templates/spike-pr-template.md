@@ -25,5 +25,5 @@ TODO: Tag the decision-makers. List strategic decisions with links to specific l
 
 _**Doc structure note:** The decision and JIRA sections of the spike doc are where your input is needed. They link to background sections later in the doc — read those if you need more context on a specific point, but it is optional._
 
-Closes # LCORE-XXXX
-Related Issue # LCORE-XXXX
+Closes LCORE-XXXX
+Related: LCORE-XXXX
