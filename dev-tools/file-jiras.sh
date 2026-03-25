@@ -103,7 +103,7 @@ PYEOF
 
 # --- Count tickets ---
 
-TICKET_COUNT=$(ls "$JIRA_DIR"/*.md 2>/dev/null | wc -l)
+TICKET_COUNT=$(find "$JIRA_DIR" -maxdepth 1 -name '*.md' | wc -l)
 if [ "$TICKET_COUNT" -eq 0 ]; then
     echo "No JIRA sections found in $SPIKE_DOC"
     echo "Expected headings like: ### LCORE-???? Title"
@@ -130,7 +130,7 @@ show_summary() {
 }
 
 get_file_by_number() {
-    ls "$JIRA_DIR"/*.md 2>/dev/null | sed -n "${1}p"
+    find "$JIRA_DIR" -maxdepth 1 -name '*.md' | sort | sed -n "${1}p"
 }
 
 file_ticket() {
@@ -400,6 +400,7 @@ while true; do
                     fi
                 done
                 if [ -n "$files" ]; then
+                    # shellcheck disable=SC2086
                     $editor $files
                 fi
             else
