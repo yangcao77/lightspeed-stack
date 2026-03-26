@@ -324,16 +324,14 @@ async def test_streaming_query_byok_inline_rag_with_request_vector_store_ids(
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that per-request vector_store_ids override config for streaming query.
+    """Test that per-request vector_store_ids not in rag.inline are filtered out.
 
     Config has rag.inline = ["source-a"] (resolves to vs-source-a).
-    Request passes vector_store_ids = ["vs-source-b"].
-    Only vs-source-b should be queried, proving the override works.
-    (passing vector_store_ids overrides config)
+    Request passes vector_store_ids = ["source-b"] which is NOT in rag.inline.
+    No inline RAG should be triggered because config is the source of truth.
 
     Verifies:
-    - vector_io.query is called with the request-specified store, not config
-    - The config-based store is NOT queried
+    - vector_io.query is NOT called (source-b is not in rag.inline)
     """
     entry_a = mocker.MagicMock()
     entry_a.rag_id = "source-a"
@@ -363,10 +361,10 @@ async def test_streaming_query_byok_inline_rag_with_request_vector_store_ids(
 
     mock_holder_class.return_value.get_client.return_value = mock_client
 
-    # Override: request specifies vs-source-b, not the config's vs-source-a
+    # Request specifies source-b which is NOT in rag.inline config
     query_request = QueryRequest(
         query="What is OpenShift?",
-        vector_store_ids=["vs-source-b"],
+        vector_store_ids=["source-b"],
     )
 
     response = await streaming_query_endpoint_handler(
@@ -378,12 +376,8 @@ async def test_streaming_query_byok_inline_rag_with_request_vector_store_ids(
 
     assert isinstance(response, StreamingResponse)
 
-    # Verify only vs-source-b was queried (not the config's vs-source-a)
-    assert mock_client.vector_io.query.call_count == 1
-    # call_args.kwargs holds the keyword arguments of the most recent call to vector_io.query.
-    # e.g. "vector_store_id" is the store queried, "query" is the search text.
-    call_kwargs = mock_client.vector_io.query.call_args.kwargs
-    assert call_kwargs["vector_store_id"] == "vs-source-b"
+    # source-b is not in rag.inline, so no inline RAG should be triggered
+    assert mock_client.vector_io.query.call_count == 0
 
 
 @pytest.mark.asyncio
@@ -433,7 +427,7 @@ async def test_streaming_query_byok_request_vector_store_ids_filters_configured_
 
     query_request = QueryRequest(
         query="What is OpenShift?",
-        vector_store_ids=["vs-source-a"],
+        vector_store_ids=["source-a"],
     )
 
     response = await streaming_query_endpoint_handler(
