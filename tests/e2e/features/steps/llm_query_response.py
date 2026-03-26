@@ -57,7 +57,9 @@ def responses_output_should_include_item_type(context: Context, item_type: str) 
 
 
 @then('The responses output should not include an item with type "{item_type}"')
-def responses_output_should_not_include_item_type(context: Context, item_type: str) -> None:
+def responses_output_should_not_include_item_type(
+    context: Context, item_type: str
+) -> None:
     """Assert no ``output`` item has the given ``type``."""
     assert context.response is not None, "Request needs to be performed first"
     response_json = cast(dict[str, Any], context.response.json())
