@@ -440,6 +440,7 @@ class TestFetchByokRag:
         byok_rag_mock.rag_id = "my-kb"
         byok_rag_mock.vector_db_id = "vs-internal-001"
         config_mock.configuration.byok_rag = [byok_rag_mock]
+        config_mock.configuration.rag.inline = ["my-kb"]
         config_mock.score_multiplier_mapping = {"vs-internal-001": 1.0}
         config_mock.rag_id_mapping = {"vs-internal-001": "my-kb"}
         mocker.patch("utils.vector_search.configuration", config_mock)
@@ -479,6 +480,7 @@ class TestFetchByokRag:
         byok_rag_2.rag_id = "kb-part2"
         byok_rag_2.vector_db_id = "vs-bbb-222"
         config_mock.configuration.byok_rag = [byok_rag_1, byok_rag_2]
+        config_mock.configuration.rag.inline = ["kb-part1", "kb-part2"]
         config_mock.score_multiplier_mapping = {"vs-aaa-111": 1.0, "vs-bbb-222": 1.0}
         config_mock.rag_id_mapping = {
             "vs-aaa-111": "kb-part1",
@@ -512,6 +514,46 @@ class TestFetchByokRag:
         assert "vs-bbb-222" in call_args
         assert "kb-part1" not in call_args
         assert "kb-part2" not in call_args
+
+    @pytest.mark.asyncio
+    async def test_no_inline_rag_configured_skips_byok(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that BYOK inline RAG is skipped when rag.inline is empty."""
+        config_mock = mocker.Mock(spec=AppConfig)
+        config_mock.configuration.rag.inline = []
+        config_mock.configuration.byok_rag = []
+        mocker.patch("utils.vector_search.configuration", config_mock)
+
+        client_mock = mocker.AsyncMock()
+
+        rag_chunks, referenced_docs = await _fetch_byok_rag(
+            client_mock, "test query", vector_store_ids=["some-id"]
+        )
+
+        assert rag_chunks == []
+        assert referenced_docs == []
+        client_mock.vector_io.query.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_request_id_not_in_inline_config_skips_byok(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that a request vector_store_id not registered in rag.inline is filtered out."""
+        config_mock = mocker.Mock(spec=AppConfig)
+        config_mock.configuration.rag.inline = ["registered-id"]
+        config_mock.configuration.byok_rag = []
+        mocker.patch("utils.vector_search.configuration", config_mock)
+
+        client_mock = mocker.AsyncMock()
+
+        rag_chunks, referenced_docs = await _fetch_byok_rag(
+            client_mock, "test query", vector_store_ids=["unregistered-id"]
+        )
+
+        assert rag_chunks == []
+        assert referenced_docs == []
+        client_mock.vector_io.query.assert_not_called()
 
 
 class TestFetchSolrRag:
