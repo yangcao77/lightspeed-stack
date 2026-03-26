@@ -3,10 +3,15 @@
 These tests configure Llama Stack's run.yaml with NetworkConfig settings
 (proxy, TLS) and verify the full pipeline works through the Lightspeed Stack.
 The proxy sits between Llama Stack and the LLM provider (e.g., OpenAI).
+
+Works in both Docker (CI) and local (non-Docker) environments:
+- Docker: overwrites run.yaml on host, restarts containers via docker commands
+- Local: overwrites run.yaml, restarts services via process management
 """
 
 import asyncio
 import os
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -20,8 +25,51 @@ import yaml
 from behave import given, then, when  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
-# Base Llama Stack config to modify for proxy tests
-_LLAMA_STACK_CONFIG = "tests/e2e/configs/run-ci.yaml"
+from tests.e2e.utils.utils import (
+    restart_container,
+)
+
+# Base Llama Stack config — in Docker CI this is mounted into the container
+_LLAMA_STACK_CONFIG = "run.yaml"
+_LLAMA_STACK_CONFIG_BACKUP = "run.yaml.proxy-backup"
+
+
+def _is_docker_mode() -> bool:
+    """Check if services are running in Docker containers."""
+    result = subprocess.run(
+        ["docker", "ps", "--filter", "name=llama-stack", "--format", "{{.Names}}"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return "llama-stack" in result.stdout
+
+
+def _get_proxy_host() -> str:
+    """Get the host address that Docker containers can use to reach the proxy.
+
+    In Docker mode, containers reach the host via the Docker bridge gateway.
+    In local mode, localhost works directly.
+    """
+    if _is_docker_mode():
+        result = subprocess.run(
+            [
+                "docker",
+                "network",
+                "inspect",
+                "lightspeednet",
+                "--format",
+                "{{(index .IPAM.Config 0).Gateway}}",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        gateway = result.stdout.strip()
+        if gateway:
+            return gateway
+        return "172.17.0.1"
+    return "127.0.0.1"
 
 
 def _load_llama_config() -> dict[str, Any]:
@@ -36,22 +84,39 @@ def _write_config(config: dict[str, Any], path: str) -> None:
         yaml.dump(config, f, default_flow_style=False)
 
 
-def _find_openai_provider(config: dict[str, Any]) -> dict[str, Any] | None:
-    """Find the OpenAI inference provider in the config."""
+def _find_openai_provider(config: dict[str, Any]) -> dict[str, Any]:
+    """Find the OpenAI inference provider in the config.
+
+    Raises:
+        AssertionError: If no remote::openai provider is found.
+    """
     providers = config.get("providers", {})
     for provider in providers.get("inference", []):
         if provider.get("provider_type") == "remote::openai":
             return provider
-    return None
+    raise AssertionError("No remote::openai provider found in run.yaml")
 
 
-def _restart_llama_stack(config_path: str) -> None:
-    """Restart Llama Stack with a new config.
+def _backup_llama_config() -> None:
+    """Create a backup of the current run.yaml if not already backed up."""
+    if not os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
+        shutil.copy(_LLAMA_STACK_CONFIG, _LLAMA_STACK_CONFIG_BACKUP)
 
-    Parameters:
-        config_path: Path to the run.yaml config file.
+
+def _restart_services() -> None:
+    """Restart Llama Stack and Lightspeed Stack.
+
+    Works in both Docker and local environments.
     """
-    # Kill existing Llama Stack
+    if _is_docker_mode():
+        restart_container("llama-stack")
+        restart_container("lightspeed-stack")
+    else:
+        _restart_services_local()
+
+
+def _restart_services_local() -> None:
+    """Restart services in local (non-Docker) mode."""
     subprocess.run(
         ["pkill", "-f", "llama stack run"],
         capture_output=True,
@@ -59,36 +124,38 @@ def _restart_llama_stack(config_path: str) -> None:
     )
     time.sleep(3)
 
-    # Start with new config
     env = os.environ.copy()
     env["OPENSSL_CONF"] = ""
     llama_port = os.getenv("E2E_LLAMA_PORT", "8321")
     with open("/tmp/llama-stack-proxy-test.log", "w") as log_file:
         subprocess.Popen(
-            ["uv", "run", "llama", "stack", "run", config_path, "--port", llama_port],
+            [
+                "uv",
+                "run",
+                "llama",
+                "stack",
+                "run",
+                _LLAMA_STACK_CONFIG,
+                "--port",
+                llama_port,
+            ],
             env=env,
             stdout=log_file,
             stderr=log_file,
         )
 
-    # Wait for readiness
     llama_host = os.getenv("E2E_LLAMA_HOSTNAME", "localhost")
-    for i in range(45):
+    for _ in range(45):
         try:
             resp = requests.get(
                 f"http://{llama_host}:{llama_port}/v1/health", timeout=2
             )
             if resp.status_code == 200:
-                return
+                break
         except requests.ConnectionError:
             pass
         time.sleep(2)
 
-    raise TimeoutError("Llama Stack did not start within 90 seconds")
-
-
-def _restart_lightspeed_stack() -> None:
-    """Restart the Lightspeed Stack to pick up the new Llama Stack."""
     subprocess.run(
         ["pkill", "-f", "lightspeed_stack.py"],
         capture_output=True,
@@ -96,12 +163,10 @@ def _restart_lightspeed_stack() -> None:
     )
     time.sleep(2)
 
-    env = os.environ.copy()
-    env["OPENSSL_CONF"] = ""
     config_path = os.getenv(
-        "E2E_LSC_CONFIG", "tests/e2e/configuration/server-mode/lightspeed-stack.yaml"
+        "E2E_LSC_CONFIG",
+        "tests/e2e/configuration/server-mode/lightspeed-stack.yaml",
     )
-
     with open("/tmp/lightspeed-stack-proxy-test.log", "w") as log_file:
         subprocess.Popen(
             ["uv", "run", "src/lightspeed_stack.py", "-c", config_path],
@@ -112,16 +177,25 @@ def _restart_lightspeed_stack() -> None:
 
     hostname = os.getenv("E2E_LSC_HOSTNAME", "localhost")
     port = os.getenv("E2E_LSC_PORT", "8080")
-    for i in range(15):
+    for _ in range(15):
         try:
             resp = requests.get(f"http://{hostname}:{port}/liveness", timeout=2)
             if resp.status_code == 200:
-                return
+                break
         except requests.ConnectionError:
             pass
         time.sleep(2)
 
-    raise TimeoutError("Lightspeed Stack did not start within 30 seconds")
+
+def _restore_original_services() -> None:
+    """Restore original run.yaml and restart services."""
+    if os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
+        shutil.copy(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
+        os.remove(_LLAMA_STACK_CONFIG_BACKUP)
+    try:
+        _restart_services()
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
 
 
 # --- Tunnel Proxy Steps ---
@@ -132,7 +206,7 @@ def start_tunnel_proxy(context: Context, port: int) -> None:
     """Start a tunnel proxy in a background thread."""
     from tests.e2e.proxy.tunnel_proxy import TunnelProxy
 
-    proxy = TunnelProxy(port=port)
+    proxy = TunnelProxy(host="0.0.0.0", port=port)
     loop = asyncio.new_event_loop()
     context.proxy_loop = loop
     context.tunnel_proxy = proxy
@@ -149,23 +223,42 @@ def start_tunnel_proxy(context: Context, port: int) -> None:
 
 @given("Llama Stack is configured to route inference through the tunnel proxy")
 def configure_llama_tunnel_proxy(context: Context) -> None:
-    """Write a run.yaml with proxy config pointing to the tunnel proxy."""
+    """Modify run.yaml with proxy config pointing to the tunnel proxy."""
+    _backup_llama_config()
     proxy = context.tunnel_proxy
+    proxy_host = _get_proxy_host()
     config = _load_llama_config()
     provider = _find_openai_provider(config)
-    assert provider is not None, "No remote::openai provider found in run-ci.yaml"
 
     if "config" not in provider:
         provider["config"] = {}
     provider["config"]["network"] = {
         "proxy": {
-            "url": f"http://{proxy.host}:{proxy.port}",
+            "url": f"http://{proxy_host}:{proxy.port}",
         }
     }
 
-    config_path = os.path.join(tempfile.gettempdir(), "run-ci-proxy.yaml")
-    _write_config(config, config_path)
-    context.llama_config_path = config_path
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
+
+
+@given('Llama Stack is configured to route inference through proxy "{proxy_url}"')
+def configure_llama_unreachable_proxy(context: Context, proxy_url: str) -> None:
+    """Modify run.yaml with a proxy URL (may be unreachable)."""
+    _backup_llama_config()
+    config = _load_llama_config()
+    provider = _find_openai_provider(config)
+
+    if "config" not in provider:
+        provider["config"] = {}
+    provider["config"]["network"] = {
+        "proxy": {
+            "url": proxy_url,
+        }
+    }
+
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
 
 
 # --- Interception Proxy Steps ---
@@ -177,10 +270,22 @@ def start_interception_proxy(context: Context, port: int) -> None:
     from tests.e2e.proxy.interception_proxy import InterceptionProxy
 
     ca = trustme.CA()
-    proxy = InterceptionProxy(ca=ca, port=port)
+    proxy = InterceptionProxy(ca=ca, host="0.0.0.0", port=port)
 
+    # Write cert to a known path
     ca_cert_path = Path(tempfile.gettempdir()) / "interception-proxy-ca.pem"
     proxy.export_ca_cert(ca_cert_path)
+
+    # In Docker mode, copy the cert into the llama-stack container
+    if _is_docker_mode():
+        container_cert_path = "/tmp/interception-proxy-ca.pem"
+        subprocess.run(
+            ["docker", "cp", str(ca_cert_path), f"llama-stack:{container_cert_path}"],
+            check=True,
+        )
+        context.ca_cert_path_for_config = container_cert_path
+    else:
+        context.ca_cert_path_for_config = str(ca_cert_path)
 
     loop = asyncio.new_event_loop()
     context.interception_proxy_loop = loop
@@ -198,41 +303,66 @@ def start_interception_proxy(context: Context, port: int) -> None:
 
 
 @given(
-    "Llama Stack is configured to route inference through the interception proxy with CA cert"
+    "Llama Stack is configured to route inference through "
+    "the interception proxy with CA cert"
 )
-def configure_llama_interception_proxy(context: Context) -> None:
-    """Write a run.yaml with interception proxy and CA cert config."""
+def configure_llama_interception_with_ca(context: Context) -> None:
+    """Modify run.yaml with interception proxy and CA cert config."""
+    _backup_llama_config()
     proxy = context.interception_proxy
+    proxy_host = _get_proxy_host()
     config = _load_llama_config()
     provider = _find_openai_provider(config)
-    assert provider is not None, "No remote::openai provider found in run-ci.yaml"
 
     if "config" not in provider:
         provider["config"] = {}
     provider["config"]["network"] = {
         "proxy": {
-            "url": f"http://{proxy.host}:{proxy.port}",
-            "cacert": context.interception_ca_cert_path,
+            "url": f"http://{proxy_host}:{proxy.port}",
+            "cacert": context.ca_cert_path_for_config,
         },
         "tls": {
-            "verify": context.interception_ca_cert_path,
+            "verify": context.ca_cert_path_for_config,
         },
     }
 
-    config_path = os.path.join(tempfile.gettempdir(), "run-ci-interception.yaml")
-    _write_config(config, config_path)
-    context.llama_config_path = config_path
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
+
+
+@given(
+    "Llama Stack is configured to route inference through "
+    "the interception proxy without CA cert"
+)
+def configure_llama_interception_no_ca(context: Context) -> None:
+    """Modify run.yaml with interception proxy but NO CA cert."""
+    _backup_llama_config()
+    proxy = context.interception_proxy
+    proxy_host = _get_proxy_host()
+    config = _load_llama_config()
+    provider = _find_openai_provider(config)
+
+    if "config" not in provider:
+        provider["config"] = {}
+    provider["config"]["network"] = {
+        "proxy": {
+            "url": f"http://{proxy_host}:{proxy.port}",
+        },
+    }
+
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
 
 
 # --- TLS Steps ---
 
 
 @given('Llama Stack is configured with minimum TLS version "{version}"')
-def configure_llama_tls(context: Context, version: str) -> None:
-    """Write a run.yaml with TLS version config."""
+def configure_llama_tls_version(context: Context, version: str) -> None:
+    """Modify run.yaml with TLS version config."""
+    _backup_llama_config()
     config = _load_llama_config()
     provider = _find_openai_provider(config)
-    assert provider is not None, "No remote::openai provider found in run-ci.yaml"
 
     if "config" not in provider:
         provider["config"] = {}
@@ -242,20 +372,37 @@ def configure_llama_tls(context: Context, version: str) -> None:
         }
     }
 
-    config_path = os.path.join(tempfile.gettempdir(), "run-ci-tls.yaml")
-    _write_config(config, config_path)
-    context.llama_config_path = config_path
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
+
+
+@given('Llama Stack is configured with ciphers "{ciphers}"')
+def configure_llama_ciphers(context: Context, ciphers: str) -> None:
+    """Modify run.yaml with cipher suite config."""
+    _backup_llama_config()
+    config = _load_llama_config()
+    provider = _find_openai_provider(config)
+
+    if "config" not in provider:
+        provider["config"] = {}
+    provider["config"]["network"] = {
+        "tls": {
+            "ciphers": ciphers.split(":"),
+        }
+    }
+
+    _write_config(config, _LLAMA_STACK_CONFIG)
+    context.llama_config_modified = True
 
 
 # --- Service Restart Steps ---
 
 
-@given("The lightspeed stack is restarted with the proxy-configured Llama Stack")
-@given("The lightspeed stack is restarted with the TLS-configured Llama Stack")
-def restart_services(context: Context) -> None:
+@given("The services are restarted with the modified Llama Stack config")
+def restart_services_step(context: Context) -> None:
     """Restart Llama Stack with new config and restart Lightspeed Stack."""
-    _restart_llama_stack(context.llama_config_path)
-    _restart_lightspeed_stack()
+    context.services_modified = True
+    _restart_services()
 
 
 # --- Query Steps ---
@@ -277,28 +424,44 @@ def send_query(context: Context, query: str) -> None:
         context.connection_error = str(e)
 
 
+# --- Verification Steps ---
+
+
 @then("The LLM responds successfully")
 def verify_llm_response(context: Context) -> None:
     """Verify the LLM returned a successful response."""
-    assert (
-        context.response is not None
-    ), f"No response received. Connection error: {getattr(context, 'connection_error', 'unknown')}"
-    assert (
-        context.response.status_code == 200
-    ), f"Expected 200, got {context.response.status_code}: {context.response.text[:200]}"
+    assert context.response is not None, (
+        "No response received. "
+        f"Connection error: {getattr(context, 'connection_error', 'unknown')}"
+    )
+    assert context.response.status_code == 200, (
+        f"Expected 200, got {context.response.status_code}: "
+        f"{context.response.text[:200]}"
+    )
 
 
-# --- Proxy Verification Steps ---
+@then("The response indicates a proxy or connection error")
+def verify_error_response(context: Context) -> None:
+    """Verify the response indicates a connection or proxy error."""
+    if context.response is not None:
+        assert (
+            context.response.status_code >= 400
+        ), f"Expected error status, got {context.response.status_code}"
+    else:
+        assert hasattr(
+            context, "connection_error"
+        ), "Expected a connection error or error response"
 
 
-@then("The tunnel proxy handled at least {count:d} CONNECT request to the LLM provider")
+@then(
+    "The tunnel proxy handled at least {count:d} " "CONNECT request to the LLM provider"
+)
 def verify_tunnel_proxy_used(context: Context, count: int) -> None:
     """Verify the tunnel proxy received CONNECT requests."""
     proxy = context.tunnel_proxy
-    assert (
-        proxy.connect_count >= count
-    ), f"Expected at least {count} CONNECT requests, got {proxy.connect_count}"
-    # Verify the target was an LLM provider endpoint
+    assert proxy.connect_count >= count, (
+        f"Expected at least {count} CONNECT requests, " f"got {proxy.connect_count}"
+    )
     assert proxy.last_connect_target is not None, "No CONNECT target recorded"
 
 
@@ -306,6 +469,7 @@ def verify_tunnel_proxy_used(context: Context, count: int) -> None:
 def verify_interception_proxy_used(context: Context, count: int) -> None:
     """Verify the interception proxy intercepted connections."""
     proxy = context.interception_proxy
-    assert (
-        proxy.connect_count >= count
-    ), f"Expected at least {count} intercepted connections, got {proxy.connect_count}"
+    assert proxy.connect_count >= count, (
+        f"Expected at least {count} intercepted connections, "
+        f"got {proxy.connect_count}"
+    )

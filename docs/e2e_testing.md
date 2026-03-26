@@ -190,6 +190,11 @@ All tag behaviour is implemented in **`features/environment.py`**: the hooks (`b
 | `@RHIdentity`                   | Feature-level: use RH identity config; restore in after_feature.                                                                                        |
 | `@Feedback`                     | Feature-level: set feedback conversation list; after_feature deletes those conversations.                                                               |
 | `@MCP`                          | Feature-level: use MCP config; restore in after_feature.                                                                                                |
+| `@Proxy`                        | Feature-level: proxy/TLS networking tests. Restarts Llama Stack with modified run.yaml NetworkConfig. After: restores original services.                 |
+| `@TunnelProxy`                  | Scenario-level: uses a tunnel proxy (HTTP CONNECT) for the test.                                                                                        |
+| `@InterceptionProxy`            | Scenario-level: uses a TLS-intercepting proxy with trustme CA for the test.                                                                             |
+| `@TLSVersion`                   | Scenario-level: configures minimum TLS version in Llama Stack run.yaml.                                                                                  |
+| `@TLSCipher`                    | Scenario-level: configures cipher suites in Llama Stack run.yaml.                                                                                        |
 
 
 ### Multiple Tags and Skip Comment
