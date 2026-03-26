@@ -3,6 +3,7 @@
 from typing import Any
 
 import pytest
+from llama_stack_client import APIConnectionError
 from llama_stack_client.types import VersionInfo
 from pytest_mock import MockerFixture
 from pytest_subtests import SubTests
@@ -115,3 +116,43 @@ async def test_check_llama_stack_version_too_big_version(
     with subtests.test(msg="Increased all numbers"):
         bigger_version = max_version.bump_major().bump_minor().bump_patch()
         await _check_version_must_fail(mock_client, bigger_version)
+
+
+@pytest.mark.asyncio
+async def test_check_llama_stack_version_retries_on_connection_error(
+    mocker: MockerFixture,
+) -> None:
+    """Test that check_llama_stack_version retries on APIConnectionError."""
+    mock_client = mocker.AsyncMock()
+    mock_sleep = mocker.patch("utils.llama_stack_version.asyncio.sleep")
+
+    # Fail twice with connection error, then succeed
+    mock_client.inspect.version.side_effect = [
+        APIConnectionError(request=mocker.MagicMock()),
+        APIConnectionError(request=mocker.MagicMock()),
+        VersionInfo(version=MINIMAL_SUPPORTED_LLAMA_STACK_VERSION),
+    ]
+
+    await check_llama_stack_version(mock_client, max_retries=5, retry_delay=1)
+
+    assert mock_client.inspect.version.call_count == 3
+    assert mock_sleep.call_count == 2
+
+
+@pytest.mark.asyncio
+async def test_check_llama_stack_version_raises_after_max_retries(
+    mocker: MockerFixture,
+) -> None:
+    """Test that check_llama_stack_version raises after all retries are exhausted."""
+    mock_client = mocker.AsyncMock()
+    mock_sleep = mocker.patch("utils.llama_stack_version.asyncio.sleep")
+
+    mock_client.inspect.version.side_effect = APIConnectionError(
+        request=mocker.MagicMock()
+    )
+
+    with pytest.raises(APIConnectionError):
+        await check_llama_stack_version(mock_client, max_retries=3, retry_delay=1)
+
+    assert mock_client.inspect.version.call_count == 3
+    assert mock_sleep.call_count == 2
