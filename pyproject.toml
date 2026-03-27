@@ -126,6 +126,7 @@ dev = [
     "ruff>=0.11.13",
     "aiosqlite",
     "behave>=1.3.0",
+    "trustme>=1.2.1",
     "types-cachetools>=6.1.0.20250717",
     "build>=1.2.2.post1",
     "twine>=6.1.0",

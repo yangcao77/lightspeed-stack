@@ -157,6 +157,11 @@ def before_all(context: Context) -> None:
     context.deployment_mode = os.getenv("E2E_DEPLOYMENT_MODE", "server").lower()
     context.is_library_mode = context.deployment_mode == "library"
 
+    # Detect Docker mode once for proxy tests
+    from tests.e2e.features.steps.proxy import _is_docker_mode
+
+    context.is_docker_mode = _is_docker_mode()
+
     # Get first LLM model from running service
     print(f"Running tests in {context.deployment_mode} mode")
 
@@ -546,3 +551,10 @@ def after_feature(context: Context, feature: Feature) -> None:
         switch_config(context.default_config_backup)
         restart_container("lightspeed-stack")
         remove_config_backup(context.default_config_backup)
+
+    # Clean up any proxy servers left from the last scenario
+    if hasattr(context, "tunnel_proxy") or hasattr(context, "interception_proxy"):
+        from tests.e2e.features.steps.proxy import _stop_proxy
+
+        _stop_proxy(context, "tunnel_proxy", "proxy_loop")
+        _stop_proxy(context, "interception_proxy", "interception_proxy_loop")

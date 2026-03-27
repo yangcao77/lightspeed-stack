@@ -192,6 +192,10 @@ All tag behaviour is implemented in **`features/environment.py`**: the hooks (`b
 | `@RHIdentity`                   | Feature-level: use RH identity config; restore in after_feature.                                                                                        |
 | `@Feedback`                     | Feature-level: set feedback conversation list; after_feature deletes those conversations.                                                               |
 | `@MCP`                          | Feature-level: use MCP config; restore in after_feature.                                                                                                |
+| `@TunnelProxy`                  | Selection: tunnel proxy (HTTP CONNECT) scenarios.                                                                                                       |
+| `@InterceptionProxy`            | Selection: TLS-intercepting proxy with trustme CA scenarios.                                                                                            |
+| `@TLSVersion`                   | Selection: TLS version configuration scenarios.                                                                                                          |
+| `@TLSCipher`                    | Selection: cipher suite configuration scenarios.                                                                                                         |
 
 
 ### Multiple Tags and Skip Comment
