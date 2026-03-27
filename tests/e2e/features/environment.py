@@ -287,20 +287,6 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
         scenario-specific teardown actions to run (e.g.,
         "InvalidFeedbackStorageConfig", "NoCacheConfig").
     """
-    # Restore services after @Proxy scenarios that modified Llama Stack config
-    services_modified = getattr(context, "services_modified", False)
-    if services_modified and "Proxy" in scenario.effective_tags:
-        try:
-            from tests.e2e.features.steps.proxy import _restore_original_services
-
-            print("Restoring original Llama Stack and Lightspeed Stack configs...")
-            _restore_original_services(
-                is_docker=getattr(context, "is_docker_mode", False)
-            )
-            context.services_modified = False
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            print(f"Warning: Service restoration failed: {e}")
-
     # Restore Llama Stack FIRST (before any lightspeed-stack restart)
     llama_was_running = getattr(context, "llama_stack_was_running", False)
     if llama_was_running:

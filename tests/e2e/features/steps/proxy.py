@@ -193,15 +193,24 @@ def _restart_services_local() -> None:
         time.sleep(2)
 
 
-def _restore_original_services(is_docker: bool = False) -> None:
-    """Restore original run.yaml and restart services."""
+# --- Background Steps ---
+
+
+@given("The original Llama Stack config is restored if modified")
+def restore_if_modified(context: Context) -> None:
+    """Restore original run.yaml if a previous scenario modified it.
+
+    Called from Background so every scenario starts with a clean config,
+    even if the previous scenario failed mid-way.
+    """
     if os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
+        print("Restoring original Llama Stack config from backup...")
         shutil.copy(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
         os.remove(_LLAMA_STACK_CONFIG_BACKUP)
-    try:
-        _restart_services(is_docker=is_docker)
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        print(f"Warning: Service restoration failed: {e}")
+        try:
+            _restart_services(is_docker=context.is_docker_mode)
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            print(f"Warning: Service restart after restore failed: {e}")
 
 
 # --- Tunnel Proxy Steps ---
@@ -407,7 +416,6 @@ def configure_llama_ciphers(context: Context, ciphers: str) -> None:
 @given("The services are restarted with the modified Llama Stack config")
 def restart_services_step(context: Context) -> None:
     """Restart Llama Stack with new config and restart Lightspeed Stack."""
-    context.services_modified = True
     _restart_services(is_docker=context.is_docker_mode)
 
 

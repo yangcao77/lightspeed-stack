@@ -1,4 +1,3 @@
-@Proxy
 @skip-in-library-mode
 Feature: Proxy and TLS networking tests for Llama Stack providers
 
@@ -9,6 +8,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
   Background:
     Given The service is started locally
       And REST API service prefix is /v1
+      And The original Llama Stack config is restored if modified
 
 
   # --- AC1: Tunnel proxy routing ---
