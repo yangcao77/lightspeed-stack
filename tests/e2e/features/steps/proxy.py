@@ -105,13 +105,38 @@ def _backup_llama_config() -> None:
 # --- Background Steps ---
 
 
+def _stop_proxy(context: Context, attr: str, loop_attr: str) -> None:
+    """Stop a proxy server and its event loop if they exist on the context."""
+    proxy = getattr(context, attr, None)
+    loop = getattr(context, loop_attr, None)
+    if proxy is not None and loop is not None:
+        # Schedule proxy stop and loop shutdown
+        async def _shutdown() -> None:
+            await proxy.stop()
+
+        loop.call_soon_threadsafe(lambda: asyncio.ensure_future(_shutdown()))
+        time.sleep(1)
+        loop.call_soon_threadsafe(loop.stop)
+        time.sleep(0.5)
+    # Clear references
+    if hasattr(context, attr):
+        delattr(context, attr)
+    if hasattr(context, loop_attr):
+        delattr(context, loop_attr)
+
+
 @given("The original Llama Stack config is restored if modified")
 def restore_if_modified(context: Context) -> None:
     """Restore original run.yaml if a previous scenario modified it.
 
     Called from Background so every scenario starts with a clean config,
-    even if the previous scenario failed mid-way.
+    even if the previous scenario failed mid-way. Also stops any proxy
+    servers left running from the previous scenario.
     """
+    # Stop any leftover proxy servers from previous scenario
+    _stop_proxy(context, "tunnel_proxy", "proxy_loop")
+    _stop_proxy(context, "interception_proxy", "interception_proxy_loop")
+
     if os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
         print("Restoring original Llama Stack config from backup...")
         shutil.copy(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
