@@ -165,7 +165,7 @@ oc create configmap mock-jwks-script -n "$NAMESPACE" \
     --dry-run=client -o yaml | oc apply -f -
 
 oc create configmap mcp-mock-server-script -n "$NAMESPACE" \
-    --from-file=server.py="$REPO_ROOT/dev-tools/mcp-mock-server/server.py" \
+    --from-file=server.py="$REPO_ROOT/tests/e2e/mock_mcp_server/server.py" \
     --dry-run=client -o yaml | oc apply -f -
 
 # Deploy mock server pods and services

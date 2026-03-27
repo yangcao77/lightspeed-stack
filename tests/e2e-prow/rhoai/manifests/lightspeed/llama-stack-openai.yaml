@@ -1,0 +1,168 @@
+# Llama Stack pod: runs from source on UBI (no pre-built image).
+#
+# Flow:
+#   1. setup-from-source: clone repo (from ConfigMap llama-stack-source or defaults), install deps (uv sync), prepare /opt/app-root.
+#   2. setup-rag-data: extract RAG DB into shared volume.
+#   3. Main container: run entrypoint → enrich config → llama stack run.
+#
+# Requires: ConfigMap llama-stack-config (run.yaml), ConfigMap rag-data (kv_store.db.gz).
+# Optional: ConfigMap llama-stack-source (repo_url, repo_revision); if missing, uses defaults.
+#
+apiVersion: v1
+kind: Pod
+metadata:
+  name: llama-stack-service
+  labels:
+    # Must match oc expose selector immediately on pod recreate (do not rely only on post-apply oc label).
+    pod: llama-stack-service
+spec:
+  imagePullSecrets:
+    - name: quay-lightspeed-pull-secret
+  securityContext:
+    seccompProfile:
+      type: RuntimeDefault
+  initContainers:
+    - name: setup-from-source
+      image: registry.access.redhat.com/ubi9/python-312
+      # runAsUser: 0 required for dnf install; avoids capabilities.drop so dnf/chroot works (PodSecurity restricted will warn)
+      securityContext:
+        runAsUser: 0
+      env:
+        - name: REPO_URL
+          valueFrom:
+            configMapKeyRef:
+              name: llama-stack-source
+              key: repo_url
+              optional: true
+        - name: REPO_REVISION
+          valueFrom:
+            configMapKeyRef:
+              name: llama-stack-source
+              key: repo_revision
+              optional: true
+      command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          # Repo URL/revision: from ConfigMap or defaults; convert SSH to HTTPS for clone
+          REPO_URL="${REPO_URL:-https://github.com/lightspeed-core/lightspeed-stack.git}"
+          REPO_REVISION="${REPO_REVISION:-main}"
+          case "$REPO_URL" in git@github.com:*) REPO_URL="https://github.com/${REPO_URL#git@github.com:}"; esac
+          # Install system deps and uv
+          dnf -y install git tar gcc gcc-c++ make
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          export PATH="/root/.local/bin:$PATH"
+          ln -sf /usr/bin/python3.12 /usr/bin/python3 2>/dev/null || true
+          # Clone and install Python deps
+          git clone -q "${REPO_URL}" /opt/app-root/repo
+          cd /opt/app-root/repo && git fetch origin "${REPO_REVISION}" 2>/dev/null || true && git checkout -q "${REPO_REVISION}"
+          uv sync --locked --no-install-project --group llslibdev
+          # Move repo to /opt/app-root and fix venv shebangs (paths changed from repo/.venv to .venv)
+          (cd /opt/app-root/repo && tar cf - .) | (cd /opt/app-root && tar xf -)
+          rm -rf /opt/app-root/repo
+          sed -i 's|/opt/app-root/repo/.venv|/opt/app-root/.venv|g' /opt/app-root/.venv/bin/* 2>/dev/null || true
+          # Layout and permissions for main container
+          mkdir -p /opt/app-root/src/.llama/storage/rag /opt/app-root/src/.llama/storage/files
+          cp /opt/app-root/src/llama_stack_configuration.py /opt/app-root/llama_stack_configuration.py
+          chmod -R 775 /opt/app-root && chown -R 1001:0 /opt/app-root
+      volumeMounts:
+        - name: app-root
+          mountPath: /opt/app-root
+    - name: setup-rag-data
+      image: busybox:latest
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      command:
+        - /bin/sh
+        - -c
+        - |
+          mkdir -p /data/src/.llama/storage/rag /data/src/.llama/storage/files
+          chmod -R 777 /data
+          gunzip -c /rag-data/kv_store.db.gz > /data/src/.llama/storage/rag/kv_store.db
+          chmod -R 777 /data
+          echo "RAG data extracted successfully"
+      volumeMounts:
+        - name: app-root
+          mountPath: /data
+        - name: rag-data
+          mountPath: /rag-data
+  containers:
+    - name: llama-stack-container
+      image: registry.access.redhat.com/ubi9/python-312
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: ["ALL"]
+        runAsNonRoot: true
+        runAsUser: 1001
+        seccompProfile:
+          type: RuntimeDefault
+      workingDir: /opt/app-root
+      env:
+        - name: PATH
+          value: "/opt/app-root/.venv/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+        - name: HOME
+          value: "/opt/app-root/src"
+        - name: KV_STORE_PATH
+          value: "/opt/app-root/src/.llama/storage/rag/kv_store.db"
+        - name: KV_RAG_PATH
+          value: "/opt/app-root/src/.llama/storage/rag/kv_store.db"
+        - name: SQL_STORE_PATH
+          value: "/opt/app-root/src/.llama/storage/sql_store.db"
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openai-api-key-secret
+              key: key
+        - name: E2E_OPENAI_MODEL
+          value: "gpt-4o-mini"
+        - name: FAISS_VECTOR_STORE_ID
+          valueFrom:
+            secretKeyRef:
+              name: faiss-vector-store-secret
+              key: id
+      command:
+        - /bin/bash
+        - -c
+        - |
+          exec /opt/app-root/scripts/llama-stack-entrypoint.sh
+      ports:
+        - containerPort: 8321
+      # Without probes, kubelet marks the pod Ready as soon as the container starts — before HTTP listens.
+      # That made wait_for_pod return too early after disruption; align Ready with /v1/health (see docker-compose).
+      readinessProbe:
+        httpGet:
+          path: /v1/health
+          port: 8321
+        initialDelaySeconds: 20
+        periodSeconds: 5
+        failureThreshold: 36
+      livenessProbe:
+        httpGet:
+          path: /v1/health
+          port: 8321
+        initialDelaySeconds: 120
+        periodSeconds: 20
+        failureThreshold: 3
+      volumeMounts:
+        - name: app-root
+          mountPath: /opt/app-root
+        - name: config
+          mountPath: /opt/app-root/run.yaml
+          subPath: run.yaml
+  volumes:
+    - name: app-root
+      emptyDir: {}
+    - name: config
+      configMap:
+        name: llama-stack-config
+    - name: rag-data
+      configMap:
+        name: rag-data

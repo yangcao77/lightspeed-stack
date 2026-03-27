@@ -4,9 +4,13 @@
 Responds to GET (OAuth probe) with 401 and WWW-Authenticate. Accepts POST
 (MCP JSON-RPC) when Authorization: Bearer <token> is present; otherwise 401.
 Uses only Python stdlib.
+
+Run as ``python server.py [port]``; default port is 3001 (Docker ``mock-mcp``).
+OpenShift e2e passes 3000 to match the pod's containerPort.
 """
 
 import json
+import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from typing import Any, Optional
 
@@ -45,7 +49,8 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_GET(self) -> None:  # pylint: disable=invalid-name
         """Handle GET requests."""
-        if self.path == "/health":
+        path_only = self.path.split("?", 1)[0]
+        if path_only == "/health":
             self._json_response({"status": "ok"})
         elif self._parse_auth() is not None:
             self._json_response({"status": "authorized"})
@@ -112,6 +117,7 @@ class Handler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer(("0.0.0.0", 3001), Handler)
-    print("Mock MCP server on :3001")
+    port = int(sys.argv[1]) if len(sys.argv) > 1 else 3001
+    server = HTTPServer(("0.0.0.0", port), Handler)
+    print(f"Mock MCP server on :{port}")
     server.serve_forever()

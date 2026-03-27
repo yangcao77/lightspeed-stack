@@ -21,7 +21,10 @@ from tests.e2e.utils.llama_stack_utils import (
     unregister_mcp_toolgroups,
     unregister_shield,
 )
-from tests.e2e.utils.prow_utils import restore_llama_stack_pod
+from tests.e2e.utils.prow_utils import (
+    restart_lightspeed_stack_only,
+    restore_llama_stack_pod,
+)
 from tests.e2e.utils.utils import (
     clear_llama_stack_storage,
     create_config_backup,
@@ -55,6 +58,11 @@ _CONFIG_PATHS = {
     "rh-identity": (
         "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
         "tests/e2e-prow/rhoai/configs/lightspeed-stack-auth-rh-identity.yaml",
+    ),
+    # Default LCS config for @MCP feature; per-scenario tags select mcp-* variants in before_scenario.
+    "mcp": (
+        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
+        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp.yaml",
     ),
     "mcp-file-auth": (
         "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
@@ -352,7 +360,35 @@ def _print_llama_stack_diagnostics() -> None:
 def _restore_llama_stack(context: Context) -> None:
     """Restore Llama Stack connection after disruption."""
     if is_prow_environment():
-        restore_llama_stack_pod()
+        # Recreate llama pod, then restart LCS so in-process clients reconnect (Llama IP/pod changed).
+        try:
+            restore_llama_stack_pod()
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            print(f"Warning: Could not restore Llama Stack pod on Prow: {e}")
+            return
+        last_lcs_err: (
+            subprocess.CalledProcessError | subprocess.TimeoutExpired | None
+        ) = None
+        for attempt in range(1, 4):
+            try:
+                restart_lightspeed_stack_only()
+                print(
+                    "✓ Prow: Llama Stack restored and lightspeed-stack restarted "
+                    "for clean reconnect"
+                )
+                return
+            except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+                last_lcs_err = e
+                print(
+                    f"Warning: restart_lightspeed after Llama restore "
+                    f"attempt {attempt}/3 failed: {e}"
+                )
+                if attempt < 3:
+                    time.sleep(8)
+        print(
+            "Warning: Could not restart lightspeed-stack after Llama restore "
+            f"after 3 attempts: {last_lcs_err}"
+        )
         return
 
     try:
@@ -436,9 +472,7 @@ def before_feature(context: Context, feature: Feature) -> None:
 
     if "MCP" in feature.tags:
         mode_dir = "library-mode" if context.is_library_mode else "server-mode"
-        context.feature_config = (
-            f"tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml"
-        )
+        context.feature_config = _get_config_path("mcp", mode_dir)
         context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
         switch_config(context.feature_config)
         restart_container("lightspeed-stack")

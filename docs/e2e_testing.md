@@ -69,9 +69,11 @@ tests/e2e/
 tests/e2e-prow/
 └── rhoai/                       # RHOAI / OpenShift E2E
     ├── run-tests.sh             # Entry to run E2E in Prow
-    ├── pipeline.sh              # Main pipeline definition
-    ├── pipeline-services.sh     # Services pipeline
-    ├── pipeline-vllm.sh         # vLLM pipeline
+    ├── pipeline.sh              # Prow: full vLLM + LCS + behave (main branch workflow)
+    ├── pipeline-konflux.sh      # Konflux: OpenAI Llama run-from-source + run-ci.yaml + behave
+    ├── pipeline-services.sh     # Services for Prow (vLLM llama-stack image + LCS)
+    ├── pipeline-services-konflux.sh  # Services for Konflux (llama-stack-openai + templated LCS)
+    ├── pipeline-vllm.sh         # vLLM cluster setup (called from pipeline.sh)
     ├── pipeline-test-pod.sh     # Test pod pipeline
     ├── configs/                 # Lightspeed-stack configs for Prow (used by environment.py when is_prow)
     │   ├── lightspeed-stack.yaml
@@ -80,7 +82,7 @@ tests/e2e-prow/
     │   ├── lightspeed-stack-auth-rh-identity.yaml
     │   ├── lightspeed-stack-no-cache.yaml
     │   ├── lightspeed-stack-invalid-feedback-storage.yaml
-    │   └── run.yaml             # Llama Stack run config for Prow
+    │   └── run.yaml             # vLLM Llama Stack config (used by pipeline.sh); Konflux uses tests/e2e/configs/run-ci.yaml via pipeline-konflux.sh
     ├── scripts/
     │   ├── e2e-ops.sh           # E2E ops (e.g. disrupt/restore llama-stack) — called from prow_utils
     │   ├── bootstrap.sh

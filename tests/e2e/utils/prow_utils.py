@@ -40,6 +40,8 @@ def run_e2e_ops(
 ) -> subprocess.CompletedProcess:
     """Run a command via the consolidated e2e-ops.sh script.
 
+    Most script output is written to stdout (including errors); stderr is often empty.
+
     Args:
         command: The command to run (e.g., "restart-lightspeed", "wait-for-pod").
         args: Optional list of arguments to pass to the command.
@@ -74,9 +76,18 @@ def wait_for_pod_health(pod_name: str, max_attempts: int = 12) -> None:
 
 
 def restart_pod(container_name: str) -> None:
-    """Restart lightspeed-stack pod in OpenShift/Prow environment."""
+    """Restart lightspeed-stack pod in OpenShift/Prow environment.
+
+    Ensures Llama Stack is running first, since LSC fails to start if it cannot
+    connect to Llama Stack at startup. Llama pod logs may look unchanged (apply is a
+    no-op when healthy); that is expected.
+
+    CI failures with healthy pod logs are often **localhost port-forward** contention
+    (pipeline forward vs hook restart), not application crashes—see e2e-ops.sh header.
+    """
+    restore_llama_stack_pod()
     try:
-        result = run_e2e_ops("restart-lightspeed", timeout=120)
+        result = run_e2e_ops("restart-lightspeed", timeout=200)
         print(result.stdout, end="")
         if result.returncode != 0:
             print(result.stderr, end="")
@@ -87,16 +98,41 @@ def restart_pod(container_name: str) -> None:
 
 
 def restore_llama_stack_pod() -> None:
-    """Restore Llama Stack pod in Prow/OpenShift environment."""
+    """Restore Llama Stack pod in Prow/OpenShift environment.
+
+    Raises:
+        subprocess.CalledProcessError: If oc/e2e-ops restore fails.
+        subprocess.TimeoutExpired: If the operation times out.
+    """
+    # wait_for_pod (up to ~180s) + in-pod /v1/health polling (~105s) — allow headroom.
+    result = run_e2e_ops("restart-llama-stack", timeout=420)
+    print(result.stdout, end="")
+    if result.returncode != 0:
+        print(result.stderr, end="")
+        raise subprocess.CalledProcessError(
+            result.returncode, "restart-llama-stack", result.stderr
+        )
+    print("✓ Llama Stack pod restored successfully")
+
+
+def restart_lightspeed_stack_only() -> None:
+    """Restart lightspeed-stack pod and port-forward on Prow without restoring Llama first.
+
+    Use after Llama Stack was already restored (e.g. after disruption scenarios) so LCS
+    picks up a fresh connection to the new llama pod; ``restart_pod`` is not suitable
+    because it would redundantly run ``restart-llama-stack`` first.
+    """
     try:
-        result = run_e2e_ops("restart-llama-stack", timeout=180)
+        result = run_e2e_ops("restart-lightspeed", timeout=200)
         print(result.stdout, end="")
         if result.returncode != 0:
             print(result.stderr, end="")
-        else:
-            print("✓ Llama Stack pod restored successfully")
+            raise subprocess.CalledProcessError(
+                result.returncode, "restart-lightspeed", result.stderr
+            )
     except subprocess.TimeoutExpired:
-        print("Warning: Timeout while restoring Llama Stack pod")
+        print("Timeout while restarting lightspeed-stack after Llama restore")
+        raise
 
 
 def disrupt_llama_stack_pod() -> bool:

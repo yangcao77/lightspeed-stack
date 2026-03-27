@@ -7,9 +7,9 @@ cd "$(dirname "$0")/../../.."
 # Timestamps to pinpoint where time is spent (e.g. if Prow 2h timeout is hit)
 ts() { echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] $*"; }
 
-# FAISS_VECTOR_STORE_ID should be exported by pipeline.sh
+# FAISS_VECTOR_STORE_ID should be exported by pipeline.sh or pipeline-konflux.sh
 if [ -z "$FAISS_VECTOR_STORE_ID" ]; then
-    echo "❌ FAISS_VECTOR_STORE_ID is not set - should be exported by pipeline.sh"
+    echo "❌ FAISS_VECTOR_STORE_ID is not set - should be exported by the OpenShift E2E pipeline"
     exit 1
 fi
 
@@ -35,16 +35,34 @@ for i in $(seq 1 12); do
 done
 ts "End: wait for service"
 
-ts "Start: pip install uv"
+ts "Start: ensure uv is available"
 echo "Installing test dependencies..."
-pip install uv
-ts "End: pip install uv"
+if command -v uv >/dev/null 2>&1; then
+  echo "uv already on PATH"
+elif command -v pip >/dev/null 2>&1; then
+  pip install uv
+elif command -v python3 >/dev/null 2>&1 && python3 -m pip --version >/dev/null 2>&1; then
+  python3 -m pip install --user uv
+  export PATH="${HOME}/.local/bin:${PATH}"
+else
+  echo "Installing uv via astral.sh (no pip in image)..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="${HOME}/.local/bin:${PATH}"
+fi
+command -v uv >/dev/null 2>&1 || { echo "❌ uv not available after install"; exit 1; }
+ts "End: ensure uv is available"
 
 ts "Start: uv sync"
-uv sync
+# dev group provides behave (Makefile test-e2e uses uv run behave)
+uv sync --group dev
 ts "End: uv sync"
 
-ts "Start: make test-e2e"
+ts "Start: e2e test-e2e"
 echo "Running e2e test suite..."
-make test-e2e
-ts "End: make test-e2e"
+# Makefile target is: uv run behave ... (Konflux/ubi-minimal often has no make)
+if command -v make >/dev/null 2>&1; then
+  make test-e2e
+else
+  uv run behave --color --format pretty --tags=-skip -D dump_errors=true @tests/e2e/test_list.txt
+fi
+ts "End: e2e test-e2e"
