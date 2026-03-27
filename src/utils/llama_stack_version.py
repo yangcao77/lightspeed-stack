@@ -1,8 +1,9 @@
 """Check if the Llama Stack version is supported by the LCS."""
 
+import asyncio
 import re
 
-from llama_stack_client._client import AsyncLlamaStackClient
+from llama_stack_client import APIConnectionError, AsyncLlamaStackClient
 from semver import Version
 
 from constants import (
@@ -13,6 +14,13 @@ from log import get_logger
 
 logger = get_logger(__name__)
 
+# Retry settings for waiting on Llama Stack readiness during startup.
+# When LCS runs as a sidecar alongside Llama Stack, both containers start
+# concurrently and Llama Stack may not be ready when LCS attempts its
+# first version check.
+_DEFAULT_MAX_RETRIES = 5
+_DEFAULT_RETRY_DELAY = 2
+
 
 class InvalidLlamaStackVersionException(Exception):
     """Llama Stack version is not valid."""
@@ -20,26 +28,50 @@ class InvalidLlamaStackVersionException(Exception):
 
 async def check_llama_stack_version(
     client: AsyncLlamaStackClient,
+    max_retries: int = _DEFAULT_MAX_RETRIES,
+    retry_delay: int = _DEFAULT_RETRY_DELAY,
 ) -> None:
     """
     Verify the connected Llama Stack's version is within the supported range.
 
-    This coroutine fetches the Llama Stack version from the
-    provided client and validates it against the configured minimal
-    and maximal supported versions. Raises
-    InvalidLlamaStackVersionException if the detected version is
-    outside the supported range.
+    This coroutine fetches the Llama Stack version from the provided client
+    and validates it against the configured minimal and maximal supported
+    versions. Connection attempts are retried with a fixed delay to handle
+    the case where Llama Stack is still starting up (e.g., when running as
+    a sidecar in the same pod).
+
+    Args:
+        client: The async Llama Stack client.
+        max_retries: Maximum number of connection attempts before giving up.
+        retry_delay: Delay in seconds between retry attempts.
 
     Raises:
+        APIConnectionError: If Llama Stack is unreachable after all retries.
         InvalidLlamaStackVersionException: If the detected version is outside
         the supported range or cannot be parsed.
     """
-    version_info = await client.inspect.version()
-    compare_versions(
-        version_info.version,
-        MINIMAL_SUPPORTED_LLAMA_STACK_VERSION,
-        MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION,
-    )
+    if max_retries < 1:
+        raise ValueError("max_retries must be >= 1")
+
+    for attempt in range(max_retries):
+        try:
+            version_info = await client.inspect.version()
+            compare_versions(
+                version_info.version,
+                MINIMAL_SUPPORTED_LLAMA_STACK_VERSION,
+                MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION,
+            )
+            return
+        except APIConnectionError:
+            if attempt == max_retries - 1:
+                raise
+            logger.warning(
+                "Llama Stack not ready (attempt %d/%d), retrying in %ds...",
+                attempt + 1,
+                max_retries,
+                retry_delay,
+            )
+            await asyncio.sleep(retry_delay)
 
 
 def compare_versions(version_info: str, minimal: str, maximal: str) -> None:
