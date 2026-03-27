@@ -58,7 +58,10 @@ def ask_question_authorized(context: Context, endpoint: str) -> None:
     json_str = replace_placeholders(context, context.text or "{}")
 
     data = json.loads(json_str)
-    if endpoint == "streaming_query":
+    use_sse = endpoint == "streaming_query" or (
+        endpoint == "responses" and bool(data.get("stream"))
+    )
+    if use_sse:
         resp = requests.post(
             url,
             json=data,

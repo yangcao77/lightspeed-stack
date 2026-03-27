@@ -1,5 +1,6 @@
 """Unsorted utility functions to be used from other sources and test step definitions."""
 
+import json
 import os
 import shutil
 import subprocess
@@ -163,6 +164,50 @@ def validate_json_partially(actual: Any, expected: Any) -> None:
         assert actual == expected, f"Value mismatch: expected {expected}, got {actual}"
 
 
+RESPONSES_SSE_TERMINAL_EVENT_TYPES = frozenset(
+    {"response.completed", "response.incomplete", "response.failed"}
+)
+
+
+def parse_responses_sse_final_response_object(text: str) -> dict[str, Any]:
+    """Return the ``response`` object from the last terminal LCORE ``/responses`` SSE event."""
+    last: dict[str, Any] | None = None
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("data:"):
+            continue
+        payload = stripped[5:].strip()
+        if payload == "[DONE]":
+            continue
+        try:
+            obj = json.loads(payload)
+        except json.JSONDecodeError:
+            continue
+        if obj.get("type") in RESPONSES_SSE_TERMINAL_EVENT_TYPES and isinstance(
+            obj.get("response"), dict
+        ):
+            last = obj["response"]
+    if last is None:
+        raise AssertionError(
+            "No terminal responses SSE event (completed/incomplete/failed) found in body"
+        )
+    return last
+
+
+def http_response_json_or_responses_sse_terminal(response: Any) -> Any:
+    """Decode JSON body or, for streaming ``/responses`` SSE, the terminal ``response`` object.
+
+    Non-SST responses use ``response.json()`` unchanged.
+    """
+    text = response.text
+    content_type = (response.headers.get("content-type") or "").lower()
+    if "text/event-stream" in content_type or (
+        "event:" in text and "data:" in text and "[DONE]" in text
+    ):
+        return parse_responses_sse_final_response_object(text)
+    return response.json()
+
+
 def switch_config(
     source_path: str, destination_path: str = "lightspeed-stack.yaml"
 ) -> None:
@@ -320,4 +365,17 @@ def replace_placeholders(context: Context, text: str) -> str:
     """
     result = text.replace("{MODEL}", context.default_model)
     result = result.replace("{PROVIDER}", context.default_provider)
-    return result.replace("{VECTOR_STORE_ID}", context.faiss_vector_store_id)
+    result = result.replace("{VECTOR_STORE_ID}", context.faiss_vector_store_id)
+    if hasattr(context, "responses_first_response_id"):
+        result = result.replace(
+            "{RESPONSES_FIRST_RESPONSE_ID}", context.responses_first_response_id
+        )
+    if hasattr(context, "responses_conversation_id"):
+        result = result.replace(
+            "{RESPONSES_CONVERSATION_ID}", context.responses_conversation_id
+        )
+    if hasattr(context, "responses_second_response_id"):
+        result = result.replace(
+            "{RESPONSES_SECOND_RESPONSE_ID}", context.responses_second_response_id
+        )
+    return result

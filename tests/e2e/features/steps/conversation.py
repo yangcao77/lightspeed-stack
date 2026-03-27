@@ -58,6 +58,68 @@ def access_conversation_endpoint_get_specific(
     context.response = requests.get(url, headers=headers, timeout=DEFAULT_TIMEOUT)
 
 
+@step(
+    "I use REST API conversation endpoint with the forked responses conversation id using HTTP GET method"
+)
+def access_forked_responses_conversation_get(context: Context) -> None:
+    """GET /conversations/{id} using the id stored after a responses API fork."""
+    assert hasattr(
+        context, "responses_fork_conversation_id"
+    ), "responses_fork_conversation_id not set; store fork id first"
+    endpoint = "conversations"
+    base = f"http://{context.hostname}:{context.port}"
+    path = (
+        f"{context.api_prefix}/{endpoint}/{context.responses_fork_conversation_id}"
+    ).replace("//", "/")
+    url = base + path
+    headers = context.auth_headers if hasattr(context, "auth_headers") else {}
+    context.response = requests.get(url, headers=headers, timeout=DEFAULT_TIMEOUT)
+
+
+@step(
+    "I use REST API conversation endpoint with the responses multi-turn baseline conversation id using HTTP GET method"
+)
+def access_responses_baseline_conversation_get(context: Context) -> None:
+    """GET /conversations/{id} for the linear thread before a responses fork."""
+    assert hasattr(
+        context, "responses_multi_turn_baseline_conversation_id"
+    ), "responses_multi_turn_baseline_conversation_id not set"
+    endpoint = "conversations"
+    base = f"http://{context.hostname}:{context.port}"
+    cid = context.responses_multi_turn_baseline_conversation_id
+    path = f"{context.api_prefix}/{endpoint}/{cid}".replace("//", "/")
+    url = base + path
+    headers = context.auth_headers if hasattr(context, "auth_headers") else {}
+    context.response = requests.get(url, headers=headers, timeout=DEFAULT_TIMEOUT)
+
+
+@then("The GET conversation response id matches the forked responses conversation id")
+def check_get_matches_forked_responses_conversation_id(context: Context) -> None:
+    """Assert GET /conversations payload matches the fork id from /v1/responses."""
+    assert context.response is not None
+    assert hasattr(context, "responses_fork_conversation_id")
+    response_json = context.response.json()
+    assert response_json["conversation_id"] == context.responses_fork_conversation_id, (
+        f"expected conversation_id {context.responses_fork_conversation_id!r}, "
+        f"got {response_json.get('conversation_id')!r}"
+    )
+
+
+@then(
+    "The GET conversation response id matches the responses multi-turn baseline conversation id"
+)
+def check_get_matches_responses_baseline_conversation_id(context: Context) -> None:
+    """Assert GET /conversations payload matches the pre-fork thread id."""
+    assert context.response is not None
+    assert hasattr(context, "responses_multi_turn_baseline_conversation_id")
+    expected = context.responses_multi_turn_baseline_conversation_id
+    response_json = context.response.json()
+    assert response_json["conversation_id"] == expected, (
+        f"expected conversation_id {expected!r}, "
+        f"got {response_json.get('conversation_id')!r}"
+    )
+
+
 @when(
     "I use REST API conversation endpoint with conversation_id from above using HTTP DELETE method"
 )

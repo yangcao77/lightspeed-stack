@@ -12,6 +12,7 @@ from behave import (
 from behave.runner import Context
 
 from tests.e2e.utils.utils import (
+    http_response_json_or_responses_sse_terminal,
     normalize_endpoint,
     replace_placeholders,
     validate_json,
@@ -171,11 +172,16 @@ def check_response_body_contains(context: Context, substring: str) -> None:
     Supports {MODEL} and {PROVIDER} placeholders in the substring so
     assertions work with any configured provider (e.g. unknown-provider
     error message includes the actual model id).
+
+    Matching is case-insensitive so LLM replies (e.g. ``Hello`` vs ``hello``)
+    do not fail otherwise-identical scenarios.
     """
     assert context.response is not None, "Request needs to be performed first"
     expected = replace_placeholders(context, substring)
+    response_text_lower = context.response.text.lower()
+    expected_substring_lower = expected.lower()
     assert (
-        expected in context.response.text
+        expected_substring_lower in response_text_lower
     ), f"The response text '{context.response.text}' doesn't contain '{expected}'"
 
 
@@ -425,7 +431,7 @@ def check_response_partially(context: Context) -> None:
     in `context.text`, ignoring extra keys or values not specified.
     """
     assert context.response is not None, "Request needs to be performed first"
-    body = context.response.json()
+    body = http_response_json_or_responses_sse_terminal(context.response)
     json_str = replace_placeholders(context, context.text or "{}")
     expected = json.loads(json_str)
     validate_json_partially(body, expected)

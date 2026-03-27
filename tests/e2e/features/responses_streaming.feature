@@ -1,24 +1,25 @@
 @Authorized
-Feature: Responses endpoint API tests
+Feature: Responses endpoint streaming API tests
+
+# Same coverage as ``responses.feature`` with ``stream=true`` (SSE for success paths;
 
   Background:
     Given The service is started locally
       And REST API service prefix is /v1
 
-
-  Scenario: Responses returns 200 for minimal request
+  Scenario: Streaming responses returns 200 for minimal request
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 200
       And The body of the response contains hello
 
   # https://redhat.atlassian.net/browse/LCORE-1583
   @skip
-  Scenario: Responses accepts passthrough parameters with valid types
+  Scenario: Streaming responses accepts passthrough parameters with valid types
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
@@ -26,7 +27,7 @@ Feature: Responses endpoint API tests
     {
       "input": "Say hello in one short sentence.",
       "model": "{PROVIDER}/{MODEL}",
-      "stream": false,
+      "stream": true,
       "instructions": "You are a helpful assistant.",
       "prompt": {"id": "e2e_responses_passthrough_prompt"},
       "reasoning": {"effort": "low"},
@@ -65,12 +66,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 422 for unknown JSON fields on the request body
+  Scenario: Streaming responses returns 422 for unknown JSON fields on the request body
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "not_a_valid_field": true}
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "not_a_valid_field": true}
     """
     Then The status code of the response is 422
       And the body of the response has the following structure
@@ -86,12 +87,75 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 422 when input is a bare JSON array
+  Scenario: Streaming responses returns 422 for invalid include enum value
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": ["plain", "strings", "list"], "model": "{PROVIDER}/{MODEL}"}
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "include": ["not_a_valid_include_token"]}
+    """
+    Then The status code of the response is 422
+      And the body of the response has the following structure
+        """
+        {
+          "detail": [
+            {
+              "type": "literal_error",
+              "loc": ["body", "include", 0],
+              "input": "not_a_valid_include_token"
+            }
+          ]
+        }
+        """
+
+  Scenario: Streaming responses returns 422 when metadata values are not strings
+    Given The system is in default state
+      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    When I use "responses" to ask question with authorization header
+    """
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "metadata": {"k": 1}}
+    """
+    Then The status code of the response is 422
+      And the body of the response has the following structure
+        """
+        {
+          "detail": [
+            {
+              "type": "string_type",
+              "loc": ["body", "metadata", "k"],
+              "msg": "Input should be a valid string"
+            }
+          ]
+        }
+        """
+
+  Scenario: Streaming responses returns 422 when parallel_tool_calls is not a boolean
+    Given The system is in default state
+      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    When I use "responses" to ask question with authorization header
+    """
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "parallel_tool_calls": "maybe"}
+    """
+    Then The status code of the response is 422
+      And the body of the response has the following structure
+        """
+        {
+          "detail": [
+            {
+              "type": "bool_parsing",
+              "loc": ["body", "parallel_tool_calls"],
+              "input": "maybe"
+            }
+          ]
+        }
+        """
+
+  Scenario: Streaming responses returns 422 when input is a bare JSON array
+    Given The system is in default state
+      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+    When I use "responses" to ask question with authorization header
+    """
+    {"input": ["plain", "strings", "list"], "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 422
       And the body of the response has the following structure
@@ -107,12 +171,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses accepts string input
+  Scenario: Streaming responses accepts string input
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Reply with the single word: ok.", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "Reply with the single word: ok.", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 200
       And the body of the response has the following structure
@@ -131,7 +195,7 @@ Feature: Responses endpoint API tests
         """
       And The body of the response contains ok
 
-  Scenario: Responses accepts structured input as a list of message objects
+  Scenario: Streaming responses accepts structured input as a list of message objects
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
@@ -142,28 +206,28 @@ Feature: Responses endpoint API tests
         {"type": "message", "role": "user", "content": "What was the word?"}
       ],
       "model": "{PROVIDER}/{MODEL}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
       And The body of the response contains alpha
 
-  Scenario: Responses omits model and auto-selects when only input is sent
+  Scenario: Streaming responses omits model and auto-selects like query when only input is sent
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "stream": false}
+    {"input": "Say hello", "stream": true}
     """
     Then The status code of the response is 200
       And The body of the response contains hello
 
-  Scenario: Responses returns 404 for unknown model segment in provider slash model id
+  Scenario: Streaming responses returns 404 for unknown model segment in provider slash model id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "model": "{PROVIDER}/unknown-model-id", "stream": false}
+    {"input": "Say hello", "model": "{PROVIDER}/unknown-model-id", "stream": true}
     """
     Then The status code of the response is 404
       And the body of the response has the following structure
@@ -176,12 +240,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 404 for unknown provider segment in provider slash model id
+  Scenario: Streaming responses returns 404 for unknown provider segment in provider slash model id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "model": "unknown-provider/{MODEL}", "stream": false}
+    {"input": "Say hello", "model": "unknown-provider/{MODEL}", "stream": true}
     """
     Then The status code of the response is 404
       And the body of the response has the following structure
@@ -194,7 +258,7 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 422 when conversation and previous_response_id are both set
+  Scenario: Streaming responses returns 422 when conversation and previous_response_id are both set
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
@@ -204,7 +268,7 @@ Feature: Responses endpoint API tests
       "model": "{PROVIDER}/{MODEL}",
       "conversation": "123e4567-e89b-12d3-a456-426614174000",
       "previous_response_id": "resp_any",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 422
@@ -221,12 +285,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 422 for malformed conversation id
+  Scenario: Streaming responses returns 422 for malformed conversation id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "conversation": "short-id", "stream": false}
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "conversation": "short-id", "stream": true}
     """
     Then The status code of the response is 422
       And the body of the response has the following structure
@@ -243,12 +307,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 422 when previous_response_id looks like a moderation id
+  Scenario: Streaming responses returns 422 when previous_response_id looks like a moderation id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "previous_response_id": "modr_foo", "stream": false}
+    {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "previous_response_id": "modr_foo", "stream": true}
     """
     Then The status code of the response is 422
       And the body of the response has the following structure
@@ -265,7 +329,7 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses returns 404 for unknown existing-format conversation id
+  Scenario: Streaming responses returns 404 for unknown existing-format conversation id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
@@ -274,7 +338,7 @@ Feature: Responses endpoint API tests
       "input": "Hi",
       "model": "{PROVIDER}/{MODEL}",
       "conversation": "123e4567-e89b-12d3-a456-426614174000",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 404
@@ -288,12 +352,12 @@ Feature: Responses endpoint API tests
         }
         """
 
-  Scenario: Responses continues a thread using previous_response_id from latest turn
+  Scenario: Streaming responses continues a thread using previous_response_id from latest turn
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 200
       And I store the first responses turn from the last response
@@ -303,7 +367,7 @@ Feature: Responses endpoint API tests
       "input": "Second turn: say beta.",
       "model": "{PROVIDER}/{MODEL}",
       "previous_response_id": "{RESPONSES_FIRST_RESPONSE_ID}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
@@ -314,18 +378,18 @@ Feature: Responses endpoint API tests
       "input": "Third turn: say gamma.",
       "model": "{PROVIDER}/{MODEL}",
       "previous_response_id": "{RESPONSES_SECOND_RESPONSE_ID}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
       And The responses conversation id matches the multi-turn baseline
 
-  Scenario: Responses continues a thread using conversation id
+  Scenario: Streaming responses continues a thread using conversation id
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 200
       And The body of the response contains alpha
@@ -336,19 +400,19 @@ Feature: Responses endpoint API tests
       "input": "Second turn: say beta.",
       "model": "{PROVIDER}/{MODEL}",
       "conversation": "{RESPONSES_CONVERSATION_ID}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
       And The body of the response contains beta
       And The responses conversation id matches the first stored conversation
 
-  Scenario: Responses forks to a new conversation when previous_response_id is not the latest turn
+  Scenario: Streaming responses forks to a new conversation when previous_response_id is not the latest turn
     Given The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Fork test turn one.", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "Fork test turn one.", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
     Then The status code of the response is 200
       And The body of the response contains one
@@ -359,7 +423,7 @@ Feature: Responses endpoint API tests
       "input": "Fork test turn two.",
       "model": "{PROVIDER}/{MODEL}",
       "previous_response_id": "{RESPONSES_FIRST_RESPONSE_ID}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
@@ -371,7 +435,7 @@ Feature: Responses endpoint API tests
       "input": "Fork from middle using first response id.",
       "model": "{PROVIDER}/{MODEL}",
       "previous_response_id": "{RESPONSES_FIRST_RESPONSE_ID}",
-      "stream": false
+      "stream": true
     }
     """
     Then The status code of the response is 200
@@ -389,11 +453,11 @@ Feature: Responses endpoint API tests
       And The body of the response contains Fork test turn two
       And The conversation history contains 2 messages
 
-  Scenario: Responses returns error when not authenticated
+  Scenario: Streaming responses returns error when not authenticated
     Given The system is in default state
      When I use "responses" to ask question
      """
-     {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": false}
+     {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
      """
       Then The status code of the response is 401
       And The body of the response is the following
@@ -406,24 +470,24 @@ Feature: Responses endpoint API tests
       }
       """
 
-  Scenario: Responses returns error when bearer token is missing
+  Scenario: Streaming responses returns error when bearer token is missing
     Given The system is in default state
     And I set the Authorization header to Bearer
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
       Then The status code of the response is 401
       And The body of the response contains No token found in Authorization header
 
   @skip-in-library-mode
-  Scenario: Responses returns error when unable to connect to llama-stack
+  Scenario: Streaming responses returns error when unable to connect to llama-stack
     Given The system is in default state
     And The llama-stack connection is disrupted
     And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
-    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": false}
+    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
     """
      Then The status code of the response is 503
       And The body of the response contains Unable to connect to Llama Stack
