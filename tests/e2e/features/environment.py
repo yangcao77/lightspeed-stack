@@ -513,3 +513,10 @@ def after_feature(context: Context, feature: Feature) -> None:
         switch_config(context.default_config_backup)
         restart_container("lightspeed-stack")
         remove_config_backup(context.default_config_backup)
+
+    # Clean up any proxy servers left from the last scenario
+    if hasattr(context, "tunnel_proxy") or hasattr(context, "interception_proxy"):
+        from tests.e2e.features.steps.proxy import _stop_proxy
+
+        _stop_proxy(context, "tunnel_proxy", "proxy_loop")
+        _stop_proxy(context, "interception_proxy", "interception_proxy_loop")
