@@ -552,6 +552,17 @@ def after_feature(context: Context, feature: Feature) -> None:
         restart_container("lightspeed-stack")
         remove_config_backup(context.default_config_backup)
 
+    # Restore Lightspeed Stack config if the generic configure_service step switched it.
+    # This cleanup intentionally runs for any feature (not tag-gated) - any feature that
+    # leaves a backup file will trigger config restoration and container restarts.
+    backup_path = "lightspeed-stack.yaml.backup"
+    if os.path.exists(backup_path):
+        switch_config(backup_path)
+        remove_config_backup(backup_path)
+        if not context.is_library_mode:
+            restart_container("llama-stack")
+        restart_container("lightspeed-stack")
+
     # Clean up any proxy servers left from the last scenario
     if hasattr(context, "tunnel_proxy") or hasattr(context, "interception_proxy"):
         from tests.e2e.features.steps.proxy import _stop_proxy

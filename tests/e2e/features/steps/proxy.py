@@ -142,9 +142,10 @@ def restore_if_modified(context: Context) -> None:
     _stop_proxy(context, "interception_proxy", "interception_proxy_loop")
 
     if os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
-        print("Restoring original Llama Stack config from backup...")
-        shutil.copy(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
-        os.remove(_LLAMA_STACK_CONFIG_BACKUP)
+        print(
+            f"Restoring original Llama Stack config from {_LLAMA_STACK_CONFIG_BACKUP}..."
+        )
+        shutil.move(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
         restart_container("llama-stack")
         restart_container("lightspeed-stack")
 
