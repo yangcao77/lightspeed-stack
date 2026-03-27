@@ -66,7 +66,6 @@ from utils.query import (
     validate_model_provider_override,
 )
 from utils.quota import check_tokens_available, get_available_quotas
-from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.responses import (
     build_tool_call_summary,
     build_turn_summary,
@@ -87,6 +86,7 @@ from utils.shields import run_shield_moderation
 from utils.suid import (
     normalize_conversation_id,
 )
+from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.types import (
     RAGContext,
     ResponseInput,
