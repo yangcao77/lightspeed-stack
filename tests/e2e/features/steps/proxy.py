@@ -45,13 +45,16 @@ def _is_docker_mode() -> bool:
     return "llama-stack" in result.stdout
 
 
-def _get_proxy_host() -> str:
+def _get_proxy_host(is_docker: bool) -> str:
     """Get the host address that Docker containers can use to reach the proxy.
 
     In Docker mode, containers reach the host via the Docker bridge gateway.
     In local mode, localhost works directly.
+
+    Parameters:
+        is_docker: Whether services are running in Docker containers.
     """
-    if _is_docker_mode():
+    if is_docker:
         result = subprocess.run(
             [
                 "docker",
@@ -103,12 +106,15 @@ def _backup_llama_config() -> None:
         shutil.copy(_LLAMA_STACK_CONFIG, _LLAMA_STACK_CONFIG_BACKUP)
 
 
-def _restart_services() -> None:
+def _restart_services(is_docker: bool = False) -> None:
     """Restart Llama Stack and Lightspeed Stack.
 
     Works in both Docker and local environments.
+
+    Parameters:
+        is_docker: Whether services are running in Docker containers.
     """
-    if _is_docker_mode():
+    if is_docker:
         restart_container("llama-stack")
         restart_container("lightspeed-stack")
     else:
@@ -187,15 +193,15 @@ def _restart_services_local() -> None:
         time.sleep(2)
 
 
-def _restore_original_services() -> None:
+def _restore_original_services(is_docker: bool = False) -> None:
     """Restore original run.yaml and restart services."""
     if os.path.exists(_LLAMA_STACK_CONFIG_BACKUP):
         shutil.copy(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
         os.remove(_LLAMA_STACK_CONFIG_BACKUP)
     try:
-        _restart_services()
-    except Exception:  # pylint: disable=broad-exception-caught
-        pass
+        _restart_services(is_docker=is_docker)
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Warning: Service restoration failed: {e}")
 
 
 # --- Tunnel Proxy Steps ---
@@ -226,7 +232,7 @@ def configure_llama_tunnel_proxy(context: Context) -> None:
     """Modify run.yaml with proxy config pointing to the tunnel proxy."""
     _backup_llama_config()
     proxy = context.tunnel_proxy
-    proxy_host = _get_proxy_host()
+    proxy_host = _get_proxy_host(context.is_docker_mode)
     config = _load_llama_config()
     provider = _find_openai_provider(config)
 
@@ -277,7 +283,7 @@ def start_interception_proxy(context: Context, port: int) -> None:
     proxy.export_ca_cert(ca_cert_path)
 
     # In Docker mode, copy the cert into the llama-stack container
-    if _is_docker_mode():
+    if context.is_docker_mode:
         container_cert_path = "/tmp/interception-proxy-ca.pem"
         subprocess.run(
             ["docker", "cp", str(ca_cert_path), f"llama-stack:{container_cert_path}"],
@@ -310,7 +316,7 @@ def configure_llama_interception_with_ca(context: Context) -> None:
     """Modify run.yaml with interception proxy and CA cert config."""
     _backup_llama_config()
     proxy = context.interception_proxy
-    proxy_host = _get_proxy_host()
+    proxy_host = _get_proxy_host(context.is_docker_mode)
     config = _load_llama_config()
     provider = _find_openai_provider(config)
 
@@ -338,7 +344,7 @@ def configure_llama_interception_no_ca(context: Context) -> None:
     """Modify run.yaml with interception proxy but NO CA cert."""
     _backup_llama_config()
     proxy = context.interception_proxy
-    proxy_host = _get_proxy_host()
+    proxy_host = _get_proxy_host(context.is_docker_mode)
     config = _load_llama_config()
     provider = _find_openai_provider(config)
 
@@ -402,7 +408,7 @@ def configure_llama_ciphers(context: Context, ciphers: str) -> None:
 def restart_services_step(context: Context) -> None:
     """Restart Llama Stack with new config and restart Lightspeed Stack."""
     context.services_modified = True
-    _restart_services()
+    _restart_services(is_docker=context.is_docker_mode)
 
 
 # --- Query Steps ---

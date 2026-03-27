@@ -145,6 +145,11 @@ def before_all(context: Context) -> None:
     context.deployment_mode = os.getenv("E2E_DEPLOYMENT_MODE", "server").lower()
     context.is_library_mode = context.deployment_mode == "library"
 
+    # Detect Docker mode once for proxy tests
+    from tests.e2e.features.steps.proxy import _is_docker_mode
+
+    context.is_docker_mode = _is_docker_mode()
+
     # Get first LLM model from running service
     print(f"Running tests in {context.deployment_mode} mode")
 
@@ -289,10 +294,12 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
             from tests.e2e.features.steps.proxy import _restore_original_services
 
             print("Restoring original Llama Stack and Lightspeed Stack configs...")
-            _restore_original_services()
+            _restore_original_services(
+                is_docker=getattr(context, "is_docker_mode", False)
+            )
+            context.services_modified = False
         except Exception as e:  # pylint: disable=broad-exception-caught
             print(f"Warning: Service restoration failed: {e}")
-        context.services_modified = False
 
     # Restore Llama Stack FIRST (before any lightspeed-stack restart)
     llama_was_running = getattr(context, "llama_stack_was_running", False)

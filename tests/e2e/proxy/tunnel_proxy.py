@@ -69,7 +69,12 @@ class TunnelProxy:
             # Parse target host:port
             if ":" in target:
                 target_host, target_port_str = target.rsplit(":", 1)
-                target_port = int(target_port_str)
+                try:
+                    target_port = int(target_port_str)
+                except ValueError:
+                    writer.write(b"HTTP/1.1 400 Bad Request\r\n\r\n")
+                    await writer.drain()
+                    return
             else:
                 target_host = target
                 target_port = 443
@@ -80,12 +85,13 @@ class TunnelProxy:
                 if header_line in (b"\r\n", b"\n", b""):
                     break
 
-            # Connect to the target
+            # Connect to the target with timeout
             try:
-                remote_reader, remote_writer = await asyncio.open_connection(
-                    target_host, target_port
+                remote_reader, remote_writer = await asyncio.wait_for(
+                    asyncio.open_connection(target_host, target_port),
+                    timeout=10,
                 )
-            except (OSError, ConnectionRefusedError) as e:
+            except (asyncio.TimeoutError, OSError, ConnectionRefusedError) as e:
                 logger.warning("Failed to connect to %s: %s", target, e)
                 writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
                 await writer.drain()
