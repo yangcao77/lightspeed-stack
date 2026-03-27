@@ -15,14 +15,13 @@ user_data_collection:
   transcripts_enabled: true
   transcripts_storage: "/tmp/data/transcripts"
 
-# Conversation cache for storing Q&A history
 conversation_cache:
   type: "sqlite"
   sqlite:
     db_path: "/tmp/data/conversation-cache.db"
 
 authentication:
-  module: "noop-with-token"
+  module: "noop"
 inference:
   default_provider: openai
   default_model: gpt-4o-mini
@@ -37,5 +36,5 @@ byok_rag:
     score_multiplier: 1.0
 
 rag:
-  tool:
+  inline:
     - e2e-test-docs

@@ -184,7 +184,11 @@ def construct_vector_stores_section(
             output = ls_config["registered_resources"]["vector_stores"].copy()
 
     # append new vector_stores entries, skipping duplicates
-    existing_store_ids = {vs.get("vector_store_id") for vs in output}
+    # Resolve ${env.VAR} patterns so comparisons work when existing entries
+    # use environment variable references and new entries have resolved values.
+    existing_store_ids = {
+        replace_env_vars(vs.get("vector_store_id", "")) for vs in output
+    }
     added = 0
     for brag in byok_rag:
         if not brag.get("rag_id"):
