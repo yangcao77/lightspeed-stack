@@ -3,6 +3,9 @@
 ## [__init__.py](__init__.py)
 Unit tests for endpoints implementations.
 
+## [conftest.py](conftest.py)
+Shared pytest fixtures for endpoint unit tests.
+
 ## [test_a2a.py](test_a2a.py)
 Unit tests for the A2A (Agent-to-Agent) protocol endpoints.
 
@@ -30,6 +33,9 @@ Unit tests for the /info REST API endpoint.
 ## [test_mcp_auth.py](test_mcp_auth.py)
 Unit tests for MCP auth endpoint.
 
+## [test_mcp_servers.py](test_mcp_servers.py)
+Unit tests for the MCP servers dynamic registration endpoint.
+
 ## [test_metrics.py](test_metrics.py)
 Unit tests for the /metrics REST API endpoint.
 
@@ -45,6 +51,9 @@ Unit tests for the /query (v2) REST API endpoint using Responses API.
 ## [test_rags.py](test_rags.py)
 Unit tests for the /rags REST API endpoints.
 
+## [test_responses.py](test_responses.py)
+Unit tests for the /responses REST API endpoint (LCORE Responses API).
+
 ## [test_rlsapi_v1.py](test_rlsapi_v1.py)
 Unit tests for the rlsapi v1 /infer REST API endpoint.
 
@@ -53,6 +62,9 @@ Unit tests for the / endpoint handler.
 
 ## [test_shields.py](test_shields.py)
 Unit tests for the /shields REST API endpoint.
+
+## [test_stream_interrupt.py](test_stream_interrupt.py)
+Unit tests for streaming query interrupt endpoint.
 
 ## [test_streaming_query.py](test_streaming_query.py)
 Unit tests for the /streaming_query (v2) endpoint using Responses API.

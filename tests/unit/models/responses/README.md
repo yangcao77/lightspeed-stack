@@ -13,7 +13,7 @@ Unit tests for all error response models.
 Unit tests for QueryResponse model.
 
 ## [test_rag_chunk.py](test_rag_chunk.py)
-Unit tests for RAGChunk model.
+Unit tests for RAGChunk and RAGContext models.
 
 ## [test_response_types.py](test_response_types.py)
 Unit tests for response-related type models defined in models/responses.py.

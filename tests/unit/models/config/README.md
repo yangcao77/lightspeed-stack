@@ -51,6 +51,9 @@ Unit tests for QuotaLimiterConfig model.
 ## [test_quota_scheduler_config.py](test_quota_scheduler_config.py)
 Unit tests for QuotaSchedulerConfig model.
 
+## [test_rag_configuration.py](test_rag_configuration.py)
+Unit tests for RAG and OKP configuration models.
+
 ## [test_service_configuration.py](test_service_configuration.py)
 Unit tests for ServiceConfiguration model.
 

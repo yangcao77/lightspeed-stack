@@ -30,6 +30,9 @@ Handler for REST API call to provide info.
 ## [mcp_auth.py](mcp_auth.py)
 Handler for REST API calls related to MCP server authentication.
 
+## [mcp_servers.py](mcp_servers.py)
+Handler for REST API calls to dynamically manage MCP servers.
+
 ## [metrics.py](metrics.py)
 Handler for REST API call to provide metrics.
 
@@ -45,6 +48,9 @@ Handler for REST API call to provide answer to query using Response API.
 ## [rags.py](rags.py)
 Handler for REST API calls to list and retrieve available RAGs.
 
+## [responses.py](responses.py)
+Handler for REST API call to provide answer using Responses API (LCORE specification).
+
 ## [rlsapi_v1.py](rlsapi_v1.py)
 Handler for RHEL Lightspeed rlsapi v1 REST API endpoints.
 
@@ -53,6 +59,9 @@ Handler for the / endpoint.
 
 ## [shields.py](shields.py)
 Handler for REST API call to list available shields.
+
+## [stream_interrupt.py](stream_interrupt.py)
+Endpoint for interrupting in-progress streaming query requests.
 
 ## [streaming_query.py](streaming_query.py)
 Streaming query handler using Responses API.

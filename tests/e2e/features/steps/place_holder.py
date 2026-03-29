@@ -1,4 +1,4 @@
-"""Implementation of place holder test steps."""
+"""Implementation of placeholder test steps."""
 
 from behave import given  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context

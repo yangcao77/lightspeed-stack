@@ -28,7 +28,7 @@ Utilities for resolving MCP server authorization headers.
 MCP headers handling.
 
 ## [mcp_oauth_probe.py](mcp_oauth_probe.py)
-Probe MCP server for OAuth and raise 401 with WWW-Authenticate when required.
+Probe MCP servers for OAuth and raise 401 with WWW-Authenticate when required.
 
 ## [prompts.py](prompts.py)
 Utility functions for system prompts.
@@ -47,6 +47,9 @@ Function to dump the configuration schema into OpenAPI-compatible format.
 
 ## [shields.py](shields.py)
 Utility functions for working with Llama Stack shields.
+
+## [stream_interrupts.py](stream_interrupts.py)
+In-memory registry for interrupting active streaming requests.
 
 ## [suid.py](suid.py)
 Session ID utility functions.

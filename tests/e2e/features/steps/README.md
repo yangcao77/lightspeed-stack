@@ -27,8 +27,23 @@ Implementation of common test steps.
 ## [llm_query_response.py](llm_query_response.py)
 LLM query and response steps.
 
+## [models.py](models.py)
+Steps for /models endpoint.
+
+## [place_holder.py](place_holder.py)
+Implementation of placeholder test steps.
+
+## [proxy.py](proxy.py)
+Step definitions for proxy and TLS networking e2e tests.
+
 ## [rbac.py](rbac.py)
 Step definitions for RBAC E2E tests.
+
+## [responses_steps.py](responses_steps.py)
+Behave steps for POST /v1/responses (LCORE Responses API) multi-turn tests.
+
+## [rlsapi_v1.py](rlsapi_v1.py)
+rlsapi v1 endpoint test steps.
 
 ## [token_counters.py](token_counters.py)
 Step definitions for token counter validation.
