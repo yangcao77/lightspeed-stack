@@ -45,9 +45,15 @@ Unit tests for utils/shields.py functions.
 ## [test_suid.py](test_suid.py)
 Unit tests for functions defined in utils.suid module.
 
+## [test_tool_formatter.py](test_tool_formatter.py)
+Unit tests for tool_formatter utilities.
+
 ## [test_transcripts.py](test_transcripts.py)
 Unit tests for functions defined in utils.transcripts module.
 
 ## [test_types.py](test_types.py)
 Unit tests for functions and types defined in utils/types.py.
+
+## [test_vector_search.py](test_vector_search.py)
+Unit tests for vector search utilities.
 
