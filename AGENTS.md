@@ -106,7 +106,7 @@ src/
 - **Pydantic Models**: Extend `ConfigurationBase` for config, `BaseModel` for data models
 - **Abstract Classes**: Use ABC for interfaces with `@abstractmethod` decorators
 - **Validation**: Use `@model_validator` and `@field_validator` for Pydantic models
-- **Type Hints**: Complete type annotations for all class attributes
+- **Type Hints**: Complete type annotations for all class attributes, use specific types, not `Any`
 
 #### Docstring Standards
 - Follow Google Python docstring conventions: https://google.github.io/styleguide/pyguide.html
@@ -173,7 +173,7 @@ uv run make test-e2e         # End-to-end tests
 ### Linting Tools
 - **black**: Code formatting
 - **pylint**: Static analysis (`source-roots = "src"`)
-- **pyright**: Type checking (excludes `src/authentication/k8s.py`)
+- **pyright**: Type checking
 - **ruff**: Fast linter
 - **pydocstyle**: Docstring style
 - **mypy**: Additional type checking
