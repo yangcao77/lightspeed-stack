@@ -3653,12 +3653,12 @@ Returns:
 
 ### ✅ Responses
 
-| Status Code | Description | Component |
-|-------------|-------------|-----------|
-| 200 | Successful response | [ReadinessResponse](#readinessresponse) |
-| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse) |
-| 503 | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
+| Status Code | Description         | Component                                                 |
+|-------------|---------------------|-----------------------------------------------------------|
+| 200         | Successful response | [ReadinessResponse](#readinessresponse)                   |
+| 401         | Unauthorized        | [UnauthorizedResponse](#unauthorizedresponse)             |
+| 403         | Permission denied   | [ForbiddenResponse](#forbiddenresponse)                   |
+| 503         | Service unavailable | [ServiceUnavailableResponse](#serviceunavailableresponse) |
 
 Examples
 
@@ -3728,10 +3728,11 @@ Returns:
 
 ### ✅ Responses
 
-| Status Code | Description | Component |
-|-------------|-------------|-----------|
-| 200 | Successful response | [LivenessResponse](#livenessresponse) |
-| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse)
+| Status Code | Description         | Component                                     |
+|-------------|---------------------|-----------------------------------------------|
+| 200         | Successful response | [LivenessResponse](#livenessresponse)         |
+| 401         | Unauthorized        | [UnauthorizedResponse](#unauthorizedresponse) |
+| 403         | Permission denied   | [ForbiddenResponse](#forbiddenresponse)       |
 
 Examples
 
@@ -3759,12 +3760,6 @@ Examples
   }
 }
 ```
- |
-| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse)
-
-Examples
-
-
 
 
 
@@ -3776,7 +3771,7 @@ Examples
   }
 }
 ```
- |
+
 ## POST `/authorized`
 
 > **Authorized Endpoint Handler**
@@ -3797,11 +3792,11 @@ Returns:
 
 ### ✅ Responses
 
-| Status Code | Description | Component |
-|-------------|-------------|-----------|
-| 200 | Successful response | [AuthorizedResponse](#authorizedresponse) |
-| 401 | Unauthorized | [UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Permission denied | [ForbiddenResponse](#forbiddenresponse) |
+| Status Code | Description         | Component                                     |
+|-------------|---------------------|-----------------------------------------------|
+| 200         | Successful response | [AuthorizedResponse](#authorizedresponse)     |
+| 401         | Unauthorized        | [UnauthorizedResponse](#unauthorizedresponse) |
+| 403         | Permission denied   | [ForbiddenResponse](#forbiddenresponse)       |
 
 
 
@@ -3863,13 +3858,15 @@ Returns:
 
 ### ✅ Responses
 
-| Status Code | Description | Component |
-|-------------|-------------|-----------|
-| 200 | Successful Response | string |
-| 401 | Unauthorized | ...
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful Response   | string                                                      |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+
 Examples
-
-
 
 
 
@@ -3894,12 +3891,6 @@ Examples
 }
 ```
 
-[UnauthorizedResponse](#unauthorizedresponse) |
-| 403 | Permission denied | ...
-Examples
-
-
-
 
 
 ```json
@@ -3910,12 +3901,6 @@ Examples
   }
 }
 ```
-
-[ForbiddenResponse](#forbiddenresponse) |
-| 500 | Internal server error | ...
-Examples
-
-
 
 
 
@@ -3928,13 +3913,6 @@ Examples
 }
 ```
 
-[InternalServerErrorResponse](#internalservererrorresponse) |
-| 503 | Service unavailable | ...
-Examples
-
-
-
-
 
 ```json
 {
@@ -3945,7 +3923,6 @@ Examples
 }
 ```
 
-[ServiceUnavailableResponse](#serviceunavailableresponse) |
 ## GET `/.well-known/agent-card.json`
 
 > **Get Agent Card**
@@ -3967,6 +3944,7 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [AgentCard](#agentcard) |
+
 ## GET `/.well-known/agent.json`
 
 > **Get Agent Card**
@@ -3988,6 +3966,7 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | [AgentCard](#agentcard) |
+
 ## GET `/a2a`
 
 > **Handle A2A Jsonrpc**
@@ -4020,6 +3999,7 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | ... |
+
 ## POST `/a2a`
 
 > **Handle A2A Jsonrpc**
@@ -4052,6 +4032,7 @@ Returns:
 | Status Code | Description | Component |
 |-------------|-------------|-----------|
 | 200 | Successful Response | ... |
+
 ## GET `/a2a/health`
 
 > **A2A Health Check**
