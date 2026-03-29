@@ -25,6 +25,7 @@ from behave import given, then  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
 from tests.e2e.utils.utils import (
+    is_prow_environment,
     restart_container,
 )
 
@@ -35,6 +36,9 @@ _LLAMA_STACK_CONFIG_BACKUP = "run.yaml.proxy-backup"
 
 def _is_docker_mode() -> bool:
     """Check if services are running in Docker containers."""
+    if is_prow_environment():
+        return False
+
     result = subprocess.run(
         ["docker", "ps", "--filter", "name=llama-stack", "--format", "{{.Names}}"],
         capture_output=True,
