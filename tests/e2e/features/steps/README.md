@@ -31,7 +31,7 @@ LLM query and response steps.
 Steps for /models endpoint.
 
 ## [place_holder.py](place_holder.py)
-Implementation of place holder test steps.
+Implementation of placeholder test steps.
 
 ## [proxy.py](proxy.py)
 Step definitions for proxy and TLS networking e2e tests.

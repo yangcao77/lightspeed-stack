@@ -1,4 +1,4 @@
-"""Integration tests for /query endpoint BYOK inline and tool RAG functionality."""
+"""Integration tests for the /query endpoint BYOK inline and tool RAG functionality."""
 
 # pylint: disable=too-many-lines
 
