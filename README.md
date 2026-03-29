@@ -35,6 +35,7 @@ The service includes comprehensive user data collection capabilities for various
                 * [2. Kubernetes Service Account Tokens (For K8s Deployments)](#2-kubernetes-service-account-tokens-for-k8s-deployments)
                 * [3. Client-Provided Tokens (For Per-User Authentication)](#3-client-provided-tokens-for-per-user-authentication)
                 * [4. OAuth (For MCP Servers Requiring OAuth)](#4-oauth-for-mcp-servers-requiring-oauth)
+                * [5. Automatic Header Propagation (For Gateway-Injected Headers)](#5-automatic-header-propagation-for-gateway-injected-headers)
                 * [Client-Authenticated MCP Servers Discovery](#client-authenticated-mcp-servers-discovery)
                 * [Combining Authentication Methods](#combining-authentication-methods)
                 * [Authentication Method Comparison](#authentication-method-comparison)
