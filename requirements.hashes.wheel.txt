@@ -71,8 +71,6 @@ fsspec==2025.10.0 \
     --hash=sha256:0b0286f736ac841b0e518cfbd9ec04da01d82726e8ffb5d1a7ae185e041146b2
 google-cloud-core==2.5.0 \
     --hash=sha256:6fbf78b1f08be891d896310309e576f66565a19a79334575db9cececde4fe948
-google-cloud-resource-manager==1.16.0 \
-    --hash=sha256:0258bea03e95912ad68a24dae00ff3a288cc1b73aa49f9a135bfd39118811c58
 google-crc32c==1.8.0 \
     --hash=sha256:aa358fd96bbc33eddfccd794e8bf77b7cd1b02b5b857518139dcc0b328392cf6
 google-genai==1.59.0 \
@@ -197,8 +195,6 @@ pyyaml==6.0.3 \
     --hash=sha256:c99b924c5311933fa398cc53c617f99705cf2d96226d023f75e95e15e753f81f
 referencing==0.37.0 \
     --hash=sha256:bd019ff74869f84a893b7e50b84ce3d0db1e465ceb3a336403011c6467ffacb0
-requests==2.32.5 \
-    --hash=sha256:7cf3560d7ec28f972b1c540ecbb2140bb370364faf479119bdb23f03683a3046
 requests-oauthlib==2.0.0 \
     --hash=sha256:4fd6526c6de7a0bd036e84563b7a1523d92ba1f62e32cad65ccef9b2523bbc33
 rpds-py==0.30.0 \
