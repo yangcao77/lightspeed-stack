@@ -77,9 +77,6 @@ dependencies = [
 
 [tool.pyright]
 exclude = [
-  # Agent API v1 endpoints - deprecated API but still supported
-  # Type errors due to llama-stack-client not exposing Agent API types
-  "src/app/endpoints/conversations.py",
 ]
 extraPaths = ["./src"]
 
