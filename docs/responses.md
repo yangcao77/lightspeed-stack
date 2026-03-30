@@ -96,6 +96,8 @@ The following request attributes are supported as defined by the underlying Llam
 | `tool_choice` | string or object | Tool selection strategy (auto, required, none, or specific rules). Default: auto | No |
 | `tools` | array[object] | Tools available for request (file search, web search, functions, MCP). Default: all | No |
 
+**Note:** `reasoning` and `max_output_tokens` are accepted for OpenResponses compatibility but are **not yet supported** in LCORE: the endpoint clears them before processing and logs a warning.
+
 ### LCORE-Specific Extensions
 
 The following fields are LCORE-specific request extensions and are not part of the standard LLS OpenAPI specification:
