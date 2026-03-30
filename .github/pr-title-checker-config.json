@@ -4,7 +4,7 @@
     "color": "EEEEEE"
   },
   "CHECKS": {
-    "prefixes": ["LCORE-"]
+    "prefixes": ["LCORE-", "RSPEED"]
   },
   "MESSAGES": {
     "success": "All OK",
