@@ -10,6 +10,7 @@
 * [PR description](#pr-description)
 * [Definition of Done](#definition-of-done)
     * [A deliverable is to be considered “done” when](#a-deliverable-is-to-be-considered-done-when)
+* [Feature design process](#feature-design-process)
 * [AI assistants](#ai-assistants)
     * [“Mark” code with substantial AI-generated portions.](#mark-code-with-substantial-ai-generated-portions)
     * [Copyright and licence notices](#copyright-and-licence-notices)
@@ -117,6 +118,41 @@ Happy hacking!
 * All linters are running cleanly in the CI environment
 * Code changes reviewed by at least one peer
 * Code changes acked by at least one project owner
+
+## Feature design process
+
+When implementing a new feature or significant change, we take the proposal,
+run a spike for it, present the findings for review, make decisions about the
+scope and design, create a permanent document with the feature specification,
+and file ready-for-implementation JIRA tickets:
+
+1. **Run a spike** — research the problem, evaluate design alternatives, build
+   a PoC if needed, document decisions and recommendations.  The spike produces
+   two documents and a set of proposed JIRAs.
+   → [How to run a spike](contributing/howto-run-a-spike.md)
+
+2. **Write a spec doc** — the permanent in-repo feature spec.  Records the
+   approved design: requirements, architecture, implementation suggestions.
+   All implementation JIRAs reference it.
+   → [How to write a spec doc](contributing/howto-write-a-spec-doc.md)
+
+3. **Get decisions confirmed** — open a PR with the spike doc and spec doc.
+   Reviewers confirm or override the design decisions.
+
+4. **File implementation tickets** — once decisions are confirmed, file the
+   JIRA sub-tickets.  Each ticket references the spec doc.
+
+If the feature is well-understood and doesn't need research, skip step 1 and
+start at step 2.
+
+Templates for all of the above are in
+[docs/contributing/templates/](contributing/templates/).  If a PoC is part of
+the spike, see
+[how to organize PoC output](contributing/howto-organize-poc-output.md).
+
+**Claude Code shortcuts**: `/spike`, `/spec-doc`, and `/file-jiras` automate
+parts of this process.  Use `dev-tools/file-jiras.sh` directly for JIRA filing
+without Claude Code.
 
 ## AI assistants
 
