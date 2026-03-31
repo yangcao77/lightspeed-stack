@@ -20,3 +20,4 @@ features/rest_api.feature
 features/mcp.feature
 features/models.feature
 features/proxy.feature
+features/tls.feature
