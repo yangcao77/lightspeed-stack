@@ -232,11 +232,14 @@ async def responses_endpoint_handler(
         responses_request.shield_ids,
     )
 
-    (
-        responses_request.tools,
-        responses_request.tool_choice,
-        vector_store_ids,
-    ) = await resolve_tool_choice(
+    # Extract vector store IDs for Inline RAG context before resolving tool choice.
+    vector_store_ids: Optional[list[str]] = (
+        extract_vector_store_ids_from_tools(responses_request.tools)
+        if responses_request.tools is not None
+        else None
+    )
+
+    responses_request.tools, responses_request.tool_choice = await resolve_tool_choice(
         responses_request.tools,
         responses_request.tool_choice,
         auth[1],
