@@ -71,6 +71,7 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 ## Design documents
 
 [Conversation compaction](https://lightspeed-core.github.io/lightspeed-stack/design/conversation-compaction/conversation-compaction.html)
+
 [Supporting backport changes for releases](https://lightspeed-core.github.io/lightspeed-stack/design/supporting-backport-changes-for-releases/supporting-backport-changes-for-releases.html)
 
 ## Testing
