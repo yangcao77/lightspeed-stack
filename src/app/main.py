@@ -15,8 +15,8 @@ import metrics
 import version
 from a2a_storage import A2AStorageFactory
 from app import routers
-from app.endpoints.streaming_query import shutdown_background_topic_summary_tasks
 from app.database import create_tables, initialize_database
+from app.endpoints.streaming_query import shutdown_background_topic_summary_tasks
 from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration

@@ -49,7 +49,6 @@ from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import (
     INTERRUPTED_RESPONSE_MESSAGE,
-    TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
     LLM_TOKEN_EVENT,
     LLM_TOOL_CALL_EVENT,
     LLM_TOOL_RESULT_EVENT,
@@ -57,6 +56,7 @@ from constants import (
     MEDIA_TYPE_EVENT_STREAM,
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_TEXT,
+    TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
 )
 from log import get_logger
 from models.config import Action
