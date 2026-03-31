@@ -234,7 +234,7 @@ Concretely:
   release branch or branches.
 
 * Each change merged to a release branch must pass the same CI pipeline used
-  for main branch, including unit, integration, and end to end tests, before
+  for main branch, including unit, integration, and end-to-end tests, before
   being packaged.
 
 * Semantic versioning is applied to all published artifacts:
