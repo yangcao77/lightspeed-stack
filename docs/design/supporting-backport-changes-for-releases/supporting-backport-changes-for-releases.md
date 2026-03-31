@@ -98,7 +98,7 @@ development.
 
 # Why
 
-We need the ability to create and maintain separate branches of the Lighspeed
+We need the ability to create and maintain separate branches of the Lightspeed
 Core Stack (LCS) codebase after each formal release so that, if any Lightspeed
 team requests an urgent or on-demand patch, we can apply fixes to the released
 version without disrupting ongoing development on the mainline. This branching
