@@ -729,6 +729,68 @@ async def get_mcp_tools(
     return tools
 
 
+def apply_mcp_headers_to_explicit_tools(
+    tools: list[InputTool],
+    token: Optional[str] = None,
+    mcp_headers: Optional[McpHeaders] = None,
+    request_headers: Optional[Mapping[str, str]] = None,
+) -> list[InputTool]:
+    """Merge resolved MCP headers into explicit request MCP tools.
+
+    Args:
+        tools: Tools from the request after BYOK translation.
+        token: Optional bearer token for kubernetes MCP auth.
+        mcp_headers: Per-request MCP-HEADERS map keyed by server name.
+        request_headers: Incoming HTTP headers for allowlist propagation.
+
+    Returns:
+        New tool list with MCP entries updated or omitted.
+    """
+    if not tools:
+        return tools
+
+    complete_headers = build_mcp_headers(
+        configuration, mcp_headers or {}, request_headers, token
+    )
+    servers_by_name = {s.name: s for s in configuration.mcp_servers}
+
+    out: list[InputTool] = []
+    for tool in tools:
+        if tool.type != "mcp":
+            out.append(tool)
+            continue
+
+        mcp_tool = cast(InputToolMCP, tool)
+        mcp_server = servers_by_name.get(mcp_tool.server_label)
+        if mcp_server is None:
+            out.append(tool)
+            continue
+
+        headers: dict[str, str] = dict(complete_headers.get(mcp_server.name, {}))
+        unresolved = find_unresolved_auth_headers(
+            mcp_server.authorization_headers, headers
+        )
+        if unresolved:
+            logger.warning(
+                "Skipping explicit MCP tool %s: required %d auth headers but only resolved %d",
+                mcp_server.name,
+                len(mcp_server.authorization_headers),
+                len(mcp_server.authorization_headers) - len(unresolved),
+            )
+            continue
+
+        authorization = headers.pop("Authorization", None)
+        out.append(
+            mcp_tool.model_copy(
+                update={
+                    "headers": headers if headers else None,
+                    "authorization": authorization,
+                }
+            )
+        )
+    return out
+
+
 def parse_referenced_documents(  # pylint: disable=too-many-locals
     response: Optional[ResponseObject],
     vector_store_ids: Optional[list[str]] = None,
@@ -1553,6 +1615,9 @@ async def resolve_tool_choice(
         # Pass tools explicitly configured for this request
         byok_rags = configuration.configuration.byok_rag
         prepared_tools = translate_tools_vector_store_ids(tools, byok_rags)
+        prepared_tools = apply_mcp_headers_to_explicit_tools(
+            prepared_tools, token, mcp_headers, request_headers
+        )
 
     if isinstance(tool_choice, AllowedTools):
         # Apply filters to tools if specified and overwrite tool choice mode
