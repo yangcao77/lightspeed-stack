@@ -259,11 +259,17 @@ jobs:
             exit 1
           }
 
+      # Wait for watsonx library mode to finish before running server mode
+      # watsonx has a rate limit of 2 calls / second
+      - name: Wait for watsonx library mode to finish
+        if: matrix.environment == 'watsonx' && matrix.mode == 'server'
+        run: sleep 7200  # 120 minutes
+
       # watsonx has a different convention than "<provider>/<model>"
       - name: Set watsonx test overrides
         if: matrix.environment == 'watsonx'
         run: |
-          echo "E2E_DEFAULT_MODEL_OVERRIDE=watsonx/watsonx/meta-llama/llama-3-3-70b-instruct" >> $GITHUB_ENV
+          echo "E2E_DEFAULT_MODEL_OVERRIDE=meta-llama/llama-3-3-70b-instruct" >> $GITHUB_ENV
           echo "E2E_DEFAULT_PROVIDER_OVERRIDE=watsonx" >> $GITHUB_ENV
 
       - name: Run e2e tests
