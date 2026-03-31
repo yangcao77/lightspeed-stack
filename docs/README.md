@@ -67,6 +67,7 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 ## Design documents
 
 [Conversation compaction](https://lightspeed-core.github.io/lightspeed-stack/design/conversation-compaction/conversation-compaction.html)
+
 [Supporting backport changes for releases](https://lightspeed-core.github.io/lightspeed-stack/design/supporting-backport-changes-for-releases/supporting-backport-changes-for-releases.html)
 
 ## Testing
