@@ -15,6 +15,7 @@ import metrics
 import version
 from a2a_storage import A2AStorageFactory
 from app import routers
+from app.endpoints.streaming_query import shutdown_background_topic_summary_tasks
 from app.database import create_tables, initialize_database
 from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
@@ -80,6 +81,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     yield
 
     # Cleanup resources on shutdown
+    await shutdown_background_topic_summary_tasks()
     await A2AStorageFactory.cleanup()
     logger.info("App shutdown complete")
 

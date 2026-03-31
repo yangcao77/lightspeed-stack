@@ -467,6 +467,53 @@ def persist_user_conversation_details(
         )
 
 
+def update_conversation_topic_summary(
+    conversation_id: str,
+    topic_summary: str,
+    user_id: Optional[str] = None,
+    skip_userid_check: bool = False,
+) -> None:
+    """Update topic_summary for an existing conversation in DB and optionally cache.
+
+    Args:
+        conversation_id: The conversation ID (normalized or with conv_ prefix).
+        topic_summary: The topic summary to store.
+        user_id: Optional user ID for cache update; when provided with cache
+            configured, also updates the conversation cache.
+        skip_userid_check: Whether to skip user ID validation for cache operations.
+    """
+    normalized_id = normalize_conversation_id(conversation_id)
+    with get_session() as session:
+        existing = session.query(UserConversation).filter_by(id=normalized_id).first()
+        if existing:
+            existing.topic_summary = topic_summary
+            session.commit()
+            logger.debug("Updated topic summary for conversation %s", normalized_id)
+        else:
+            logger.debug(
+                "No conversation found for topic summary update: id=%s, "
+                "topic_summary_len=%d",
+                normalized_id,
+                len(topic_summary),
+            )
+
+    if (
+        user_id
+        and configuration.conversation_cache_configuration.type is not None
+        and configuration.conversation_cache is not None
+    ):
+        try:
+            configuration.conversation_cache.set_topic_summary(
+                user_id, conversation_id, topic_summary, skip_userid_check
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to update topic summary in cache for %s: %s",
+                normalized_id,
+                e,
+            )
+
+
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
     """Validate the attachments metadata provided in the request.
 
