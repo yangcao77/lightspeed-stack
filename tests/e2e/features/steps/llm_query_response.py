@@ -231,6 +231,8 @@ def check_referenced_documents_present(context: Context) -> None:
     assert (
         len(response_json["referenced_documents"]) > 0
     ), "referenced_documents is empty — no documents were referenced"
+
+
 @then("The responses output_text should contain following fragments")
 def check_fragments_in_responses_output_text(context: Context) -> None:
     """Check that fragments from the scenario table appear in JSON ``output_text``.
