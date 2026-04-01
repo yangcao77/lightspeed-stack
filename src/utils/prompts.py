@@ -45,9 +45,9 @@ def get_system_prompt(system_prompt: Optional[str]) -> str:
         response = UnprocessableEntityResponse(
             response="System prompt customization is disabled",
             cause=(
-                "This instance does not support customizing the system prompt in the "
-                "query request (disable_query_system_prompt is set). Please remove the "
-                "system_prompt field from your request."
+                "This instance does not support customizing the system prompt "
+                "(disable_query_system_prompt is set). Please remove the "
+                "system_prompt or instructions field from your request."
             ),
         )
         raise HTTPException(**response.model_dump())

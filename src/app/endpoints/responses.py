@@ -57,6 +57,7 @@ from utils.endpoints import (
 )
 from utils.mcp_headers import mcp_headers_dependency
 from utils.mcp_oauth_probe import check_mcp_auth
+from utils.prompts import get_system_prompt
 from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
@@ -170,6 +171,7 @@ async def responses_endpoint_handler(
         responses_request.max_output_tokens = None
 
     responses_request = responses_request.model_copy(deep=True)
+    responses_request.instructions = get_system_prompt(responses_request.instructions)
     check_configuration_loaded(configuration)
     started_at = datetime.now(UTC)
     user_id = auth[0]
