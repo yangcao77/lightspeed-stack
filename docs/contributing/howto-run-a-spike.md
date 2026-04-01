@@ -4,7 +4,9 @@ A spike is a time-boxed research task that produces a design recommendation and
 proposed JIRAs.  This document describes how to run one in the Lightspeed Core
 project.
 
-**Claude Code shortcut**: `/spike` runs this process interactively.
+**Claude Code shortcut**: `/spike` runs this process interactively. You can
+also use `/spike LCORE-1234` or `/spike 1234` (defaults to LCORE) to have
+Claude Code fetch the respective JIRA ticket using `dev-tools/fetch-jira.sh`.
 
 ## Outputs
 
@@ -151,10 +153,19 @@ Once all decisions are confirmed:
 1. Update the parent feature ticket description to point to the spec doc.
 2. File sub-JIRAs under the parent ticket using
    [jira-ticket-template.md](templates/jira-ticket-template.md).
-   Use `dev-tools/file-jiras.sh` to parse and file them from the spike doc
-   (Claude Code shortcut: `/file-jiras`).
-3. Each sub-JIRA's agentic tool instruction should point to the **spec doc**
+   Use `dev-tools/file-jiras.sh --spike-doc <path> --feature-ticket <key>`
+   to parse and file them from the spike doc (Claude Code shortcut:
+   `/file-jiras`).  The script auto-creates an Epic under the feature
+   ticket and files children under it.
+3. Ensure all four categories are covered across the filed tickets:
+   implementation, integration tests, e2e tests, and documentation.
+   Where it makes sense, combine work into fewer tickets.
+4. Each sub-JIRA's agentic tool instruction should point to the **spec doc**
    (not the spike doc), since the spec doc is the permanent reference.
+5. After filing, update the spike doc: replace `LCORE-????` placeholders with
+   the actual ticket keys.  The filed ticket files in
+   `docs/design/<feature>/jiras/` have `<!-- key: LCORE-XXXX -->` metadata
+   that maps each ticket to its filed key.
 
 ### 10. Prepare for merge
 
