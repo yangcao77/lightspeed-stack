@@ -59,6 +59,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
         """Register an active stream task for interrupt support.
 
         Parameters:
+        ----------
             request_id: Unique streaming request identifier.
             user_id: User identifier that owns the stream.
             task: Asyncio task associated with the stream.
@@ -83,10 +84,12 @@ class StreamInterruptRegistry(metaclass=Singleton):
         is raised (inside the generator or in Starlette's send).
 
         Parameters:
+        ----------
             request_id: Unique streaming request identifier.
             user_id: User identifier attempting the interruption.
 
         Returns:
+        -------
             CancelStreamResult: Structured cancellation result.
         """
         on_interrupt = None
@@ -115,6 +118,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
         """Remove stream task from registry once completed/cancelled.
 
         Parameters:
+        ----------
             request_id: Unique streaming request identifier.
         """
         with self._lock:
@@ -124,9 +128,11 @@ class StreamInterruptRegistry(metaclass=Singleton):
         """Get currently registered stream metadata for tests/introspection.
 
         Parameters:
+        ----------
             request_id: Unique streaming request identifier.
 
         Returns:
+        -------
             ActiveStream | None: Registered stream metadata, or None when absent.
         """
         with self._lock:

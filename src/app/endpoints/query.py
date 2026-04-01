@@ -276,11 +276,13 @@ async def retrieve_response(
     This function processes the prepared request and returns the LLM response.
 
     Parameters:
+    ----------
         client: The AsyncLlamaStackClient to use for the request.
         responses_params: The Responses API parameters.
         moderation_result: The moderation result.
 
     Returns:
+    -------
         TurnSummary: Summary of the LLM response content
     """
     response: Optional[OpenAIResponseObject] = None

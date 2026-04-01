@@ -46,11 +46,13 @@ class NoopCache(Cache):
         """Get the value associated with the given key.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             list[CacheEntry]: An empty list (this cache does not persist entries).
         """
         # just check if user_id and conversation_id are UUIDs
@@ -71,6 +73,7 @@ class NoopCache(Cache):
         entry without persisting it.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
@@ -86,11 +89,13 @@ class NoopCache(Cache):
         """Delete conversation history for a given user_id and conversation_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             bool: True in all cases.
         """
         # just check if user_id and conversation_id are UUIDs
@@ -106,10 +111,12 @@ class NoopCache(Cache):
         Validate the user ID and return an empty list of conversations (noop implementation).
 
         Parameters:
+        ----------
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             An empty list.
         """
         super()._check_user_id(user_id, skip_user_id_check)
@@ -126,6 +133,7 @@ class NoopCache(Cache):
         """Set the topic summary for the given conversation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.

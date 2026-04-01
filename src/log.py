@@ -24,9 +24,11 @@ def resolve_log_level() -> int:
     falls back to DEFAULT_LOG_LEVEL.
 
     Parameters:
+    ----------
         None
 
     Returns:
+    -------
         int: A valid logging level constant (e.g., logging.INFO, logging.DEBUG).
     """
     level_str = os.environ.get(LIGHTSPEED_STACK_LOG_LEVEL_ENV_VAR, DEFAULT_LOG_LEVEL)
@@ -90,9 +92,11 @@ def get_logger(name: str) -> logging.Logger:
     to ancestor loggers disabled.
 
     Parameters:
+    ----------
         name (str): Name of the logger to retrieve or create.
 
     Returns:
+    -------
         logging.Logger: The configured logger instance.
     """
     logger = logging.getLogger(name)

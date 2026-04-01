@@ -18,9 +18,11 @@ def format_tool_response(tool_dict: dict[str, Any]) -> dict[str, Any]:
     version extracted by `extract_clean_description`.
 
     Parameters:
+    ----------
         tool_dict: Raw tool dictionary from Llama Stack
 
     Returns:
+    -------
         dict[str, Any]: Formatted tool dictionary containing the following keys:
             - identifier: tool identifier string (defaults to "").
             - description: cleaned or original description string.
@@ -66,9 +68,11 @@ def extract_clean_description(description: str) -> str:
     when truncation occurs.
 
     Parameters:
+    ----------
         description: Raw description with structured metadata
 
     Returns:
+    -------
         Clean description without metadata
     """
     min_description_length = 20
@@ -124,9 +128,11 @@ def format_tools_list(tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     Format a list of tools with structured description parsing.
 
     Parameters:
+    ----------
         tools: (list[dict[str, Any]]): List of raw tool dictionaries
 
     Returns:
+    -------
         list[dict[str, Any]]: Formatted tool dictionaries with normalized
                               fields and cleaned descriptions.
     """
@@ -141,10 +147,12 @@ def translate_vector_store_ids_to_user_facing(
     Rewrite file_search tool dicts so vector_store_ids use user-facing RAG IDs.
 
     Parameters:
+    ----------
         tools: Serialized tool dicts.
         rag_id_mapping: Llama Stack vector_db_id -> user-facing RAG id.
 
     Returns:
+    -------
         list[dict[str, Any]]: New list of tool dicts; file_search entries get
             updated vector_store_ids.
     """

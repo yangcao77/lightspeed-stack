@@ -304,12 +304,15 @@ def get_user_info(token: str) -> Optional[kubernetes.client.V1TokenReviewStatus]
     """Perform a Kubernetes TokenReview to validate a given token.
 
     Parameters:
+    ----------
         token: The bearer token to be validated.
 
     Returns:
+    -------
         The V1TokenReviewStatus if the token is valid, None otherwise.
 
     Raises:
+    ------
         HTTPException:
             503 if Kubernetes API is unavailable (5xx errors, 429 rate limit).
             503 if unable to initialize Kubernetes client.
@@ -402,6 +405,7 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
         SubjectAccessReview checks on a specific virtual path.
 
         Parameters:
+        ----------
             virtual_path (str): The request path used in SubjectAccessReview
             non-resource attributes; defaults to DEFAULT_VIRTUAL_PATH.
 
@@ -417,15 +421,18 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
         """Validate FastAPI Requests for authentication and authorization.
 
         Parameters:
+        ----------
             request: The FastAPI request object.
 
         Returns:
+        -------
             The user's UID and username if authentication and authorization succeed
             user_id check should never be skipped with K8s authentication
             If user_id check should be skipped - always return False for k8s
             User's token
 
         Raises:
+        ------
             HTTPException: If authentication or authorization fails.
         """
         # LCORE-694: Config option to skip authorization for readiness and liveness probe

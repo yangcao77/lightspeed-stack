@@ -19,6 +19,7 @@ class InMemoryCache(Cache):
         Initialize the InMemoryCache with the provided configuration.
 
         Parameters:
+        ----------
             config (InMemoryCacheConfig): Configuration options controlling cache behavior.
         """
         self.cache_config = config
@@ -62,11 +63,13 @@ class InMemoryCache(Cache):
         Validate the provided identifiers and retrieve cache entries for a user's conversation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             Empty list.
         """
         # just check if user_id and conversation_id are UUIDs
@@ -90,6 +93,7 @@ class InMemoryCache(Cache):
         storage or mutation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
@@ -107,11 +111,13 @@ class InMemoryCache(Cache):
         Validate the provided user and conversation identifiers and report deletion success.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             bool: True in all cases.
         """
         # just check if user_id and conversation_id are UUIDs
@@ -125,10 +131,12 @@ class InMemoryCache(Cache):
         """List all conversations for a given user_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             An empty list.
 
         """
@@ -146,6 +154,7 @@ class InMemoryCache(Cache):
         """Set the topic summary for the given conversation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.

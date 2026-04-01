@@ -23,9 +23,11 @@ async def mcp_headers_dependency(request: Request) -> McpHeaders:
     mcp headers is a json dictionary or mcp url paths and their respective headers
 
     Parameters:
+    ----------
         request (Request): The FastAPI request object.
 
     Returns:
+    -------
         The mcp headers dictionary, or empty dictionary if not found or on json decoding error
     """
     return extract_mcp_headers(request)
@@ -38,9 +40,11 @@ def extract_mcp_headers(request: Request) -> McpHeaders:
     value is not a dictionary, an empty dictionary is returned.
 
     Parameters:
+    ----------
         request: The FastAPI request object
 
     Returns:
+    -------
         The mcp headers dictionary, or empty dictionary if not found or on json decoding error
     """
     mcp_headers_string = request.headers.get("MCP-HEADERS", "")

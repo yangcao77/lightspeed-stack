@@ -72,14 +72,17 @@ def _create_sqlite_engine(config: SQLiteDatabaseConfiguration, **kwargs: Any) ->
     """Create SQLite database engine.
 
     Parameters:
+    ----------
         config (SQLiteDatabaseConfiguration): Configuration containing
         `db_path` for the SQLite file.
         **kwargs: Additional keyword arguments forwarded to SQLAlchemy's create_engine.
 
     Returns:
+    -------
         Engine: A SQLAlchemy Engine bound to the specified SQLite database file.
 
     Raises:
+    ------
         FileNotFoundError: If the parent directory of `config.db_path` does not exist.
         RuntimeError: If engine creation fails.
     """
@@ -107,14 +110,17 @@ def _create_postgres_engine(
     SSL.
 
     Parameters:
+    ----------
         config (PostgreSQLDatabaseConfiguration): Connection and database
         settings (user, password, host, port, db, ssl/gss options, optional
         namespace and ca_cert_path).
 
     Returns:
+    -------
         Engine: A SQLAlchemy Engine connected to the configured PostgreSQL database.
 
     Raises:
+    ------
         RuntimeError: If engine creation fails or if creating the specified schema fails.
     """
     postgres_url = (

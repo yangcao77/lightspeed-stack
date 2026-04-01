@@ -32,9 +32,11 @@ def _hash_user_id(user_id: str) -> str:
     Return the SHA-256 hex digest of the given user_id.
 
     Parameters:
+    ----------
         user_id (str): The user identifier to hash.
 
     Returns:
+    -------
         str: Hexadecimal SHA-256 digest of the UTF-8 encoded user_id.
     """
     return hashlib.sha256(user_id.encode("utf-8")).hexdigest()
@@ -49,11 +51,13 @@ def construct_transcripts_path(hashed_user_id: str, conversation_id: str) -> Pat
     and a filesystem-safe form of `conversation_id`.
 
     Parameters:
+    ----------
         hashed_user_id (str): The hashed identifier for the user
         conversation_id (str): The conversation identifier; this value is
                                normalized for use as a path component.
 
     Returns:
+    -------
         Path: A Path pointing to the directory where transcripts for the
         specified user and conversation should be stored.
     """
@@ -73,9 +77,11 @@ def store_transcript(
     """Store transcript in the local filesystem.
 
     Parameters:
+    ----------
         transcript: BaseModel instance to be stored (e.g., Transcript).
 
     Raises:
+    ------
         HTTPException: If writing the transcript file to disk fails.
     """
     transcripts_path = construct_transcripts_path(
@@ -106,6 +112,7 @@ def create_transcript_metadata(  # pylint: disable=too-many-arguments,too-many-p
     """Create a TranscriptMetadata BaseModel instance.
 
     Parameters:
+    ----------
         user_id: The user ID (UUID).
         conversation_id: The conversation ID (UUID).
         model_id: Identifier of the model used to generate the LLM response.
@@ -114,6 +121,7 @@ def create_transcript_metadata(  # pylint: disable=too-many-arguments,too-many-p
         query_model: Optional model identifier from the query request.
 
     Returns:
+    -------
         TranscriptMetadata: A TranscriptMetadata BaseModel instance.
     """
     hashed_user_id = _hash_user_id(user_id)
@@ -138,6 +146,7 @@ def create_transcript(
     """Create a Transcript BaseModel instance from individual parameters.
 
     Parameters:
+    ----------
         metadata: The transcript metadata.
         redacted_query: The query text (redacted if necessary).
         summary: Summary of the query/response turn containing LLM response,
@@ -145,6 +154,7 @@ def create_transcript(
         attachments: List of attachments from the query request.
 
     Returns:
+    -------
         Transcript: A Transcript BaseModel instance ready to be stored.
     """
     return Transcript(

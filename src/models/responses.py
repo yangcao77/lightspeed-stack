@@ -1132,6 +1132,7 @@ class ConversationDeleteResponse(AbstractSuccessfulResponse):
         successfully"; otherwise it is "Conversation cannot be deleted".
 
         Parameters:
+        ----------
             deleted (bool): Whether the conversation was successfully deleted.
             conversation_id (str): The ID of the conversation.
         """
@@ -1720,6 +1721,7 @@ class AbstractErrorResponse(BaseModel):
         Create an error response model with an HTTP status code and detailed message.
 
         Parameters:
+        ----------
             response (str): A short, user-facing summary of the error.
             cause (str): A more detailed explanation of the error cause.
             status_code (int): The HTTP status code to associate with this error response.
@@ -1751,10 +1753,12 @@ class AbstractErrorResponse(BaseModel):
         under its label with a `value` containing a `detail` payload.
 
         Parameters:
+        ----------
             examples (Optional[list[str]]): If provided, restricts which
                                             labeled examples to include by label.
 
         Returns:
+        -------
             dict[str, Any]: A response mapping with keys:
                 - "description": the response description,
                 - "model": the model class,
@@ -1762,6 +1766,7 @@ class AbstractErrorResponse(BaseModel):
                              object (or None if no examples).
 
         Raises:
+        ------
             SchemaError: If any example in the model schema lacks a `label`.
         """
         schema = cls.model_json_schema()
@@ -1814,6 +1819,7 @@ class BadRequestResponse(AbstractErrorResponse):
         Create a 400 Bad Request response for an invalid resource ID format.
 
         Parameters:
+        ----------
             resource (str): Type of the resource (for message), e.g., "conversation" or "provider".
             resource_id (str): The invalid resource identifier used in the error message.
         """
@@ -1899,6 +1905,7 @@ class UnauthorizedResponse(AbstractErrorResponse):
         provided cause, and sets the HTTP status to 401 Unauthorized.
 
         Parameters:
+        ----------
                 cause (str): Human-readable explanation of why the request is
                              unauthorized (e.g. "missing token", "token expired").
         """
@@ -1975,11 +1982,13 @@ class ForbiddenResponse(AbstractErrorResponse):
         Create a ForbiddenResponse for a denied conversation action.
 
         Parameters:
+        ----------
             action (str): The attempted action (e.g., "read", "delete", "update").
             resource_id (str): The conversation identifier targeted by the action.
             user_id (str): The identifier of the user who attempted the action.
 
         Returns:
+        -------
             ForbiddenResponse: Error response indicating the user is not
             permitted to perform the specified action on the conversation, with
             `response` and `cause` fields populated.
@@ -1997,9 +2006,11 @@ class ForbiddenResponse(AbstractErrorResponse):
         Create a ForbiddenResponse indicating the specified user is denied access to the endpoint.
 
         Parameters:
+        ----------
             user_id (str): Identifier of the user denied access.
 
         Returns:
+        -------
             ForbiddenResponse: Error response with a message and a cause
             referencing the given `user_id`.
         """
@@ -2049,6 +2060,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Construct a ForbiddenResponse with a public response message and an internal cause.
 
         Parameters:
+        ----------
                 response (str): Human-facing error message describing the forbidden action.
                 cause (str): Detailed cause or reason for the denial intended
                 for logs or diagnostics.
@@ -2124,6 +2136,7 @@ class NotFoundResponse(AbstractErrorResponse):
         Create a NotFoundResponse for a missing resource and set the HTTP status to 404.
 
         Parameters:
+        ----------
             resource (str): Resource type that was not found (e.g., "conversation", "model").
             resource_id (str | None): Identifier of the missing resource. If None, indicates
                 the resource type is not configured (e.g., no model selected).
@@ -2165,6 +2178,7 @@ class ConflictResponse(AbstractErrorResponse):
         """Create a 409 Conflict response for a duplicate resource.
 
         Parameters:
+        ----------
             resource: Type of the resource (e.g., "MCP server").
             resource_id: The identifier of the conflicting resource.
         """
@@ -2259,6 +2273,7 @@ class UnprocessableEntityResponse(AbstractErrorResponse):
         Create a 422 Unprocessable Entity error response.
 
         Parameters:
+        ----------
             response (str): Human-readable error message describing what was unprocessable.
             cause (str): Specific cause or diagnostic information explaining the error.
         """
@@ -2335,9 +2350,11 @@ class QuotaExceededResponse(AbstractErrorResponse):
         Create a QuotaExceededResponse for a specific model.
 
         Parameters:
+        ----------
             model_name (str): The model identifier whose token quota was exceeded.
 
         Returns:
+        -------
             QuotaExceededResponse: Response with a standard response message
             and a cause that includes the model name.
         """
@@ -2351,10 +2368,12 @@ class QuotaExceededResponse(AbstractErrorResponse):
         Construct a QuotaExceededResponse representing the provided QuotaExceedError.
 
         Parameters:
+        ----------
             exc: The QuotaExceedError instance whose message will be used as
                  the cause.
 
         Returns:
+        -------
             QuotaExceededResponse initialized with a standard quota-exceeded
             message and the exception's text as the cause.
         """
@@ -2367,11 +2386,13 @@ class QuotaExceededResponse(AbstractErrorResponse):
         Create a QuotaExceededResponse with a public message and an explanatory cause.
 
         Parameters:
+        ----------
             response (str): Public-facing error message describing the quota condition.
             cause (str): Detailed cause or internal explanation for the quota
                          exceedance; stored in the error detail.
 
         Notes:
+        -----
             Sets the response's HTTP status code to 429 (Too Many Requests).
         """
         super().__init__(
@@ -2490,9 +2511,11 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Create an InternalServerErrorResponse describing a failure to store feedback.
 
         Parameters:
+        ----------
             path (str): Filesystem directory where feedback storage was attempted.
 
         Returns:
+        -------
             InternalServerErrorResponse: Error response with a response message
             "Failed to store feedback" and a cause indicating the failed
             directory.
@@ -2508,9 +2531,11 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Create an InternalServerErrorResponse representing a failed query.
 
         Parameters:
+        ----------
             cause (str): The error cause message.
 
         Returns:
+        -------
             InternalServerErrorResponse: An error response with response "Error
             while processing query" and the provided cause.
         """
@@ -2552,6 +2577,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Initialize the error response for internal server errors and set the HTTP status code.
 
         Parameters:
+        ----------
             response (str): Public-facing error message.
             cause (str): Internal explanation of the error cause.
         """
@@ -2595,6 +2621,7 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
         Construct a ServiceUnavailableResponse indicating the specified backend cannot be reached.
 
         Parameters:
+        ----------
             backend_name (str): Name of the backend service that could not be contacted.
             cause (str): Detailed explanation of why the service is unavailable.
         """

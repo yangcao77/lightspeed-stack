@@ -70,9 +70,11 @@ def key_resolver_func(
     if no suitable key is found or if multiple keys are found for the same `kid`.
 
     Parameters:
+    ----------
         jwk_set (KeySet): JWK set to search for verification keys.
 
     Returns:
+    -------
         callable: A function `header, payload -> Key` that resolves and returns
                   the verification key.
         Raises `KeyNotFoundError` when resolution fails.
@@ -148,12 +150,14 @@ class JwkTokenAuthDependency(AuthInterface):  # pylint: disable=too-few-public-m
         Create a JWK-based token authentication dependency configured for a specific virtual path.
 
         Parameters:
+        ----------
             config (JwkConfiguration): Configuration containing the JWK URL,
                                        claim names, and validation settings.
             virtual_path (str): Virtual authorization scope path used when
                                 resolving authorization rules; defaults to DEFAULT_VIRTUAL_PATH.
 
         Notes:
+        -----
             Initializes the instance and sets `skip_userid_check` to False.
         """
         self.virtual_path: str = virtual_path
@@ -173,10 +177,12 @@ class JwkTokenAuthDependency(AuthInterface):  # pylint: disable=too-few-public-m
         - 500 for unexpected internal errors.
 
         Parameters:
+        ----------
             request (Request): The incoming FastAPI request; must include the
                 Authorization header (Bearer token) or 401 is raised.
 
         Returns:
+        -------
             AuthTuple: A tuple (user_id, username, skip_userid_check, token)
             extracted from the validated JWT. Only returned on successful
             authentication; all error paths raise HTTPException.

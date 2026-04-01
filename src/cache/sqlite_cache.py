@@ -132,6 +132,7 @@ class SQLiteCache(Cache):
         establish the database connection.
 
         Parameters:
+        ----------
             config (SQLiteDatabaseConfiguration): Configuration containing the
             SQLite database path and related settings used to create and open
             the connection.
@@ -229,14 +230,17 @@ class SQLiteCache(Cache):
         """Get the value associated with the given key.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             The value associated with the key, or None if not found.
 
         Raises:
+        ------
             CacheError: If the cache connection is disconnected.
         """
         if self.connection is None:
@@ -326,12 +330,14 @@ class SQLiteCache(Cache):
         """Set the value associated with the given key.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
 
         Raises:
+        ------
             CacheError: If the cache connection is not available.
         """
         if self.connection is None:
@@ -419,14 +425,17 @@ class SQLiteCache(Cache):
         """Delete conversation history for a given user_id and conversation_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             bool: True if the conversation was deleted, False if not found.
 
         Raises:
+        ------
             CacheError: If the cache connection is not available.
         """
         if self.connection is None:
@@ -457,10 +466,12 @@ class SQLiteCache(Cache):
         """List all conversations for a given user_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             A list of ConversationData objects containing conversation_id,
             topic_summary, and last_message_timestamp
 
@@ -496,6 +507,7 @@ class SQLiteCache(Cache):
         """Set the topic summary for the given conversation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.

@@ -43,6 +43,7 @@ class TokenUsageHistory:
         database connection.
 
         Parameters:
+        ----------
             configuration (QuotaHandlersConfiguration): Configuration
             containing `sqlite` and `postgres` connection settings.
         """
@@ -104,6 +105,7 @@ class TokenUsageHistory:
         Record token usage for a specific user/provider/model triple in persistent storage.
 
         Parameters:
+        ----------
             user_id (str): Identifier of the user whose token usage will be updated.
             provider (str): Provider name associated with the usage (e.g., "openai").
             model (str): Model name associated with the usage (e.g., "gpt-4").
@@ -111,6 +113,7 @@ class TokenUsageHistory:
             output_tokens (int): Number of output tokens to add to the stored usage.
 
         Raises:
+        ------
             ValueError: If no database backend configuration (Postgres or SQLite) is available.
         """
         logger.info(

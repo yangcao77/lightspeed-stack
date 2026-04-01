@@ -32,10 +32,12 @@ class NoopWithTokenAuthDependency(
         """Initialize the required allowed paths for authorization checks.
 
         Parameters:
+        ----------
             virtual_path (str): Virtual base path used for authorization
             context; defaults to DEFAULT_VIRTUAL_PATH.
 
         Notes:
+        -----
             Sets the instance attribute `virtual_path` and sets `skip_userid_check` to True.
         """
         self.virtual_path = virtual_path
@@ -45,9 +47,11 @@ class NoopWithTokenAuthDependency(
         """Validate FastAPI Requests for authentication and authorization.
 
         Parameters:
+        ----------
             request: The FastAPI request object.
 
         Returns:
+        -------
             tuple[str, str, bool, str]: A 4-tuple containing:
                 - user_id: The value of the "user_id" query parameter or
                            DEFAULT_USER_UID if absent.

@@ -438,6 +438,7 @@ async def _persist_interrupted_turn(
     and updated when ready.
 
     Parameters:
+    ----------
         context: The response generator context.
         responses_params: The Responses API parameters.
         turn_summary: TurnSummary with llm_response already set to the
@@ -507,11 +508,13 @@ def _register_interrupt_callback(
     both persist the same turn.
 
     Parameters:
+    ----------
         context: The response generator context.
         responses_params: The Responses API parameters.
         turn_summary: TurnSummary populated during streaming.
 
     Returns:
+    -------
         A mutable list ``[False]`` used as a persist-done guard; the
         caller should check ``guard[0]`` before persisting and set
         it to ``True`` afterwards.
@@ -904,9 +907,11 @@ def format_stream_data(d: dict) -> str:
     Create a response generator function for Responses API streaming.
 
     Parameters:
+    ----------
         d (dict): The data to be formatted as an SSE event.
 
     Returns:
+    -------
         str: The formatted SSE data string.
     """
     data = json.dumps(d)
@@ -921,11 +926,13 @@ def stream_start_event(conversation_id: str, request_id: str) -> str:
     use the request ID to issue an interrupt if needed.
 
     Parameters:
+    ----------
         conversation_id (str): Unique identifier for the conversation.
         request_id (str): Unique SUID for this streaming request,
             returned to the client for interrupt support.
 
     Returns:
+    -------
         str: SSE-formatted string representing the start event.
     """
     return format_stream_data(
@@ -947,9 +954,11 @@ def stream_interrupted_event(request_id: str) -> str:
     from an unexpected connection drop.
 
     Parameters:
+    ----------
         request_id (str): Unique identifier for the interrupted request.
 
     Returns:
+    -------
         str: SSE-formatted string representing the interrupted event.
     """
     return format_stream_data(
@@ -975,12 +984,14 @@ def stream_end_event(
     including referenced document metadata and token usage information.
 
     Parameters:
+    ----------
         token_usage (TokenCounter): Token usage information.
         available_quotas (dict[str, int]): Available quotas for the user.
         referenced_documents (list[ReferencedDocument]): List of referenced documents.
         media_type (str): The media type for the response format.
 
     Returns:
+    -------
         str: A Server-Sent Events (SSE) formatted string
         representing the end of the data stream.
     """

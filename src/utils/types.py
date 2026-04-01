@@ -57,10 +57,12 @@ def content_to_str(content: Any) -> str:
     """Convert content (str, TextContentItem, ImageContentItem, or list) to string.
 
     Parameters:
+    ----------
         content: Value to normalize into a string (may be None,
                  str, content item, list, or any other object).
 
     Returns:
+    -------
         str: The normalized string representation of the content.
     """
     if content is None:
