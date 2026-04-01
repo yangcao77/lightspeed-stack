@@ -1569,6 +1569,8 @@ class TestResponsesInstructionResolution:
             )
 
         assert exc_info.value.status_code == 422
+        assert isinstance(exc_info.value.detail, dict)
+        assert "instructions field" in exc_info.value.detail.get("cause", "")
 
     @pytest.mark.asyncio
     async def test_streaming_response_uses_resolved_instructions(
