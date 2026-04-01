@@ -331,7 +331,8 @@ class TestAuthorizeDecorator:
                 **_: Any additional keyword arguments are ignored.
 
             Returns:
-                A string indicating the mock operation was successful."""
+                A string indicating the mock operation was successful.
+            """
             return "success"
 
         mocker.patch(
@@ -354,7 +355,8 @@ class TestAuthorizeDecorator:
                 **_: Arbitrary keyword arguments.
 
             Returns:
-                A string indicating the success of the operation."""
+                A string indicating the success of the operation.
+            """
             return "success"
 
         mocker.patch(

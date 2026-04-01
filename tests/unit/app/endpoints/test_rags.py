@@ -216,7 +216,8 @@ async def test_rag_info_endpoint_success(
                 expires_at (int): Expiry timestamp, set to 12345678.
                 object (str): Type of object, set to "faiss".
                 status (str): Status of the instance, set to "completed".
-                usage_bytes (int): Usage in bytes, set to 100."""
+                usage_bytes (int): Usage in bytes, set to 100.
+            """
             self.id = "xyzzy"
             self.name = "rag_name"
             self.created_at = 123456
