@@ -22,6 +22,7 @@ def service_is_started_locally(context: Context) -> None:
     environment variables.
 
     Parameters:
+    ----------
         context (Context): Behave context object to receive the endpoint attributes.
     """
     assert context is not None
@@ -41,6 +42,7 @@ def configure_service(context: Context, config_name: str) -> None:
     or backup key presence in Prow).
 
     Parameters:
+    ----------
         context (Context): Behave context.
         config_name (str): Config filename (e.g. lightspeed-stack-inline-rag.yaml).
     """
@@ -61,6 +63,7 @@ def restart_service(context: Context) -> None:
     """Restart the lightspeed-stack container and wait for it to be healthy.
 
     Parameters:
+    ----------
         context (Context): Behave context.
     """
     restart_container("lightspeed-stack")
@@ -76,9 +79,11 @@ def system_in_default_state(context: Context) -> None:
     is in its default state.
 
     Parameters:
+    ----------
         context (Context): Behave Context instance used to store and share test state.
 
     Raises:
+    ------
         AssertionError: If `context` is None.
     """
     assert context is not None

@@ -34,6 +34,7 @@ def test_dump_configuration(tmp_path: Path) -> None:
     Please note that redaction process is not in place.
 
     Parameters:
+    ----------
         tmp_path (Path): Directory where the test JSON file will be written.
     """
     cfg = Configuration(
@@ -226,6 +227,7 @@ def test_dump_configuration_with_one_mcp_server(tmp_path: Path) -> None:
     present in the output.
 
     Parameters:
+    ----------
         tmp_path: Temporary directory path provided by pytest for file output.
     """
     mcp_servers = [

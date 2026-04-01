@@ -87,9 +87,11 @@ def create_cache(path: Path) -> SQLiteCache:
     inside the given directory.
 
     Parameters:
+    ----------
         path (Path): Directory in which the `test.sqlite` database file will be created.
 
     Returns:
+    -------
         SQLiteCache: Cache instance configured to use the `test.sqlite`
         database at the provided path.
     """

@@ -15,6 +15,7 @@ def resolve_authorization_headers(
     Resolve authorization headers by reading secret files or preserving special values.
 
     Parameters:
+    ----------
         authorization_headers: Map of header names to secret locations or special keywords.
             - If value is "kubernetes": leave unchanged. We substitute it during request.
             - If value is "client": leave unchanged. We substitute it during request.
@@ -23,9 +24,11 @@ def resolve_authorization_headers(
             - Otherwise: Treat as file path and read the secret from that file
 
     Returns:
+    -------
         dict[str, str]: Map of header names to resolved header values or special keywords
 
     Examples:
+    --------
         >>> # With file paths
         >>> resolve_authorization_headers({"Authorization": "/var/secrets/token"})
         {"Authorization": "secret-value-from-file"}

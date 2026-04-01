@@ -43,10 +43,12 @@ def _input_schema_to_parameters(
     the flat parameter list format used by the tools endpoint response.
 
     Parameters:
+    ----------
         schema: JSON Schema dict with ``properties`` and ``required`` keys,
                 or ``None`` if the tool has no parameters.
 
     Returns:
+    -------
         A list of parameter dicts, each containing ``name``, ``description``,
         ``parameter_type``, ``required``, and ``default`` keys.
     """

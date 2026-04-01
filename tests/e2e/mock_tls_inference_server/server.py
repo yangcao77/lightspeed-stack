@@ -116,6 +116,7 @@ def _export_expired_client_cert(
     """Re-sign a client certificate with expired validity dates.
 
     Parameters:
+    ----------
         ca: The CA that issued the original client certificate.
         client_cert: The original client leaf certificate.
         path: File path to write the expired client certificate PEM.
@@ -150,6 +151,7 @@ def _export_expired_ca_cert(ca: trustme.CA, path: Path) -> None:
     dates set in the past, making it an expired certificate.
 
     Parameters:
+    ----------
         ca: The trustme CA whose certificate and key to use.
         path: File path to write the expired CA certificate PEM.
 
@@ -181,11 +183,13 @@ def _make_tls_context(
     """Build an SSL context using trustme-generated certificates.
 
     Parameters:
+    ----------
         ca: The trustme CA instance.
         server_cert: The server certificate issued by the CA.
         require_client_cert: Whether to require client certificate (mTLS).
 
     Returns:
+    -------
         Configured SSL context for server-side TLS.
     """
     ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

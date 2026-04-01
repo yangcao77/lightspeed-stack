@@ -682,10 +682,12 @@ def append_inline_rag_context_to_responses_input(
     If there is no user message, returns the input unchanged.
 
     Parameters:
+    ----------
         input_value: The request input (string or list of ResponseItem).
         inline_rag_context_text: RAG context string to inject.
 
     Returns:
+    -------
         The same type as input_value, with context merged in.
     """
     if not inline_rag_context_text:

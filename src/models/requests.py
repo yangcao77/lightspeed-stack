@@ -273,12 +273,15 @@ class QueryRequest(BaseModel):
         Validate that a conversation identifier matches the expected SUID format.
 
         Parameters:
+        ----------
             value (Optional[str]): Conversation identifier to validate; may be None.
 
         Returns:
+        -------
             Optional[str]: The original `value` if valid or `None` if not provided.
 
         Raises:
+        ------
             ValueError: If `value` is provided and does not conform to the
                         expected SUID format.
         """
@@ -351,12 +354,15 @@ class StreamingInterruptRequest(BaseModel):
         """Validate that request identifier matches expected SUID format.
 
         Parameters:
+        ----------
             value: Request identifier submitted by the caller.
 
         Returns:
+        -------
             str: The validated request identifier.
 
         Raises:
+        ------
             ValueError: If the request identifier is not a valid SUID.
         """
         if not suid.check_suid(value):
@@ -485,12 +491,15 @@ class FeedbackRequest(BaseModel):
         Validate that a conversation identifier conforms to the application's SUID format.
 
         Parameters:
+        ----------
             value (str): Conversation identifier to validate.
 
         Returns:
+        -------
             str: The validated conversation identifier.
 
         Raises:
+        ------
             ValueError: If `value` is not a valid SUID.
         """
         if not suid.check_suid(value):
@@ -504,12 +513,15 @@ class FeedbackRequest(BaseModel):
         Validate a sentiment value is one of the allowed options.
 
         Parameters:
+        ----------
             value (Optional[int]): Sentiment value; must be -1, 1, or None.
 
         Returns:
+        -------
             Optional[int]: The validated sentiment value.
 
         Raises:
+        ------
             ValueError: If `value` is not -1, 1, or None.
         """
         if value not in {-1, 1, None}:
@@ -531,9 +543,11 @@ class FeedbackRequest(BaseModel):
         it is returned unchanged.
 
         Parameters:
+        ----------
             value (Optional[list[FeedbackCategory]]): List of feedback categories or None.
 
         Returns:
+        -------
             Optional[list[FeedbackCategory]]: The normalized list with duplicates removed, or None.
         """
         if value is None:
@@ -889,12 +903,15 @@ class MCPServerRegistrationRequest(BaseModel):
         """Validate that URL uses http or https scheme.
 
         Parameters:
+        ----------
             value: The URL string to validate.
 
         Returns:
+        -------
             The validated URL string.
 
         Raises:
+        ------
             ValueError: If URL does not start with http:// or https://.
         """
         if not value.startswith(("http://", "https://")):
@@ -914,12 +931,15 @@ class MCPServerRegistrationRequest(BaseModel):
         server filesystem.
 
         Parameters:
+        ----------
             value: The authorization headers dict to validate.
 
         Returns:
+        -------
             The validated authorization headers dict.
 
         Raises:
+        ------
             ValueError: If any header value is not a supported keyword.
         """
         if value is None:

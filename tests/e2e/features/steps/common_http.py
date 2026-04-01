@@ -232,6 +232,7 @@ def check_prediction_result_ignoring_field(context: Context, field: str) -> None
     payload, ignoring a specified field.
 
     Parameters:
+    ----------
         field (str): The name of the field to exclude from both the actual and expected JSON objects during comparison.
     """
     assert context.response is not None, "Request needs to be performed first"

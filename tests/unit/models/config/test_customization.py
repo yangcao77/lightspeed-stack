@@ -26,6 +26,7 @@ def test_service_customization(subtests: SubTests) -> None:
       the disable flag remains True.
 
     Parameters:
+    ----------
         subtests (SubTests): Pytest SubTests context used to group related assertions.
     """
     with subtests.test(msg="System prompt is enabled"):

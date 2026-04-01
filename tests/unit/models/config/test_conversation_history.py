@@ -51,6 +51,7 @@ def test_conversation_cache_correct_type_but_not_configured(subtests: SubTests) 
     backend configuration raises a ValidationError with the expected message.
 
     Parameters:
+    ----------
         subtests (SubTests): pytest_subtests SubTests object used to create
         subtests for memory, sqlite, and postgres cases.
     """

@@ -14,6 +14,7 @@ class QuotaExceedError(Exception):
         Initialize the QuotaExceedError with the subject identity and token counts.
 
         Parameters:
+        ----------
                 subject_id (str): Identifier of the subject (user id or cluster id).
             subject_type (str): Subject kind: "u" for user, "c" for cluster,
                                 any other value treated as unknown.
@@ -21,6 +22,7 @@ class QuotaExceedError(Exception):
                 needed (int): Number of tokens required; defaults to 0.
 
         Attributes:
+        ----------
                 subject_id (str): Copied from the `subject_id` parameter.
                 available (int): Copied from the `available` parameter.
                 needed (int): Copied from the `needed` parameter.

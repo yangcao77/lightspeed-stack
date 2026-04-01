@@ -405,9 +405,11 @@ def extract_vector_store_ids_from_tools(
     """Extract vector store IDs from prepared tool configurations.
 
     Parameters:
+    ----------
         tools: The prepared tools list of InputTool objects.
 
     Returns:
+    -------
         List of vector store IDs used in file_search tools, or empty list.
     """
     if not tools:
@@ -423,10 +425,12 @@ def tool_matches_allowed_entry(tool: InputTool, entry: dict[str, str]) -> bool:
     """Check whether a tool matches every field on one allowlist row.
 
     Parameters:
+    ----------
         tool: Configured input tool.
         entry: Single row from allowed_tools.tools (field names match tool attributes).
 
     Returns:
+    -------
         True if each entry key exists on the tool, the attribute is not None, and
         the value matches (including string coercion).
     """
@@ -451,9 +455,11 @@ def group_mcp_tools_by_server(
     names are kept in first-seen order.
 
     Parameters:
+    ----------
         entries: Raw allowlist rows (typically allowed_tools.tools).
 
     Returns:
+    -------
         Mapping from server_label to None (no name restriction) or to the list
         of allowed tool names on that server.
     """
@@ -497,9 +503,11 @@ def mcp_strip_name_from_allowlist_entries(
     """Copy allowlist rows and remove the name field from mcp rows only.
 
     Parameters:
+    ----------
         allowed_entries: Original allowed_tools.tools rows.
 
     Returns:
+    -------
         Shallow-copied rows; name is dropped only when type is mcp.
     """
     result: list[dict[str, str]] = []
@@ -519,10 +527,12 @@ def mcp_project_allowed_tools_to_names(
     """Intersect allowlist tool names with the MCP tool allowed_tools constraint.
 
     Parameters:
+    ----------
         tool: MCP tool; allowed_tools may be unset, a list of names, or a filter.
         names: Names from grouped allowlist rows for this server_label.
 
     Returns:
+    -------
         List of names in the intersection, or None if names is empty or the
         intersection is empty.
     """
@@ -553,10 +563,12 @@ def filter_tools_by_allowed_entries(
     """Drop tools that match no allowlist row; narrow MCP allowed_tools when needed.
 
     Parameters:
+    ----------
         tools: Candidate tools (e.g. after BYOK translation or prepare_tools).
         allowed_entries: Rows from allowed_tools.tools.
 
     Returns:
+    -------
         Sublist of tools matching at least one sanitized row. MCP tools may be
         copied with a tighter allowed_tools list when the allowlist names tools
         per server. Empty allowlist yields an empty list.
@@ -610,11 +622,13 @@ def resolve_vector_store_ids(
     llama-stack vector store ID).
 
     Parameters:
+    ----------
         vector_store_ids: List of IDs from the client request (may be
             customer-facing rag_ids or raw llama-stack vector_db_ids).
         byok_rags: BYOK RAG configuration entries.
 
     Returns:
+    -------
         List of llama-stack vector_db_ids ready for the Llama Stack API.
     """
     rag_id_to_vector_db_id = {brag.rag_id: brag.vector_db_id for brag in byok_rags}
@@ -630,10 +644,12 @@ def translate_tools_vector_store_ids(
     """Translate user-facing vector_store_ids to llama-stack IDs in each file_search tool.
 
     Parameters:
+    ----------
         tools: List of request tools (may contain file_search with user-facing IDs).
         byok_rags: BYOK RAG configuration for ID resolution.
 
     Returns:
+    -------
         New list of tools with file_search vector_store_ids translated; other tools
         unchanged.
     """
@@ -867,6 +883,7 @@ def parse_rag_chunks(
         response: The OpenAI Response API response object
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         List of RAG chunks derived from tool file search results (not mutated in place).
     """
@@ -1146,11 +1163,13 @@ def _resolve_source_for_result(
     to user-facing rag_ids from configuration.
 
     Parameters:
+    ----------
         result: A file search result object with optional attributes.
         vector_store_ids: The vector store IDs used in this query.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
 
     Returns:
+    -------
         The resolved index name, or None if resolution is not possible.
     """
     if len(vector_store_ids) == 1:
@@ -1180,9 +1199,11 @@ def _build_chunk_attributes(result: Any) -> Optional[dict[str, Any]]:
     """Extract document metadata attributes from a file search result.
 
     Parameters:
+    ----------
         result: A file search result object with optional attributes.
 
     Returns:
+    -------
         Dictionary of metadata attributes, or None if no attributes available.
     """
     attributes = getattr(result, "attributes", None)
@@ -1393,6 +1414,7 @@ def build_turn_summary(
         model: The model identifier in "provider/model" format
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         TurnSummary with extracted response text, referenced_documents, rag_chunks,
         tool_calls, and tool_results. All fields are empty/default if response is None

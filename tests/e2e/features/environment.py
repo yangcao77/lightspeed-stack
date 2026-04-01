@@ -147,6 +147,7 @@ def before_all(context: Context) -> None:
     "gpt-4-turbo" and "openai".
 
     Parameters:
+    ----------
         context (Context): Behave context into which this function writes:
             - deployment_mode (str): "server" or "library".
             - is_library_mode (bool): True when deployment_mode is "library".
@@ -288,6 +289,7 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
     health endpoint until it becomes healthy or a timeout is reached.
 
     Parameters:
+    ----------
         context (Context): Behave test context. Expected attributes used here include:
             - feature_config: path to the feature-level configuration to restore.
             - is_library_mode (bool): whether tests run in library mode.

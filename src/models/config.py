@@ -420,12 +420,15 @@ class ServiceConfiguration(ConfigurationBase):
         slash and does not end with a trailing slash.
 
         Parameters:
+        ----------
             value: The root path value to validate.
 
         Returns:
+        -------
             The validated root path value.
 
         Raises:
+        ------
             ValueError: If root_path is missing a leading slash or has
                 a trailing slash.
         """
@@ -1999,6 +2002,7 @@ class Configuration(ConfigurationBase):
         file exists it will be overwritten.
 
         Parameters:
+        ----------
             filename (str | Path): Path to the output file (defaults to "configuration.json").
         """
         with open(filename, "w", encoding="utf-8") as fout:

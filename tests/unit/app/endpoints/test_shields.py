@@ -127,6 +127,7 @@ async def test_shields_endpoint_handler_configuration_loaded(
     HTTPException with status 503 and the expected detail.
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest-mock fixture used to create patches and mocks.
     """
     mock_authorization_resolvers(mocker)

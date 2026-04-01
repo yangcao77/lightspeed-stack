@@ -131,9 +131,11 @@ def _get_current_token_metrics(context: Context) -> dict[str, float]:
     """Fetch and parse current token metrics from Prometheus endpoint.
 
     Parameters:
+    ----------
         context: Behave context containing hostname, port, and auth_headers.
 
     Returns:
+    -------
         Dictionary with 'token_sent' and 'token_received' totals.
     """
     base = f"http://{context.hostname}:{context.port}"
@@ -152,9 +154,11 @@ def _get_end_event_data(response_text: str) -> Optional[dict]:
     """Extract the end event data from streaming SSE response.
 
     Parameters:
+    ----------
         response_text: The raw SSE response text.
 
     Returns:
+    -------
         The data dictionary from the end event (including available_quotas),
         or None if not found.
     """
@@ -177,9 +181,11 @@ def _parse_token_metrics(metrics_text: str) -> dict[str, float]:
     """Parse Prometheus metrics text to extract token counter values.
 
     Parameters:
+    ----------
         metrics_text: Raw Prometheus metrics text output.
 
     Returns:
+    -------
         Dictionary with 'token_sent' and 'token_received' totals.
     """
     token_sent_total = 0.0

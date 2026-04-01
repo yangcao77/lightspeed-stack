@@ -281,6 +281,7 @@ class TestInitializeDatabase:
         initialize_database tests.
 
         Parameters:
+        ----------
             mocker (MockerFixture): pytest-mock fixture used to create MagicMock instances.
             mock_sessionmaker (MockType): Mocked sessionmaker whose return
             value will be set to the mocked session-local factory.
@@ -288,6 +289,7 @@ class TestInitializeDatabase:
             enable_debug (bool): If True, configures `mock_logger.isEnabledFor` to return True.
 
         Returns:
+        -------
             tuple[MockType, MockType]: A tuple (mock_engine,
             mock_session_local) where `mock_engine` is a mocked SQLAlchemy
             Engine and `mock_session_local` is the mocked session-local
@@ -312,6 +314,7 @@ class TestInitializeDatabase:
         and that sessionmaker was invoked with the expected arguments.
 
         Parameters:
+        ----------
             mock_sessionmaker (MockType): Mock of the sessionmaker factory;
             expected to have been called with autocommit=False,
             autoflush=False, bind=mock_engine.

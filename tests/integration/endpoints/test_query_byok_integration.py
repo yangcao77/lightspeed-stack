@@ -60,10 +60,12 @@ def _make_vector_io_response(
     """Build a mock vector_io.query response with arbitrary chunks.
 
     Parameters:
+    ----------
         mocker: pytest-mock fixture.
         chunks_data: List of (content, chunk_id, score) tuples.
 
     Returns:
+    -------
         Mock with .chunks and .scores attributes.
     """
     chunks = []

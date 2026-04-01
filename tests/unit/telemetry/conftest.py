@@ -378,9 +378,11 @@ def llama_stack_config_file_fixture(tmp_path: Path) -> str:
     """Write SAMPLE_LLAMA_STACK_CONFIG to a temp YAML file and return its path.
 
     Parameters:
+    ----------
         tmp_path: Pytest-managed temporary directory (auto-cleaned).
 
     Returns:
+    -------
         str: Path to the temporary YAML file.
     """
     path = tmp_path / "llama_stack_config.yaml"

@@ -28,13 +28,16 @@ async def check_mcp_auth(configuration: AppConfig, mcp_headers: McpHeaders) -> N
     WWW-Authenticate (or 401 without header on probe failure).
 
     Parameters:
+    ----------
         configuration: Application config containing mcp_servers.
         mcp_headers: Per-server headers; keys are MCP server names.
 
     Returns:
+    -------
         None when no server requires OAuth or probe does not trigger 401.
 
     Raises:
+    ------
         HTTPException: 401 when an MCP server requires OAuth (from probe_mcp).
     """
     probes = []
@@ -72,14 +75,17 @@ async def probe_mcp(
     raises 401 without WWW-Authenticate.
 
     Parameters:
+    ----------
         url: MCP server URL to probe.
         authorization: Optional Authorization header value for the probe request.
 
     Returns:
+    -------
         None when the server responds with a status other than 401 (OAuth not
         required). Otherwise does not return; raises HTTPException.
 
     Raises:
+    ------
         HTTPException: 401 with WWW-Authenticate when the server returns 401
             and includes that header; 401 without the header when the server
             returns 401 without it or when the probe fails (timeout/connection).

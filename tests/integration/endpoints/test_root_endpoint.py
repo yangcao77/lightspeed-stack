@@ -23,9 +23,11 @@ def mock_llama_stack_client_fixture(
     as it represents an external service call.
 
     Parameters:
+    ----------
         mocker (pytest_mock.MockerFixture): The pytest-mock fixture used to apply the patch.
 
     Yields:
+    ------
         AsyncMock: A mocked Llama Stack client configured for tests.
     """
     mock_holder_class = mocker.patch("app.endpoints.info.AsyncLlamaStackClientHolder")
@@ -55,6 +57,7 @@ async def test_root_endpoint(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         test_config (AppConfig): Loads root configuration
         test_request (Request): FastAPI request
         test_auth (AuthTuple): noop authentication tuple

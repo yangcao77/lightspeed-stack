@@ -28,6 +28,7 @@ def set_authorization_header_custom(context: Context, header_value: str) -> None
     """Set a custom Authorization header value.
 
     Parameters:
+    ----------
         header_value (str): The value to set for the `Authorization` header.
     """
     if not hasattr(context, "auth_headers"):
@@ -52,6 +53,7 @@ def access_rest_api_endpoint_post(
     The response is stored in `context.response` attribute.
 
     Parameters:
+    ----------
         endpoint (str): Endpoint path to call; will be normalized.
         user_id (str): Value used for the `user_id` query parameter (surrounding quotes are removed).
     """

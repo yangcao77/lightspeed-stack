@@ -221,6 +221,7 @@ async def resolve_response_context(
     """Resolve conversation context for the responses endpoint without mutating the request.
 
     Parameters:
+    ----------
         user_id: ID of the user making the request.
         others_allowed: Whether the user can access conversations owned by others.
         conversation_id: Conversation ID from the request, if any.
@@ -228,10 +229,12 @@ async def resolve_response_context(
         generate_topic_summary: Resolved value for request.generate_topic_summary.
 
     Returns:
+    -------
         ResponsesConversationContext: Contains conversation, user_conversation, and
             resolved generate_topic_summary to apply to the request.
 
     Raises:
+    ------
         HTTPException: 404 if previous_response_id is set but the turn does not exist;
             other HTTP exceptions from validate_and_retrieve_conversation.
     """
@@ -374,11 +377,13 @@ def _process_http_source(
     Process HTTP source and return (doc_url, doc_title) tuple.
 
     Parameters:
+    ----------
         src (str): The source URL string to process.
         doc_urls (set[str]): Set of already-seen source strings; the function
                              will add `src` to this set when it is new.
 
     Returns:
+    -------
         Optional[tuple[Optional[AnyUrl], str]]: A tuple (validated_url, doc_title)
                when `src` was not previously seen:
             - `validated_url`: an `AnyUrl` instance if `src` is a valid URL, or
@@ -411,6 +416,7 @@ def _process_document_id(
     Process document ID and return (doc_url, doc_title) tuple.
 
     Parameters:
+    ----------
         src (str): Document identifier to process.
         doc_ids (set[str]): Set of already-seen document IDs; the function adds `src` to this set.
         doc_urls (set[str]): Set of already-seen document URLs; the function
@@ -425,6 +431,7 @@ def _process_document_id(
                                               metadata lookup is skipped.
 
     Returns:
+    -------
         Optional[tuple[Optional[AnyUrl], str]]: `(validated_url, doc_title)` where
         `validated_url` is a validated `AnyUrl` or `None` and `doc_title` is
         the chosen title string; returns `None` if the `src` or its URL was
@@ -498,12 +505,14 @@ def _process_rag_chunks_for_documents(
     This is the core logic shared between both return formats.
 
     Parameters:
+    ----------
         rag_chunks (list): Iterable of RAG chunk objects; each chunk must
         provide a `source` attribute (e.g., an HTTP URL or a document ID).
         metadata_map (Optional[dict[str, Any]]): Optional mapping of document IDs
         to metadata dictionaries used to resolve titles and document URLs.
 
     Returns:
+    -------
         list[tuple[Optional[AnyUrl], str]]: Ordered list of tuples where the first
         element is a validated URL object or `None` (if no URL is available)
         and the second element is the document title.
@@ -555,12 +564,14 @@ def create_referenced_documents(
     either ReferencedDocument objects (for query endpoint) or dictionaries (for streaming).
 
     Parameters:
+    ----------
         rag_chunks: List of RAG chunks with source information
         metadata_map: Optional mapping containing metadata about referenced documents
         return_dict_format: If True, returns list of dicts; if False, returns list of
             ReferencedDocument objects
 
     Returns:
+    -------
         List of ReferencedDocument objects or dictionaries with doc_url and doc_title
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks, metadata_map)
@@ -589,11 +600,13 @@ def create_referenced_documents_with_metadata(
     This function now returns ReferencedDocument objects for consistency with the query endpoint.
 
     Parameters:
+    ----------
         summary (TurnSummary): Summary object containing `rag_chunks` to be processed.
         metadata_map (dict[str, Any]): Metadata keyed by document id used to
                                        derive or enrich document `doc_url` and `doc_title`.
 
     Returns:
+    -------
         list[ReferencedDocument]: ReferencedDocument objects with `doc_url` and
         `doc_title` populated; `doc_url` may be `None` if no valid URL could be
         determined.
@@ -617,9 +630,11 @@ def create_referenced_documents_from_chunks(
     create_referenced_documents function.
 
     Parameters:
+    ----------
         rag_chunks (list): List of RAG chunk entries containing source and metadata information.
 
     Returns:
+    -------
         list[ReferencedDocument]: ReferencedDocument instances created from the
         chunks; each contains `doc_url` (validated URL or `None`) and
         `doc_title`.

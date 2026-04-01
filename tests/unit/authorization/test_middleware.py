@@ -46,9 +46,11 @@ class TestGetAuthorizationResolvers:
         Create a mock configuration with empty authorization access rules and empty JWT role rules.
 
         Parameters:
+        ----------
             mocker (pytest_mock.MockerFixture): Fixture used to create the MagicMock.
 
         Returns:
+        -------
             Mock: A MagicMock whose `authorization_configuration.access_rules` and
             `authentication_configuration.jwk_configuration.jwt_configuration.role_rules`
             are set to empty lists.
@@ -204,9 +206,11 @@ class TestPerformAuthorizationCheck:
         Create paired mock role and access resolvers for tests.
 
         Parameters:
+        ----------
             mocker (MockerFixture): Pytest mocker fixture used to create mock objects.
 
         Returns:
+        -------
             tuple: (role_resolver, access_resolver)
                 - role_resolver: an AsyncMock whose `resolve_roles` returns `{"employee"}`.
                 - access_resolver: a MagicMock with `check_access` returning
@@ -331,7 +335,8 @@ class TestAuthorizeDecorator:
                 **_: Any additional keyword arguments are ignored.
 
             Returns:
-                A string indicating the mock operation was successful."""
+                A string indicating the mock operation was successful.
+            """
             return "success"
 
         mocker.patch(
@@ -354,7 +359,8 @@ class TestAuthorizeDecorator:
                 **_: Arbitrary keyword arguments.
 
             Returns:
-                A string indicating the success of the operation."""
+                A string indicating the success of the operation.
+            """
             return "success"
 
         mocker.patch(

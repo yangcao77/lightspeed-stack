@@ -28,9 +28,11 @@ async def _collect_sse_events(response: StreamingResponse) -> list[dict[str, Any
     """Consume a StreamingResponse and parse SSE events into dicts.
 
     Parameters:
+    ----------
         response: The StreamingResponse to consume.
 
     Returns:
+    -------
         List of parsed JSON event dicts from ``data:`` lines.
     """
     events: list[dict[str, Any]] = []

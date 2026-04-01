@@ -58,9 +58,11 @@ class CursorMock:
         Execute the given SQL command using the database cursor.
 
         Parameters:
+        ----------
                 command (Any): SQL statement or command object to execute.
 
         Raises:
+        ------
                 psycopg2.DatabaseError: Always raised with the message "can not INSERT".
         """
         raise psycopg2.DatabaseError("can not INSERT")

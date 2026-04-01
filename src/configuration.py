@@ -70,6 +70,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         """Load configuration from YAML file.
 
         Parameters:
+        ----------
             filename (str): Path to the YAML configuration file to load.
         """
         with open(filename, encoding="utf-8") as fin:
@@ -81,6 +82,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         """Initialize configuration from a dictionary.
 
         Parameters:
+        ----------
             config_dict (dict[Any, Any]): Mapping of configuration values
             (typically parsed from YAML) to construct a new Configuration
             instance. The method sets the internal configuration to
@@ -179,9 +181,11 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         """Add an MCP server to the runtime configuration.
 
         Parameters:
+        ----------
             mcp_server: The MCP server configuration to add.
 
         Raises:
+        ------
             LogicError: If the configuration has not been loaded.
             ValueError: If an MCP server with the same name already exists.
         """
@@ -199,9 +203,11 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         """Remove a dynamically registered MCP server from the runtime configuration.
 
         Parameters:
+        ----------
             name: The name of the MCP server to remove.
 
         Raises:
+        ------
             LogicError: If the configuration has not been loaded.
             ValueError: If the server was not found or was statically configured.
         """
@@ -220,9 +226,11 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         """Check if an MCP server was dynamically registered.
 
         Parameters:
+        ----------
             name: The name of the MCP server.
 
         Returns:
+        -------
             bool: True if the server was registered via the API.
         """
         return name in self._dynamic_mcp_server_names
@@ -507,10 +515,12 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         If no mapping exists, returns the vector_store_id unchanged.
 
         Parameters:
+        ----------
             vector_store_id: The llama-stack vector store identifier.
             rag_id_mapping: Optional pre-built mapping to avoid repeated lookups.
 
         Returns:
+        -------
             str: The user-facing index name from config, or the original ID.
         """
         mapping = rag_id_mapping if rag_id_mapping is not None else self.rag_id_mapping

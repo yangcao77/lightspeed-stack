@@ -112,7 +112,8 @@ async def test_api_key_with_token_auth_dependency_invalid(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
     """Test the APIKeyTokenAuthDependency class with default user ID,
-    where token's value is not the one from configuration."""
+    where token's value is not the one from configuration.
+    """
     dependency = APIKeyTokenAuthDependency(default_api_key_token_configuration)
 
     request = Request(

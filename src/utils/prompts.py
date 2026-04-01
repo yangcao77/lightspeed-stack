@@ -22,13 +22,16 @@ def get_system_prompt(system_prompt: Optional[str]) -> str:
     4. The module default `constants.DEFAULT_SYSTEM_PROMPT` (lowest precedence).
 
     Parameters:
+    ----------
         system_prompt: Optional per-request system prompt from the query; may be
             None.
 
     Returns:
+    -------
         The resolved system prompt string to apply to the request.
 
     Raises:
+    ------
         HTTPException: 422 Unprocessable Entity when per-request system prompts
             are disabled (disable_query_system_prompt) and a non-None
             `system_prompt` is provided; the response instructs the client to

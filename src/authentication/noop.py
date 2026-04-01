@@ -24,6 +24,7 @@ class NoopAuthDependency(AuthInterface):  # pylint: disable=too-few-public-metho
         user-ID checking disabled.
 
         Parameters:
+        ----------
             virtual_path (str): Virtual path context used by the dependency
                                 (defaults to DEFAULT_VIRTUAL_PATH).
         """
@@ -34,9 +35,11 @@ class NoopAuthDependency(AuthInterface):  # pylint: disable=too-few-public-metho
         """Validate FastAPI Requests for authentication and authorization.
 
         Parameters:
+        ----------
             request (Request): FastAPI request whose query parameters may contain "user_id".
 
         Returns:
+        -------
             tuple[str, str, bool, str]: A 4-tuple containing:
                 - user_id: the value of the "user_id" query parameter if
                            present, otherwise DEFAULT_USER_UID.

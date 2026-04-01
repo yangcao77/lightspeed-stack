@@ -66,6 +66,7 @@ def store_conversation_into_cache(
     anything.
 
     Parameters:
+    ----------
         user_id (str): Owner identifier used as the cache key.
         conversation_id (str): Conversation identifier used as the cache key.
         cache_entry (CacheEntry): Entry to insert or append to the conversation history.
@@ -117,9 +118,11 @@ def _is_inout_shield(shield: Shield) -> bool:
     Determine if the shield identifier indicates an input/output shield.
 
     Parameters:
+    ----------
         shield (Shield): The shield to check.
 
     Returns:
+    -------
         bool: True if the shield identifier starts with "inout_", otherwise False.
     """
     return shield.identifier.startswith("inout_")
@@ -146,9 +149,11 @@ def is_input_shield(shield: Shield) -> bool:
     shield.
 
     Parameters:
+    ----------
         shield (Shield): The shield identifier to classify.
 
     Returns:
+    -------
         bool: True if the shield is for input or both input/output monitoring; False otherwise.
     """
     return _is_inout_shield(shield) or not is_output_shield(shield)
