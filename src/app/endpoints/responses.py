@@ -171,8 +171,10 @@ async def responses_endpoint_handler(
         responses_request.max_output_tokens = None
 
     responses_request = responses_request.model_copy(deep=True)
-    responses_request.instructions = get_system_prompt(responses_request.instructions)
     check_configuration_loaded(configuration)
+    responses_request.instructions = get_system_prompt(
+        responses_request.instructions, field_name="instructions"
+    )
     started_at = datetime.now(UTC)
     user_id = auth[0]
 

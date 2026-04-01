@@ -18,6 +18,7 @@ from app.endpoints.responses import (
     responses_endpoint_handler,
 )
 from configuration import AppConfig
+from constants import DEFAULT_SYSTEM_PROMPT
 from models.config import Action
 from models.database.conversations import UserConversation
 from models.requests import ResponsesRequest
@@ -1419,7 +1420,7 @@ class TestResponsesInstructionResolution:
         # The request passed to handle_non_streaming_response should have
         # instructions resolved to the default system prompt.
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == "You are a helpful assistant"
+        assert call_kwargs["request"].instructions == DEFAULT_SYSTEM_PROMPT
 
     @pytest.mark.asyncio
     async def test_client_provided_instructions_pass_through(
@@ -1607,4 +1608,4 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == "You are a helpful assistant"
+        assert call_kwargs["request"].instructions == DEFAULT_SYSTEM_PROMPT
