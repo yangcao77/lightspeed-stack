@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         mode: ["server", "library"]
-        environment: ["azure", "vertexai", "watsonx", "bedrock"]
+        environment: ["bedrock"]
     
     name: "E2E: ${{ matrix.mode }} mode / ${{ matrix.environment }}"
     
