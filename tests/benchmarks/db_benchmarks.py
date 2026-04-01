@@ -27,6 +27,7 @@ def store_new_user_conversation(
     session.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to persist the record.
         id (Optional[str]): Optional explicit ID to assign to the new conversation.
             If not provided, a generated suid will be used.
@@ -34,6 +35,7 @@ def store_new_user_conversation(
             conversation. If not provided, a generated suid will be used.
 
     Returns:
+    -------
         None
     """
     provider = generate_provider()
@@ -60,10 +62,12 @@ def update_user_conversation(session: Session, id: str) -> None:
     session.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to persist the record.
         id (str): Explicit ID to assign to the new conversation.
 
     Returns:
+    -------
         None
     """
     provider = generate_provider()
@@ -89,9 +93,11 @@ def list_conversation_for_all_users(session: Session) -> None:
     that measures the listing performance.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to query conversations.
 
     Returns:
+    -------
         None
     """
     query = session.query(UserConversation)
@@ -110,9 +116,11 @@ def retrieve_conversation(
     is intended for use in a benchmark that measures the listing performance.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to query conversations.
 
     Returns:
+    -------
         None
     """
     query = session.query(UserConversation).filter_by(id=conversation_id)
@@ -133,9 +141,11 @@ def retrieve_conversation_for_one_user(
     is intended for use in a benchmark that measures the listing performance.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to query conversations.
 
     Returns:
+    -------
         None
     """
     query = session.query(UserConversation).filter_by(
@@ -157,9 +167,11 @@ def list_conversation_for_one_user(session: Session, user_id: str) -> None:
     that measures the listing performance.
 
     Parameters:
+    ----------
         session (Session): SQLAlchemy session used to query conversations.
 
     Returns:
+    -------
         None
     """
     query = session.query(UserConversation).filter_by(user_id=user_id)
@@ -178,10 +190,12 @@ def benchmark_store_new_user_conversations(
     benchmark task stores one more conversation (using the helper above).
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:
@@ -202,10 +216,12 @@ def benchmark_update_user_conversation(
     and then benchmarks updating that conversation.
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:
@@ -232,10 +248,12 @@ def benchmark_list_conversations_for_all_users(
     the performance of querying and retrieving all UserConversation rows.
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:
@@ -255,10 +273,12 @@ def benchmark_list_conversations_for_one_user(
     the performance of querying and retrieving all UserConversation rows.
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:
@@ -281,10 +301,12 @@ def benchmark_retrieve_conversation(
     the performance of querying and retrieving one UserConversation record.
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:
@@ -309,10 +331,12 @@ def benchmark_retrieve_conversation_for_one_user(
     the performance of querying and retrieving one UserConversation record.
 
     Parameters:
+    ----------
         benchmark (BenchmarkFixture): pytest-benchmark fixture to run the measurement.
         records_to_insert (int): Number of records to pre-populate before benchmarking.
 
     Returns:
+    -------
         None
     """
     with get_session() as session:

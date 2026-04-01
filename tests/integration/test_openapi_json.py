@@ -104,9 +104,11 @@ def _check_openapi_top_level_info(spec: dict[str, Any]) -> None:
     (name and URL) match the expected values used by the project.
 
     Parameters:
+    ----------
         spec (dict): Parsed OpenAPI specification document.
 
     Raises:
+    ------
         AssertionError: If any required top-level field is missing or does not
         match the expected value.
     """
@@ -128,9 +130,11 @@ def _check_server_section_present(spec: dict[str, Any]) -> None:
     """Check if the servers section stored in OpenAPI specification.
 
     Parameters:
+    ----------
         spec (dict[str, Any]): Parsed OpenAPI specification.
 
     Raises:
+    ------
         AssertionError: If the 'servers' field is missing, not a list, or empty.
     """
     servers = spec.get("servers")
@@ -143,12 +147,14 @@ def _check_paths_and_responses_exist(
     """Checks if the specified paths and responses exist in the API specification.
 
     Parameters:
+    ----------
          spec (dict): The API specification.
          path (str): The API endpoint path to check.
          method (str): The HTTP method to check.
          expected_codes (set[str]): The set of expected HTTP status codes.
 
     Raises:
+    ------
          AssertionError: If the path, method, or any of the expected response codes are missing.
     """
     paths = spec.get("paths") or {}
@@ -170,6 +176,7 @@ def test_openapi_top_level_info_from_file(spec_from_file: dict[str, Any]) -> Non
     license fields meet the repository's expected values.
 
     Parameters:
+    ----------
         spec_from_file (dict[str, Any]): OpenAPI specification dictionary
         loaded from docs/openapi.json.
     """
@@ -184,6 +191,7 @@ def test_openapi_top_level_info_from_url(spec_from_url: dict[str, Any]) -> None:
     used by the tests.
 
     Parameters:
+    ----------
         spec_from_url (dict[str, Any]): OpenAPI document parsed from the
         application's /openapi.json endpoint.
     """
@@ -294,6 +302,7 @@ def test_paths_and_responses_exist_from_file(
     status codes.
 
     Parameters:
+    ----------
         spec_from_file (dict): OpenAPI specification document loaded from the local file.
         path (str): API path to check (e.g., "/items/{id}").
         method (str): HTTP method to check for the path (e.g., "get", "post").
@@ -397,6 +406,7 @@ def test_paths_and_responses_exist_from_url(
     status codes.
 
     Parameters:
+    ----------
         path (str): OpenAPI path string to check (for example, "/items/{id}").
         method (str): HTTP method name for the operation to check (e.g., "get",
         "post"); case-insensitive.

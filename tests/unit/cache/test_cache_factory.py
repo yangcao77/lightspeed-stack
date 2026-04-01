@@ -84,10 +84,12 @@ def sqlite_cache_config(tmpdir: Path) -> ConversationHistoryConfiguration:
     using a temporary directory.
 
     Parameters:
+    ----------
         tmpdir (Path): Temporary directory path; the SQLite file will be
         created at `tmpdir / "test.sqlite"`.
 
     Returns:
+    -------
         ConversationHistoryConfiguration: Configuration with `type` set to the
         SQLite cache constant and `sqlite` set to a SQLiteDatabaseConfiguration
         pointing to the test database path.

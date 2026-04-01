@@ -229,9 +229,11 @@ def mock_configuration(mocker: MockerFixture) -> MockType:
     Create a mocked configuration object with a mocked `conversation_cache` attribute.
 
     Parameters:
+    ----------
         mocker (pytest.MockFixture): The pytest-mock fixture used to create mocks.
 
     Returns:
+    -------
         Mock: A mock configuration object whose `conversation_cache` attribute is a mock.
     """
     mock_config = mocker.Mock()

@@ -56,10 +56,12 @@ async def test_health_liveness(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         test_config: Loads test configuration
         test_auth: noop authentication tuple
 
     Returns:
+    -------
         None
     """
     _ = test_config
@@ -85,6 +87,7 @@ async def test_health_readiness_provider_statuses(
     - Multiple providers with different health states are handled correctly
 
     Parameters:
+    ----------
         mock_llama_stack_client_health: Mocked Llama Stack client
         mocker: pytest-mock fixture for creating mock objects
     """
@@ -139,6 +142,7 @@ async def test_health_readiness_client_error(
     - The endpoint does not catch RuntimeError, only APIConnectionError
 
     Parameters:
+    ----------
         test_response: FastAPI response object
         test_auth: noop authentication tuple
     """
@@ -165,11 +169,13 @@ async def test_health_readiness(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         mock_llama_stack_client_health: Mocked Llama Stack client
         test_response: FastAPI response object
         test_auth: noop authentication tuple
 
     Returns:
+    -------
         None
     """
     _ = mock_llama_stack_client_health

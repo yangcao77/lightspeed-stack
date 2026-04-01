@@ -84,10 +84,12 @@ def create_auth_header(identity_data: dict) -> str:
     Create a base64-encoded string suitable for use as an x-rh-identity header from identity data.
 
     Parameters:
+    ----------
         identity_data (dict): Identity payload (serializable to JSON)
         containing identity, user/system fields, and optional entitlements.
 
     Returns:
+    -------
         header_value (str): Base64-encoded JSON string representing the provided identity data.
     """
     json_str = json.dumps(identity_data)
@@ -102,11 +104,13 @@ def create_request_with_header(
     Create a mock FastAPI Request with an `x-rh-identity` header for tests.
 
     Parameters:
+    ----------
         mocker: Pytest-mock fixture for creating mocks.
         header_value (Optional[str]): Base64-encoded identity header value to
         set. If `None` or empty, the returned request will have no headers.
 
     Returns:
+    -------
         Request: A mocked Request object whose `headers` contains
         `{"x-rh-identity": header_value}` when a value is provided, or an empty
         dict otherwise.

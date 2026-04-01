@@ -45,9 +45,11 @@ def _ensure_tls_provider(config: dict[str, Any]) -> dict[str, Any]:
     mock-tls-model registered resource.
 
     Parameters:
+    ----------
         config: The Llama Stack configuration dictionary.
 
     Returns:
+    -------
         The tls-openai provider configuration dictionary.
     """
     providers = config.setdefault("providers", {})
@@ -74,6 +76,7 @@ def _configure_tls(tls_config: dict[str, Any], base_url: Optional[str] = None) -
     """Configure TLS settings for the tls-openai provider.
 
     Parameters:
+    ----------
         tls_config: The TLS configuration dictionary.
         base_url: Optional base URL override for the provider.
     """

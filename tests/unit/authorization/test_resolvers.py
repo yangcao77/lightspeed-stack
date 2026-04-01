@@ -22,9 +22,11 @@ def claims_to_token(claims: dict) -> str:
     and signature.
 
     Parameters:
+    ----------
         claims (dict): JWT claims to serialize and encode.
 
     Returns:
+    -------
         token (str): A token string in the form "foo_header.<base64url(JSON
         claims)>.foo_signature", where the payload is base64url-encoded without
         padding.
@@ -42,9 +44,11 @@ def claims_to_auth_tuple(claims: dict) -> AuthTuple:
     Builds an AuthTuple from JWT claims for use in tests.
 
     Parameters:
+    ----------
         claims (dict): JWT claims to encode into the returned token.
 
     Returns:
+    -------
         AuthTuple: A 4-tuple (username, token_id, expired, jwt_token) where
         `username` is the fixed string "user", `token_id` is the fixed string
         "token", `expired` is False, and `jwt_token` is the token produced from
@@ -86,9 +90,11 @@ class TestJwtRolesResolver:
         employee role rule.
 
         Parameters:
+        ----------
             employee_role_rule (JwtRoleRule): Rule used to map JWT claims to the employee role.
 
         Returns:
+        -------
             JwtRolesResolver: Resolver initialized with the given rule.
         """
         return JwtRolesResolver([employee_role_rule])

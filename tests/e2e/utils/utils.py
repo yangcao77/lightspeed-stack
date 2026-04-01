@@ -33,9 +33,11 @@ def normalize_endpoint(endpoint: str) -> str:
     not already present.
 
     Parameters:
+    ----------
         endpoint (str): The endpoint string to normalize.
 
     Returns:
+    -------
         str: The normalized endpoint starting with '/' and containing no double-quote characters.
     """
     endpoint = endpoint.replace('"', "")
@@ -50,13 +52,16 @@ def validate_json(message: Any, schema: Any) -> None:
     Validate a JSON-like object against a jsonschema-compatible schema.
 
     Parameters:
+    ----------
         message (Any): The JSON-like instance to validate (typically a dict or list).
         schema (Any): A jsonschema-compatible schema describing the expected structure.
 
     Returns:
+    -------
         None
 
     Raises:
+    ------
         AssertionError: If the instance does not conform to the schema or if
         the schema itself is invalid; the assertion message contains the
         underlying jsonschema error.
@@ -86,9 +91,11 @@ def wait_for_container_health(container_name: str, max_attempts: int = 6) -> Non
     after the container is observed healthy or after all attempts complete.
 
     Returns:
+    -------
         None
 
     Parameters:
+    ----------
         container_name (str): Docker container name or ID to check.
         max_attempts (int): Maximum number of health check attempts (default 3).
     """
@@ -216,14 +223,17 @@ def switch_config(
     Replace the destination configuration file with the file at source_path.
 
     Parameters:
+    ----------
         source_path (str): Path to the replacement configuration file.
         destination_path (str): Path to the configuration file to be
         overwritten (defaults to "lightspeed-stack.yaml").
 
     Returns:
+    -------
         None
 
     Raises:
+    ------
         FileNotFoundError: If source_path does not exist.
         PermissionError: If the file cannot be read or destination cannot be
                          written due to permissions.
@@ -275,9 +285,11 @@ def remove_config_backup(backup_path: str) -> None:
     If the file is present, attempts to delete it; on failure prints a warning with the error.
 
     Returns:
+    -------
         None
 
     Parameters:
+    ----------
         backup_path (str): Filesystem path to the backup file to remove.
     """
     if is_prow_environment():
@@ -300,9 +312,11 @@ def clear_llama_stack_storage(container_name: str = "lightspeed-stack") -> None:
     Only runs when using Docker (skipped in Prow).
 
     Parameters:
+    ----------
         container_name (str): Docker container name (default "lightspeed-stack").
 
     Returns:
+    -------
         None
     """
     if is_prow_environment():
@@ -357,10 +371,12 @@ def replace_placeholders(context: Context, text: str) -> str:
     """Replace {MODEL} and {PROVIDER} placeholders with actual values from context.
 
     Parameters:
+    ----------
         context (Context): Behave context containing default_model and default_provider
         text (str): String that may contain {MODEL} and {PROVIDER} placeholders
 
     Returns:
+    -------
         String with placeholders replaced by actual values
     """
     result = text.replace("{MODEL}", context.default_model)

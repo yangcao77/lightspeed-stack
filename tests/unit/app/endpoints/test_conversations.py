@@ -83,6 +83,7 @@ def create_mock_conversation(
     - topic_summary: optional topic summary (may be None or empty string)
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest mocker fixture used to build the mock object.
         conversation_id (str): Conversation identifier to assign to the mock.
         created_at (str): ISO-formatted created-at timestamp to be returned by
@@ -95,6 +96,7 @@ def create_mock_conversation(
         topic_summary (Optional[str]): Optional topic summary to assign to the mock.
 
     Returns:
+    -------
         mock_conversation: A mock object configured with the above attributes.
     """
     mock_conversation = mocker.Mock()
@@ -202,6 +204,7 @@ def mock_database_session(
     Create and patch a mocked database session and a context-manager-compatible get_session.
 
     Parameters:
+    ----------
         mocker (pytest.MockerFixture): Fixture used to create and patch mocks.
         query_result (Optional[list]): If provided, configures the
         session.query().all() and session.query().filter_by().all() to return
@@ -210,6 +213,7 @@ def mock_database_session(
         to return this list.
 
     Returns:
+    -------
         Mock: The mocked session object that will be yielded by the patched
         get_session context manager.
     """

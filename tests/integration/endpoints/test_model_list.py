@@ -25,9 +25,11 @@ def mock_llama_stack_client_fixture(
     as it represents an external service call.
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
 
     Returns:
+    -------
         mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.models where it's actually used by models_endpoint_handler_base
@@ -67,9 +69,11 @@ def mock_llama_stack_client_failing_fixture(
     as it represents an external service call.
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
 
     Returns:
+    -------
         mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.models where it's actually used by models_endpoint_handler_base
@@ -99,6 +103,7 @@ async def test_models_list(
     - Model list handler
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -135,6 +140,7 @@ async def test_models_list_filter_model_type_llm(
     - Model list handler
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -167,6 +173,7 @@ async def test_models_list_filter_model_type_embedding(
     - Model list handler
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -201,6 +208,7 @@ async def test_models_list_filter_model_type_unknown(
     - Model list handler
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -234,6 +242,7 @@ async def test_models_list_on_api_connection_error(
     - Error handling when Llama Stack is unreachable
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client_failing: Mocked Llama Stack client that raises APIConnectionError
         test_request: FastAPI request

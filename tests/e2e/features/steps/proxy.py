@@ -52,6 +52,7 @@ def _get_proxy_host(is_docker: bool) -> str:
     """Get the host address that Docker containers can use to reach the proxy.
 
     Parameters:
+    ----------
         is_docker: Whether services are running in Docker containers.
     """
     if is_docker:

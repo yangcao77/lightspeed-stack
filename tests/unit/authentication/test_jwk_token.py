@@ -26,10 +26,12 @@ def token_header(single_key_set: list[dict[str, Any]]) -> dict[str, Any]:
     Create a JWT header using RS256 and the first key's `kid` from the provided key set.
 
     Parameters:
+    ----------
         single_key_set (list[dict]): List of signing key dictionaries; the
         first element must contain a `"kid"`.
 
     Returns:
+    -------
         dict: JWT header with keys `"alg": "RS256"`, `"typ": "JWT"`, and
         `"kid"` set to the first key's `kid`.
     """
@@ -94,12 +96,14 @@ def valid_token(
     Create a JWT signed with the first private key from a single-key JWK set using RS256.
 
     Parameters:
+    ----------
         single_key_set (list[dict[str, Any]]): List of key dicts where the
         first entry must contain a 'private_key' used to sign the token.
         token_header (dict[str, Any]): JWT header values to include in the token.
         token_payload (dict[str, Any]): JWT claims to include in the token.
 
     Returns:
+    -------
         str: The compact serialized JWT signed with the provided private key.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
@@ -125,6 +129,7 @@ def make_signing_server(
     derived from the provided key set.
 
     Parameters:
+    ----------
         mocker (pytest.MockerFixture): Pytest mocker used to patch aiohttp.ClientSession.
         key_set (list[dict[str, Any]]): List of signing key dicts; each item
         must include a `private_key` with an `as_dict(private=False)` method
@@ -133,6 +138,7 @@ def make_signing_server(
         corresponding key in `key_set`.
 
     Returns:
+    -------
         Any: The mocked ClientSession class (the value assigned to the patched
         `aiohttp.ClientSession`). The mock is configured so that:
           - Instantiating the session returns an async context manager.
@@ -187,6 +193,7 @@ def mocked_signing_keys_server(
     Create and register a mocked signing keys HTTP server that serves a single RS256 JWK set.
 
     Parameters:
+    ----------
         mocker (pytest_mock.MockerFixture): Pytest-mock fixture used to patch
         aiohttp.ClientSession and related network calls.
         single_key_set (list[dict[str, Any]]): A list containing one JWK dict
@@ -225,9 +232,11 @@ def dummy_request(token: str) -> Request:
     Create a FastAPI Request with an Authorization Bearer header containing the provided token.
 
     Parameters:
+    ----------
         token (str): Token string to place after the "Bearer " prefix in the Authorization header.
 
     Returns:
+    -------
         request (Request): FastAPI Request object with the Authorization header
         set to "Bearer <token>".
     """
@@ -287,6 +296,7 @@ def set_auth_header(request: Request, token: str) -> None:
     parameter should be the full header value (for example, "Bearer <token>").
 
     Parameters:
+    ----------
         request (Request): FastAPI/Starlette Request whose headers will be modified.
         token (str): Full Authorization header value to set (e.g., "Bearer <token>").
     """
@@ -303,10 +313,12 @@ def ensure_test_user_id_and_name(auth_tuple: tuple, expected_token: str) -> None
     Assert that an authentication tuple contains the expected test user values.
 
     Parameters:
+    ----------
         auth_tuple (tuple): A 4-tuple in the form (user_id, username, skip_userid_check, token).
         expected_token (str): The token value expected to be present as the fourth element.
 
     Raises:
+    ------
         AssertionError: If any element of auth_tuple does not match the expected test values
                         (user id equals TEST_USER_ID, username equals TEST_USER_NAME,
                         skip_userid_check is False, and token equals expected_token).
@@ -344,6 +356,7 @@ def expired_token(
     Create a JWT that is correctly signed but has an expiration time set in the past.
 
     Parameters:
+    ----------
         single_key_set (list[dict]): A list of key dicts; the first element's
         `private_key` is used to sign the token.
         token_header (dict): JWT header values to include in the token.
@@ -351,6 +364,7 @@ def expired_token(
         `exp` to a past timestamp.
 
     Returns:
+    -------
         str: The signed JWT as a string with an expired `exp` claim.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
@@ -397,6 +411,7 @@ def invalid_token(
     use in invalid-signature tests.
 
     Parameters:
+    ----------
         another_single_key_set (list[dict[str, Any]]): A key set whose first
         entry's "private_key" will be used to sign the token; should not match
         the verifier's keys.
@@ -404,6 +419,7 @@ def invalid_token(
         token_payload (dict[str, Any]): JWT claims to encode.
 
     Returns:
+    -------
         str: The serialized JWT as a compact string.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
@@ -564,6 +580,7 @@ def custom_claims_token(
     Create an RS256-signed JWT that uses custom claim names for the user id and username.
 
     Parameters:
+    ----------
         single_key_set (list[dict[str, Any]]): List of signing key dicts; the
         first entry's `private_key` is used to sign the token.
         token_payload (dict[str, Any]): Base payload; `user_id` and `username`
@@ -571,6 +588,7 @@ def custom_claims_token(
         token_header (dict[str, Any]): JWT header to include in the token.
 
     Returns:
+    -------
         str: The encoded JWT as a string.
     """
     jwt_instance = JsonWebToken(algorithms=["RS256"])
@@ -596,9 +614,11 @@ def custom_claims_configuration(
     Create a JwkConfiguration that maps custom JWT claim names for user ID and username.
 
     Parameters:
+    ----------
         default_jwk_configuration (JwkConfiguration): Base configuration to copy and modify.
 
     Returns:
+    -------
         JwkConfiguration: A copy of the input configuration with `jwt_configuration.user_id_claim`
         set to "id_of_the_user" and `jwt_configuration.username_claim` set to "name_of_the_user".
     """
@@ -641,10 +661,12 @@ def token_header_256_2(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
     Create a JWT header for RS256 that references the second key in a multi-key set.
 
     Parameters:
+    ----------
         multi_key_set (list[dict[str, Any]]): List of JWK-like dicts where each
         dict contains a `"kid"` entry; the second entry (index 1) is used.
 
     Returns:
+    -------
         dict[str, Any]: JWT header with keys `"alg": "RS256"`, `"typ": "JWT"`,
         and `"kid"` taken from `multi_key_set[1]["kid"]`.
     """
@@ -658,11 +680,13 @@ def token_header_384(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
     Builds a JWT header for RS384 using the third key's `kid` from a multi-key set.
 
     Parameters:
+    ----------
         multi_key_set (list[dict[str, Any]]): A list of JWK-like dicts; must
         contain at least three entries. The `kid` from the item at index 2 is
         used.
 
     Returns:
+    -------
         dict[str, Any]: JWT header with keys `"alg": "RS384"`, `"typ": "JWT"`,
         and `"kid"` set to the third key's `kid`.
     """
@@ -800,11 +824,13 @@ def multi_key_signing_server(
     "RS256", "RS384"].
 
     Parameters:
+    ----------
         mocker: pytest-mock MockerFixture used to patch aiohttp client behavior.
         multi_key_set (list[dict[str, Any]]): List of JWK dictionaries to be
         served by the mock JWKS endpoint.
 
     Returns:
+    -------
         A mock object that simulates an aiohttp client/session which, when
         queried, yields a response containing the configured JWKs.
     """

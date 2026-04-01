@@ -79,6 +79,7 @@ async def test_rags_endpoint_success(
             Initialize a RagInfo instance with the given identifier.
 
             Parameters:
+            ----------
                 rag_id (str): The unique identifier for the RAG.
             """
             self.id = rag_id

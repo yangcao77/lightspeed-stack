@@ -97,9 +97,11 @@ def encode_identity(identity_json: dict) -> str:
     """Encode identity JSON to base64.
 
     Parameters:
+    ----------
         identity_json (dict): JSON-serializable identity payload to encode.
 
     Returns:
+    -------
         str: Base64-encoded UTF-8 string representation of the JSON payload.
     """
     json_str = json.dumps(identity_json)

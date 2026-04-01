@@ -48,6 +48,7 @@ class MockK8sResponseStatus:
         authentication and authorization results.
 
         Parameters:
+        ----------
             authenticated (Optional[bool]): Whether the token was
             authenticated; when True, `user` is populated.
             allowed (Optional[bool]): Whether the action is authorized (subject
@@ -85,6 +86,7 @@ class MockK8sUser:
         Create a mock Kubernetes user holding identity attributes.
 
         Parameters:
+        ----------
                 username (Optional[str]): The user's username, or None if not provided.
                 uid (Optional[str]): The user's unique identifier, or None if not provided.
                 groups (Optional[list[str]]): List of groups the user belongs
@@ -114,6 +116,7 @@ class MockK8sResponse:
         Initialize a mock Kubernetes API response wrapper containing a status object.
 
         Parameters:
+        ----------
             authenticated (Optional[bool]): Whether the token was authenticated; use None to omit.
             allowed (Optional[bool]): Whether the action is authorized; use None to omit.
             username (Optional[str]): Username of the authenticated user, if any.
