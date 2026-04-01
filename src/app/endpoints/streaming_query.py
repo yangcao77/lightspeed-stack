@@ -877,6 +877,7 @@ def stream_http_error_event(
     Args:
         error: An AbstractErrorResponse instance representing the error.
         media_type: The media type for the response format. Defaults to MEDIA_TYPE_JSON if None.
+
     Returns:
         str: A Server-Sent Events (SSE) formatted error message containing
             the serialized error details.

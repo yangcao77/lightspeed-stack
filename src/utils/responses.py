@@ -867,6 +867,7 @@ def parse_rag_chunks(
         response: The OpenAI Response API response object
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         List of RAG chunks derived from tool file search results (not mutated in place).
     """
@@ -1393,6 +1394,7 @@ def build_turn_summary(
         model: The model identifier in "provider/model" format
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         TurnSummary with extracted response text, referenced_documents, rag_chunks,
         tool_calls, and tool_results. All fields are empty/default if response is None

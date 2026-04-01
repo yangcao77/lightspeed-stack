@@ -148,7 +148,7 @@ def _check_paths_and_responses_exist(
          method (str): The HTTP method to check.
          expected_codes (set[str]): The set of expected HTTP status codes.
 
-     Raises:
+    Raises:
          AssertionError: If the path, method, or any of the expected response codes are missing.
     """
     paths = spec.get("paths") or {}
