@@ -21,6 +21,12 @@ def user_identity_data() -> dict:
 
     Provide a valid Red Hat identity payload for a User, suitable for unit tests.
 
+    The payload contains two top-level keys:
+    - `identity`: includes `account_number`, `org_id`, `type` (set to
+      `"User"`), and `user` with `user_id`, `username`, and `is_org_admin`.
+    - `entitlements`: maps service names (for example, `"rhel"`, `"ansible"`,
+      `"openshift"`) to objects with `is_entitled` and `is_trial`.
+
     Returns:
         identity_data (dict): A dictionary with two top-level keys:
             - "identity": contains "account_number", "org_id", "type" (set to
@@ -485,7 +491,13 @@ class TestRHIdentityHealthProbeSkip:
     def _mock_configuration(
         mocker: MockerFixture, skip_for_health_probes: bool
     ) -> None:
-        """Patch the configuration singleton with a mock for probe skip tests."""
+        """Patch the configuration singleton with a mock for probe skip tests.
+
+        Parameters:
+            skip_for_health_probes (bool): Value to assign to the mocked
+            configuration's authentication_configuration.skip_for_health_probes
+            flag.
+        """
         mock_config = mocker.MagicMock()
         mock_config.authentication_configuration.skip_for_health_probes = (
             skip_for_health_probes
@@ -714,7 +726,13 @@ class TestRHIdentityFieldValidation:
         RHIdentityData(user_identity_data)
 
     def test_org_id_oversized_rejected(self, user_identity_data: dict) -> None:
-        """Reject oversized org_id."""
+        """Reject oversized org_id.
+
+        Verifies that an identity with an org_id longer than 256 characters is rejected.
+
+        Expects RHIdentityData to raise an HTTPException with status_code 400
+        when identity.org_id length exceeds 256 characters.
+        """
         user_identity_data["identity"]["org_id"] = "a" * 257
         with pytest.raises(HTTPException) as exc_info:
             RHIdentityData(user_identity_data)

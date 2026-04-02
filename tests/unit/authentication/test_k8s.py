@@ -836,7 +836,15 @@ async def test_kube_admin_cluster_version_not_found_returns_500(
 async def test_kube_admin_cluster_version_permission_error_returns_500(
     mocker: MockerFixture,
 ) -> None:
-    """Test kube:admin flow returns 500 when permission to ClusterVersion is denied."""
+    """Test kube:admin flow returns 500 when permission to ClusterVersion is denied.
+
+    Sets up a request with a valid Bearer token, mocks subject access review to
+    allow the action and mocks the authenticated user as `kube:admin`. Patches
+    cluster-id retrieval to raise ClusterVersionPermissionError and asserts
+    that the dependency raises an HTTPException with status code 500,
+    `detail["response"] == "Internal server error"`, and that `detail["cause"]`
+    contains an "Insufficient permissions" message.
+    """
     dependency = K8SAuthDependency()
     mock_authz_api = mocker.patch("authentication.k8s.K8sClientSingleton.get_authz_api")
     mock_authz_api.return_value.create_subject_access_review.return_value = (
