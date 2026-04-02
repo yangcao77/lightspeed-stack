@@ -1390,6 +1390,7 @@ class TestResponsesInstructionResolution:
         assert responses_request.instructions is None
 
         _patch_base(mocker, minimal_config)
+        mocker.patch("utils.prompts.configuration", minimal_config)
         _patch_client(mocker)
         _patch_resolve_response_context(mocker, conversation="conv_new_123")
         mocker.patch(
@@ -1436,6 +1437,7 @@ class TestResponsesInstructionResolution:
         )
 
         _patch_base(mocker, minimal_config)
+        mocker.patch("utils.prompts.configuration", minimal_config)
         _patch_client(mocker)
         _patch_resolve_response_context(mocker, conversation="conv_new_123")
         mocker.patch(
@@ -1584,6 +1586,7 @@ class TestResponsesInstructionResolution:
         assert responses_request.instructions is None
 
         _patch_base(mocker, minimal_config)
+        mocker.patch("utils.prompts.configuration", minimal_config)
         _patch_client(mocker)
         _patch_resolve_response_context(mocker, conversation="conv_new_123")
         mocker.patch(
