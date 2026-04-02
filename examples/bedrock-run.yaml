@@ -59,6 +59,9 @@ providers:
   - config: {} # Enable the RAG tool
     provider_id: rag-runtime
     provider_type: inline::rag-runtime
+  - config: {} # Enable MCP (Model Context Protocol) support
+    provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
   vector_io:
   - config: # Define the storage backend for RAG
       persistence:
@@ -109,12 +112,12 @@ server:
   port: 8321
 storage:
   backends:
-    kv_default: # Define the storage backend type for RAG, in this case registry and RAG are unified i.e. information on registered resources (e.g. models, vector_stores) are saved together with the RAG chunks
+    kv_default:
       type: kv_sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/storage/rag/kv_store.db}
+      db_path: ${env.KV_STORE_PATH:=~/.llama/storage/kv_store.db}
     sql_default:
       type: sql_sqlite
-      db_path: ${env.SQLITE_STORE_DIR:=~/.llama/storage/sql_store.db}
+      db_path: ${env.SQL_STORE_PATH:=~/.llama/storage/sql_store.db}
   stores:
     metadata:
       namespace: registry
@@ -136,6 +139,12 @@ registered_resources:
     model_type: llm
     provider_id: aws-bedrock
     provider_model_id: deepseek.v3-v1:0
+  - model_id: all-mpnet-base-v2
+    model_type: embedding
+    provider_id: sentence-transformers
+    provider_model_id: all-mpnet-base-v2
+    metadata:
+      embedding_dimension: 768
   shields:
   - shield_id: llama-guard
     provider_id: llama-guard
@@ -149,6 +158,6 @@ registered_resources:
     provider_id: rag-runtime
 vector_stores:
   default_provider_id: faiss
-  default_embedding_model: # Define the default embedding model for RAG
+  default_embedding_model:
     provider_id: sentence-transformers
-    model_id: nomic-ai/nomic-embed-text-v1.5
+    model_id: all-mpnet-base-v2
