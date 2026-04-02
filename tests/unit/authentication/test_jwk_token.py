@@ -57,7 +57,16 @@ def token_payload() -> dict[str, Any]:
 
 
 def make_key() -> dict[str, Any]:
-    """Generate a key pair for testing purposes."""
+    """Generate a key pair for testing purposes.
+
+    Create an RSA test key pair and return the private key, public key, and key identifier.
+
+    Returns:
+        dict: A dictionary with the following entries:
+            - "private_key": the generated private JsonWebKey instance.
+            - "public_key": the corresponding public JsonWebKey instance.
+            - "kid": the key identifier (thumbprint) as a string.
+    """
     key = JsonWebKey.generate_key("RSA", 2048, is_private=True)
     return {
         "private_key": key,
@@ -79,8 +88,10 @@ def another_single_key_set() -> list[dict[str, Any]]:
     Create a single-key JWK set using a newly generated RSA key.
 
     Returns:
-        list[dict[str, Any]]: A list containing one key dict with keys
-        `private_key`, `public_key`, and `kid`.
+        list[dict[str, Any]]: A list containing one dict with keys:
+            - `private_key`: the generated private JsonWebKey
+            - `public_key`: the corresponding public JsonWebKey
+            - `kid`: the key identifier (thumbprint)
     """
     return [make_key()]
 
@@ -114,7 +125,11 @@ def valid_token(
 
 @pytest.fixture(autouse=True)
 def clear_jwk_cache() -> Generator:
-    """Clear the global JWK cache before each test."""
+    """Clear the global JWK cache before each test.
+
+    This autouse fixture ensures the module-level `_jwk_cache` is emptied at
+    setup and teardown to prevent cross-test interference.
+    """
     _jwk_cache.clear()
     yield
     _jwk_cache.clear()
@@ -497,6 +512,9 @@ def no_user_id_token(
     `single_key_set`; the supplied `token_payload` is modified in-place to
     remove `user_id`.
 
+    Parameters:
+        token_payload (dict): Payload to encode; will be mutated to remove `user_id`.
+
     Returns:
         jwt (str): Encoded JWT as a string that does not contain the `user_id` claim.
     """
@@ -637,7 +655,11 @@ async def test_custom_claims(
     mocked_signing_keys_server: Any,
     custom_claims_token: str,
 ) -> None:
-    """Test with a token that has custom claims."""
+    """Test with a token that has custom claims.
+
+    Asserts the returned auth tuple matches the expected user id, username,
+    skip flag, and original token.
+    """
     _ = mocked_signing_keys_server
 
     dependency = JwkTokenAuthDependency(custom_claims_configuration)
@@ -650,7 +672,15 @@ async def test_custom_claims(
 
 @pytest.fixture
 def token_header_256_1(multi_key_set: list[dict[str, Any]]) -> dict[str, Any]:
-    """A sample token header for RS256 using multi_key_set."""
+    """A sample token header for RS256 using multi_key_set.
+
+    Parameters:
+        multi_key_set (list[dict[str, Any]]): List of JWK dictionaries; the
+        header's `kid` is taken from multi_key_set[0]["kid"].
+
+    Returns:
+        dict[str, Any]: JWT header containing "alg", "typ", and "kid".
+    """
     return {"alg": "RS256", "typ": "JWT", "kid": multi_key_set[0]["kid"]}
 
 
@@ -727,7 +757,7 @@ def multi_key_set() -> list[dict[str, Any]]:
     by tests (e.g., `private_key`, `public_key`, and `kid`).
 
     Returns:
-        key_set (list[dict]): A list of three signing key dictionaries.
+        list[dict[str, Any]]: A list of three signing key dictionaries.
     """
     return [make_key(), make_key(), make_key()]
 
