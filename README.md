@@ -137,6 +137,7 @@ Lightspeed Core Stack is based on the FastAPI framework (Uvicorn). The service i
   | Azure OpenAI    | https://azure.microsoft.com/en-us/products/ai-services/openai-service |
   | Google VertexAI | https://cloud.google.com/vertex-ai                                    |
   | IBM WatsonX     | https://www.ibm.com/products/watsonx                                  |
+  | AWS Bedrock     | https://aws.amazon.com/bedrock                                        |
   | RHOAI (vLLM)    | See tests/e2e-prow/rhoai/configs/run.yaml                             |
   | RHEL AI (vLLM)  | See tests/e2e/configs/run-rhelai.yaml                                 |
 
@@ -212,6 +213,7 @@ __Note__: Support for individual models is dependent on the specific inference p
 | Azure          | gpt-5-chat, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano,  o1-mini                    | No or limited | remote::azure    |                                                                            |
 | VertexAI       | google/gemini-2.0-flash, google/gemini-2.5-flash, google/gemini-2.5-pro [^1] | Yes           | remote::vertexai | [1](examples/vertexai-run.yaml)                                            |
 | WatsonX        | meta-llama/llama-3-3-70b-instruct                                            | Yes           | remote::watsonx  | [1](examples/watsonx-run.yaml)                                             |
+| AWS Bedrock    | deepseek.v3-v1                                                               | Yes           | remote::bedrock  | [1](examples/bedrock-run.yaml)                                             |
 
 [^1]: List of models is limited by design in llama-stack, future versions will probably allow to use more models (see [here](https://github.com/llamastack/llama-stack/blob/release-0.3.x/llama_stack/providers/remote/inference/vertexai/vertexai.py#L54))
 

@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         mode: ["server", "library"]
-        environment: ["azure", "vertexai", "watsonx"]
+        environment: ["azure", "vertexai", "watsonx", "bedrock"]
     
     name: "E2E: ${{ matrix.mode }} mode / ${{ matrix.environment }}"
     
@@ -197,6 +197,7 @@ jobs:
           GCP_KEYS_PATH: ${{ env.GCP_KEYS_PATH }}
           WATSONX_PROJECT_ID: ${{ secrets.WATSONX_PROJECT_ID }}
           WATSONX_API_KEY: ${{ secrets.WATSONX_API_KEY }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
 
         run: |
           # Debug: Check if environment variable is available for docker-compose
@@ -228,6 +229,7 @@ jobs:
           GCP_KEYS_PATH: ${{ env.GCP_KEYS_PATH }}
           WATSONX_PROJECT_ID: ${{ secrets.WATSONX_PROJECT_ID }}
           WATSONX_API_KEY: ${{ secrets.WATSONX_API_KEY }}
+          AWS_BEARER_TOKEN_BEDROCK: ${{ secrets.AWS_BEARER_TOKEN_BEDROCK }}
 
         run: |
           echo "Starting service in library mode (1 container)"

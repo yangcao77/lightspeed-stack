@@ -1,5 +1,4 @@
 version: 2
-image_name: rhelai-configuration
 
 apis:
 - agents
@@ -15,17 +14,16 @@ apis:
       
 benchmarks: []
 datasets: []
+image_name: starter
 # external_providers_dir: /opt/app-root/src/.llama/providers.d
 
 providers:
   inference:
-  - provider_id: vllm
-    provider_type: remote::vllm
-    config:
-      url: http://${env.RHEL_AI_URL}:${env.RHEL_AI_PORT}/v1/
-      api_token: ${env.RHEL_AI_API_KEY}
-      tls_verify: false
-      max_tokens: 2048
+  - config:
+      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK}
+      region_name: us-east-2
+    provider_id: aws-bedrock
+    provider_type: remote::bedrock
   - provider_id: openai
     provider_type: remote::openai
     config:
@@ -38,7 +36,7 @@ providers:
       metadata_store:
         table_name: files_metadata
         backend: sql_default
-      storage_dir: ~/.llama/storage/files
+      storage_dir: ${env.SQLITE_STORE_DIR:=~/.llama/storage/files}
     provider_id: meta-reference-files
     provider_type: inline::localfs
   safety:
@@ -47,21 +45,28 @@ providers:
     provider_id: llama-guard
     provider_type: inline::llama-guard
   scoring:
-  - config: {}
-    provider_id: basic
+  - provider_id: basic
     provider_type: inline::basic
+    config: {}
+  - provider_id: llm-as-judge
+    provider_type: inline::llm-as-judge
+    config: {}
+  - provider_id: braintrust
+    provider_type: inline::braintrust
+    config:
+      openai_api_key: '********'
   tool_runtime:
-  - config: {}
+  - config: {} # Enable the RAG tool
     provider_id: rag-runtime
     provider_type: inline::rag-runtime
-  - config: {}
+  - config: {} # Enable MCP (Model Context Protocol) support
     provider_id: model-context-protocol
     provider_type: remote::model-context-protocol
   vector_io:
-  - config:
+  - config: # Define the storage backend for RAG
       persistence:
         namespace: vector_io::faiss
-        backend: kv_rag
+        backend: kv_default
     provider_id: faiss
     provider_type: inline::faiss
   agents:
@@ -110,9 +115,6 @@ storage:
     kv_default:
       type: kv_sqlite
       db_path: ${env.KV_STORE_PATH:=~/.llama/storage/kv_store.db}
-    kv_rag: # Define the storage backend type for RAG
-      type: kv_sqlite
-      db_path: ${env.KV_RAG_PATH:=~/.llama/storage/rag/kv_store.db}
     sql_default:
       type: sql_sqlite
       db_path: ${env.SQL_STORE_PATH:=~/.llama/storage/sql_store.db}
@@ -132,11 +134,11 @@ storage:
       namespace: prompts
       backend: kv_default
 registered_resources:
-  models:
-  - model_id: ${env.RHEL_AI_MODEL}
-    provider_id: vllm
+  models: 
+  - model_id: custom-bedrock-model
     model_type: llm
-    provider_model_id: ${env.RHEL_AI_MODEL}
+    provider_id: aws-bedrock
+    provider_model_id: deepseek.v3-v1:0
   - model_id: all-mpnet-base-v2
     model_type: embedding
     provider_id: sentence-transformers
@@ -147,21 +149,15 @@ registered_resources:
   - shield_id: llama-guard
     provider_id: llama-guard
     provider_shield_id: openai/gpt-4o-mini
-  vector_stores: 
-  - embedding_dimension: 768
-    embedding_model: sentence-transformers/all-mpnet-base-v2
-    provider_id: faiss
-    vector_store_id: ${env.FAISS_VECTOR_STORE_ID}
+  vector_stores: []
   datasets: []
   scoring_fns: []
   benchmarks: []
   tool_groups:
-  - toolgroup_id: builtin::rag
+  - toolgroup_id: builtin::rag # Register the RAG tool
     provider_id: rag-runtime
 vector_stores:
   default_provider_id: faiss
   default_embedding_model:
     provider_id: sentence-transformers
     model_id: all-mpnet-base-v2
-safety:
-  default_shield_id: llama-guard
