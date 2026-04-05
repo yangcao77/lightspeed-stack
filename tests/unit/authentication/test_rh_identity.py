@@ -443,6 +443,7 @@ class TestRHIdentityAuthDependency:
             ),  # Multiple with one missing
         ],
     )
+    @pytest.mark.asyncio
     async def test_entitlement_validation(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         self,
         mocker: MockerFixture,
@@ -514,6 +515,7 @@ class TestRHIdentityHealthProbeSkip:
             "/api/lightspeed/liveness",
         ],
     )
+    @pytest.mark.asyncio
     async def test_probe_paths_skip_auth_when_enabled(
         self, mocker: MockerFixture, path: str
     ) -> None:
@@ -536,6 +538,7 @@ class TestRHIdentityHealthProbeSkip:
             "/api/lightspeed/liveness",
         ],
     )
+    @pytest.mark.asyncio
     async def test_probe_paths_require_auth_when_disabled(
         self, mocker: MockerFixture, path: str
     ) -> None:

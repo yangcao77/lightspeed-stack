@@ -135,6 +135,7 @@ def test_singleton_pattern() -> None:
     assert k1 is k2
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_valid_token(mocker: MockerFixture) -> None:
     """Tests the auth dependency with a mocked valid-token."""
     dependency = K8SAuthDependency()
@@ -168,6 +169,7 @@ async def test_auth_dependency_valid_token(mocker: MockerFixture) -> None:
     assert token == "valid-token"
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_invalid_token(mocker: MockerFixture) -> None:
     """Test the auth dependency with a mocked invalid-token."""
     dependency = K8SAuthDependency()
@@ -203,6 +205,7 @@ async def test_auth_dependency_invalid_token(mocker: MockerFixture) -> None:
     assert detail["cause"] == "Invalid or expired Kubernetes token"
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_no_token(mocker: MockerFixture) -> None:
     """Test the auth dependency without a token."""
     dependency = K8SAuthDependency()
@@ -238,6 +241,7 @@ async def test_auth_dependency_no_token(mocker: MockerFixture) -> None:
     assert detail["cause"] == "No Authorization header found"
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_no_token_readiness_liveness_endpoints_1(
     mocker: MockerFixture,
 ) -> None:
@@ -312,6 +316,7 @@ async def test_auth_dependency_no_token_readiness_liveness_endpoints_1(
         assert token == ""
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_no_token_readiness_liveness_endpoints_2(
     mocker: MockerFixture,
 ) -> None:
@@ -397,6 +402,7 @@ async def test_auth_dependency_no_token_readiness_liveness_endpoints_2(
         assert detail["cause"] == "No Authorization header found"
 
 
+@pytest.mark.asyncio
 async def test_auth_dependency_no_token_normal_endpoints(
     mocker: MockerFixture,
 ) -> None:
@@ -475,6 +481,7 @@ async def test_auth_dependency_no_token_normal_endpoints(
         assert detail["cause"] == "No Authorization header found"
 
 
+@pytest.mark.asyncio
 async def test_cluster_id_is_used_for_kube_admin(mocker: MockerFixture) -> None:
     """Test the cluster id is used as user_id when user is kube:admin."""
     dependency = K8SAuthDependency()
@@ -741,6 +748,7 @@ def test_get_cluster_id_outside_of_cluster(mocker: MockerFixture) -> None:
     assert K8sClientSingleton.get_cluster_id() == CLUSTER_ID_LOCAL
 
 
+@pytest.mark.asyncio
 async def test_kube_admin_cluster_id_api_connection_error_returns_503(
     mocker: MockerFixture,
 ) -> None:
@@ -787,6 +795,7 @@ async def test_kube_admin_cluster_id_api_connection_error_returns_503(
     assert "Service Unavailable" in detail["cause"]
 
 
+@pytest.mark.asyncio
 async def test_kube_admin_cluster_version_not_found_returns_500(
     mocker: MockerFixture,
 ) -> None:
@@ -833,6 +842,7 @@ async def test_kube_admin_cluster_version_not_found_returns_500(
     assert "ClusterVersion 'version' resource not found" in detail["cause"]
 
 
+@pytest.mark.asyncio
 async def test_kube_admin_cluster_version_permission_error_returns_500(
     mocker: MockerFixture,
 ) -> None:
@@ -887,6 +897,7 @@ async def test_kube_admin_cluster_version_permission_error_returns_500(
     assert "Insufficient permissions" in detail["cause"]
 
 
+@pytest.mark.asyncio
 async def test_kube_admin_invalid_cluster_version_returns_500(
     mocker: MockerFixture,
 ) -> None:
