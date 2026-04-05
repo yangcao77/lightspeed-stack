@@ -148,6 +148,7 @@ tests/
   ```
 - **Auth Mock**: `MOCK_AUTH = ("mock_user_id", "mock_username", False, "mock_token")`
 - **Coverage**: Unit tests require 60% coverage, integration 10%
+- **Async tests**: Use marker `pytest.mark.asyncio`
 
 ### E2E Tests (behave)
 - **Framework**: Behave (BDD) with Gherkin feature files

@@ -1,10 +1,12 @@
 """Unit tests for functions defined in metrics/utils.py"""
 
+import pytest
 from pytest_mock import MockerFixture
 
 from metrics.utils import setup_model_metrics
 
 
+@pytest.mark.asyncio
 async def test_setup_model_metrics(mocker: MockerFixture) -> None:
     """Test the setup_model_metrics function."""
     # Mock the LlamaStackAsLibraryClient

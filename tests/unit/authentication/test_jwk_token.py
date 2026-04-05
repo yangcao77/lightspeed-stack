@@ -345,6 +345,7 @@ def ensure_test_user_id_and_name(auth_tuple: tuple, expected_token: str) -> None
     assert token == expected_token
 
 
+@pytest.mark.asyncio
 async def test_valid(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -389,6 +390,7 @@ def expired_token(
     ).decode()
 
 
+@pytest.mark.asyncio
 async def test_expired(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -443,6 +445,7 @@ def invalid_token(
     ).decode()
 
 
+@pytest.mark.asyncio
 async def test_invalid(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -460,6 +463,7 @@ async def test_invalid(
     assert exc_info.value.status_code == 401
 
 
+@pytest.mark.asyncio
 async def test_no_auth_header(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -479,6 +483,7 @@ async def test_no_auth_header(
     assert detail["response"] == "Missing or invalid credentials provided by client"
 
 
+@pytest.mark.asyncio
 async def test_no_bearer(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -527,6 +532,7 @@ def no_user_id_token(
     ).decode()
 
 
+@pytest.mark.asyncio
 async def test_no_user_id(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -568,6 +574,7 @@ def no_username_token(
     ).decode()
 
 
+@pytest.mark.asyncio
 async def test_no_username(
     default_jwk_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -650,6 +657,7 @@ def custom_claims_configuration(
     return custom_config
 
 
+@pytest.mark.asyncio
 async def test_custom_claims(
     custom_claims_configuration: JwkConfiguration,
     mocked_signing_keys_server: Any,
@@ -867,6 +875,7 @@ def multi_key_signing_server(
     return make_signing_server(mocker, multi_key_set, ["RS256", "RS256", "RS384"])
 
 
+@pytest.mark.asyncio
 async def test_multi_key_valid(
     default_jwk_configuration: JwkConfiguration,
     multi_key_signing_server: Any,
@@ -888,6 +897,7 @@ async def test_multi_key_valid(
     ensure_test_user_id_and_name(auth_tuple, token3)
 
 
+@pytest.mark.asyncio
 async def test_multi_key_no_kid(
     default_jwk_configuration: JwkConfiguration,
     multi_key_signing_server: Any,

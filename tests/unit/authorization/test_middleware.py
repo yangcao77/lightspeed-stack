@@ -223,6 +223,7 @@ class TestPerformAuthorizationCheck:
         access_resolver.get_actions.return_value = {Action.QUERY}
         return role_resolver, access_resolver
 
+    @pytest.mark.asyncio
     async def test_missing_auth_kwarg(self) -> None:
         """Test KeyError when auth dependency is missing."""
         with pytest.raises(HTTPException) as exc_info:
@@ -230,6 +231,7 @@ class TestPerformAuthorizationCheck:
 
         assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
+    @pytest.mark.asyncio
     async def test_access_denied(
         self,
         mocker: MockerFixture,
@@ -267,6 +269,7 @@ class TestPerformAuthorizationCheck:
         assert "not authorized to access this endpoint" in detail["cause"]
 
     @pytest.mark.parametrize("request_location", ["kwargs", "args", "none"])
+    @pytest.mark.asyncio
     async def test_request_state_handling(
         self,
         mocker: MockerFixture,
@@ -298,6 +301,7 @@ class TestPerformAuthorizationCheck:
         if request_location != "none":
             assert mock_request.state.authorized_actions == {Action.QUERY}
 
+    @pytest.mark.asyncio
     async def test_everyone_role_added(
         self,
         mocker: MockerFixture,
@@ -322,6 +326,7 @@ class TestPerformAuthorizationCheck:
 class TestAuthorizeDecorator:
     """Test cases for authorize decorator."""
 
+    @pytest.mark.asyncio
     async def test_decorator_success(
         self, mocker: MockerFixture, dummy_auth_tuple: AuthTuple
     ) -> None:
@@ -346,6 +351,7 @@ class TestAuthorizeDecorator:
         result = await mock_endpoint(auth=dummy_auth_tuple)
         assert result == "success"
 
+    @pytest.mark.asyncio
     async def test_decorator_failure(
         self, mocker: MockerFixture, dummy_auth_tuple: AuthTuple
     ) -> None:

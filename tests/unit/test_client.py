@@ -53,6 +53,7 @@ async def test_get_async_llama_stack_library_client() -> None:
         assert ls_client.is_closed()
 
 
+@pytest.mark.asyncio
 async def test_get_async_llama_stack_remote_client() -> None:
     """Test the initialization of asynchronous Llama Stack client in server mode."""
     cfg = LlamaStackConfiguration(
@@ -70,6 +71,7 @@ async def test_get_async_llama_stack_remote_client() -> None:
     assert ls_client is not None
 
 
+@pytest.mark.asyncio
 async def test_get_async_llama_stack_wrong_configuration() -> None:
     """Test if configuration is checked before Llama Stack is initialized."""
     cfg = LlamaStackConfiguration(
