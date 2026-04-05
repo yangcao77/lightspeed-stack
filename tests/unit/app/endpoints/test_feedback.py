@@ -58,6 +58,7 @@ def test_is_feedback_disabled(mocker: MockerFixture) -> None:
     assert is_feedback_enabled() is False, "Feedback should be disabled"
 
 
+@pytest.mark.asyncio
 async def test_assert_feedback_enabled_disabled(mocker: MockerFixture) -> None:
     """Test that assert_feedback_enabled raises HTTPException when feedback is disabled."""
     # Simulate feedback being disabled
@@ -71,6 +72,7 @@ async def test_assert_feedback_enabled_disabled(mocker: MockerFixture) -> None:
     assert exc_info.value.detail["cause"] == "Storing feedback is disabled."  # type: ignore
 
 
+@pytest.mark.asyncio
 async def test_assert_feedback_enabled(mocker: MockerFixture) -> None:
     """Test that assert_feedback_enabled does not raise an exception when feedback is enabled."""
     # Simulate feedback being enabled
@@ -261,6 +263,7 @@ def test_store_feedback_on_io_error(
     assert "Failed to store feedback at directory" in detail["cause"]  # type: ignore
 
 
+@pytest.mark.asyncio
 async def test_update_feedback_status_different(mocker: MockerFixture) -> None:
     """Test that update_feedback_status returns the correct status with an update."""
     configuration.user_data_collection_configuration.feedback_enabled = True
@@ -281,6 +284,7 @@ async def test_update_feedback_status_different(mocker: MockerFixture) -> None:
     }
 
 
+@pytest.mark.asyncio
 async def test_update_feedback_status_no_change(mocker: MockerFixture) -> None:
     """Test that update_feedback_status returns the correct status with no update."""
     configuration.user_data_collection_configuration.feedback_enabled = True
