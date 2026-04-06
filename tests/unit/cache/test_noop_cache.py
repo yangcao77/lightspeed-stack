@@ -49,7 +49,14 @@ def test_connect(cache_fixture: NoopCache) -> None:
 
 
 def test_insert_or_append(cache_fixture: NoopCache) -> None:
-    """Test the behavior of insert_or_append method."""
+    """Test the behavior of insert_or_append method.
+
+    Verify that inserting a CacheEntry for a user and conversation via
+    `insert_or_append` completes without raising an exception.
+
+    This confirms the cache accepts the provided `cache_entry_1` for `USER_ID`
+    and `CONVERSATION_ID`.
+    """
     cache_fixture.insert_or_append(
         USER_ID,
         CONVERSATION_ID,
@@ -124,7 +131,13 @@ def test_delete_improper_conversation_id(cache_fixture: NoopCache) -> None:
 
 
 def test_delete_skip_user_id_check(cache_fixture: NoopCache) -> None:
-    """Test deleting an existing conversation."""
+    """Test deleting an existing conversation.
+
+    Verify that deleting a conversation created with skip_user_id_check=True succeeds.
+
+    Inserts a cache entry for a non-UUID user ID using skip_user_id_check,
+    deletes it with the same flag, and asserts the deletion returns True.
+    """
     skip_user_id_check = True
     cache_fixture.insert_or_append(
         USER_PROVIDED_USER_ID, CONVERSATION_ID, cache_entry_1, skip_user_id_check
@@ -201,7 +214,14 @@ improper_user_uuids = [
 
 @pytest.mark.parametrize("uuid", improper_user_uuids)
 def test_list_improper_user_id(cache_fixture: NoopCache, uuid: Optional[str]) -> None:
-    """Test list with invalid user ID."""
+    """Test list with invalid user ID.
+
+    Verify that listing conversations raises a ValueError for invalid user IDs.
+
+    Parameters:
+        - uuid (Optional[str]): The invalid user-id value to test; the test
+          asserts a ValueError with message "Invalid user ID {uuid}".
+    """
     with pytest.raises(ValueError, match=f"Invalid user ID {uuid}"):
         cache_fixture.list(uuid)
 

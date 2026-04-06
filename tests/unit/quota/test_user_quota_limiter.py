@@ -64,7 +64,7 @@ def test_available_quota() -> None:
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     available_quota = quota_limiter.available_quota("foo")
@@ -78,7 +78,7 @@ def test_consume_tokens() -> None:
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     available_quota = quota_limiter.available_quota("foo")
@@ -107,7 +107,7 @@ def test_increase_quota() -> None:
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     available_quota = quota_limiter.available_quota("foo")
@@ -129,20 +129,29 @@ def test_ensure_available_quota() -> None:
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     quota_limiter.ensure_available_quota("foo")
 
 
 def test_ensure_available_quota_no_quota() -> None:
-    """Test the ensure_available_quota operation."""
+    """Test the ensure_available_quota operation.
+
+    Verify that ensure_available_quota raises QuotaExceedError when the user's
+    available quota is zero.
+
+    Initializes a limiter with initial_quota set to 0, calls the limiter
+    initialization routine, and asserts that calling
+    ensure_available_quota("foo") raises QuotaExceedError with the message
+    "User foo has no available tokens".
+    """
     initial_quota = 0
     quota_limit = 100
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     with pytest.raises(QuotaExceedError, match="User foo has no available tokens"):
@@ -156,7 +165,7 @@ def test_revoke_quota() -> None:
 
     quota_limiter = create_quota_limiter("foo", initial_quota, quota_limit)
 
-    # init quota for given cluster
+    # init quota for given user
     quota_limiter._init_quota()
 
     available_quota = quota_limiter.available_quota("foo")
