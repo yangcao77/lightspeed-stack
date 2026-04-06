@@ -39,7 +39,15 @@ def sample_context_fixture(sample_systeminfo: RlsapiV1SystemInfo) -> RlsapiV1Con
 
 @pytest.fixture(name="sample_request")
 def sample_request_fixture(sample_context: RlsapiV1Context) -> RlsapiV1InferRequest:
-    """Create a sample RlsapiV1InferRequest for testing."""
+    """Create a sample RlsapiV1InferRequest for testing.
+
+    Parameters:
+        sample_context (RlsapiV1Context): Context to attach to the request.
+
+    Returns:
+        RlsapiV1InferRequest: Request initialized with question "How do I list
+        files?", the provided context, and skip_rag set to True.
+    """
     return RlsapiV1InferRequest(
         question="How do I list files?",
         context=sample_context,
@@ -201,7 +209,14 @@ class TestRlsapiV1Context:
     """Test cases for RlsapiV1Context model."""
 
     def test_constructor_defaults(self) -> None:
-        """Test RlsapiV1Context with default values."""
+        """Test RlsapiV1Context with default values.
+
+        Verify that a newly constructed RlsapiV1Context uses the expected defaults.
+
+        Asserts that `stdin` is an empty string and that `attachments`,
+        `terminal`, `systeminfo`, and `cla` are instantiated as their
+        respective model types.
+        """
         context = RlsapiV1Context()
         assert context.stdin == ""
         assert isinstance(context.attachments, RlsapiV1Attachment)
@@ -317,7 +332,20 @@ class TestRlsapiV1InferRequest:
 
 @pytest.fixture(name="make_request")
 def make_request_fixture() -> Any:
-    """Factory fixture to build requests with specific context values."""
+    """Factory fixture to build requests with specific context values.
+
+    Create a test request builder for constructing RlsapiV1InferRequest
+    instances with customizable context fields.
+
+    The returned helper exposes a static build(question='q', stdin='',
+    attachment='', terminal='') that returns an RlsapiV1InferRequest whose
+    context contains the provided stdin, a single RlsapiV1Attachment with
+    contents set to `attachment`, and a RlsapiV1Terminal with output set to
+    `terminal`.
+
+    Returns:
+        _RequestBuilder: Helper class with a `build(...)` static method to create requests for tests.
+    """
 
     class _RequestBuilder:  # pylint: disable=too-few-public-methods
         """Helper to construct requests with variable context."""
@@ -329,7 +357,17 @@ def make_request_fixture() -> Any:
             attachment: str = "",
             terminal: str = "",
         ) -> RlsapiV1InferRequest:
-            """Build an RlsapiV1InferRequest with specified context values."""
+            """Build an RlsapiV1InferRequest with specified context values.
+
+            Parameters:
+                question (str): The request question text.
+                stdin (str): Content to place in context.stdin.
+                attachment (str): Content to place in context.attachments.contents.
+                terminal (str): Content to place in context.terminal.output.
+
+            Returns:
+                RlsapiV1InferRequest: The constructed request with the specified context values.
+            """
             return RlsapiV1InferRequest(
                 question=question,
                 context=RlsapiV1Context(
@@ -613,7 +651,21 @@ class TestGetInputSourceEdgeCases:
     ],
 )
 def test_value_max_length(model: Callable, field: str, max_length: int) -> None:
-    """Test that fields with longer than allowed data are not allowed"""
+    """Test that fields with longer than allowed data are not allowed.
+
+    Verify a model field enforces a maximum character length.
+
+    Constructs an instance with a string of exactly `max_length` characters and
+    asserts the model accepts it, then attempts to construct the model with a
+    value one character longer and asserts a `ValidationError` is raised with
+    the message "should have at most {max_length} characters". Finally,
+    confirms the created instance retains the valid value.
+
+    Parameters:
+        model (Callable): The Pydantic model or constructor to test.
+        field (str): The name of the string field to validate on the model.
+        max_length (int): The maximum allowed length for the field.
+    """
     value = "a" * max_length
     bad_value = value + "a"
 

@@ -28,7 +28,16 @@ def sample_data_fixture() -> RlsapiV1InferData:
 
 @pytest.fixture(name="sample_response")
 def sample_response_fixture(sample_data: RlsapiV1InferData) -> RlsapiV1InferResponse:
-    """Create a sample RlsapiV1InferResponse for testing."""
+    """Create a sample RlsapiV1InferResponse for testing.
+
+    Constructs an RlsapiV1InferResponse populated with the provided sample data for tests.
+
+    Parameters:
+        sample_data (RlsapiV1InferData): The data object to set as the response's `data` field.
+
+    Returns:
+        RlsapiV1InferResponse: A response model whose `data` is `sample_data`.
+    """
     return RlsapiV1InferResponse(data=sample_data)
 
 
@@ -152,7 +161,14 @@ class TestRlsapiV1InferResponse:
     def test_serialization_roundtrip(
         self, sample_response: RlsapiV1InferResponse
     ) -> None:
-        """Test that model can be serialized and deserialized."""
+        """Test that model can be serialized and deserialized.
+
+        Verify that RlsapiV1InferResponse serializes to JSON and restores the
+        same nested data when deserialized.
+
+        Asserts that the deserialized response's `data.text` and
+        `data.request_id` match the original instance.
+        """
         json_data = sample_response.model_dump_json()
         restored = RlsapiV1InferResponse.model_validate_json(json_data)
 
