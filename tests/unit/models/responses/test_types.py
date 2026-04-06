@@ -10,7 +10,15 @@ class TestConversationDetails:
     """Test cases for ConversationDetails type."""
 
     def test_constructor(self) -> None:
-        """Test ConversationDetails with all fields."""
+        """Test ConversationDetails with all fields.
+
+        Verify ConversationDetails initializes correctly when provided all
+        expected fields.
+
+        Constructs a ConversationDetails instance with a complete set of fields
+        and asserts that each model attribute equals the corresponding input
+        value.
+        """
         details = ConversationDetails(
             conversation_id="123e4567-e89b-12d3-a456-426614174000",
             created_at="2024-01-01T00:00:00Z",

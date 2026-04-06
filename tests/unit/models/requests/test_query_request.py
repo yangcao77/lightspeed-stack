@@ -12,7 +12,14 @@ class TestQueryRequest:
     """Test cases for the QueryRequest model."""
 
     def test_constructor(self) -> None:
-        """Test the QueryRequest constructor."""
+        """Test the QueryRequest constructor.
+
+        Verify QueryRequest initializes with the provided query and leaves optional fields unset.
+
+        Asserts that:
+        - `query` equals the provided string.
+        - `conversation_id`, `provider`, `model`, `system_prompt`, and `attachments` are `None`.
+        """
         qr = QueryRequest(
             query="Tell me about Kubernetes"
         )  # pyright: ignore[reportCallIssue]
@@ -32,7 +39,15 @@ class TestQueryRequest:
             )  # pyright: ignore[reportCallIssue]
 
     def test_with_attachments(self) -> None:
-        """Test the QueryRequest with attachments."""
+        """Test the QueryRequest with attachments.
+
+        Verify that a QueryRequest constructed with attachments stores them intact.
+
+        Constructs two Attachment instances, creates a QueryRequest with those attachments,
+        and asserts that the request's attachments list is present, has length 2, and that
+        each attachment's `attachment_type`, `content_type`, and `content` match the
+        original objects.
+        """
         attachments = [
             Attachment(
                 attachment_type="log",
@@ -107,7 +122,13 @@ class TestQueryRequest:
         mock_logger.warning.assert_not_called()
 
     def test_generate_topic_summary_explicit_false(self) -> None:
-        """Test that generate_topic_summary can be explicitly set to False."""
+        """Test that generate_topic_summary can be explicitly set to False.
+
+        Verify that generate_topic_summary accepts an explicit value.
+
+        Constructs a QueryRequest with generate_topic_summary set to False and
+        asserts the instance's attribute reflects that setting.
+        """
         qr = QueryRequest(
             query="Tell me about Kubernetes", generate_topic_summary=False
         )  # pyright: ignore[reportCallIssue]

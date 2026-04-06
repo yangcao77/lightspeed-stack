@@ -18,7 +18,18 @@ def test_user_data_collection_feedback_enabled() -> None:
 
 
 def test_user_data_collection_feedback_disabled() -> None:
-    """Test the UserDataCollection constructor for feedback."""
+    """Test the UserDataCollection constructor for feedback.
+
+    Verify the constructor raises a ValueError when feedback is enabled but no
+    storage is provided.
+
+    This test constructs UserDataCollection with feedback_enabled=True and
+    feedback_storage=None and asserts that a ValueError is raised with the
+    message "feedback_storage is required when feedback is enabled".
+
+    Raises:
+        ValueError: if feedback is enabled while feedback_storage is None.
+    """
     # incorrect configuration
     with pytest.raises(
         ValueError,

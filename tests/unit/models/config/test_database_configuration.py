@@ -43,7 +43,16 @@ def test_database_configuration(subtests: SubTests) -> None:
 
 
 def test_no_databases_configuration() -> None:
-    """Test if no databases configuration is checked."""
+    """Test if no databases configuration is checked.
+
+    Verify default database selection and error behavior when no database
+    configuration is present.
+
+    Asserts that a newly constructed DatabaseConfiguration defaults to SQLite
+    (db_type == "sqlite"), and that if both `sqlite` and `postgres` are set to
+    None, accessing the `db_type` or `config` properties raises a `ValueError`
+    with message "No database configuration found".
+    """
     d = DatabaseConfiguration()  # pyright: ignore[reportCallIssue]
     assert d is not None
 

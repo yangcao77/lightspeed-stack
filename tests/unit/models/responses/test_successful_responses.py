@@ -87,7 +87,17 @@ class TestModelsResponse:
             ModelsResponse()  # type: ignore[call-arg]
 
     def test_openapi_response(self) -> None:
-        """Test ModelsResponse.openapi_response() method."""
+        """Test ModelsResponse.openapi_response() method.
+
+        Verify ModelsResponse.openapi_response() produces a well-formed OpenAPI
+        response with a JSON example.
+
+        Asserts that the returned mapping has description "Successful
+        response", uses ModelsResponse as the model, includes an
+        'application/json' content entry with an 'example' containing a
+        'models' list, and that the number of examples in the model JSON schema
+        equals 1.
+        """
         schema = ModelsResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -205,7 +215,18 @@ class TestProvidersListResponse:
             ProvidersListResponse()  # type: ignore[call-arg]
 
     def test_openapi_response(self) -> None:
-        """Test ProvidersListResponse.openapi_response() method."""
+        """Test ProvidersListResponse.openapi_response() method.
+
+        Verify ProvidersListResponse.openapi_response() returns a Successful
+        response structure and that the model schema contains exactly one
+        example.
+
+        Asserts that:
+        - the OpenAPI response description equals "Successful response",
+        - the `model` is ProvidersListResponse,
+        - `content["application/json"]` contains an `example`,
+        - the ProvidersListResponse JSON schema includes exactly one example.
+        """
         schema = ProvidersListResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -408,7 +429,16 @@ class TestReadinessResponse:
             ReadinessResponse(ready=True)  # type: ignore[call-arg]
 
     def test_openapi_response(self) -> None:
-        """Test ReadinessResponse.openapi_response() method."""
+        """Test ReadinessResponse.openapi_response() method.
+
+        Verify ReadinessResponse.openapi_response() returns the expected
+        OpenAPI structure and examples.
+
+        Asserts the returned mapping has description "Successful response", the
+        `model` is ReadinessResponse, and `content["application/json"]`
+        contains an "example". Also verifies the number of examples in
+        ReadinessResponse.model_json_schema() equals 1.
+        """
         schema = ReadinessResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -471,7 +501,16 @@ class TestFeedbackResponse:
             FeedbackResponse()  # type: ignore[call-arg]
 
     def test_openapi_response(self) -> None:
-        """Test FeedbackResponse.openapi_response() method."""
+        """Test FeedbackResponse.openapi_response() method.
+
+        Verify FeedbackResponse.openapi_response() produces a valid OpenAPI
+        response with an example.
+
+        Asserts that the returned mapping has description "Successful
+        response", uses FeedbackResponse as the model, contains an
+        "application/json" content entry with an "example", and that the
+        model's JSON schema exposes exactly one example.
+        """
         schema = FeedbackResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -496,7 +535,14 @@ class TestStatusResponse:
         assert isinstance(sr, AbstractSuccessfulResponse)
 
     def test_constructor_feedback_disabled(self) -> None:
-        """Test the StatusResponse constructor."""
+        """Test the StatusResponse constructor.
+
+        Verifies that StatusResponse stores a disabled feedback status and is
+        an AbstractSuccessfulResponse.
+
+        Asserts that `functionality` is "feedback", `status` equals {"enabled":
+        False}, and the instance is a subclass of AbstractSuccessfulResponse.
+        """
         sr = StatusResponse(functionality="feedback", status={"enabled": False})
         assert sr.functionality == "feedback"
         assert sr.status == {"enabled": False}
@@ -510,7 +556,17 @@ class TestStatusResponse:
             StatusResponse(functionality="feedback")  # type: ignore[call-arg]
 
     def test_openapi_response(self) -> None:
-        """Test StatusResponse.openapi_response() method."""
+        """Test StatusResponse.openapi_response() method.
+
+        Verify StatusResponse.openapi_response() returns a valid OpenAPI
+        response with an example consistent with the model schema.
+
+        Asserts that the returned mapping:
+        - has description "Successful response"
+        - sets the model to StatusResponse
+        - contains an "application/json" content entry with an "example"
+        Also asserts the model JSON schema defines exactly one example.
+        """
         schema = StatusResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -540,7 +596,10 @@ class TestAuthorizedResponse:
         assert response.skip_userid_check is False
 
     def test_skip_userid_check_true(self) -> None:
-        """Test AuthorizedResponse with skip_userid_check=True."""
+        """Test AuthorizedResponse with skip_userid_check=True.
+
+        Verify that AuthorizedResponse records skip_userid_check when provided.
+        """
         response = AuthorizedResponse(
             user_id="user-123", username="test", skip_userid_check=True
         )
@@ -568,7 +627,14 @@ class TestAuthorizedResponse:
         assert expected_count == 1
 
     def test_constructor_fields_required(self) -> None:
-        """Test the AuthorizedResponse constructor."""
+        """Test the AuthorizedResponse constructor.
+
+        Verify AuthorizedResponse requires both user_id and username.
+
+        Asserts that constructing AuthorizedResponse with no arguments, with
+        only `username`, or with only `user_id` raises a
+        pydantic.ValidationError.
+        """
         with pytest.raises(ValidationError):
             # missing all parameters
             _ = AuthorizedResponse()  # pyright: ignore
@@ -718,7 +784,16 @@ class TestConversationDeleteResponse:
         )
 
     def test_openapi_response_missing_label(self) -> None:
-        """Test openapi_response() raises SchemaError when example has no label."""
+        """Test openapi_response() raises SchemaError when example has no label.
+
+        Verifies that calling openapi_response() on a response model whose JSON
+        schema examples lack a required "label" raises a SchemaError.
+
+        Creates a ConversationDeleteResponse subclass with a malformed
+        json_schema_extra.examples entry missing the "label" key and asserts
+        openapi_response() fails with an error message containing "has no
+        label".
+        """
 
         class InvalidResponse(ConversationDeleteResponse):
             """Class with invalid examples (missing label)."""
@@ -815,7 +890,15 @@ class TestConversationsListResponseV2:
     """Test cases for ConversationsListResponseV2."""
 
     def test_constructor(self) -> None:
-        """Test ConversationsListResponseV2 with conversation data."""
+        """Test ConversationsListResponseV2 with conversation data.
+
+        Validate that ConversationsListResponseV2 stores provided
+        ConversationData entries correctly.
+
+        Constructs a ConversationsListResponseV2 with a single ConversationData
+        entry and asserts the response is an AbstractSuccessfulResponse,
+        contains one conversation, and preserves the conversation_id.
+        """
         conversations = [
             ConversationData(
                 conversation_id="123e4567-e89b-12d3-a456-426614174000",
@@ -867,7 +950,15 @@ class TestFeedbackStatusUpdateResponse:
     """Test cases for FeedbackStatusUpdateResponse."""
 
     def test_constructor(self) -> None:
-        """Test FeedbackStatusUpdateResponse with status dict."""
+        """Test FeedbackStatusUpdateResponse with status dict.
+
+        Verify that FeedbackStatusUpdateResponse accepts and preserves a status
+        dictionary and is a successful response.
+
+        Asserts that constructing FeedbackStatusUpdateResponse with a status
+        dict produces an AbstractSuccessfulResponse instance and that its
+        `.status` equals the provided dictionary.
+        """
         status_dict = {
             "previous_status": True,
             "updated_status": False,
@@ -1022,7 +1113,13 @@ class TestStreamingQueryResponse:
         assert schema["format"] == "text/event-stream"
 
     def test_model_json_schema_has_examples(self) -> None:
-        """Test that model_json_schema() includes examples."""
+        """Test that model_json_schema() includes examples.
+
+        Verify that StreamingQueryResponse.model_json_schema() exposes exactly one string example.
+
+        Asserts that the returned schema contains an "examples" key, that it
+        has exactly one item, and that the item is a string.
+        """
         schema = StreamingQueryResponse.model_json_schema()
         assert "examples" in schema
         assert len(schema["examples"]) == 1
@@ -1051,7 +1148,17 @@ class TestMCPClientAuthOptionsResponse:
         assert response.servers == []
 
     def test_openapi_response(self) -> None:
-        """Test MCPClientAuthOptionsResponse.openapi_response() method."""
+        """Test MCPClientAuthOptionsResponse.openapi_response() method.
+
+        Verify the OpenAPI response structure and example presence for
+        MCPClientAuthOptionsResponse.
+
+        Asserts that the model's JSON schema defines examples (exactly one),
+        and that openapi_response() returns a mapping with description
+        "Successful response", the response model set to
+        MCPClientAuthOptionsResponse, and an "example" entry under
+        content/application/json.
+        """
         schema = MCPClientAuthOptionsResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)

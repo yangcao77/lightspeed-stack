@@ -145,7 +145,15 @@ def test_configuration_multiple_mcp_servers() -> None:
 def test_model_context_protocol_server_with_authorization_headers(
     tmp_path: Path,
 ) -> None:
-    """Test ModelContextProtocolServer with authorization headers."""
+    """Test ModelContextProtocolServer with authorization headers.
+
+    Verify that authorization headers supplied as file paths are preserved and resolved.
+
+    Creates temporary files for header secrets, constructs a ModelContextProtocolServer with
+    authorization_headers mapping header names to those file paths, and asserts that:
+    - the model retains the original mapping to file paths, and
+    - resolved_authorization_headers contains the file contents for each header.
+    """
     auth_file = tmp_path / "auth.txt"
     auth_file.write_text("my-secret")
     api_key_file = tmp_path / "api_key.txt"

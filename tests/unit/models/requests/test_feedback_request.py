@@ -25,7 +25,12 @@ class TestFeedbackRequest:
         assert fr.user_feedback == "This is a great response!"
 
     def test_check_invalid_uuid_format(self) -> None:
-        """Test the UUID format check."""
+        """Test the UUID format check.
+
+        Asserts that constructing a FeedbackRequest with a non-UUID
+        conversation_id raises a ValueError with message "Improper conversation
+        ID invalid-uuid".
+        """
         with pytest.raises(ValueError, match="Improper conversation ID invalid-uuid"):
             FeedbackRequest(
                 conversation_id="invalid-uuid",

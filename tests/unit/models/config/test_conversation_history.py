@@ -120,7 +120,17 @@ def test_conversation_cache_no_type_but_configured(subtests: SubTests) -> None:
 
 
 def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
-    """Test how multiple configurations are handled."""
+    """Test how multiple configurations are handled.
+
+    Verify that selecting a cache type while providing multiple backend
+    configurations raises validation errors.
+
+    Asserts that constructing ConversationHistoryConfiguration with more than
+    one backend config fails and produces the specific validation messages:
+    - For memory type: "Only memory cache config must be provided"
+    - For SQLite type: "Only SQLite cache config must be provided"
+    - For PostgreSQL type: "Only PostgreSQL cache config must be provided"
+    """
     d = PostgreSQLDatabaseConfiguration(
         db="db",
         user="user",

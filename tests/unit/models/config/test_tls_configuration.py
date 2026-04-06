@@ -66,7 +66,15 @@ def test_tls_configuration_wrong_key_path() -> None:
 
 
 def test_tls_configuration_wrong_password_path() -> None:
-    """Test the TLS configuration loading when some path is broken."""
+    """Test the TLS configuration loading when some path is broken.
+
+    Verify that constructing a TLSConfiguration raises a ValueError when the
+    tls_key_password path does not point to a file.
+
+    Raises:
+        ValueError: with message "Path does not point to a file" if
+        `tls_key_password` is not a file.
+    """
     with pytest.raises(ValueError, match="Path does not point to a file"):
         TLSConfiguration(
             tls_certificate_path=Path("tests/configurationserver.crt"),

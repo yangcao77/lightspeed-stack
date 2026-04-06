@@ -115,7 +115,18 @@ class TestUnauthorizedResponse:
     """Test cases for UnauthorizedResponse."""
 
     def test_constructor(self) -> None:
-        """Test UnauthorizedResponse with cause."""
+        """Test UnauthorizedResponse with cause.
+
+        Verify UnauthorizedResponse constructs an AbstractErrorResponse with
+        the expected HTTP 401 status and detail payload when a cause is
+        provided.
+
+        The test asserts that:
+        - the instance is an AbstractErrorResponse,
+        - status_code equals HTTP 401,
+        - detail.response equals "Missing or invalid credentials provided by client",
+        - detail.cause equals the provided cause ("Token has expired").
+        """
         response = UnauthorizedResponse(cause="Token has expired")
         assert isinstance(response, AbstractErrorResponse)
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -138,7 +149,19 @@ class TestUnauthorizedResponse:
         assert response.detail.cause == "Token missing claim: user_id"
 
     def test_openapi_response(self) -> None:
-        """Test UnauthorizedResponse.openapi_response() method."""
+        """Test UnauthorizedResponse.openapi_response() method.
+
+        Validate UnauthorizedResponse.openapi_response() returns correct
+        OpenAPI metadata and examples.
+
+        Checks that the returned mapping uses the expected description and model, exposes an
+        `application/json` examples object whose count matches the model's schema examples (8),
+        contains the labeled examples: "missing header", "missing token", "expired token",
+        "invalid signature", "invalid key", "missing claim", "invalid k8s
+        token", and "invalid jwk token", and that the "missing header"
+        example's `value.detail` contains the expected `response` and `cause`
+        strings.
+        """
         schema = UnauthorizedResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
@@ -317,7 +340,18 @@ class TestUnprocessableEntityResponse:
         )
 
     def test_openapi_response(self) -> None:
-        """Test UnprocessableEntityResponse.openapi_response() method."""
+        """Test UnprocessableEntityResponse.openapi_response() method.
+
+        Verify UnprocessableEntityResponse.openapi_response() returns an
+        OpenAPI response with the expected description, model, and labeled
+        examples.
+
+        Asserts that the number of examples in the returned content matches the
+        model's schema examples, that the three expected example labels
+        ("invalid format", "missing attributes", "invalid value") are present,
+        and that the "invalid format" example contains a `detail.response`
+        equal to "Invalid request format".
+        """
         schema = UnprocessableEntityResponse.model_json_schema()
         model_examples = schema.get("examples", [])
         expected_count = len(model_examples)
