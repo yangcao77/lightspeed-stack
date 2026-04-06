@@ -129,7 +129,16 @@ def test_conversation_cache_noop(
 def test_conversation_cache_in_memory(
     memory_cache_config_fixture: ConversationHistoryConfiguration,
 ) -> None:
-    """Check if InMemoryCache is returned by factory with proper configuration."""
+    """Check if InMemoryCache is returned by factory with proper configuration.
+
+    Verify CacheFactory returns an InMemoryCache when given an in-memory
+    ConversationHistoryConfiguration.
+
+    Parameters:
+        - memory_cache_config_fixture (ConversationHistoryConfiguration): a
+          configuration with `type` set to the in-memory cache and a valid
+          `memory` configuration.
+    """
     cache = CacheFactory.conversation_cache(memory_cache_config_fixture)
     assert cache is not None
     # check if the object has the right type
@@ -137,7 +146,15 @@ def test_conversation_cache_in_memory(
 
 
 def test_conversation_cache_in_memory_improper_config() -> None:
-    """Check if memory cache configuration is checked in cache factory."""
+    """Check if memory cache configuration is checked in cache factory.
+
+    Verify that CacheFactory.conversation_cache raises a ValueError when an
+    in-memory cache configuration is missing.
+
+    Simulates an otherwise-valid in-memory configuration with its `memory`
+    field set to None and asserts the factory raises ValueError with message
+    containing "Expecting configuration for in-memory cache".
+    """
     cc = ConversationHistoryConfiguration(
         type=CACHE_TYPE_MEMORY, memory=InMemoryCacheConfig(max_entries=10)
     )  # pyright: ignore[reportCallIssue]
@@ -192,7 +209,8 @@ def test_conversation_cache_postgres(
 def test_conversation_cache_postgres_improper_config() -> None:
     """Check if PostgreSQL cache configuration is checked in cache factory.
 
-    Verify that the cache factory raises a ValueError when the PostgreSQL configuration is missing.
+    Verify that the cache factory raises a ValueError when the PostgreSQL
+    configuration is missing.
 
     This test simulates an absent `postgres` config on a
     ConversationHistoryConfiguration with type `POSTGRES` and asserts that
@@ -216,7 +234,8 @@ def test_conversation_cache_postgres_improper_config() -> None:
 def test_conversation_cache_no_type() -> None:
     """Check if wrong cache configuration is detected properly.
 
-    Verify that a ConversationHistoryConfiguration with no type causes the factory to reject it.
+    Verify that a ConversationHistoryConfiguration with no type causes the
+    factory to reject it.
 
     Asserts that calling CacheFactory.conversation_cache with a configuration
     whose `type` is None raises a ValueError with message "Cache type must be
