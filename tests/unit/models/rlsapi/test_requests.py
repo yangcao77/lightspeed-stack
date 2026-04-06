@@ -344,7 +344,8 @@ def make_request_fixture() -> Any:
     `terminal`.
 
     Returns:
-        _RequestBuilder: Helper class with a `build(...)` static method to create requests for tests.
+        _RequestBuilder: Helper class with a `build(...)` static method to
+        create requests for tests.
     """
 
     class _RequestBuilder:  # pylint: disable=too-few-public-methods
