@@ -20,7 +20,7 @@ Key capabilities:
 - Configure approval requirements per MCP server or per tool
 - Asynchronous approval flow with configurable TTL
 - Allow/deny lists for permanent pre-approval of trusted tools
-- Per-conversation approval scope
+- Per-request approval scope
 
 ## Why
 
@@ -47,7 +47,7 @@ With HIL:
   handled
 - **R5:** Pending approval requests expire after a configurable TTL
 - **R6:** Allow/deny lists enable permanent pre-approval of specific tools
-- **R7:** Approvals are scoped to the current conversation
+- **R7:** Each tool invocation requires separate approval
 - **R8:** Default behavior remains `require_approval="never"` for backwards
   compatibility
 

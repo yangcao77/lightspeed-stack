@@ -44,9 +44,9 @@ What is the scope of an approval decision?
 | B. Per-conversation | Approval is valid only for the current conversation |
 | C. Per-request | Each tool invocation requires separate approval |
 
-**Recommendation**: Option B (Per-conversation). This balances security (no
-persistent elevated permissions) with usability (don't re-approve same tool
-repeatedly within a session).
+**Recommendation**: Option C (Per-request). Each tool invocation requires
+explicit approval, providing maximum security and auditability. Users maintain
+full control over every action taken on their behalf.
 
 ### Decision 3: Permanent allow/deny list storage
 
