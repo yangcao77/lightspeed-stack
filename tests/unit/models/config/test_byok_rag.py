@@ -15,7 +15,15 @@ from models.config import ByokRag
 
 
 def test_byok_rag_configuration_default_values() -> None:
-    """Test the ByokRag constructor."""
+    """Test the ByokRag constructor.
+
+    Verify that ByokRag initializes correctly when only required fields are provided.
+
+    Asserts that the instance stores the given `rag_id`, `vector_db_id`, and
+    `db_path`, and that unspecified fields use the module's default values for
+    `rag_type`, `embedding_model`, `embedding_dimension`, and
+    `score_multiplier`.
+    """
     byok_rag = ByokRag(  # pyright: ignore[reportCallIssue]
         rag_id="rag_id",
         vector_db_id="vector_db_id",
@@ -58,7 +66,13 @@ def test_byok_rag_configuration_nondefault_values() -> None:
 
 
 def test_byok_rag_configuration_wrong_dimension() -> None:
-    """Test the ByokRag constructor."""
+    """Test the ByokRag constructor.
+
+    Verify constructing ByokRag with embedding_dimension less than or equal to
+    zero raises a ValidationError.
+
+    The raised ValidationError's message must contain "should be greater than 0".
+    """
     with pytest.raises(ValidationError, match="should be greater than 0"):
         _ = ByokRag(
             rag_id="rag_id",
@@ -71,7 +85,13 @@ def test_byok_rag_configuration_wrong_dimension() -> None:
 
 
 def test_byok_rag_configuration_empty_rag_id() -> None:
-    """Test the ByokRag constructor."""
+    """Test the ByokRag constructor.
+
+    Validate that constructing a ByokRag with an empty `rag_id` raises a validation error.
+
+    Expects a `pydantic.ValidationError` whose message contains "String should
+    have at least 1 character".
+    """
     with pytest.raises(
         ValidationError, match="String should have at least 1 character"
     ):
@@ -108,7 +128,13 @@ def test_byok_rag_configuration_empty_rag_type() -> None:
 
 
 def test_byok_rag_configuration_empty_embedding_model() -> None:
-    """Test the ByokRag constructor."""
+    """Test the ByokRag constructor.
+
+    Verify that constructing a ByokRag with an empty `embedding_model` raises a validation error.
+
+    Expects a pydantic.ValidationError whose message contains "String should
+    have at least 1 character".
+    """
     with pytest.raises(
         ValidationError, match="String should have at least 1 character"
     ):
@@ -123,7 +149,13 @@ def test_byok_rag_configuration_empty_embedding_model() -> None:
 
 
 def test_byok_rag_configuration_empty_vector_db_id() -> None:
-    """Test the ByokRag constructor."""
+    """Test the ByokRag constructor.
+
+    Ensure constructing a ByokRag with an empty `vector_db_id` raises a ValidationError.
+
+    Asserts that Pydantic validation fails with a message containing "String
+    should have at least 1 character".
+    """
     with pytest.raises(
         ValidationError, match="String should have at least 1 character"
     ):

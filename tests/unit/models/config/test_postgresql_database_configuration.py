@@ -32,7 +32,16 @@ def test_postgresql_database_configuration() -> None:
 
 
 def test_postgresql_database_configuration_namespace_specification() -> None:
-    """Test the PostgreSQLDatabaseConfiguration model."""
+    """Test the PostgreSQLDatabaseConfiguration model.
+
+    Verify that an explicit `namespace` is preserved and other fields use their defaults.
+
+    Asserts that providing `namespace="foo"` results in `namespace` set to
+    "foo", `host` defaulting to "localhost", `port` defaulting to 5432, `db`
+    and `user` preserved, `password` stored as a secret whose
+    `get_secret_value()` returns the original, `ssl_mode` and `gss_encmode`
+    matching their PostgreSQL defaults, and `ca_cert_path` being `None`.
+    """
     # pylint: disable=no-member
     c = PostgreSQLDatabaseConfiguration(
         db="db", user="user", password="password", namespace="foo"

@@ -10,7 +10,11 @@ from models.config import SplunkConfiguration
 
 @pytest.fixture(name="token_file")
 def token_file_fixture(tmp_path: Path) -> Path:
-    """Create a temporary token file for testing."""
+    """Create a temporary token file for testing.
+
+    Returns:
+        Path: Path to the created token file.
+    """
     token_file = tmp_path / "token"
     token_file.write_text("test-token")
     return token_file
@@ -70,7 +74,15 @@ def test_enabled_missing_required_fields(
 
 
 def test_valid_enabled_configuration(token_file: Path) -> None:
-    """Test valid enabled Splunk configuration passes validation."""
+    """Test valid enabled Splunk configuration passes validation.
+
+    Verify that an enabled SplunkConfiguration with all required fields is
+    accepted and preserves the provided values.
+
+    Asserts that each field (enabled, url, token_path, index, source, timeout,
+    verify_ssl) on the created configuration equals the value passed to the
+    constructor.
+    """
     cfg = SplunkConfiguration(
         enabled=True,
         url="https://splunk.example.com:8088",
