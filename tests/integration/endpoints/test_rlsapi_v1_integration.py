@@ -32,6 +32,7 @@ from models.rlsapi.requests import (
 from models.rlsapi.responses import RlsapiV1InferResponse
 from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 from utils.suid import check_suid
+from utils.types import ShieldModerationPassed
 from version import __version__
 
 # ==========================================
@@ -78,6 +79,15 @@ def rlsapi_config_fixture(test_config: AppConfig, mocker: MockerFixture) -> AppC
 def mock_authorization_fixture(mocker: MockerFixture) -> None:
     """Mock authorization resolvers for integration tests."""
     mock_authorization_resolvers(mocker)
+
+
+@pytest.fixture(autouse=True, name="mock_shield_passed")
+def mock_shield_passed_fixture(mocker: MockerFixture) -> None:
+    """Mock shield moderation to pass for all integration tests."""
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.run_shield_moderation",
+        new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
+    )
 
 
 def _create_mock_response_output(mocker: MockerFixture, text: str) -> Any:
