@@ -12,7 +12,22 @@ from observability.splunk import _read_token_from_file, send_splunk_event
 
 @pytest.fixture(name="mock_splunk_config")
 def mock_splunk_config_fixture(tmp_path: Path, mocker: MockerFixture) -> Any:
-    """Create a mock SplunkConfiguration."""
+    """Create a mock SplunkConfiguration.
+
+    Create a mocked Splunk configuration object for tests.
+
+    The returned mock has attributes pre-populated to simulate a valid Splunk HEC configuration:
+    - enabled = True
+    - url = "https://splunk.example.com:8088/services/collector"
+    - token_path = Path to a temporary file containing "test-hec-token"
+    - index = "test_index"
+    - source = "test-source"
+    - timeout = 5
+    - verify_ssl = True
+
+    Returns:
+        mock_config: A MagicMock configured with the above Splunk fields.
+    """
     token_file = tmp_path / "token"
     token_file.write_text("test-hec-token")
 
@@ -29,7 +44,16 @@ def mock_splunk_config_fixture(tmp_path: Path, mocker: MockerFixture) -> Any:
 
 @pytest.fixture(name="mock_session")
 def mock_session_fixture(mocker: MockerFixture) -> Any:
-    """Create a mock aiohttp session with successful response."""
+    """Create a mock aiohttp session with successful response.
+
+    Parameters:
+        - mocker (pytest_mock.MockerFixture): Fixture used to create AsyncMock objects.
+
+    Returns:
+        AsyncMock: A mock session (`spec=aiohttp.ClientSession`) whose `post()`
+        returns an async context manager that yields a response mock with
+        `status = 200`.
+    """
     mock_response = mocker.AsyncMock()
     mock_response.status = 200
     session = mocker.AsyncMock(spec=aiohttp.ClientSession)
