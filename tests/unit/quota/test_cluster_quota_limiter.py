@@ -16,7 +16,22 @@ from quota.quota_exceed_error import QuotaExceedError
 def create_quota_limiter(
     name: str, initial_quota: int, quota_limit: int
 ) -> ClusterQuotaLimiter:
-    """Create new quota limiter instance."""
+    """Create new quota limiter instance.
+
+    Builds and returns a ClusterQuotaLimiter using an in-memory
+    SQLite configuration for testing.
+
+    Parameters:
+        - name (str): Name assigned to the configured quota limiter.
+        - initial_quota (int): Initial quota value passed to the
+          ClusterQuotaLimiter instance.
+        - quota_limit (int): Initial quota value placed into the limiter
+          configuration (mapped to the configuration's `initial_quota`).
+
+    Returns:
+        ClusterQuotaLimiter: A configured ClusterQuotaLimiter backed by an
+        in-memory SQLite database.
+    """
     configuration = QuotaHandlersConfiguration()  # pyright: ignore[reportCallIssue]
     configuration.sqlite = SQLiteDatabaseConfiguration(
         db_path=":memory:",
@@ -138,7 +153,14 @@ def test_ensure_available_quota() -> None:
 
 
 def test_ensure_available_quota_no_quota() -> None:
-    """Test the ensure_available_quota operation."""
+    """Test the ensure_available_quota operation.
+
+    Verify ensure_available_quota raises QuotaExceedError when the cluster has zero tokens.
+
+    Sets up a limiter with initial quota 0, initializes quota for cluster
+    "foo", and asserts that calling ensure_available_quota("foo") raises
+    QuotaExceedError with a message matching "Cluster has no available tokens".
+    """
     initial_quota = 0
     quota_limit = 100
 
