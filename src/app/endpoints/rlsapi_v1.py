@@ -48,6 +48,7 @@ from utils.responses import (
     extract_token_usage,
     get_mcp_tools,
 )
+from utils.shields import run_shield_moderation
 from utils.suid import get_suid
 
 logger = get_logger(__name__)
@@ -447,6 +448,39 @@ async def infer_endpoint(  # pylint: disable=R0914
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
+
+    # Run shield moderation on user input before inference.
+    # Uses all configured shields; no-op when no shields are registered.
+    client = AsyncLlamaStackClientHolder().get_client()
+    moderation_result = await run_shield_moderation(client, input_source)
+
+    if moderation_result.decision == "blocked":
+        logger.info(
+            "Request %s blocked by shield moderation: %s",
+            request_id,
+            moderation_result.message,
+        )
+        _queue_splunk_event(
+            background_tasks,
+            infer_request,
+            request,
+            request_id,
+            moderation_result.message,
+            0.0,
+            "infer_shield_blocked",
+        )
+        return RlsapiV1InferResponse(
+            data=RlsapiV1InferData(
+                text=moderation_result.message,
+                request_id=request_id,
+                tool_calls=None,
+                tool_results=None,
+                rag_chunks=None,
+                referenced_documents=None,
+                input_tokens=None,
+                output_tokens=None,
+            )
+        )
 
     start_time = time.monotonic()
 
