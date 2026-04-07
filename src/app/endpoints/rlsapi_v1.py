@@ -48,6 +48,7 @@ from utils.responses import (
     extract_token_usage,
     get_mcp_tools,
 )
+from utils.shields import run_shield_moderation
 from utils.suid import get_suid
 
 logger = get_logger(__name__)
@@ -318,6 +319,63 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
     background_tasks.add_task(send_splunk_event, event, sourcetype)
 
 
+async def _check_shield_moderation(
+    input_text: str,
+    request_id: str,
+    background_tasks: BackgroundTasks,
+    infer_request: RlsapiV1InferRequest,
+    request: Request,
+) -> Optional[RlsapiV1InferResponse]:
+    """Run shield moderation and return a refusal response if blocked.
+
+    Uses all configured shields in Llama Stack. When no shields are
+    registered, moderation is a no-op and returns None immediately.
+
+    Args:
+        input_text: The combined user input to moderate.
+        request_id: Unique identifier for the request.
+        background_tasks: FastAPI background tasks for async Splunk event sending.
+        infer_request: The original inference request (for Splunk event context).
+        request: The FastAPI request object (for Splunk event context).
+
+    Returns:
+        An RlsapiV1InferResponse containing the refusal message if the input
+        was blocked, or None if moderation passed.
+    """
+    client = AsyncLlamaStackClientHolder().get_client()
+    moderation_result = await run_shield_moderation(client, input_text)
+
+    if moderation_result.decision != "blocked":
+        return None
+
+    logger.info(
+        "Request %s blocked by shield moderation: %s",
+        request_id,
+        moderation_result.message,
+    )
+    _queue_splunk_event(
+        background_tasks,
+        infer_request,
+        request,
+        request_id,
+        moderation_result.message,
+        0.0,
+        "infer_shield_blocked",
+    )
+    return RlsapiV1InferResponse(
+        data=RlsapiV1InferData(
+            text=moderation_result.message,
+            request_id=request_id,
+            tool_calls=None,
+            tool_results=None,
+            rag_chunks=None,
+            referenced_documents=None,
+            input_tokens=None,
+            output_tokens=None,
+        )
+    )
+
+
 def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     background_tasks: BackgroundTasks,
     infer_request: RlsapiV1InferRequest,
@@ -441,12 +499,23 @@ async def infer_endpoint(  # pylint: disable=R0914
     logger.info("Processing rlsapi v1 /infer request %s", request_id)
 
     input_source = infer_request.get_input_source()
-    model_id = await _get_default_model_id()
-    provider, model = extract_provider_and_model_from_model_id(model_id)
-    mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
+
+    # Run shield moderation on user input before inference.
+    # Uses all configured shields; no-op when no shields are registered.
+    # Runs before model/tool discovery so blocked requests short-circuit
+    # without incurring external I/O.
+    blocked_response = await _check_shield_moderation(
+        input_source, request_id, background_tasks, infer_request, request
+    )
+    if blocked_response is not None:
+        return blocked_response
+
+    model_id = await _get_default_model_id()
+    provider, model = extract_provider_and_model_from_model_id(model_id)
+    mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
 
     start_time = time.monotonic()
 
