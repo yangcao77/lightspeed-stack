@@ -18,7 +18,7 @@ from tests.e2e.utils.utils import restart_container, switch_config
 DEFAULT_TIMEOUT = 10
 
 
-@step("The feedback is enabled")  # type: ignore
+@step("The feedback is enabled")  # type: ignore[reportCallIssue]
 def enable_feedback(context: Context) -> None:
     """Enable the feedback endpoint and assert success."""
     assert context is not None
@@ -26,7 +26,7 @@ def enable_feedback(context: Context) -> None:
     access_feedback_put_endpoint(context, payload)
 
 
-@step("The feedback is disabled")  # type: ignore
+@step("The feedback is disabled")  # type: ignore[reportCallIssue]
 def disable_feedback(context: Context) -> None:
     """Disable the feedback endpoint and assert success."""
     assert context is not None
@@ -34,7 +34,7 @@ def disable_feedback(context: Context) -> None:
     access_feedback_put_endpoint(context, payload)
 
 
-@when("I update feedback status with")  # type: ignore
+@when("I update feedback status with")  # type: ignore[reportCallIssue]
 def set_feedback(context: Context) -> None:
     """Enable or disable feedback via PUT request."""
     assert context.text is not None, "Payload needs to be specified"
@@ -92,13 +92,13 @@ def access_feedback_post_endpoint(
     context.response = requests.post(url, headers=headers, json=payload)
 
 
-@when("I retreive the current feedback status")  # type: ignore
+@when("I retreive the current feedback status")  # type: ignore[reportCallIssue]
 def access_feedback_get_endpoint(context: Context) -> None:
     """Retrieve the current feedback status via GET request."""
     access_rest_api_endpoint_get(context, "feedback/status")
 
 
-@given("A new conversation is initialized")  # type: ignore
+@given("A new conversation is initialized")  # type: ignore[reportCallIssue]
 def initialize_conversation(context: Context) -> None:
     """Create a conversation for submitting feedback."""
     create_conversation_with_user_id(context, user_id=None)
@@ -140,7 +140,7 @@ def create_conversation_with_user_id(
     context.response = response
 
 
-@given("An invalid feedback storage path is configured")  # type: ignore
+@given("An invalid feedback storage path is configured")  # type: ignore[reportCallIssue]
 def configure_invalid_feedback_storage_path(context: Context) -> None:
     """Set an invalid feedback storage path and restart the container."""
     switch_config(context.scenario_config)
