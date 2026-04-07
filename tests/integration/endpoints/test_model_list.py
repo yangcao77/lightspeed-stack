@@ -207,5 +207,6 @@ async def test_models_list_on_api_connection_error(
 
     assert exc_info.value.status_code == 503
     assert isinstance(exc_info.value.detail, dict)
-    assert exc_info.value.detail["response"] == "Unable to connect to Llama Stack"
+    expected = "Unable to connect to Llama Stack"
+    assert exc_info.value.detail["response"] == expected  # type: ignore[reportArgumentType]
     assert "cause" in exc_info.value.detail

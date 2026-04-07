@@ -131,7 +131,8 @@ async def test_query_v2_endpoint_handles_connection_error(
     # Verify error details
     assert exc_info.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
     assert isinstance(exc_info.value.detail, dict)
-    assert exc_info.value.detail["response"] == "Unable to connect to Llama Stack"
+    expected = "Unable to connect to Llama Stack"
+    assert exc_info.value.detail["response"] == expected  # type: ignore[reportArgumentType]
     assert "cause" in exc_info.value.detail
 
 
