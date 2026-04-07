@@ -172,5 +172,5 @@ class AsyncLlamaStackClientHolder(metaclass=Singleton):
             "X-LlamaStack-Provider-Data": json.dumps(provider_data),
         }
 
-        self._lsc = self._lsc.copy(set_default_headers=updated_headers)  # type: ignore
+        self._lsc = self._lsc.copy(set_default_headers=updated_headers)  # type: ignore[arg-type]
         return self._lsc
