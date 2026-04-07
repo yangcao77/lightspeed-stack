@@ -90,6 +90,15 @@ def mock_shield_passed_fixture(mocker: MockerFixture) -> None:
     )
 
 
+@pytest.fixture(autouse=True, name="mock_model_configured")
+def mock_model_configured_fixture(mocker: MockerFixture) -> None:
+    """Mock model existence check to pass for all integration tests."""
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.check_model_configured",
+        new=mocker.AsyncMock(return_value=True),
+    )
+
+
 def _create_mock_response_output(mocker: MockerFixture, text: str) -> Any:
     """Create a mock Responses API output item with assistant message."""
     mock_output_item = mocker.Mock()
