@@ -73,11 +73,13 @@ class "Configuration" as src.models.config.Configuration {
   okp : Optional[OkpConfiguration]
   quota_handlers : Optional[QuotaHandlersConfiguration]
   rag : Optional[RagConfiguration]
+  rlsapi_v1 : Optional[RlsapiV1Configuration]
   service : Optional[ServiceConfiguration]
   splunk : Optional[SplunkConfiguration]
   user_data_collection : Optional[UserDataCollection]
   dump(filename: str | Path) -> None
   validate_mcp_auth_headers() -> Self
+  validate_rlsapi_v1_quota_configuration() -> Self
 }
 class "ConfigurationBase" as src.models.config.ConfigurationBase {
   model_config : ConfigDict
@@ -97,7 +99,6 @@ class "CustomProfile" as src.models.config.CustomProfile {
 class "Customization" as src.models.config.Customization {
   agent_card_config : Optional[dict[str, Any]]
   agent_card_path : Optional[FilePath]
-  allow_verbose_infer : bool
   custom_profile : Optional[CustomProfile]
   disable_query_system_prompt : bool
   disable_shield_ids_override : bool
@@ -207,6 +208,10 @@ class "RagConfiguration" as src.models.config.RagConfiguration {
   inline : Optional[list[str]]
   tool : Optional[list[str]]
 }
+class "RlsapiV1Configuration" as src.models.config.RlsapiV1Configuration {
+  allow_verbose_infer : Optional[bool]
+  quota_subject : Optional[Literal['user_id', 'org_id', 'system_id']]
+}
 class "SQLiteDatabaseConfiguration" as src.models.config.SQLiteDatabaseConfiguration {
   db_path : Optional[str]
 }
@@ -273,6 +278,7 @@ src.models.config.QuotaLimiterConfiguration --|> src.models.config.Configuration
 src.models.config.QuotaSchedulerConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.RHIdentityConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.RagConfiguration --|> src.models.config.ConfigurationBase
+src.models.config.RlsapiV1Configuration --|> src.models.config.ConfigurationBase
 src.models.config.SQLiteDatabaseConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.ServiceConfiguration --|> src.models.config.ConfigurationBase
 src.models.config.SplunkConfiguration --|> src.models.config.ConfigurationBase

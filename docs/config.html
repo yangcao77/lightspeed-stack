@@ -604,22 +604,28 @@ reconfigure Llama Stack through its run.yaml configuration file</td>
           <td/>
         </tr>
         <tr class="even">
+          <td>rlsapi_v1</td>
+          <td/>
+          <td>Configuration for the rlsapi v1 /infer endpoint used by the RHEL
+Lightspeed Command Line Assistant (CLA).</td>
+        </tr>
+        <tr class="odd">
           <td>splunk</td>
           <td/>
           <td>Splunk HEC configuration for sending telemetry events.</td>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>deployment_environment</td>
           <td>string</td>
           <td>Deployment environment name (e.g., &#x2018;development&#x2019;, &#x2018;staging&#x2019;,
 &#x2018;production&#x2019;). Used in telemetry events.</td>
         </tr>
-        <tr class="even">
+        <tr class="odd">
           <td>rag</td>
           <td/>
           <td>Configuration for all RAG strategies (inline and tool-based).</td>
         </tr>
-        <tr class="odd">
+        <tr class="even">
           <td>okp</td>
           <td/>
           <td>OKP provider settings. Only used when &#x2018;okp&#x2019; is listed in rag.inline
@@ -738,11 +744,6 @@ stored.</td>
         <tr class="even">
           <td>custom_profile</td>
           <td/>
-          <td/>
-        </tr>
-        <tr class="odd">
-          <td>allow_verbose_infer</td>
-          <td>boolean</td>
           <td/>
         </tr>
       </tbody>
@@ -1451,6 +1452,45 @@ RAG).</td>
           <td>RAG IDs made available to the LLM as a file_search tool. Use &#x2018;okp&#x2019;
 to include the OKP vector store. When omitted, all registered BYOK
 vector stores are used (backward compatibility).</td>
+        </tr>
+      </tbody>
+    </table>
+    <h2 id="rlsapiv1configuration">RlsapiV1Configuration</h2>
+    <p>Configuration for the rlsapi v1 /infer endpoint.</p>
+    <p>Settings specific to the RHEL Lightspeed Command Line Assistant (CLA)
+stateless inference endpoint. Kept separate from shared configuration
+sections so that CLA-specific options do not affect other endpoints.</p>
+    <table>
+      <colgroup>
+        <col style="width: 26%"/>
+        <col style="width: 23%"/>
+        <col style="width: 50%"/>
+      </colgroup>
+      <thead>
+        <tr class="header">
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="odd">
+          <td>allow_verbose_infer</td>
+          <td>boolean</td>
+          <td>Allow /v1/infer to return extended metadata (tool_calls, rag_chunks,
+token_usage) when the client sends &#x201C;include_metadata&#x201D;: true. Should NOT
+be enabled in production. If production use is needed, consider
+RBAC-based access control via an Action.RLSAPI_V1_INFER authorization
+rule.</td>
+        </tr>
+        <tr class="even">
+          <td>quota_subject</td>
+          <td>string</td>
+          <td>Identity field used as the quota subject for /v1/infer. When set,
+token quota enforcement is enabled for this endpoint. Requires
+quota_handlers to be configured. &#x201C;org_id&#x201D; and &#x201C;system_id&#x201D; require
+rh-identity authentication; falls back to user_id when rh-identity data
+is unavailable.</td>
         </tr>
       </tbody>
     </table>
