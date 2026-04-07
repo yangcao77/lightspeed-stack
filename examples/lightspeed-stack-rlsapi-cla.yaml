@@ -20,6 +20,17 @@ inference:
   default_provider: google-vertex
   default_model: gemini-2.5-flash
 
+# rlsapi v1 endpoint settings (CLA-specific)
+rlsapi_v1:
+  # Quota enforcement: which identity field to track token usage by.
+  # Options: "user_id", "org_id", "system_id"
+  # Requires quota_handlers to be configured. Omit to disable quotas.
+  # quota_subject: "org_id"
+
+  # Allow /v1/infer to return extended metadata when clients send
+  # "include_metadata": true. Should NOT be enabled in production.
+  # allow_verbose_infer: false
+
 # Red Hat Identity authentication (typical for CLA deployments)
 authentication:
   module: "rh-identity"

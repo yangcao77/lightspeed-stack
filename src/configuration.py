@@ -27,6 +27,7 @@ from models.config import (
     OkpConfiguration,
     QuotaHandlersConfiguration,
     RagConfiguration,
+    RlsapiV1Configuration,
     ServiceConfiguration,
     SplunkConfiguration,
     UserDataCollection,
@@ -285,6 +286,21 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
         return self._configuration.customization
+
+    @property
+    def rlsapi_v1(self) -> RlsapiV1Configuration:
+        """Return rlsapi v1 endpoint configuration.
+
+        Returns:
+            RlsapiV1Configuration: Configuration for the rlsapi v1 /infer
+            endpoint (CLA-specific settings).
+
+        Raises:
+            LogicError: If the configuration has not been loaded.
+        """
+        if self._configuration is None:
+            raise LogicError("logic error: configuration is not loaded")
+        return self._configuration.rlsapi_v1
 
     @property
     def inference(self) -> InferenceConfiguration:

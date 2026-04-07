@@ -40,9 +40,11 @@ from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
 from observability import InferenceEventData, build_inference_event, send_splunk_event
 from utils.endpoints import check_configuration_loaded
 from utils.query import (
+    consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
 )
+from utils.quota import check_tokens_available
 from utils.responses import (
     build_turn_summary,
     extract_text_from_response_items,
@@ -456,10 +458,55 @@ def _is_verbose_enabled(infer_request: RlsapiV1InferRequest) -> bool:
         True if both server config and client request enable verbose mode.
     """
     return (
-        configuration.customization is not None
-        and configuration.customization.allow_verbose_infer
-        and infer_request.include_metadata
+        configuration.rlsapi_v1.allow_verbose_infer and infer_request.include_metadata
     )
+
+
+def _resolve_quota_subject(request: Request, auth: AuthTuple) -> str | None:
+    """Resolve the quota subject identifier based on rlsapi_v1 configuration.
+
+    Returns None when quota enforcement is disabled (quota_subject not set),
+    signaling the caller to skip quota checks entirely.
+
+    When the configured subject source (org_id or system_id) is unavailable
+    (e.g., rh-identity auth is not active), falls back to user_id from the
+    auth tuple so quota enforcement still applies.
+
+    Args:
+        request: The FastAPI request object (for accessing rh-identity state).
+        auth: Authentication tuple from the configured auth provider.
+
+    Returns:
+        The resolved subject identifier string, or None if quota is disabled.
+    """
+    quota_subject = configuration.rlsapi_v1.quota_subject
+    if quota_subject is None:
+        return None
+
+    user_id = auth[0]
+
+    if quota_subject == "user_id":
+        return user_id
+
+    org_id, system_id = _get_rh_identity_context(request)
+
+    if quota_subject == "org_id":
+        if org_id == AUTH_DISABLED:
+            logger.warning(
+                "quota_subject is 'org_id' but rh-identity data is unavailable, "
+                "falling back to user_id"
+            )
+            return user_id
+        return org_id
+
+    # quota_subject == "system_id"
+    if system_id == AUTH_DISABLED:
+        logger.warning(
+            "quota_subject is 'system_id' but rh-identity data is unavailable, "
+            "falling back to user_id"
+        )
+        return user_id
+    return system_id
 
 
 def _build_infer_response(
@@ -594,9 +641,13 @@ async def infer_endpoint(  # pylint: disable=R0914
         HTTPException: 503 if the LLM service is unavailable.
     """
     # Authentication enforced by get_auth_dependency(), authorization by @authorize decorator.
-    _ = auth
-
     check_configuration_loaded(configuration)
+
+    # Quota enforcement: resolve subject and check availability before any work.
+    # No-op when quota_subject is not configured or no quota limiters exist.
+    quota_id = _resolve_quota_subject(request, auth)
+    if quota_id is not None:
+        check_tokens_available(configuration.quota_limiters, quota_id)
 
     request_id = get_suid()
 
@@ -634,7 +685,7 @@ async def infer_endpoint(  # pylint: disable=R0914
             model_id=model_id,
         )
         response_text = extract_text_from_response_items(response.output)
-        extract_token_usage(response.usage, model_id)
+        token_usage = extract_token_usage(response.usage, model_id)
         inference_time = time.monotonic() - start_time
     except _INFER_HANDLED_EXCEPTIONS as error:
         if response is not None:
@@ -661,6 +712,14 @@ async def infer_endpoint(  # pylint: disable=R0914
     if not response_text:
         logger.warning("Empty response from LLM for request %s", request_id)
         response_text = constants.UNABLE_TO_PROCESS_RESPONSE
+
+    # Consume quota tokens after successful inference.
+    if quota_id is not None:
+        consume_query_tokens(
+            user_id=quota_id,
+            model_id=model_id,
+            token_usage=token_usage,
+        )
 
     _queue_splunk_event(
         background_tasks,
