@@ -29,7 +29,10 @@ def service_is_started_locally(context: Context) -> None:
     assert context is not None
     context.hostname = os.getenv("E2E_LSC_HOSTNAME", "localhost")
     context.port = os.getenv("E2E_LSC_PORT", "8080")
-    context.hostname_llama = os.getenv("E2E_LLAMA_HOSTNAME", "localhost")
+    if is_prow_environment():
+        context.hostname_llama = os.getenv("E2E_LLAMA_HOSTNAME", "localhost")
+    else:
+        context.hostname_llama = "localhost"
     context.port_llama = os.getenv("E2E_LLAMA_PORT", "8321")
 
 

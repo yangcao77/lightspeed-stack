@@ -19,12 +19,17 @@ from llama_stack_client import (
     AsyncLlamaStackClient,
 )
 
+from tests.e2e.utils.utils import is_prow_environment
+
 
 def _get_llama_stack_client() -> AsyncLlamaStackClient:
     """Build an AsyncLlamaStackClient from env (for e2e test use)."""
     base_url = os.getenv("E2E_LLAMA_STACK_URL")
     if not base_url:
-        host = os.getenv("E2E_LLAMA_HOSTNAME", "localhost")
+        if is_prow_environment():
+            host = os.getenv("E2E_LLAMA_HOSTNAME", "localhost")
+        else:
+            host = "localhost"
         port = os.getenv("E2E_LLAMA_PORT", "8321")
         base_url = f"http://{host}:{port}"
     api_key = os.getenv("E2E_LLAMA_STACK_API_KEY", "xyzzy")
