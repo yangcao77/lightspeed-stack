@@ -1,0 +1,819 @@
+"""Handler for REST API calls to manage vector stores and files."""
+
+import asyncio
+import os
+import traceback
+from io import BytesIO
+from typing import Annotated, Any
+
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
+from fastapi.params import Depends
+from llama_stack_client import APIConnectionError, BadRequestError
+
+from authentication import get_auth_dependency
+from authentication.interface import AuthTuple
+from authorization.middleware import authorize
+from client import AsyncLlamaStackClientHolder
+from configuration import configuration
+from log import get_logger
+from models.config import Action
+from models.requests import (
+    VectorStoreCreateRequest,
+    VectorStoreFileCreateRequest,
+    VectorStoreUpdateRequest,
+)
+from models.responses import (
+    FileResponse,
+    ForbiddenResponse,
+    InternalServerErrorResponse,
+    NotFoundResponse,
+    ServiceUnavailableResponse,
+    UnauthorizedResponse,
+    VectorStoreFileResponse,
+    VectorStoreFilesListResponse,
+    VectorStoreResponse,
+    VectorStoresListResponse,
+)
+from utils.endpoints import check_configuration_loaded
+
+logger = get_logger(__name__)
+router = APIRouter(tags=["vector-stores"])
+
+
+# Response schemas for OpenAPI documentation
+vector_stores_list_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoresListResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
+}
+
+vector_store_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoreResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["vector_store"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
+}
+
+file_responses: dict[int | str, dict[str, Any]] = {
+    200: FileResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
+}
+
+vector_store_file_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoreFileResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["vector_store_file"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
+}
+
+vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoreFilesListResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(
+        examples=["missing header", "missing token"]
+    ),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(),
+}
+
+
+@router.post("/vector-stores", responses=vector_store_responses)
+@authorize(Action.MANAGE_VECTOR_STORES)
+async def create_vector_store(
+    request: Request,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+    body: VectorStoreCreateRequest,
+) -> VectorStoreResponse:
+    """Create a new vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        auth: Authentication tuple from the auth dependency.
+        body: Vector store creation parameters.
+
+    Returns:
+        VectorStoreResponse: The created vector store object.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+
+        # Extract provider_id for extra_body (not a direct client parameter)
+        body_dict = body.model_dump(exclude_none=True)
+        print("client.models.list() reaches here", await client.models.list())
+        extra_body = {}
+        if "provider_id" in body_dict:
+            extra_body["provider_id"] = body_dict.pop("provider_id")
+        if "embedding_model" in body_dict:
+            extra_body["embedding_model"] = body_dict.pop("embedding_model")
+        if "embedding_dimension" in body_dict:
+            extra_body["embedding_dimension"] = body_dict.pop("embedding_dimension")
+
+        logger.info(
+            "Creating vector store - body_dict: %s, extra_body: %s",
+            body_dict,
+            extra_body,
+        )
+
+        vector_store = await client.vector_stores.create(
+            **body_dict,
+            extra_body=extra_body,
+        )
+
+        return VectorStoreResponse(
+            id=vector_store.id,
+            name=vector_store.name,
+            created_at=vector_store.created_at,
+            last_active_at=vector_store.last_active_at,
+            expires_at=vector_store.expires_at,
+            status=vector_store.status or "unknown",
+            usage_bytes=vector_store.usage_bytes or 0,
+            metadata=vector_store.metadata,
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to create vector store: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to create vector store",
+            cause=f"Error creating vector store: {type(e).__name__}: {str(e)}",
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.get("/vector-stores", responses=vector_stores_list_responses)
+@authorize(Action.READ_VECTOR_STORES)
+async def list_vector_stores(
+    request: Request,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> VectorStoresListResponse:
+    """List all vector stores.
+
+    Parameters:
+        request: The incoming HTTP request.
+        auth: Authentication tuple from the auth dependency.
+
+    Returns:
+        VectorStoresListResponse: List of all vector stores.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        vector_stores = await client.vector_stores.list()
+
+        data = [
+            VectorStoreResponse(
+                id=vs.id,
+                name=vs.name,
+                created_at=vs.created_at,
+                last_active_at=vs.last_active_at,
+                expires_at=vs.expires_at or None,
+                status=vs.status or "unknown",
+                usage_bytes=vs.usage_bytes or 0,
+                metadata=vs.metadata,
+            )
+            for vs in vector_stores.data
+        ]
+
+        return VectorStoresListResponse(data=data)
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to list vector stores: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to list vector stores",
+            cause=f"Error listing vector stores: {type(e).__name__}: {str(e)}",
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.get("/vector-stores/{vector_store_id}", responses=vector_store_responses)
+@authorize(Action.READ_VECTOR_STORES)
+async def get_vector_store(
+    request: Request,
+    vector_store_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> VectorStoreResponse:
+    """Retrieve a vector store by ID.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store to retrieve.
+        auth: Authentication tuple from the auth dependency.
+
+    Returns:
+        VectorStoreResponse: The vector store object.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: Vector store not found
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        vector_store = await client.vector_stores.retrieve(vector_store_id)
+
+        return VectorStoreResponse(
+            id=vector_store.id,
+            name=vector_store.name,
+            created_at=vector_store.created_at,
+            last_active_at=vector_store.last_active_at,
+            expires_at=vector_store.expires_at,
+            status=vector_store.status or "unknown",
+            usage_bytes=vector_store.usage_bytes or 0,
+            metadata=vector_store.metadata,
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store not found: %s", e)
+        response = NotFoundResponse(
+            resource="vector_store", resource_id=vector_store_id
+        )
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to get vector store: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to retrieve vector store",
+            cause=(
+                f"Error retrieving vector store '{vector_store_id}': "
+                f"{type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.put("/vector-stores/{vector_store_id}", responses=vector_store_responses)
+@authorize(Action.MANAGE_VECTOR_STORES)
+async def update_vector_store(
+    request: Request,
+    vector_store_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+    body: VectorStoreUpdateRequest,
+) -> VectorStoreResponse:
+    """Update a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store to update.
+        auth: Authentication tuple from the auth dependency.
+        body: Vector store update parameters.
+
+    Returns:
+        VectorStoreResponse: The updated vector store object.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: Vector store not found
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        vector_store = await client.vector_stores.update(
+            vector_store_id, **body.model_dump(exclude_none=True)
+        )
+
+        return VectorStoreResponse(
+            id=vector_store.id,
+            name=vector_store.name,
+            created_at=vector_store.created_at,
+            last_active_at=vector_store.last_active_at,
+            expires_at=vector_store.expires_at,
+            status=vector_store.status or "unknown",
+            usage_bytes=vector_store.usage_bytes or 0,
+            metadata=vector_store.metadata or None,
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store not found: %s", e)
+        response = NotFoundResponse(
+            resource="vector_store", resource_id=vector_store_id
+        )
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to update vector store: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to update vector store",
+            cause=f"Error updating vector store '{vector_store_id}': {type(e).__name__}: {str(e)}",
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.delete(
+    "/vector-stores/{vector_store_id}",
+    responses={"204": {"description": "Vector store deleted"}},
+)
+@authorize(Action.MANAGE_VECTOR_STORES)
+async def delete_vector_store(
+    request: Request,
+    vector_store_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> None:
+    """Delete a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store to delete.
+        auth: Authentication tuple from the auth dependency.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: Vector store not found
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        await client.vector_stores.delete(vector_store_id)
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store not found: %s", e)
+        response = NotFoundResponse(
+            resource="vector_store", resource_id=vector_store_id
+        )
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to delete vector store: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to delete vector store",
+            cause=f"Error deleting vector store '{vector_store_id}': {type(e).__name__}: {str(e)}",
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.post("/files", responses=file_responses)
+@authorize(Action.MANAGE_FILES)
+async def create_file(
+    request: Request,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+    file: UploadFile = File(...),
+) -> FileResponse:
+    """Upload a file.
+
+    Parameters:
+        request: The incoming HTTP request.
+        auth: Authentication tuple from the auth dependency.
+        file: The file to upload.
+
+    Returns:
+        FileResponse: The uploaded file object.
+
+    Raises:
+        HTTPException:
+            - 400: Bad request (e.g., file too large)
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+
+        # Read file content
+        content = await file.read()
+        filename = file.filename or "uploaded_file"
+
+        # Add .txt extension if no extension present
+        # (since parsed PDFs/URLs are sent as plain text)
+        if not os.path.splitext(filename)[1]:
+            filename = f"{filename}.txt"
+
+        logger.info(
+            "Uploading file - filename: %s, size: %d bytes",
+            filename,
+            len(content),
+        )
+        print("filename reaches here", filename)
+
+        # Convert to BytesIO for Llama Stack client
+        # The client expects bytes, io.IOBase, PathLike, or a tuple
+        file_bytes = BytesIO(content)
+        file_bytes.name = filename  # Set the filename attribute
+
+        file_obj = await client.files.create(
+            file=file_bytes,
+            purpose="assistants",
+        )
+
+        return FileResponse(
+            id=file_obj.id,
+            filename=file_obj.filename or filename,
+            bytes=file_obj.bytes or len(content),
+            created_at=file_obj.created_at,
+            purpose=file_obj.purpose or "assistants",
+            object=file_obj.object or "file",
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Bad request for file upload: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        full_trace = traceback.format_exc()
+        logger.error("Unable to upload file: %s", e)
+        logger.error("Full traceback:\n%s", full_trace)
+        response = InternalServerErrorResponse(
+            response="Unable to upload file",
+            cause=(
+                f"Error uploading file '{file.filename or 'unknown'}': "
+                f"{type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.post(
+    "/vector-stores/{vector_store_id}/files", responses=vector_store_file_responses
+)
+@authorize(Action.MANAGE_VECTOR_STORES)
+async def add_file_to_vector_store(
+    request: Request,
+    vector_store_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+    body: VectorStoreFileCreateRequest,
+) -> VectorStoreFileResponse:
+    """Add a file to a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store.
+        auth: Authentication tuple from the auth dependency.
+        body: File addition parameters.
+
+    Returns:
+        VectorStoreFileResponse: The vector store file object.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: Vector store or file not found
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+
+        # Retry logic for database lock errors
+        max_retries = 3
+        retry_delay = 0.5  # seconds
+        vs_file = None
+
+        for attempt in range(max_retries):
+            try:
+                vs_file = await client.vector_stores.files.create(
+                    vector_store_id=vector_store_id,
+                    **body.model_dump(exclude_none=True),
+                )
+                break  # Success, exit retry loop
+            except Exception as retry_error:  # pylint: disable=broad-exception-caught
+                error_msg = str(retry_error).lower()
+                is_lock_error = (
+                    "database is locked" in error_msg or "locked" in error_msg
+                )
+                is_last_attempt = attempt == max_retries - 1
+
+                if is_lock_error and not is_last_attempt:
+                    logger.warning(
+                        "Database locked while adding file to vector store, "
+                        "retrying in %s seconds (attempt %d/%d)",
+                        retry_delay,
+                        attempt + 1,
+                        max_retries,
+                    )
+                    await asyncio.sleep(retry_delay)
+                    retry_delay *= 2  # Exponential backoff
+                else:
+                    raise  # Re-raise if not a lock error or max retries reached
+        if not vs_file:
+            raise HTTPException(
+                status_code=500, detail="Failed to create vector store file"
+            )
+        logger.info(
+            "Vector store file created - ID: %s, status: %s, last_error: %s",
+            vs_file.id,
+            vs_file.status,
+            vs_file.last_error if vs_file.last_error else "None",
+        )
+
+        return VectorStoreFileResponse(
+            id=vs_file.id,
+            vector_store_id=vs_file.vector_store_id or vector_store_id,
+            status=vs_file.status or "unknown",
+            attributes=vs_file.attributes,
+            last_error=(
+                vs_file.last_error.message
+                if vs_file.last_error and hasattr(vs_file.last_error, "message")
+                else None
+            ),
+            object=vs_file.object or "vector_store.file",
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store file operation failed: %s", e)
+        response = NotFoundResponse(
+            resource="vector_store_file", resource_id=body.file_id
+        )
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to add file to vector store: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to add file to vector store",
+            cause=(
+                f"Error adding file '{body.file_id}' to vector store "
+                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.get(
+    "/vector-stores/{vector_store_id}/files",
+    responses=vector_store_files_list_responses,
+)
+@authorize(Action.READ_VECTOR_STORES)
+async def list_vector_store_files(
+    request: Request,
+    vector_store_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> VectorStoreFilesListResponse:
+    """List files in a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store.
+        auth: Authentication tuple from the auth dependency.
+
+    Returns:
+        VectorStoreFilesListResponse: List of files in the vector store.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        files = await client.vector_stores.files.list(vector_store_id=vector_store_id)
+
+        data = [
+            VectorStoreFileResponse(
+                id=f.id,
+                vector_store_id=f.vector_store_id or vector_store_id,
+                status=f.status or "unknown",
+                attributes=f.attributes,
+                last_error=(
+                    f.last_error.message
+                    if f.last_error and hasattr(f.last_error, "message")
+                    else None
+                ),
+                object=f.object or "vector_store.file",
+            )
+            for f in files.data
+        ]
+        return VectorStoreFilesListResponse(data=data)
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to list vector store files: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to list vector store files",
+            cause=(
+                f"Error listing files in vector store '{vector_store_id}': "
+                f"{type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.get(
+    "/vector-stores/{vector_store_id}/files/{file_id}",
+    responses=vector_store_file_responses,
+)
+@authorize(Action.READ_VECTOR_STORES)
+async def get_vector_store_file(
+    request: Request,
+    vector_store_id: str,
+    file_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> VectorStoreFileResponse:
+    """Retrieve a file from a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store.
+        file_id: ID of the file.
+        auth: Authentication tuple from the auth dependency.
+
+    Returns:
+        VectorStoreFileResponse: The vector store file object.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: File not found in vector store
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        print("file_id", file_id)
+        vs_file = await client.vector_stores.files.retrieve(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+        )
+        print("vs_file reaches here", vs_file)
+
+        return VectorStoreFileResponse(
+            id=vs_file.id,
+            vector_store_id=vs_file.vector_store_id or vector_store_id,
+            status=vs_file.status or "unknown",
+            attributes=vs_file.attributes,
+            last_error=(
+                vs_file.last_error.message
+                if vs_file.last_error and hasattr(vs_file.last_error, "message")
+                else None
+            ),
+            object=vs_file.object or "vector_store.file",
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store file not found: %s", e)
+        response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to get vector store file: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to retrieve vector store file",
+            cause=(
+                f"Error retrieving file '{file_id}' from vector store "
+                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e
+
+
+@router.delete(
+    "/vector-stores/{vector_store_id}/files/{file_id}",
+    responses={"204": {"description": "File deleted from vector store"}},
+)
+@authorize(Action.MANAGE_VECTOR_STORES)
+async def delete_vector_store_file(
+    request: Request,
+    vector_store_id: str,
+    file_id: str,
+    auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
+) -> None:
+    """Delete a file from a vector store.
+
+    Parameters:
+        request: The incoming HTTP request.
+        vector_store_id: ID of the vector store.
+        file_id: ID of the file to delete.
+        auth: Authentication tuple from the auth dependency.
+
+    Raises:
+        HTTPException:
+            - 401: Authentication failed
+            - 403: Authorization failed
+            - 404: File not found in vector store
+            - 500: Lightspeed Stack configuration not loaded
+            - 503: Unable to connect to Llama Stack
+    """
+    _ = auth
+    _ = request
+
+    check_configuration_loaded(configuration)
+
+    try:
+        client = AsyncLlamaStackClientHolder().get_client()
+        await client.vector_stores.files.delete(
+            vector_store_id=vector_store_id,
+            file_id=file_id,
+        )
+    except APIConnectionError as e:
+        logger.error("Unable to connect to Llama Stack: %s", e)
+        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store file not found: %s", e)
+        response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
+        raise HTTPException(**response.model_dump()) from e
+    except Exception as e:
+        logger.error("Unable to delete vector store file: %s", e)
+        response = InternalServerErrorResponse(
+            response="Unable to delete vector store file",
+            cause=(
+                f"Error deleting file '{file_id}' from vector store "
+                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
+            ),
+        )
+        raise HTTPException(**response.model_dump()) from e

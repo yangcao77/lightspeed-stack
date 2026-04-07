@@ -2604,3 +2604,197 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
             cause=cause,
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
         )
+
+
+class VectorStoreResponse(BaseModel):
+    """Response model containing a single vector store.
+
+    Attributes:
+        id: Vector store ID.
+        name: Vector store name.
+        created_at: Unix timestamp when created.
+        last_active_at: Unix timestamp of last activity.
+        expires_at: Optional Unix timestamp when it expires.
+        status: Vector store status.
+        usage_bytes: Storage usage in bytes.
+    """
+
+    id: str = Field(..., description="Vector store ID")
+    name: str = Field(..., description="Vector store name")
+    created_at: int = Field(..., description="Unix timestamp when created")
+    last_active_at: Optional[int] = Field(
+        None, description="Unix timestamp of last activity"
+    )
+    expires_at: Optional[int] = Field(
+        None, description="Unix timestamp when it expires"
+    )
+    status: str = Field(..., description="Vector store status")
+    usage_bytes: int = Field(default=0, description="Storage usage in bytes")
+
+    model_config = {"extra": "forbid"}
+    metadata: Optional[dict[str, Any]] = Field(
+        None,
+        description="Metadata dictionary for storing session information",
+        examples=[
+            {"conversation_id": "conv_123", "document_ids": ["doc_456", "doc_789"]}
+        ],
+    )
+
+    @classmethod
+    def openapi_response(cls, _examples: Optional[list[str]] = None) -> dict[str, Any]:
+        """Generate OpenAPI response schema.
+
+        Parameters:
+            _examples: Optional list of example identifiers (unused).
+
+        Returns:
+            OpenAPI response schema dictionary.
+        """
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+        }
+
+
+class VectorStoresListResponse(BaseModel):
+    """Response model containing a list of vector stores.
+
+    Attributes:
+        data: List of vector store objects.
+        object: Object type (always "list").
+    """
+
+    data: list[VectorStoreResponse] = Field(
+        default_factory=list, description="List of vector stores"
+    )
+    object: str = Field(default="list", description="Object type")
+
+    model_config = {"extra": "forbid"}
+
+    @classmethod
+    def openapi_response(cls, _examples: Optional[list[str]] = None) -> dict[str, Any]:
+        """Generate OpenAPI response schema.
+
+        Parameters:
+            _examples: Optional list of example identifiers (unused).
+
+        Returns:
+            OpenAPI response schema dictionary.
+        """
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+        }
+
+
+class FileResponse(BaseModel):
+    """Response model containing a file object.
+
+    Attributes:
+        id: File ID.
+        filename: File name.
+        bytes: File size in bytes.
+        created_at: Unix timestamp when created.
+        purpose: File purpose.
+        object: Object type (always "file").
+    """
+
+    id: str = Field(..., description="File ID")
+    filename: str = Field(..., description="File name")
+    bytes: int = Field(..., description="File size in bytes")
+    created_at: int = Field(..., description="Unix timestamp when created")
+    purpose: str = Field(default="assistants", description="File purpose")
+    object: str = Field(default="file", description="Object type")
+
+    model_config = {"extra": "forbid"}
+
+    @classmethod
+    def openapi_response(cls, _examples: Optional[list[str]] = None) -> dict[str, Any]:
+        """Generate OpenAPI response schema.
+
+        Parameters:
+            _examples: Optional list of example identifiers (unused).
+
+        Returns:
+            OpenAPI response schema dictionary.
+        """
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+        }
+
+
+class VectorStoreFileResponse(BaseModel):
+    """Response model containing a vector store file object.
+
+    Attributes:
+        id: Vector store file ID.
+        vector_store_id: ID of the vector store.
+        status: File processing status.
+        attributes: Optional metadata key-value pairs.
+        last_error: Optional error message if processing failed.
+        object: Object type (always "vector_store.file").
+    """
+
+    id: str = Field(..., description="Vector store file ID")
+    vector_store_id: str = Field(..., description="ID of the vector store")
+    status: str = Field(..., description="File processing status")
+    attributes: Optional[dict[str, str | float | bool]] = Field(
+        None,
+        description=(
+            "Set of up to 16 key-value pairs for storing additional information. "
+            "Keys: strings (max 64 chars). Values: strings (max 512 chars), booleans, or numbers."
+        ),
+    )
+    last_error: Optional[str] = Field(
+        None, description="Error message if processing failed"
+    )
+    object: str = Field(default="vector_store.file", description="Object type")
+
+    model_config = {"extra": "forbid"}
+
+    @classmethod
+    def openapi_response(cls, _examples: Optional[list[str]] = None) -> dict[str, Any]:
+        """Generate OpenAPI response schema.
+
+        Parameters:
+            _examples: Optional list of example identifiers (unused).
+
+        Returns:
+            OpenAPI response schema dictionary.
+        """
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+        }
+
+
+class VectorStoreFilesListResponse(BaseModel):
+    """Response model containing a list of vector store files.
+
+    Attributes:
+        data: List of vector store file objects.
+        object: Object type (always "list").
+    """
+
+    data: list[VectorStoreFileResponse] = Field(
+        default_factory=list, description="List of vector store files"
+    )
+    object: str = Field(default="list", description="Object type")
+
+    model_config = {"extra": "forbid"}
+
+    @classmethod
+    def openapi_response(cls, _examples: Optional[list[str]] = None) -> dict[str, Any]:
+        """Generate OpenAPI response schema.
+
+        Parameters:
+            _examples: Optional list of example identifiers (unused).
+
+        Returns:
+            OpenAPI response schema dictionary.
+        """
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+        }
