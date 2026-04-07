@@ -18,10 +18,79 @@ from tests.e2e.utils.prow_utils import (
     wait_for_pod_health,
 )
 
+_DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR = "tests/e2e/configuration/server-mode"
+
+
+def _e2e_repo_root() -> str:
+    """Absolute path to repository root (for Prow/Konflux runners and local behave).
+
+    Set ``E2E_REPO_ROOT`` when the process cwd is not the repo or checkout layout
+    differs. Otherwise derived from this file: ``tests/e2e/utils/utils.py`` → root.
+    """
+    env = os.getenv("E2E_REPO_ROOT", "").strip()
+    if env:
+        return os.path.abspath(env)
+    return os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
+    )
+
+
+def absolute_repo_path(repo_relative: str) -> str:
+    """Return an absolute path for a location given relative to the repository root.
+
+    Used on Prow so ``oc`` and file reads do not depend on the process working
+    directory. If ``repo_relative`` is already absolute, it is normalized and
+    returned unchanged.
+
+    Parameters:
+        repo_relative: Path relative to the repo root, or an absolute path.
+
+    Returns:
+        Normalized absolute filesystem path.
+    """
+    rel = repo_relative.strip()
+    if os.path.isabs(rel):
+        return os.path.normpath(rel)
+    return os.path.normpath(os.path.join(_e2e_repo_root(), rel))
+
 
 def is_prow_environment() -> bool:
     """Check if running in Prow/OpenShift environment."""
     return os.getenv("RUNNING_PROW") is not None
+
+
+def cluster_lightspeed_config_dir() -> str:
+    """Directory of Lightspeed YAML files used for Prow/Konflux (ConfigMap sources).
+
+    Paths are relative to the repository root. Pipelines set
+    ``E2E_LIGHTSPEED_CONFIG_DIR`` explicitly so local and CI agree on one variable;
+    when unset, defaults to ``tests/e2e/configuration/server-mode``.
+
+    Returns:
+        Non-empty repo-relative directory path.
+    """
+    raw = os.getenv("E2E_LIGHTSPEED_CONFIG_DIR", _DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR)
+    stripped = raw.strip()
+    return stripped if stripped else _DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR
+
+
+def cluster_lightspeed_config_path(filename: str) -> str:
+    """Absolute path to a Lightspeed stack YAML used for Prow/OpenShift ConfigMap updates.
+
+    The cluster loads config from the ConfigMap; Behave/e2e-ops must read the same
+    YAML from the **runner filesystem**. Using an absolute path anchored at the repo
+    root avoids failures when behave's cwd is not the repository root.
+
+    Parameters:
+        filename: Basename of the Lightspeed stack YAML.
+
+    Returns:
+        Absolute path suitable for ``switch_config`` and ``oc --from-file`` on CI.
+    """
+    base = cluster_lightspeed_config_dir()
+    if os.path.isabs(base):
+        return os.path.normpath(os.path.join(base, filename))
+    return os.path.normpath(os.path.join(_e2e_repo_root(), base, filename))
 
 
 def normalize_endpoint(endpoint: str) -> str:

@@ -5,6 +5,7 @@ Feature: Inline RAG (BYOK) support tests
       And The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
       And The service uses the lightspeed-stack-inline-rag.yaml configuration
       And The service is restarted
 

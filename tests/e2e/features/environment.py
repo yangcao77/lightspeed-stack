@@ -37,74 +37,29 @@ from tests.e2e.utils.utils import (
 FALLBACK_MODEL = "gpt-4o-mini"
 FALLBACK_PROVIDER = "openai"
 
-# Config file mappings: config_name -> (docker_path, prow_path)
+# Config file mappings: logical key -> path template (Docker and Prow use the same tree).
 _CONFIG_PATHS = {
-    "no-cache": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-cache.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-no-cache.yaml",
-    ),
-    "auth-noop-token": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-noop-token.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-auth-noop-token.yaml",
-    ),
-    "rbac": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-rbac.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-rbac.yaml",
-    ),
-    "invalid-feedback-storage": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-feedback-storage.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-invalid-feedback-storage.yaml",
-    ),
-    "rh-identity": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-auth-rh-identity.yaml",
-    ),
+    "no-cache": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-cache.yaml",
+    "auth-noop-token": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-noop-token.yaml",
+    "rbac": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-rbac.yaml",
+    "invalid-feedback-storage": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-feedback-storage.yaml",
+    "rh-identity": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
     # Default LCS config for @MCP feature; per-scenario tags select mcp-* variants in before_scenario.
-    "mcp": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp.yaml",
-    ),
-    "mcp-file-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-file-auth.yaml",
-    ),
-    "invalid-mcp-file-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-mcp-file-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-invalid-mcp-file-auth.yaml",
-    ),
-    "mcp-kubernetes-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-kubernetes-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-kubernetes-auth.yaml",
-    ),
-    "mcp-client-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-client-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-client-auth.yaml",
-    ),
-    "mcp-oauth-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-oauth-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-oauth-auth.yaml",
-    ),
-    "inline-rag": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-inline-rag.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-inline-rag.yaml",
-    ),
-    "mcp-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-auth.yaml",
-    ),
-    "no-mcp": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-mcp.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-no-mcp.yaml",
-    ),
+    "mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
+    "mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
+    "invalid-mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-mcp-file-auth.yaml",
+    "mcp-kubernetes-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-kubernetes-auth.yaml",
+    "mcp-client-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-client-auth.yaml",
+    "mcp-oauth-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-oauth-auth.yaml",
+    "inline-rag": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-inline-rag.yaml",
+    "mcp-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-auth.yaml",
+    "no-mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-mcp.yaml",
 }
 
 
 def _get_config_path(config_name: str, mode_dir: str) -> str:
-    """Get the appropriate config path based on environment."""
-    docker_path_template, prow_path = _CONFIG_PATHS[config_name]
-    if is_prow_environment():
-        return prow_path
-    return docker_path_template.format(mode_dir=mode_dir)
+    """Resolve repo-relative path to a Lightspeed stack YAML for the current mode."""
+    return _CONFIG_PATHS[config_name].format(mode_dir=mode_dir)
 
 
 def _fetch_models_from_service() -> dict:

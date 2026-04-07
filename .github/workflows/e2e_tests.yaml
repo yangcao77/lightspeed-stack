@@ -19,6 +19,8 @@ jobs:
       E2E_OPENAI_MODEL: ${{ vars.E2E_OPENAI_MODEL }}
       E2E_DEPLOYMENT_MODE: ${{ matrix.mode }}
       FAISS_VECTOR_STORE_ID: ${{ vars.FAISS_VECTOR_STORE_ID }}
+      # Override via repo Actions variable E2E_LLAMA_HOSTNAME; default matches server-mode lightspeed-stack.yaml
+      E2E_LLAMA_HOSTNAME: ${{ vars.E2E_LLAMA_HOSTNAME || 'llama-stack' }}
 
     steps:
       - uses: actions/checkout@v4
