@@ -38,6 +38,7 @@ from models.responses import (
 from models.rlsapi.requests import RlsapiV1InferRequest, RlsapiV1SystemInfo
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
 from observability import InferenceEventData, build_inference_event, send_splunk_event
+from utils.endpoints import check_configuration_loaded
 from utils.query import (
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
@@ -594,6 +595,8 @@ async def infer_endpoint(  # pylint: disable=R0914
     """
     # Authentication enforced by get_auth_dependency(), authorization by @authorize decorator.
     _ = auth
+
+    check_configuration_loaded(configuration)
 
     request_id = get_suid()
 

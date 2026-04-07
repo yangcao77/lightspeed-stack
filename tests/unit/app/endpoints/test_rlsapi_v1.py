@@ -494,6 +494,29 @@ def test_get_rh_identity_context(
 
 
 @pytest.mark.asyncio
+async def test_infer_endpoint_configuration_not_loaded(
+    mocker: MockerFixture,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test /infer returns HTTP 500 when configuration is not loaded."""
+    mocker.patch.object(AppConfig(), "_configuration", None)
+
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = mock_request_factory()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
+    assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+@pytest.mark.asyncio
 async def test_infer_minimal_request(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
