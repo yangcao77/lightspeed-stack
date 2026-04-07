@@ -258,6 +258,37 @@ async def retrieve_simple_response(
         APIConnectionError: If the Llama Stack service is unreachable.
         HTTPException: 503 if no default model is configured.
     """
+    resolved_model_id = model_id or await _get_default_model_id()
+    response = await _call_llm(question, instructions, tools, resolved_model_id)
+    extract_token_usage(response.usage, resolved_model_id)
+    return extract_text_from_response_items(response.output)
+
+
+async def _call_llm(
+    question: str,
+    instructions: str,
+    tools: Optional[list[Any]] = None,
+    model_id: Optional[str] = None,
+) -> OpenAIResponseObject:
+    """Call the LLM via the Responses API and return the full response object.
+
+    This is a transport-only function: it calls the LLM and returns the raw
+    response. Callers are responsible for token usage extraction and metrics.
+
+    Args:
+        question: The combined user input (question + context).
+        instructions: System instructions for the LLM.
+        tools: Optional list of MCP tool definitions for the LLM.
+        model_id: Fully qualified model identifier in provider/model format.
+            When omitted, the configured default model is used.
+
+    Returns:
+        The full OpenAIResponseObject from the LLM.
+
+    Raises:
+        APIConnectionError: If the Llama Stack service is unreachable.
+        HTTPException: 503 if no default model is configured.
+    """
     client = AsyncLlamaStackClientHolder().get_client()
     resolved_model_id = model_id or await _get_default_model_id()
     logger.debug("Using model %s for rlsapi v1 inference", resolved_model_id)
@@ -270,10 +301,7 @@ async def retrieve_simple_response(
         stream=False,
         store=False,
     )
-    response = cast(OpenAIResponseObject, response)
-    extract_token_usage(response.usage, resolved_model_id)
-
-    return extract_text_from_response_items(response.output)
+    return cast(OpenAIResponseObject, response)
 
 
 def _get_cla_version(request: Request) -> str:
@@ -413,6 +441,79 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
     return inference_time
 
 
+def _is_verbose_enabled(infer_request: RlsapiV1InferRequest) -> bool:
+    """Check whether verbose metadata should be included in the response.
+
+    Verbose mode requires dual opt-in: the server configuration must allow it
+    via ``allow_verbose_infer``, and the client must request it via the
+    ``include_metadata`` field.
+
+    Args:
+        infer_request: The inference request to check.
+
+    Returns:
+        True if both server config and client request enable verbose mode.
+    """
+    return (
+        configuration.customization is not None
+        and configuration.customization.allow_verbose_infer
+        and infer_request.include_metadata
+    )
+
+
+def _build_infer_response(
+    response_text: str,
+    request_id: str,
+    response: Optional[OpenAIResponseObject],
+    model_id: str,
+) -> RlsapiV1InferResponse:
+    """Build the final inference response, with optional verbose metadata.
+
+    When ``response`` is provided, verbose metadata (tool calls, RAG chunks,
+    token counts) is extracted via ``build_turn_summary`` and included.
+    When ``response`` is None, a minimal response with only text is returned.
+
+    Args:
+        response_text: The LLM-generated response text.
+        request_id: Unique identifier for the request.
+        response: The full LLM response object. Pass None for non-verbose
+            responses; pass the object to include extended metadata.
+        model_id: The model identifier used for inference.
+
+    Returns:
+        The assembled RlsapiV1InferResponse.
+    """
+    if response is not None:
+        turn_summary = build_turn_summary(
+            response, model_id, vector_store_ids=None, rag_id_mapping=None
+        )
+        return RlsapiV1InferResponse(
+            data=RlsapiV1InferData(
+                text=response_text,
+                request_id=request_id,
+                tool_calls=turn_summary.tool_calls,
+                tool_results=turn_summary.tool_results,
+                rag_chunks=turn_summary.rag_chunks,
+                referenced_documents=turn_summary.referenced_documents,
+                input_tokens=turn_summary.token_usage.input_tokens,
+                output_tokens=turn_summary.token_usage.output_tokens,
+            )
+        )
+
+    return RlsapiV1InferResponse(
+        data=RlsapiV1InferData(
+            text=response_text,
+            request_id=request_id,
+            tool_calls=None,
+            tool_results=None,
+            rag_chunks=None,
+            referenced_documents=None,
+            input_tokens=None,
+            output_tokens=None,
+        )
+    )
+
+
 def _map_inference_error_to_http_exception(  # pylint: disable=too-many-return-statements
     error: Exception, model_id: str, request_id: str
 ) -> Optional[HTTPException]:
@@ -518,41 +619,22 @@ async def infer_endpoint(  # pylint: disable=R0914
     mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
 
     start_time = time.monotonic()
-
-    # Check if verbose metadata should be returned
-    verbose_enabled = (
-        configuration.customization is not None
-        and configuration.customization.allow_verbose_infer
-        and infer_request.include_metadata
-    )
+    verbose_enabled = _is_verbose_enabled(infer_request)
 
     response = None
     try:
         instructions = _build_instructions(infer_request.context.systeminfo)
-
-        # For verbose mode, retrieve the full response object instead of just text
-        if verbose_enabled:
-            client = AsyncLlamaStackClientHolder().get_client()
-            response = await client.responses.create(
-                input=input_source,
-                model=model_id,
-                instructions=instructions,
-                tools=mcp_tools or [],
-                stream=False,
-                store=False,
-            )
-            response = cast(OpenAIResponseObject, response)
-            response_text = extract_text_from_response_items(response.output)
-        else:
-            response_text = await retrieve_simple_response(
-                input_source,
-                instructions,
-                tools=cast(list[Any], mcp_tools),
-                model_id=model_id,
-            )
+        response = await _call_llm(
+            input_source,
+            instructions,
+            tools=cast(list[Any], mcp_tools),
+            model_id=model_id,
+        )
+        response_text = extract_text_from_response_items(response.output)
+        extract_token_usage(response.usage, model_id)
         inference_time = time.monotonic() - start_time
     except _INFER_HANDLED_EXCEPTIONS as error:
-        if verbose_enabled and response is not None:
+        if response is not None:
             extract_token_usage(response.usage, model_id)  # type: ignore[arg-type]
         _record_inference_failure(
             background_tasks,
@@ -589,36 +671,9 @@ async def infer_endpoint(  # pylint: disable=R0914
 
     logger.info("Completed rlsapi v1 /infer request %s", request_id)
 
-    # Build response with optional extended metadata
-    if verbose_enabled and response is not None:
-        # Extract metadata from full response object
-        turn_summary = build_turn_summary(
-            response, model_id, vector_store_ids=None, rag_id_mapping=None
-        )
-
-        return RlsapiV1InferResponse(
-            data=RlsapiV1InferData(
-                text=response_text,
-                request_id=request_id,
-                tool_calls=turn_summary.tool_calls,
-                tool_results=turn_summary.tool_results,
-                rag_chunks=turn_summary.rag_chunks,
-                referenced_documents=turn_summary.referenced_documents,
-                input_tokens=turn_summary.token_usage.input_tokens,
-                output_tokens=turn_summary.token_usage.output_tokens,
-            )
-        )
-
-    # Standard minimal response
-    return RlsapiV1InferResponse(
-        data=RlsapiV1InferData(
-            text=response_text,
-            request_id=request_id,
-            tool_calls=None,
-            tool_results=None,
-            rag_chunks=None,
-            referenced_documents=None,
-            input_tokens=None,
-            output_tokens=None,
-        )
+    return _build_infer_response(
+        response_text,
+        request_id,
+        response if verbose_enabled else None,
+        model_id,
     )
