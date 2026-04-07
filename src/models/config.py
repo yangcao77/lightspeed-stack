@@ -1326,21 +1326,6 @@ class Customization(ConfigurationBase):
     agent_card_config: Optional[dict[str, Any]] = None
     custom_profile: Optional[CustomProfile] = Field(default=None, init=False)
 
-    # Debugging: Allow /v1/infer to return extended metadata
-    # WARNING: This should NOT be enabled in production environments.
-    # Setting this to True allows clients to request extended response data
-    # (tool_calls, rag_chunks, token_usage, etc.) from the /v1/infer endpoint
-    # by including "include_metadata": true in the request body.
-    #
-    # If this feature were wanted in production, consider RBAC-based access control instead:
-    # 1. Add Action.RLSAPI_V1_INFER_VERBOSE to models/config.py Action enum
-    # 2. Check authorization in infer_endpoint:
-    #    if infer_request.include_metadata:
-    #        if Action.RLSAPI_V1_INFER_VERBOSE not in request.state.authorized_actions:
-    #            raise HTTPException(status_code=403, detail="Verbose infer not authorized")
-    # 3. Add the action to authorization rules for specific users/roles
-    allow_verbose_infer: bool = False
-
     @model_validator(mode="after")
     def check_customization_model(self) -> Self:
         """
@@ -1379,6 +1364,35 @@ class Customization(ConfigurationBase):
                 ) from e
 
         return self
+
+
+class RlsapiV1Configuration(ConfigurationBase):
+    """Configuration for the rlsapi v1 /infer endpoint.
+
+    Settings specific to the RHEL Lightspeed Command Line Assistant (CLA)
+    stateless inference endpoint. Kept separate from shared configuration
+    sections so that CLA-specific options do not affect other endpoints.
+    """
+
+    allow_verbose_infer: bool = Field(
+        default=False,
+        title="Allow verbose infer",
+        description="Allow /v1/infer to return extended metadata "
+        "(tool_calls, rag_chunks, token_usage) when the client sends "
+        '"include_metadata": true. Should NOT be enabled in production. '
+        "If production use is needed, consider RBAC-based access control "
+        "via an Action.RLSAPI_V1_INFER authorization rule.",
+    )
+
+    quota_subject: Optional[Literal["user_id", "org_id", "system_id"]] = Field(
+        default=None,
+        title="Quota subject",
+        description="Identity field used as the quota subject for /v1/infer. "
+        "When set, token quota enforcement is enabled for this endpoint. "
+        "Requires quota_handlers to be configured. "
+        '"org_id" and "system_id" require rh-identity authentication; '
+        "falls back to user_id when rh-identity data is unavailable.",
+    )
 
 
 class InferenceConfiguration(ConfigurationBase):
@@ -1911,6 +1925,13 @@ class Configuration(ConfigurationBase):
     )
     azure_entra_id: Optional[AzureEntraIdConfiguration] = None
 
+    rlsapi_v1: RlsapiV1Configuration = Field(
+        default_factory=RlsapiV1Configuration,
+        title="rlsapi v1 configuration",
+        description="Configuration for the rlsapi v1 /infer endpoint used by "
+        "the RHEL Lightspeed Command Line Assistant (CLA).",
+    )
+
     splunk: Optional[SplunkConfiguration] = Field(
         default=None,
         title="Splunk configuration",
@@ -1991,6 +2012,52 @@ class Configuration(ConfigurationBase):
                 valid_mcp_servers.append(mcp_server)
 
         self.mcp_servers = valid_mcp_servers
+        return self
+
+    @model_validator(mode="after")
+    def validate_rlsapi_v1_quota_configuration(self) -> Self:
+        """Validate rlsapi_v1 quota settings against authentication and quota handlers.
+
+        Enforces that quota_subject values requiring rh-identity data ("org_id",
+        "system_id") are only used when rh-identity authentication is active.
+        Warns when quota_subject is set but quota enforcement is not fully
+        configured (missing limiters or missing storage backend).
+
+        Returns:
+            Self: The validated configuration instance.
+
+        Raises:
+            ValueError: If quota_subject requires rh-identity but a different
+                authentication module is configured.
+        """
+        quota_subject = self.rlsapi_v1.quota_subject  # pylint: disable=no-member
+        if quota_subject is None:
+            return self
+
+        auth_module = self.authentication.module  # pylint: disable=no-member
+
+        if quota_subject in ("org_id", "system_id") and (
+            auth_module != constants.AUTH_MOD_RH_IDENTITY
+        ):
+            raise ValueError(
+                f"rlsapi_v1.quota_subject='{quota_subject}' requires "
+                f"authentication.module='{constants.AUTH_MOD_RH_IDENTITY}', "
+                f"but got '{auth_module}'. Use quota_subject='user_id' or "
+                f"switch authentication to '{constants.AUTH_MOD_RH_IDENTITY}'."
+            )
+
+        if not self.quota_handlers.limiters or (  # pylint: disable=no-member
+            self.quota_handlers.sqlite is None  # pylint: disable=no-member
+            and self.quota_handlers.postgres is None  # pylint: disable=no-member
+        ):
+            logger.warning(
+                "rlsapi_v1.quota_subject is '%s' but quota enforcement is not "
+                "fully configured. Token quota enforcement will not take effect "
+                "until at least one limiter and one quota storage backend "
+                "are configured.",
+                quota_subject,
+            )
+
         return self
 
     def dump(self, filename: str | Path = "configuration.json") -> None:

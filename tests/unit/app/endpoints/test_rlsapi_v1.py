@@ -25,6 +25,7 @@ from app.endpoints.rlsapi_v1 import (
     _compile_prompt_template,
     _get_default_model_id,
     _get_rh_identity_context,
+    _resolve_quota_subject,
     infer_endpoint,
     retrieve_simple_response,
 )
@@ -60,8 +61,13 @@ def mock_custom_prompt_fixture(mocker: MockerFixture) -> Callable[[str], None]:
     def _set(prompt: str) -> None:
         mock_customization = mocker.Mock()
         mock_customization.system_prompt = prompt
+        mock_rlsapi_v1 = mocker.Mock()
+        mock_rlsapi_v1.allow_verbose_infer = False
+        mock_rlsapi_v1.quota_subject = None
         mock_config = mocker.Mock()
         mock_config.customization = mock_customization
+        mock_config.rlsapi_v1 = mock_rlsapi_v1
+        mock_config.quota_limiters = []
         mocker.patch("app.endpoints.rlsapi_v1.configuration", mock_config)
 
     return _set
@@ -494,6 +500,29 @@ def test_get_rh_identity_context(
 
 
 @pytest.mark.asyncio
+async def test_infer_endpoint_configuration_not_loaded(
+    mocker: MockerFixture,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test /infer returns HTTP 500 when configuration is not loaded."""
+    mocker.patch.object(AppConfig(), "_configuration", None)
+
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = mock_request_factory()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
+    assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+@pytest.mark.asyncio
 async def test_infer_minimal_request(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
@@ -686,12 +715,14 @@ async def test_infer_include_metadata_respects_verbose_config(
     expect_metadata: bool,
 ) -> None:
     """Test /infer metadata inclusion controlled by dual opt-in (config + request)."""
-    custom_mock = mocker.Mock()
-    custom_mock.allow_verbose_infer = verbose_enabled
-    custom_mock.system_prompt = "You are a helpful assistant."
+    rlsapi_v1_mock = mocker.Mock()
+    rlsapi_v1_mock.allow_verbose_infer = verbose_enabled
+    rlsapi_v1_mock.quota_subject = None
     config_mock = mocker.Mock()
     config_mock.inference = mock_configuration.inference
-    config_mock.customization = custom_mock
+    config_mock.customization = mock_configuration.customization
+    config_mock.rlsapi_v1 = rlsapi_v1_mock
+    config_mock.quota_limiters = []
     mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
 
     mock_response = mocker.Mock()
@@ -740,12 +771,14 @@ def _setup_config_mock(
     verbose_enabled: bool,
 ) -> None:
     """Helper to set up configuration mock with verbose setting."""
-    custom_mock = mocker.Mock()
-    custom_mock.allow_verbose_infer = verbose_enabled
-    custom_mock.system_prompt = "You are a helpful assistant."
+    rlsapi_v1_mock = mocker.Mock()
+    rlsapi_v1_mock.allow_verbose_infer = verbose_enabled
+    rlsapi_v1_mock.quota_subject = None
     config_mock = mocker.Mock()
     config_mock.inference = mock_configuration.inference
-    config_mock.customization = custom_mock
+    config_mock.customization = mock_configuration.customization
+    config_mock.rlsapi_v1 = rlsapi_v1_mock
+    config_mock.quota_limiters = []
     mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
 
 
@@ -839,30 +872,282 @@ async def test_infer_queues_splunk_event_on_success(
     assert call_args[0][2] == "infer_with_llm"
 
 
-@pytest.mark.asyncio
-async def test_infer_queues_splunk_error_event_on_failure(
+# --- Test _resolve_quota_subject ---
+
+
+@pytest.mark.parametrize(
+    ("quota_subject", "rh_identity_setup", "expected"),
+    [
+        pytest.param(None, None, None, id="disabled_no_identity"),
+        pytest.param(
+            None,
+            {"org_id": "org1", "user_id": "sys1"},
+            None,
+            id="disabled_with_identity",
+        ),
+        pytest.param("user_id", None, "mock_user_id", id="user_id_no_identity"),
+        pytest.param(
+            "org_id",
+            {"org_id": "org123", "user_id": "sys456"},
+            "org123",
+            id="org_id_with_identity",
+        ),
+        pytest.param(
+            "system_id",
+            {"org_id": "org123", "user_id": "sys456"},
+            "sys456",
+            id="system_id_with_identity",
+        ),
+        pytest.param(
+            "org_id",
+            None,
+            "mock_user_id",
+            id="org_id_fallback_no_identity",
+        ),
+        pytest.param(
+            "system_id",
+            None,
+            "mock_user_id",
+            id="system_id_fallback_no_identity",
+        ),
+        pytest.param(
+            "org_id",
+            {"org_id": "", "user_id": "sys1"},
+            "mock_user_id",
+            id="org_id_fallback_empty_org",
+        ),
+        pytest.param(
+            "system_id",
+            {"org_id": "org1", "user_id": ""},
+            "mock_user_id",
+            id="system_id_fallback_empty_system",
+        ),
+    ],
+)
+def test_resolve_quota_subject(
+    mocker: MockerFixture,
+    mock_request_factory: Callable[..., Any],
+    quota_subject: str | None,
+    rh_identity_setup: dict[str, str] | None,
+    expected: str | None,
+) -> None:
+    """Test _resolve_quota_subject resolves correct ID based on config and identity."""
+    rlsapi_v1_mock = mocker.Mock()
+    rlsapi_v1_mock.quota_subject = quota_subject
+    config_mock = mocker.Mock()
+    config_mock.rlsapi_v1 = rlsapi_v1_mock
+    mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
+
+    if rh_identity_setup is not None:
+        mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+        mock_rh_identity.get_org_id.return_value = rh_identity_setup["org_id"]
+        mock_rh_identity.get_user_id.return_value = rh_identity_setup["user_id"]
+        mock_request = mock_request_factory(rh_identity=mock_rh_identity)
+    else:
+        mock_request = mock_request_factory()
+
+    result = _resolve_quota_subject(mock_request, MOCK_AUTH)
+    assert result == expected
+
+
+# --- Test quota enforcement in infer_endpoint ---
+
+
+@pytest.fixture(name="mock_quota_config")
+def mock_quota_config_fixture(
     mocker: MockerFixture,
     mock_configuration: AppConfig,
-    mock_api_connection_error: None,
+) -> Callable[[str], None]:
+    """Factory fixture that patches configuration with quota_subject enabled.
+
+    Args:
+        mocker: The pytest mocker fixture.
+        mock_configuration: Base AppConfig to extend.
+
+    Returns:
+        Callable that accepts a quota_subject value and patches configuration.
+    """
+
+    def _set(quota_subject: str) -> None:
+        rlsapi_v1_mock = mocker.Mock()
+        rlsapi_v1_mock.quota_subject = quota_subject
+        rlsapi_v1_mock.allow_verbose_infer = False
+        config_mock = mocker.Mock()
+        config_mock.inference = mock_configuration.inference
+        config_mock.customization = mock_configuration.customization
+        config_mock.rlsapi_v1 = rlsapi_v1_mock
+        config_mock.quota_limiters = []
+        mocker.patch("app.endpoints.rlsapi_v1.configuration", config_mock)
+
+    return _set
+
+
+@pytest.mark.asyncio
+async def test_infer_quota_check_called_when_configured(
+    mocker: MockerFixture,
+    mock_quota_config: Callable[[str], None],
+    mock_llm_response: None,
     mock_auth_resolvers: None,
     mock_request_factory: Callable[..., Any],
     mock_background_tasks: Any,
 ) -> None:
-    """Test that failed inference queues a Splunk error event."""
-    infer_request = RlsapiV1InferRequest(question="Test question")
-    mock_request = mock_request_factory()
+    """Test /infer calls check_tokens_available when quota_subject is set."""
+    mock_quota_config("user_id")
+    mock_check = mocker.patch("app.endpoints.rlsapi_v1.check_tokens_available")
+    mock_consume = mocker.patch("app.endpoints.rlsapi_v1.consume_query_tokens")
 
-    with pytest.raises(HTTPException):
+    response = await infer_endpoint(
+        infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+        request=mock_request_factory(),
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    assert isinstance(response, RlsapiV1InferResponse)
+    mock_check.assert_called_once_with([], "mock_user_id")
+    mock_consume.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_infer_quota_skipped_when_not_configured(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test /infer skips quota calls when quota_subject is None (default)."""
+    mock_check = mocker.patch("app.endpoints.rlsapi_v1.check_tokens_available")
+    mock_consume = mocker.patch("app.endpoints.rlsapi_v1.consume_query_tokens")
+
+    await infer_endpoint(
+        infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+        request=mock_request_factory(),
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    mock_check.assert_not_called()
+    mock_consume.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_infer_quota_exceeded_returns_429(
+    mocker: MockerFixture,
+    mock_quota_config: Callable[[str], None],
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test /infer returns HTTP 429 when quota is exceeded."""
+    mock_quota_config("user_id")
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.check_tokens_available",
+        side_effect=HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS),
+    )
+
+    with pytest.raises(HTTPException) as exc_info:
         await infer_endpoint(
-            infer_request=infer_request,
-            request=mock_request,
+            infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+            request=mock_request_factory(),
             background_tasks=mock_background_tasks,
             auth=MOCK_AUTH,
         )
 
-    mock_background_tasks.add_task.assert_called_once()
-    call_args = mock_background_tasks.add_task.call_args
-    assert call_args[0][2] == "infer_error"
+    assert exc_info.value.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+
+
+@pytest.mark.parametrize(
+    ("quota_subject", "rh_identity_setup", "expected_subject"),
+    [
+        pytest.param(
+            "org_id",
+            {"org_id": "org123", "user_id": "sys456"},
+            "org123",
+            id="org_id",
+        ),
+        pytest.param(
+            "system_id",
+            {"org_id": "org123", "user_id": "sys456"},
+            "sys456",
+            id="system_id",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_infer_quota_with_rh_identity_subject(
+    mocker: MockerFixture,
+    mock_quota_config: Callable[[str], None],
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+    quota_subject: str,
+    rh_identity_setup: dict[str, str],
+    expected_subject: str,
+) -> None:
+    """Test /infer propagates org_id/system_id to quota check and consumption."""
+    mock_quota_config(quota_subject)
+
+    mock_rh_identity = mocker.Mock(spec=RHIdentityData)
+    mock_rh_identity.get_org_id.return_value = rh_identity_setup["org_id"]
+    mock_rh_identity.get_user_id.return_value = rh_identity_setup["user_id"]
+
+    mock_check = mocker.patch("app.endpoints.rlsapi_v1.check_tokens_available")
+    mock_consume = mocker.patch("app.endpoints.rlsapi_v1.consume_query_tokens")
+
+    await infer_endpoint(
+        infer_request=RlsapiV1InferRequest(question="How do I list files?"),
+        request=mock_request_factory(rh_identity=mock_rh_identity),
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    mock_check.assert_called_once_with([], expected_subject)
+    mock_consume.assert_called_once()
+    assert mock_consume.call_args.kwargs["user_id"] == expected_subject
+
+
+@pytest.mark.asyncio
+async def test_infer_quota_shield_blocked_does_not_consume_tokens(
+    mocker: MockerFixture,
+    mock_quota_config: Callable[[str], None],
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test quota pre-check runs but tokens are NOT consumed when shield blocks."""
+    mock_quota_config("user_id")
+
+    blocked = ShieldModerationBlocked(
+        message="Blocked by moderation",
+        moderation_id="modr-test",
+        refusal_response=OpenAIResponseMessage(
+            role="assistant",
+            content="Blocked by moderation",
+        ),
+    )
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.run_shield_moderation",
+        new=mocker.AsyncMock(return_value=blocked),
+    )
+
+    mock_check = mocker.patch("app.endpoints.rlsapi_v1.check_tokens_available")
+    mock_consume = mocker.patch("app.endpoints.rlsapi_v1.consume_query_tokens")
+
+    response = await infer_endpoint(
+        infer_request=RlsapiV1InferRequest(question="Bad question"),
+        request=mock_request_factory(),
+        background_tasks=mock_background_tasks,
+        auth=MOCK_AUTH,
+    )
+
+    assert response.data.text == "Blocked by moderation"
+    mock_check.assert_called_once_with([], "mock_user_id")
+    mock_consume.assert_not_called()
 
 
 # --- Test shield moderation ---
