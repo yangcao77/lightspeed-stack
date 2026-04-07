@@ -413,7 +413,7 @@ def check_conversation_model_provider(
         ), f"Turn {idx} expected provider '{expected_provider}', got '{actual_provider}'"
 
 
-@given("An invalid conversation cache path is configured")  # type: ignore
+@given("An invalid conversation cache path is configured")  # type: ignore[reportCallIssue]
 def configure_invalid_conversation_cache_path(context: Context) -> None:
     """Set an invalid conversation cache path and restart the container."""
     switch_config(context.scenario_config)

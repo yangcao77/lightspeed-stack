@@ -32,7 +32,7 @@ def service_is_started_locally(context: Context) -> None:
     context.port_llama = os.getenv("E2E_LLAMA_PORT", "8321")
 
 
-@given("The service uses the {config_name} configuration")  # type: ignore
+@given("The service uses the {config_name} configuration")  # type: ignore[reportCallIssue]
 def configure_service(context: Context, config_name: str) -> None:
     """Switch to the given configuration if not already active.
 
