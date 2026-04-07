@@ -46,6 +46,7 @@ from utils.mcp_oauth_probe import check_mcp_auth
 from utils.query import (
     consume_query_tokens,
     handle_known_apistatus_errors,
+    is_context_length_error,
     prepare_input,
     store_query_results,
     update_azure_token,
@@ -303,7 +304,7 @@ async def retrieve_response(
         response = cast(OpenAIResponseObject, response)
 
     except RuntimeError as e:  # library mode wraps 413 into runtime error
-        if "context_length" in str(e).lower():
+        if is_context_length_error(str(e)):
             error_response = PromptTooLongResponse(model=responses_params.model)
             raise HTTPException(**error_response.model_dump()) from e
         raise e

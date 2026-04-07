@@ -85,6 +85,7 @@ from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
     prepare_input,
     store_query_results,
     update_azure_token,
@@ -354,7 +355,7 @@ async def retrieve_response_generator(
         )
     # Handle know LLS client errors only at stream creation time and shield execution
     except RuntimeError as e:  # library mode wraps 413 into runtime error
-        if "context_length" in str(e).lower():
+        if is_context_length_error(str(e)):
             error_response = PromptTooLongResponse(model=responses_params.model)
             raise HTTPException(**error_response.model_dump()) from e
         raise e
@@ -590,7 +591,7 @@ async def generate_response(
     except RuntimeError as e:  # library mode wraps 413 into runtime error
         error_response = (
             PromptTooLongResponse(model=responses_params.model)
-            if "context_length" in str(e).lower()
+            if is_context_length_error(str(e))
             else InternalServerErrorResponse.generic()
         )
         yield stream_http_error_event(error_response, context.query_request.media_type)
@@ -835,7 +836,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
             )
             error_response = (
                 PromptTooLongResponse(model=context.model_id)
-                if "context_length" in error_message.lower()
+                if is_context_length_error(error_message)
                 else InternalServerErrorResponse.query_failed(error_message)
             )
             yield stream_http_error_event(error_response, media_type)

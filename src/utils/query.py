@@ -51,6 +51,19 @@ from utils.types import TurnSummary
 logger = get_logger(__name__)
 
 
+def is_context_length_error(error_message: str) -> bool:
+    """Check if an error message indicates a context length exceeded error.
+
+    Args:
+        error_message: The error message to check.
+
+    Returns:
+        True if the error indicates context length was exceeded.
+    """
+    msg_lower = error_message.lower()
+    return "context_length" in msg_lower or "context length" in msg_lower
+
+
 def store_conversation_into_cache(
     user_id: str,
     conversation_id: str,
@@ -578,10 +591,7 @@ def handle_known_apistatus_errors(
     """
     if error.status_code == 400:
         error_message = getattr(error, "message", str(error))
-        if (
-            "context_length" in error_message.lower()
-            or "context length" in error_message.lower()
-        ):
+        if is_context_length_error(error_message):
             return PromptTooLongResponse(model=model_id)
     elif error.status_code == 429:
         return QuotaExceededResponse.model(model_id)
