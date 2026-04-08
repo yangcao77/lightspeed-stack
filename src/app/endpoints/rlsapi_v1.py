@@ -29,6 +29,7 @@ from models.config import Action
 from models.responses import (
     ForbiddenResponse,
     InternalServerErrorResponse,
+    NotFoundResponse,
     PromptTooLongResponse,
     QuotaExceededResponse,
     ServiceUnavailableResponse,
@@ -48,6 +49,7 @@ from utils.query import (
 from utils.quota import check_tokens_available
 from utils.responses import (
     build_turn_summary,
+    check_model_configured,
     extract_text_from_response_items,
     extract_token_usage,
     get_mcp_tools,
@@ -108,6 +110,7 @@ infer_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["model"]),
     413: PromptTooLongResponse.openapi_response(),
     422: UnprocessableEntityResponse.openapi_response(),
     429: QuotaExceededResponse.openapi_response(),
@@ -235,6 +238,28 @@ async def _get_default_model_id() -> str:
     model = llm_models[0]
     logger.info("Auto-discovered LLM model for rlsapi v1: %s", model.id)
     return model.id
+
+
+async def _resolve_validated_model_id() -> str:
+    """Resolve and validate the default model against Llama Stack.
+
+    Combines model resolution with existence validation so callers get
+    either a known-good model ID or a clear 404 error.
+
+    Returns:
+        The validated model identifier string in "provider/model" format.
+
+    Raises:
+        HTTPException: 404 if the resolved model does not exist in Llama Stack.
+        HTTPException: 503 if Llama Stack is unreachable during resolution or validation.
+    """
+    model_id = await _get_default_model_id()
+    client = AsyncLlamaStackClientHolder().get_client()
+    if not await check_model_configured(client, model_id):
+        _, model_name = extract_provider_and_model_from_model_id(model_id)
+        error_response = NotFoundResponse(resource="model", resource_id=model_name)
+        raise HTTPException(**error_response.model_dump())
+    return model_id
 
 
 async def retrieve_simple_response(
@@ -668,7 +693,7 @@ async def infer_endpoint(  # pylint: disable=R0914
     if blocked_response is not None:
         return blocked_response
 
-    model_id = await _get_default_model_id()
+    model_id = await _resolve_validated_model_id()
     provider, model = extract_provider_and_model_from_model_id(model_id)
     mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
 

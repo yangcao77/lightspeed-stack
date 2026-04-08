@@ -146,6 +146,19 @@ def mock_shield_passed_fixture(mocker: MockerFixture) -> None:
     )
 
 
+@pytest.fixture(autouse=True, name="mock_model_configured")
+def mock_model_configured_fixture(mocker: MockerFixture) -> None:
+    """Mock model existence check to pass for all endpoint tests by default.
+
+    Individual tests can override this by patching check_model_configured
+    with a different return value.
+    """
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.check_model_configured",
+        new=mocker.AsyncMock(return_value=True),
+    )
+
+
 @pytest.fixture(name="mock_api_connection_error")
 def mock_api_connection_error_fixture(mocker: MockerFixture) -> None:
     """Mock responses.create() to raise APIConnectionError."""
@@ -520,6 +533,36 @@ async def test_infer_endpoint_configuration_not_loaded(
             auth=MOCK_AUTH,
         )
     assert exc_info.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
+@pytest.mark.asyncio
+async def test_infer_model_not_found_returns_404(
+    mocker: MockerFixture,
+    mock_configuration: AppConfig,
+    mock_llm_response: None,
+    mock_auth_resolvers: None,
+    mock_request_factory: Callable[..., Any],
+    mock_background_tasks: Any,
+) -> None:
+    """Test /infer returns HTTP 404 when configured model does not exist in Llama Stack."""
+    mocker.patch(
+        "app.endpoints.rlsapi_v1.check_model_configured",
+        new=mocker.AsyncMock(return_value=False),
+    )
+
+    infer_request = RlsapiV1InferRequest(question="How do I list files?")
+    mock_request = mock_request_factory()
+
+    with pytest.raises(HTTPException) as exc_info:
+        await infer_endpoint(
+            infer_request=infer_request,
+            request=mock_request,
+            background_tasks=mock_background_tasks,
+            auth=MOCK_AUTH,
+        )
+    assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
+    assert exc_info.value.detail["response"] == "Model not found"  # type: ignore[index]
+    assert "gpt-4-turbo" in exc_info.value.detail["cause"]  # type: ignore[index]
 
 
 @pytest.mark.asyncio
