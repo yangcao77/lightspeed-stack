@@ -1,5 +1,7 @@
 """Unit tests for the /vector-stores REST API endpoints."""
 
+# pylint: disable=too-many-lines
+
 from typing import Any
 
 import pytest
@@ -49,6 +51,7 @@ class VectorStore:
         self.object = "vector_store"
         self.status = vs_status
         self.usage_bytes = 0
+        self.metadata = None
 
 
 # pylint: disable=R0903
@@ -86,6 +89,7 @@ class VectorStoreFile:
         self.vector_store_id = vector_store_id
         self.created_at = 1735689600
         self.status = file_status
+        self.attributes = None
         self.last_error = None
         self.object = "vector_store.file"
 
@@ -438,6 +442,130 @@ async def test_add_file_to_vector_store_success(mocker: MockerFixture) -> None:
 
 
 @pytest.mark.asyncio
+async def test_add_file_to_vector_store_retry_on_database_lock(
+    mocker: MockerFixture,
+) -> None:
+    """Test retry logic when database lock error occurs."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    # First call raises database lock error, second call succeeds
+    mock_client.vector_stores.files.create.side_effect = [
+        Exception("database is locked"),
+        VectorStoreFile("file_123", "vs_123"),
+    ]
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    # Mock asyncio.sleep to avoid actual delays in tests
+    mock_sleep = mocker.patch("app.endpoints.vector_stores.asyncio.sleep")
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreFileCreateRequest(file_id="file_123")
+
+    response = await add_file_to_vector_store(
+        request=request, vector_store_id="vs_123", auth=auth, body=body
+    )
+    assert response is not None
+    assert response.id == "file_123"
+    assert response.vector_store_id == "vs_123"
+    assert response.status == "completed"
+
+    # Verify retry logic was triggered
+    assert mock_client.vector_stores.files.create.call_count == 2
+    # Verify sleep was called once with 0.5 seconds (first retry delay)
+    mock_sleep.assert_called_once_with(0.5)
+
+
+@pytest.mark.asyncio
+async def test_add_file_to_vector_store_max_retries_exceeded(
+    mocker: MockerFixture,
+) -> None:
+    """Test that max retries are respected when database lock persists."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    # All attempts fail with database lock error
+    mock_client.vector_stores.files.create.side_effect = Exception("database is locked")
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    # Mock asyncio.sleep to avoid actual delays in tests
+    mock_sleep = mocker.patch("app.endpoints.vector_stores.asyncio.sleep")
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreFileCreateRequest(file_id="file_123")
+
+    with pytest.raises(HTTPException) as e:
+        await add_file_to_vector_store(
+            request=request, vector_store_id="vs_123", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    # Verify all 3 retry attempts were made
+    assert mock_client.vector_stores.files.create.call_count == 3
+    # Verify exponential backoff: 0.5s, then 1s (0.5 * 2)
+    assert mock_sleep.call_count == 2
+    assert mock_sleep.call_args_list[0][0][0] == 0.5
+    assert mock_sleep.call_args_list[1][0][0] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_add_file_to_vector_store_non_lock_error_no_retry(
+    mocker: MockerFixture,
+) -> None:
+    """Test that non-lock errors are not retried."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    # Raise a non-lock error
+    mock_client.vector_stores.files.create.side_effect = Exception("Some other error")
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    # Mock asyncio.sleep to verify it's not called
+    mock_sleep = mocker.patch("app.endpoints.vector_stores.asyncio.sleep")
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreFileCreateRequest(file_id="file_123")
+
+    with pytest.raises(HTTPException) as e:
+        await add_file_to_vector_store(
+            request=request, vector_store_id="vs_123", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+
+    # Verify only one attempt was made (no retries for non-lock errors)
+    assert mock_client.vector_stores.files.create.call_count == 1
+    # Verify sleep was not called (no retry)
+    mock_sleep.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_list_vector_store_files_success(mocker: MockerFixture) -> None:
     """Test successfully listing files in vector store."""
     mock_authorization_resolvers(mocker)
@@ -525,3 +653,424 @@ async def test_delete_vector_store_file_success(mocker: MockerFixture) -> None:
         request=request, vector_store_id="vs_123", file_id="file_123", auth=auth
     )
     assert response is None
+
+
+# Additional error path tests
+
+
+@pytest.mark.asyncio
+async def test_list_vector_stores_connection_error(mocker: MockerFixture) -> None:
+    """Test list vector stores with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.list.side_effect = APIConnectionError(request=None)  # type: ignore
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await list_vector_stores(request=request, auth=auth)
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_update_vector_store_connection_error(mocker: MockerFixture) -> None:
+    """Test update vector store with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.update.side_effect = APIConnectionError(request=None)  # type: ignore
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreUpdateRequest(name="updated_store")
+
+    with pytest.raises(HTTPException) as e:
+        await update_vector_store(
+            request=request, vector_store_id="vs_123", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_update_vector_store_not_found(mocker: MockerFixture) -> None:
+    """Test update vector store with not found error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.update.side_effect = BadRequestError(
+        message="Not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreUpdateRequest(name="updated_store")
+
+    with pytest.raises(HTTPException) as e:
+        await update_vector_store(
+            request=request, vector_store_id="vs_999", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_delete_vector_store_connection_error(mocker: MockerFixture) -> None:
+    """Test delete vector store with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.delete.side_effect = APIConnectionError(request=None)  # type: ignore
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await delete_vector_store(request=request, vector_store_id="vs_123", auth=auth)
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_delete_vector_store_not_found(mocker: MockerFixture) -> None:
+    """Test delete vector store with not found error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.delete.side_effect = BadRequestError(
+        message="Not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await delete_vector_store(request=request, vector_store_id="vs_999", auth=auth)
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_create_file_connection_error(mocker: MockerFixture) -> None:
+    """Test create file with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.files.create.side_effect = APIConnectionError(request=None)  # type: ignore
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    mock_file = mocker.AsyncMock()
+    mock_file.filename = "test.txt"
+    mock_file.read.return_value = b"test content"
+
+    with pytest.raises(HTTPException) as e:
+        await create_file(request=request, auth=auth, file=mock_file)
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_create_file_bad_request(mocker: MockerFixture) -> None:
+    """Test create file with bad request error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.files.create.side_effect = BadRequestError(
+        message="File too large", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    mock_file = mocker.AsyncMock()
+    mock_file.filename = "test.txt"
+    mock_file.read.return_value = b"test content"
+
+    with pytest.raises(HTTPException) as e:
+        await create_file(request=request, auth=auth, file=mock_file)
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_add_file_to_vector_store_connection_error(
+    mocker: MockerFixture,
+) -> None:
+    """Test add file to vector store with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.files.create.side_effect = APIConnectionError(
+        request=None  # type: ignore
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreFileCreateRequest(file_id="file_123")
+
+    with pytest.raises(HTTPException) as e:
+        await add_file_to_vector_store(
+            request=request, vector_store_id="vs_123", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_add_file_to_vector_store_not_found(mocker: MockerFixture) -> None:
+    """Test add file to vector store with not found error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.files.create.side_effect = BadRequestError(
+        message="File not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+    body = VectorStoreFileCreateRequest(file_id="file_999")
+
+    with pytest.raises(HTTPException) as e:
+        await add_file_to_vector_store(
+            request=request, vector_store_id="vs_123", auth=auth, body=body
+        )
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_list_vector_store_files_connection_error(
+    mocker: MockerFixture,
+) -> None:
+    """Test list vector store files with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.files.list.side_effect = APIConnectionError(
+        request=None  # type: ignore
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await list_vector_store_files(
+            request=request, vector_store_id="vs_123", auth=auth
+        )
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_get_vector_store_file_connection_error(mocker: MockerFixture) -> None:
+    """Test get vector store file with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.files.retrieve.side_effect = APIConnectionError(
+        request=None  # type: ignore
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await get_vector_store_file(
+            request=request, vector_store_id="vs_123", file_id="file_123", auth=auth
+        )
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_get_vector_store_file_not_found(mocker: MockerFixture) -> None:
+    """Test get vector store file with not found error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.files.retrieve.side_effect = BadRequestError(
+        message="File not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await get_vector_store_file(
+            request=request, vector_store_id="vs_123", file_id="file_999", auth=auth
+        )
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+
+
+@pytest.mark.asyncio
+async def test_delete_vector_store_file_connection_error(
+    mocker: MockerFixture,
+) -> None:
+    """Test delete vector store file with connection error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_client.vector_stores.files.delete.side_effect = APIConnectionError(
+        request=None  # type: ignore
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await delete_vector_store_file(
+            request=request, vector_store_id="vs_123", file_id="file_123", auth=auth
+        )
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_delete_vector_store_file_not_found(mocker: MockerFixture) -> None:
+    """Test delete vector store file with not found error."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.files.delete.side_effect = BadRequestError(
+        message="File not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await delete_vector_store_file(
+            request=request, vector_store_id="vs_123", file_id="file_999", auth=auth
+        )
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND

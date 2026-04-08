@@ -128,7 +128,6 @@ async def create_vector_store(
 
         # Extract provider_id for extra_body (not a direct client parameter)
         body_dict = body.model_dump(exclude_none=True)
-        print("client.models.list() reaches here", await client.models.list())
         extra_body = {}
         if "provider_id" in body_dict:
             extra_body["provider_id"] = body_dict.pop("provider_id")
@@ -462,7 +461,6 @@ async def create_file(
             filename,
             len(content),
         )
-        print("filename reaches here", filename)
 
         # Convert to BytesIO for Llama Stack client
         # The client expects bytes, io.IOBase, PathLike, or a tuple
@@ -722,12 +720,10 @@ async def get_vector_store_file(
 
     try:
         client = AsyncLlamaStackClientHolder().get_client()
-        print("file_id", file_id)
         vs_file = await client.vector_stores.files.retrieve(
             vector_store_id=vector_store_id,
             file_id=file_id,
         )
-        print("vs_file reaches here", vs_file)
 
         return VectorStoreFileResponse(
             id=vs_file.id,
