@@ -18,10 +18,79 @@ from tests.e2e.utils.prow_utils import (
     wait_for_pod_health,
 )
 
+_DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR = "tests/e2e/configuration/server-mode"
+
+
+def _e2e_repo_root() -> str:
+    """Absolute path to repository root (for Prow/Konflux runners and local behave).
+
+    Set ``E2E_REPO_ROOT`` when the process cwd is not the repo or checkout layout
+    differs. Otherwise derived from this file: ``tests/e2e/utils/utils.py`` → root.
+    """
+    env = os.getenv("E2E_REPO_ROOT", "").strip()
+    if env:
+        return os.path.abspath(env)
+    return os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..")
+    )
+
+
+def absolute_repo_path(repo_relative: str) -> str:
+    """Return an absolute path for a location given relative to the repository root.
+
+    Used on Prow so ``oc`` and file reads do not depend on the process working
+    directory. If ``repo_relative`` is already absolute, it is normalized and
+    returned unchanged.
+
+    Parameters:
+        repo_relative: Path relative to the repo root, or an absolute path.
+
+    Returns:
+        Normalized absolute filesystem path.
+    """
+    rel = repo_relative.strip()
+    if os.path.isabs(rel):
+        return os.path.normpath(rel)
+    return os.path.normpath(os.path.join(_e2e_repo_root(), rel))
+
 
 def is_prow_environment() -> bool:
     """Check if running in Prow/OpenShift environment."""
     return os.getenv("RUNNING_PROW") is not None
+
+
+def cluster_lightspeed_config_dir() -> str:
+    """Directory of Lightspeed YAML files used for Prow/Konflux (ConfigMap sources).
+
+    Paths are relative to the repository root. Pipelines set
+    ``E2E_LIGHTSPEED_CONFIG_DIR`` explicitly so local and CI agree on one variable;
+    when unset, defaults to ``tests/e2e/configuration/server-mode``.
+
+    Returns:
+        Non-empty repo-relative directory path.
+    """
+    raw = os.getenv("E2E_LIGHTSPEED_CONFIG_DIR", _DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR)
+    stripped = raw.strip()
+    return stripped if stripped else _DEFAULT_CLUSTER_LIGHTSPEED_CONFIG_DIR
+
+
+def cluster_lightspeed_config_path(filename: str) -> str:
+    """Absolute path to a Lightspeed stack YAML used for Prow/OpenShift ConfigMap updates.
+
+    The cluster loads config from the ConfigMap; Behave/e2e-ops must read the same
+    YAML from the **runner filesystem**. Using an absolute path anchored at the repo
+    root avoids failures when behave's cwd is not the repository root.
+
+    Parameters:
+        filename: Basename of the Lightspeed stack YAML.
+
+    Returns:
+        Absolute path suitable for ``switch_config`` and ``oc --from-file`` on CI.
+    """
+    base = cluster_lightspeed_config_dir()
+    if os.path.isabs(base):
+        return os.path.normpath(os.path.join(base, filename))
+    return os.path.normpath(os.path.join(_e2e_repo_root(), base, filename))
 
 
 def normalize_endpoint(endpoint: str) -> str:
@@ -33,9 +102,11 @@ def normalize_endpoint(endpoint: str) -> str:
     not already present.
 
     Parameters:
+    ----------
         endpoint (str): The endpoint string to normalize.
 
     Returns:
+    -------
         str: The normalized endpoint starting with '/' and containing no double-quote characters.
     """
     endpoint = endpoint.replace('"', "")
@@ -50,13 +121,16 @@ def validate_json(message: Any, schema: Any) -> None:
     Validate a JSON-like object against a jsonschema-compatible schema.
 
     Parameters:
+    ----------
         message (Any): The JSON-like instance to validate (typically a dict or list).
         schema (Any): A jsonschema-compatible schema describing the expected structure.
 
     Returns:
+    -------
         None
 
     Raises:
+    ------
         AssertionError: If the instance does not conform to the schema or if
         the schema itself is invalid; the assertion message contains the
         underlying jsonschema error.
@@ -74,7 +148,7 @@ def validate_json(message: Any, schema: Any) -> None:
         assert False, "The provided schema is faulty:" + str(e)
 
 
-def wait_for_container_health(container_name: str, max_attempts: int = 3) -> None:
+def wait_for_container_health(container_name: str, max_attempts: int = 6) -> None:
     """Wait for container to be healthy.
 
     Polls a Docker container until its health status becomes `healthy` or the
@@ -86,9 +160,11 @@ def wait_for_container_health(container_name: str, max_attempts: int = 3) -> Non
     after the container is observed healthy or after all attempts complete.
 
     Returns:
+    -------
         None
 
     Parameters:
+    ----------
         container_name (str): Docker container name or ID to check.
         max_attempts (int): Maximum number of health check attempts (default 3).
     """
@@ -216,14 +292,17 @@ def switch_config(
     Replace the destination configuration file with the file at source_path.
 
     Parameters:
+    ----------
         source_path (str): Path to the replacement configuration file.
         destination_path (str): Path to the configuration file to be
         overwritten (defaults to "lightspeed-stack.yaml").
 
     Returns:
+    -------
         None
 
     Raises:
+    ------
         FileNotFoundError: If source_path does not exist.
         PermissionError: If the file cannot be read or destination cannot be
                          written due to permissions.
@@ -275,9 +354,11 @@ def remove_config_backup(backup_path: str) -> None:
     If the file is present, attempts to delete it; on failure prints a warning with the error.
 
     Returns:
+    -------
         None
 
     Parameters:
+    ----------
         backup_path (str): Filesystem path to the backup file to remove.
     """
     if is_prow_environment():
@@ -300,9 +381,11 @@ def clear_llama_stack_storage(container_name: str = "lightspeed-stack") -> None:
     Only runs when using Docker (skipped in Prow).
 
     Parameters:
+    ----------
         container_name (str): Docker container name (default "lightspeed-stack").
 
     Returns:
+    -------
         None
     """
     if is_prow_environment():
@@ -357,10 +440,12 @@ def replace_placeholders(context: Context, text: str) -> str:
     """Replace {MODEL} and {PROVIDER} placeholders with actual values from context.
 
     Parameters:
+    ----------
         context (Context): Behave context containing default_model and default_provider
         text (str): String that may contain {MODEL} and {PROVIDER} placeholders
 
     Returns:
+    -------
         String with placeholders replaced by actual values
     """
     result = text.replace("{MODEL}", context.default_model)

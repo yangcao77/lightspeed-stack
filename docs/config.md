@@ -159,7 +159,7 @@ Global service configuration.
 | llama_stack |  | This section contains Llama Stack configuration. Lightspeed Core Stack service can call Llama Stack in library mode or in server mode. |
 | user_data_collection |  | This section contains configuration for subsystem that collects user data(transcription history and feedbacks). |
 | database |  | Configuration for database to store conversation IDs and other runtime data |
-| mcp_servers | array | MCP (Model Context Protocol) servers provide tools and capabilities to the AI agents. These are configured in this section. Servers can also be registered dynamically at runtime via the `POST /v1/mcp-servers` API endpoint. Only MCP servers defined in lightspeed-stack.yaml or registered via the API are available to the agents. Tools configured in the llama-stack run.yaml are not accessible to lightspeed-core agents. |
+| mcp_servers | array | MCP (Model Context Protocol) servers provide tools and capabilities to the AI agents. These are configured in this section. Only MCP servers defined in the lightspeed-stack.yaml configuration are available to the agents. Tools configured in the llama-stack run.yaml are not accessible to lightspeed-core agents. |
 | authentication |  | Authentication configuration |
 | authorization |  | Lightspeed Core Stack implements a modular authentication and authorization system with multiple authentication methods. Authorization is configurable through role-based access control. Authentication is handled through selectable modules configured via the module field in the authentication configuration. |
 | customization |  | It is possible to customize Lightspeed Core Stack via this section. System prompt can be customized and also different parts of the service can be replaced by custom Python modules. |
@@ -169,6 +169,7 @@ Global service configuration.
 | a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
 | azure_entra_id |  |  |
+| rlsapi_v1 |  | Configuration for the rlsapi v1 /infer endpoint used by the RHEL Lightspeed Command Line Assistant (CLA). |
 | splunk |  | Splunk HEC configuration for sending telemetry events. |
 | deployment_environment | string | Deployment environment name (e.g., 'development', 'staging', 'production'). Used in telemetry events. |
 | rag |  | Configuration for all RAG strategies (inline and tool-based). |
@@ -217,7 +218,6 @@ Service customization.
 | agent_card_path | string |  |
 | agent_card_config | object |  |
 | custom_profile |  |  |
-| allow_verbose_infer | boolean |  |
 
 
 ## DatabaseConfiguration
@@ -359,10 +359,10 @@ Useful resources:
 Model context protocol server configuration.
 
 MCP (Model Context Protocol) servers provide tools and capabilities to the
-AI agents. These are configured by this structure. MCP servers defined in
-lightspeed-stack.yaml and servers registered at runtime via the
-`POST /v1/mcp-servers` API are available to agents. Tools configured in
-the llama-stack run.yaml are not accessible to lightspeed-core agents.
+AI agents. These are configured by this structure. Only MCP servers
+defined in the lightspeed-stack.yaml configuration are available to the
+agents. Tools configured in the llama-stack run.yaml are not accessible to
+lightspeed-core agents.
 
 Useful resources:
 
@@ -526,6 +526,22 @@ the RAG tool will register all stores available to llama-stack.
 |-------|------|-------------|
 | inline | array | RAG IDs whose sources are injected as context before the LLM call. Use 'okp' to enable OKP inline RAG. Empty by default (no inline RAG). |
 | tool | array | RAG IDs made available to the LLM as a file_search tool. Use 'okp' to include the OKP vector store. When omitted, all registered BYOK vector stores are used (backward compatibility). |
+
+
+## RlsapiV1Configuration
+
+
+Configuration for the rlsapi v1 /infer endpoint.
+
+Settings specific to the RHEL Lightspeed Command Line Assistant (CLA)
+stateless inference endpoint. Kept separate from shared configuration
+sections so that CLA-specific options do not affect other endpoints.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| allow_verbose_infer | boolean | Allow /v1/infer to return extended metadata (tool_calls, rag_chunks, token_usage) when the client sends "include_metadata": true. Should NOT be enabled in production. If production use is needed, consider RBAC-based access control via an Action.RLSAPI_V1_INFER authorization rule. |
+| quota_subject | string | Identity field used as the quota subject for /v1/infer. When set, token quota enforcement is enabled for this endpoint. Requires quota_handlers to be configured. "org_id" and "system_id" require rh-identity authentication; falls back to user_id when rh-identity data is unavailable. |
 
 
 ## SQLiteDatabaseConfiguration

@@ -107,6 +107,7 @@ async def _perform_authorization_check(
     the resolved roles are authorized to perform.
 
     Parameters:
+    ----------
         action (Action): The action to authorize.
         args (tuple[Any, ...]): Positional arguments passed to the endpoint;
         used to locate a Request instance if present.
@@ -114,9 +115,11 @@ async def _perform_authorization_check(
         include `auth` (authentication info) and may include `request`.
 
     Returns:
+    -------
         none
 
     Raises:
+    ------
         HTTPException: with 500 Internal Server Error if `auth` is missing from `kwargs`.
         HTTPException: with 403 Forbidden if the resolved roles are not
                        permitted to perform `action`.
@@ -162,10 +165,12 @@ def authorize(action: Action) -> Callable:
     Create a decorator that enforces the specified authorization action on an endpoint.
 
     Parameters:
+    ----------
         action (Action): The action that the decorated endpoint must be
         authorized to perform.
 
     Returns:
+    -------
         Callable: A decorator which, when applied to an endpoint function,
         performs the authorization check for the given action before invoking
         the function.
@@ -176,9 +181,11 @@ def authorize(action: Action) -> Callable:
         Wrap an endpoint function to perform an authorization check before invoking original one.
 
         Parameters:
+        ----------
             func (Callable): The function to wrap.
 
         Returns:
+        -------
             Callable: A wrapper that performs authorization then calls `func`.
         """
 

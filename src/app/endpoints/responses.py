@@ -57,10 +57,12 @@ from utils.endpoints import (
 )
 from utils.mcp_headers import mcp_headers_dependency
 from utils.mcp_oauth_probe import check_mcp_auth
+from utils.prompts import get_system_prompt
 from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
     store_query_results,
     update_azure_token,
     validate_model_provider_override,
@@ -159,8 +161,21 @@ async def responses_endpoint_handler(
             - 500: Internal Server Error - Configuration not loaded or other server errors
             - 503: Service Unavailable - Unable to connect to Llama Stack backend
     """
+    # Known LLS bug: https://redhat.atlassian.net/browse/LCORE-1583
+    if responses_request.reasoning is not None:
+        logger.warning("reasoning is not yet supported in LCORE and will be ignored")
+        responses_request.reasoning = None
+    if responses_request.max_output_tokens is not None:
+        logger.warning(
+            "max_output_tokens is not yet supported in LCORE and will be ignored"
+        )
+        responses_request.max_output_tokens = None
+
     responses_request = responses_request.model_copy(deep=True)
     check_configuration_loaded(configuration)
+    responses_request.instructions = get_system_prompt(
+        responses_request.instructions, field_name="instructions"
+    )
     started_at = datetime.now(UTC)
     user_id = auth[0]
 
@@ -222,11 +237,14 @@ async def responses_endpoint_handler(
         responses_request.shield_ids,
     )
 
-    (
-        responses_request.tools,
-        responses_request.tool_choice,
-        vector_store_ids,
-    ) = await resolve_tool_choice(
+    # Extract vector store IDs for Inline RAG context before resolving tool choice.
+    vector_store_ids: Optional[list[str]] = (
+        extract_vector_store_ids_from_tools(responses_request.tools)
+        if responses_request.tools is not None
+        else None
+    )
+
+    responses_request.tools, responses_request.tool_choice = await resolve_tool_choice(
         responses_request.tools,
         responses_request.tool_choice,
         auth[1],
@@ -322,7 +340,7 @@ async def handle_streaming_response(
                 inline_rag_context=inline_rag_context,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
-            if "context_length" in str(e).lower():
+            if is_context_length_error(str(e)):
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e
@@ -683,7 +701,7 @@ async def handle_non_streaming_response(
                 )
 
         except RuntimeError as e:
-            if "context_length" in str(e).lower():
+            if is_context_length_error(str(e)):
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e

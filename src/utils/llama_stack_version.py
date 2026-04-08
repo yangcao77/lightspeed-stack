@@ -83,12 +83,14 @@ def compare_versions(version_info: str, minimal: str, maximal: str) -> None:
     higher than `maximal`, an InvalidLlamaStackVersionException is raised.
 
     Parameters:
+    ----------
         version_info (str): Semver version string to validate (must be
         parseable by semver.Version.parse).
         minimal (str): Minimum allowed semver version (inclusive).
         maximal (str): Maximum allowed semver version (inclusive).
 
     Raises:
+    ------
         InvalidLlamaStackVersionException: If `version_info` is outside the
         inclusive range defined by `minimal` and `maximal`.
     """

@@ -15,7 +15,8 @@ from models.config import APIKeyTokenConfiguration
 def default_api_key_token_configuration() -> APIKeyTokenConfiguration:
     """Default APIKeyTokenConfiguration for testing.
 
-    Provide a default APIKeyTokenConfiguration for tests.
+    Pytest fixture providing a default APIKeyTokenConfiguration for
+    tests.
 
     Returns:
         APIKeyTokenConfiguration: configuration with `api_key` set to
@@ -24,6 +25,7 @@ def default_api_key_token_configuration() -> APIKeyTokenConfiguration:
     return APIKeyTokenConfiguration(api_key=SecretStr("some-test-api-key"))
 
 
+@pytest.mark.asyncio
 async def test_api_key_with_token_auth_dependency(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
@@ -50,6 +52,7 @@ async def test_api_key_with_token_auth_dependency(
     assert user_token == default_api_key_token_configuration.api_key.get_secret_value()
 
 
+@pytest.mark.asyncio
 async def test_api_key_with_token_auth_dependency_no_token(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
@@ -83,6 +86,7 @@ async def test_api_key_with_token_auth_dependency_no_token(
     assert detail["cause"] == "No Authorization header found"  # type: ignore[index]
 
 
+@pytest.mark.asyncio
 async def test_api_key_with_token_auth_dependency_no_bearer(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
@@ -108,11 +112,13 @@ async def test_api_key_with_token_auth_dependency_no_bearer(
     assert detail["cause"] == "No token found in Authorization header"  # type: ignore[index]
 
 
+@pytest.mark.asyncio
 async def test_api_key_with_token_auth_dependency_invalid(
     default_api_key_token_configuration: APIKeyTokenConfiguration,
 ) -> None:
     """Test the APIKeyTokenAuthDependency class with default user ID,
-    where token's value is not the one from configuration."""
+    where token's value is not the one from configuration.
+    """
     dependency = APIKeyTokenAuthDependency(default_api_key_token_configuration)
 
     request = Request(

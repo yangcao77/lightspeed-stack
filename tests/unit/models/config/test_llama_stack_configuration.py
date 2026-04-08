@@ -83,7 +83,16 @@ def test_llama_stack_wrong_configuration_constructor_library_mode_off() -> None:
 
 
 def test_llama_stack_wrong_configuration_no_config_file() -> None:
-    """Test the LlamaStackConfiguration constructor."""
+    """Test the LlamaStackConfiguration constructor.
+
+    Verify that enabling library-client mode without providing a configuration
+    file path raises a ValueError.
+
+    Asserts that constructing LlamaStackConfiguration with
+    use_as_library_client=True and no library_client_config_path raises a
+    ValueError whose message is "Llama stack library client mode is enabled but
+    a configuration file path is not specified".
+    """
     m = "Llama stack library client mode is enabled but a configuration file path is not specified"
     with pytest.raises(ValueError, match=m):
         LlamaStackConfiguration(

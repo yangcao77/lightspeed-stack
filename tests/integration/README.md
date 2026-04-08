@@ -10,6 +10,7 @@ This directory contains integration tests for Lightspeed Core Stack. Integration
 - [Test Constants](#test-constants)
 - [Writing Integration Tests](#writing-integration-tests)
 - [Running Tests](#running-tests)
+- [Data-Driven (Parameterized) Tests](#data-driven-parameterized-tests)
 - [Best Practices](#best-practices)
 
 ## Getting Started
@@ -251,6 +252,107 @@ uv run make test-integration
 ```bash
 uv run pytest tests/integration/ -v --tb=short
 ```
+
+## Data-Driven (Parameterized) Tests
+
+### Overview
+
+Data-driven tests use `@pytest.mark.parametrize` to run the same test logic with different inputs. This eliminates duplicate code and makes test coverage more visible.
+
+**Benefits:**
+- Reduce code duplication 
+- Add new test cases by simply adding to the data table
+- See all test scenarios at a glance
+- Consistent structure across similar tests
+
+### When to Use
+
+Use parameterized tests when you have:
+- **Multiple similar tests** that differ only in input data and expected output
+- **Validation tests** with multiple valid/invalid scenarios
+- **Error handling tests** with different error conditions
+
+### Pattern
+
+```python
+# Define test cases as a list
+TEST_CASES = [
+    pytest.param(
+        {
+            "input": "value1",
+            "expected_result": "result1",
+        },
+        id="descriptive_test_name_1",
+    ),
+    pytest.param(
+        {
+            "input": "value2",
+            "expected_result": "result2",
+        },
+        id="descriptive_test_name_2",
+    ),
+]
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("test_case", TEST_CASES)
+async def test_example_data_driven(
+    test_case: dict,
+    # ... fixtures
+) -> None:
+    """Data-driven test for example functionality.
+
+    Tests multiple scenarios:
+    - Scenario 1 description
+    - Scenario 2 description
+
+    Parameters:
+        test_case: Dictionary containing test parameters
+        # ... other fixtures
+    """
+    input_value = test_case["input"]
+    expected = test_case["expected_result"]
+
+    result = await function_under_test(input_value)
+
+    assert result == expected
+```
+
+### Best Practices for Parameterized Tests
+
+1. **Use descriptive `id` values** - They appear in test output
+   ```python
+   pytest.param(..., id="attachment_unknown_type_returns_422")  # Good
+   pytest.param(..., id="test1")  # Bad
+   ```
+
+2. **Group related test data** - Keep test cases together at module level
+   ```python
+   ATTACHMENT_TEST_CASES = [...]  # Define near the test that uses it
+   ```
+
+3. **Document all scenarios** - List scenarios in docstring
+   ```python
+   """Data-driven test for attachments.
+
+   Tests:
+   - Single attachment
+   - Empty payload
+   - Invalid type (422 error)
+   """
+   ```
+
+4. **Keep test logic simple** - Use if/else only for success vs. error paths
+   ```python
+   if expected_status == 200:
+       # Success assertions
+   else:
+       # Error assertions
+   ```
+
+5. **Use consistent dict keys** - Standardize parameter names
+   ```python
+   {"expected_status": 200, "expected_error": None}  # Consistent
+   ```
 
 ## Best Practices
 

@@ -51,6 +51,19 @@ from utils.types import TurnSummary
 logger = get_logger(__name__)
 
 
+def is_context_length_error(error_message: str) -> bool:
+    """Check if an error message indicates a context length exceeded error.
+
+    Args:
+        error_message: The error message to check.
+
+    Returns:
+        True if the error indicates context length was exceeded.
+    """
+    msg_lower = error_message.lower()
+    return "context_length" in msg_lower or "context length" in msg_lower
+
+
 def store_conversation_into_cache(
     user_id: str,
     conversation_id: str,
@@ -66,6 +79,7 @@ def store_conversation_into_cache(
     anything.
 
     Parameters:
+    ----------
         user_id (str): Owner identifier used as the cache key.
         conversation_id (str): Conversation identifier used as the cache key.
         cache_entry (CacheEntry): Entry to insert or append to the conversation history.
@@ -117,9 +131,11 @@ def _is_inout_shield(shield: Shield) -> bool:
     Determine if the shield identifier indicates an input/output shield.
 
     Parameters:
+    ----------
         shield (Shield): The shield to check.
 
     Returns:
+    -------
         bool: True if the shield identifier starts with "inout_", otherwise False.
     """
     return shield.identifier.startswith("inout_")
@@ -146,9 +162,11 @@ def is_input_shield(shield: Shield) -> bool:
     shield.
 
     Parameters:
+    ----------
         shield (Shield): The shield identifier to classify.
 
     Returns:
+    -------
         bool: True if the shield is for input or both input/output monitoring; False otherwise.
     """
     return _is_inout_shield(shield) or not is_output_shield(shield)
@@ -467,6 +485,53 @@ def persist_user_conversation_details(
         )
 
 
+def update_conversation_topic_summary(
+    conversation_id: str,
+    topic_summary: str,
+    user_id: Optional[str] = None,
+    skip_userid_check: bool = False,
+) -> None:
+    """Update topic_summary for an existing conversation in DB and optionally cache.
+
+    Args:
+        conversation_id: The conversation ID (normalized or with conv_ prefix).
+        topic_summary: The topic summary to store.
+        user_id: Optional user ID for cache update; when provided with cache
+            configured, also updates the conversation cache.
+        skip_userid_check: Whether to skip user ID validation for cache operations.
+    """
+    normalized_id = normalize_conversation_id(conversation_id)
+    with get_session() as session:
+        existing = session.query(UserConversation).filter_by(id=normalized_id).first()
+        if existing:
+            existing.topic_summary = topic_summary
+            session.commit()
+            logger.debug("Updated topic summary for conversation %s", normalized_id)
+        else:
+            logger.debug(
+                "No conversation found for topic summary update: id=%s, "
+                "topic_summary_len=%d",
+                normalized_id,
+                len(topic_summary),
+            )
+
+    if (
+        user_id
+        and configuration.conversation_cache_configuration.type is not None
+        and configuration.conversation_cache is not None
+    ):
+        try:
+            configuration.conversation_cache.set_topic_summary(
+                user_id, conversation_id, topic_summary, skip_userid_check
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.warning(
+                "Failed to update topic summary in cache for %s: %s",
+                normalized_id,
+                e,
+            )
+
+
 def validate_attachments_metadata(attachments: list[Attachment]) -> None:
     """Validate the attachments metadata provided in the request.
 
@@ -526,10 +591,7 @@ def handle_known_apistatus_errors(
     """
     if error.status_code == 400:
         error_message = getattr(error, "message", str(error))
-        if (
-            "context_length" in error_message.lower()
-            or "context length" in error_message.lower()
-        ):
+        if is_context_length_error(error_message):
             return PromptTooLongResponse(model=model_id)
     elif error.status_code == 429:
         return QuotaExceededResponse.model(model_id)

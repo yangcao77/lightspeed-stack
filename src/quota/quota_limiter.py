@@ -55,9 +55,11 @@ class QuotaLimiter(ABC):
         Get the remaining quota for the specified subject.
 
         Parameters:
+        ----------
             subject_id (str): Identifier of the subject (user or service) whose quota to retrieve.
 
         Returns:
+        -------
             available_quota (int): Number of quota units currently available for the subject.
         """
 
@@ -95,6 +97,7 @@ class QuotaLimiter(ABC):
         Consume the specified input and output tokens from a subject's available quota.
 
         Parameters:
+        ----------
             input_tokens (int): Number of input tokens to deduct from the subject's quota.
             output_tokens (int): Number of output tokens to deduct from the subject's quota.
             subject_id (str): Identifier of the subject (user or service) whose

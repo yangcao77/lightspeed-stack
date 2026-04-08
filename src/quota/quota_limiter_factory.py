@@ -21,10 +21,12 @@ class QuotaLimiterFactory:
         """Create instances of quota limiters based on loaded configuration.
 
         Parameters:
+        ----------
             config (QuotaHandlersConfiguration): Configuration containing
                                                  storage settings and limiter definitions.
 
         Returns:
+        -------
             list[QuotaLimiter]: List of initialized quota limiter instances.
             Returns an empty list if storage configuration or limiter
             definitions are missing.
@@ -66,6 +68,7 @@ class QuotaLimiterFactory:
         Instantiate a quota limiter instance for the given limiter type.
 
         Parameters:
+        ----------
             configuration (QuotaHandlersConfiguration): Configuration used to
                                                         initialize the limiter.
             limiter_type (str): Identifier of the limiter to create; expected values are
@@ -74,9 +77,11 @@ class QuotaLimiterFactory:
             increase_by (int): Amount by which the quota increases when replenished.
 
         Returns:
+        -------
             QuotaLimiter: A configured quota limiter instance of the requested type.
 
         Raises:
+        ------
             ValueError: If `limiter_type` is not a recognized limiter identifier.
         """
         match limiter_type:

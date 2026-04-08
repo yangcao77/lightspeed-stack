@@ -25,6 +25,7 @@ async def test_config_endpoint_returns_config(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         test_config (AppConfig): Fixture providing the expected configuration to be returned.
         test_request (Request): FastAPI request object used to call the endpoint.
         test_auth (AuthTuple): Authentication fixture used for the request.
@@ -50,6 +51,7 @@ async def test_config_endpoint_returns_current_config(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         current_config (AppConfig): Loads root configuration
         test_request (Request): FastAPI request
         test_auth (AuthTuple): noop authentication tuple
@@ -72,6 +74,7 @@ async def test_config_endpoint_fails_without_configuration(
     - Error message indicates configuration is not loaded
 
     Parameters:
+    ----------
         test_request (Request): FastAPI request fixture
         test_auth (AuthTuple): noop authentication fixture
     """

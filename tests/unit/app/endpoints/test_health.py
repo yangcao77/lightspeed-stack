@@ -125,6 +125,7 @@ class TestProviderHealthStatus:
 class TestGetProvidersHealthStatuses:
     """Test cases for the get_providers_health_statuses function."""
 
+    @pytest.mark.asyncio
     async def test_get_providers_health_statuses(self, mocker: MockerFixture) -> None:
         """Test get_providers_health_statuses with healthy providers.
 
@@ -187,6 +188,7 @@ class TestGetProvidersHealthStatuses:
         assert result[2].status == HealthStatus.ERROR.value
         assert result[2].message == "Connection failed"
 
+    @pytest.mark.asyncio
     async def test_get_providers_health_statuses_connection_error(
         self, mocker: MockerFixture
     ) -> None:

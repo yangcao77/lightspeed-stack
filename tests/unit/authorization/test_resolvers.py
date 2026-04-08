@@ -22,9 +22,11 @@ def claims_to_token(claims: dict) -> str:
     and signature.
 
     Parameters:
+    ----------
         claims (dict): JWT claims to serialize and encode.
 
     Returns:
+    -------
         token (str): A token string in the form "foo_header.<base64url(JSON
         claims)>.foo_signature", where the payload is base64url-encoded without
         padding.
@@ -42,9 +44,11 @@ def claims_to_auth_tuple(claims: dict) -> AuthTuple:
     Builds an AuthTuple from JWT claims for use in tests.
 
     Parameters:
+    ----------
         claims (dict): JWT claims to encode into the returned token.
 
     Returns:
+    -------
         AuthTuple: A 4-tuple (username, token_id, expired, jwt_token) where
         `username` is the fixed string "user", `token_id` is the fixed string
         "token", `expired` is False, and `jwt_token` is the token produced from
@@ -86,9 +90,11 @@ class TestJwtRolesResolver:
         employee role rule.
 
         Parameters:
+        ----------
             employee_role_rule (JwtRoleRule): Rule used to map JWT claims to the employee role.
 
         Returns:
+        -------
             JwtRolesResolver: Resolver initialized with the given rule.
         """
         return JwtRolesResolver([employee_role_rule])
@@ -128,6 +134,7 @@ class TestJwtRolesResolver:
             "realm_access": {"roles": ["uma_authorization", "default-roles-example"]},
         }
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_redhat_employee(
         self, employee_resolver: JwtRolesResolver, employee_claims: dict[str, Any]
     ) -> None:
@@ -136,6 +143,7 @@ class TestJwtRolesResolver:
             claims_to_auth_tuple(employee_claims)
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_no_match(
         self, employee_resolver: JwtRolesResolver, non_employee_claims: dict[str, Any]
     ) -> None:
@@ -149,6 +157,7 @@ class TestJwtRolesResolver:
             == 0
         )
 
+    @pytest.mark.asyncio
     async def test_negate_operator(
         self, employee_role_rule: JwtRoleRule, non_employee_claims: dict[str, Any]
     ) -> None:
@@ -204,6 +213,7 @@ class TestJwtRolesResolver:
             ]
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_equals_operator(
         self, equals_rule_resolver: JwtRolesResolver, employee_claims: dict[str, Any]
     ) -> None:
@@ -232,6 +242,7 @@ class TestJwtRolesResolver:
             ]
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_in_operator(
         self, in_rule_resolver: JwtRolesResolver, employee_claims: dict[str, Any]
     ) -> None:
@@ -240,6 +251,7 @@ class TestJwtRolesResolver:
             claims_to_auth_tuple(employee_claims)
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_match_operator_email_domain(
         self, email_rule_resolver: JwtRolesResolver, employee_claims: dict[str, Any]
     ) -> None:
@@ -248,6 +260,7 @@ class TestJwtRolesResolver:
             claims_to_auth_tuple(employee_claims)
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_match_operator_no_match(
         self, email_rule_resolver: JwtRolesResolver, non_employee_claims: dict[str, Any]
     ) -> None:
@@ -261,6 +274,7 @@ class TestJwtRolesResolver:
             == 0
         )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_match_operator_invalid_regex(self) -> None:
         """Test that invalid regex patterns are rejected at rule creation time."""
         with pytest.raises(
@@ -274,6 +288,7 @@ class TestJwtRolesResolver:
                 negate=False,
             )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_match_operator_non_string_pattern(self) -> None:
         """Test that non-string regex patterns are rejected at rule creation time."""
         with pytest.raises(
@@ -287,6 +302,7 @@ class TestJwtRolesResolver:
                 negate=False,
             )
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_match_operator_non_string_value(self) -> None:
         """Test role extraction using MATCH operator with non-string match value."""
         role_rules = [
@@ -310,6 +326,7 @@ class TestJwtRolesResolver:
         roles = await jwt_resolver.resolve_roles(auth)
         assert len(roles) == 0  # Non-string values don't match regex
 
+    @pytest.mark.asyncio
     async def test_compiled_regex_property(self) -> None:
         """Test that compiled regex pattern is properly created for MATCH operator."""
         # Test MATCH operator creates compiled regex
@@ -334,6 +351,7 @@ class TestJwtRolesResolver:
         )
         assert equals_rule.compiled_regex is None
 
+    @pytest.mark.asyncio
     async def test_resolve_roles_with_no_user_token(
         self, employee_resolver: JwtRolesResolver
     ) -> None:
@@ -378,6 +396,7 @@ class TestGenericAccessResolver:
             AccessRule(role="moderator", actions=[Action.FEEDBACK]),
         ]
 
+    @pytest.mark.asyncio
     async def test_check_access_with_valid_role(self) -> None:
         """Test access check with valid role."""
         access_rules = [
@@ -393,6 +412,7 @@ class TestGenericAccessResolver:
         has_access = resolver.check_access(Action.FEEDBACK, {"employee"})
         assert has_access is False
 
+    @pytest.mark.asyncio
     async def test_check_access_with_invalid_role(self) -> None:
         """Test access check with invalid role."""
         access_rules = [
@@ -403,6 +423,7 @@ class TestGenericAccessResolver:
         has_access = resolver.check_access(Action.QUERY, {"visitor"})
         assert has_access is False
 
+    @pytest.mark.asyncio
     async def test_check_access_with_no_roles(self) -> None:
         """Test access check with no roles."""
         access_rules = [

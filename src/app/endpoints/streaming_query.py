@@ -56,6 +56,7 @@ from constants import (
     MEDIA_TYPE_EVENT_STREAM,
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_TEXT,
+    TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
 )
 from log import get_logger
 from models.config import Action
@@ -84,9 +85,11 @@ from utils.query import (
     consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
     prepare_input,
     store_query_results,
     update_azure_token,
+    update_conversation_topic_summary,
     validate_attachments_metadata,
     validate_model_provider_override,
 )
@@ -116,6 +119,9 @@ from utils.vector_search import build_rag_context
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["streaming_query"])
+
+# Tracks background topic summary tasks for graceful shutdown.
+_background_topic_summary_tasks: list[asyncio.Task[None]] = []
 
 streaming_query_responses: dict[int | str, dict[str, Any]] = {
     200: StreamingQueryResponse.openapi_response(),
@@ -349,7 +355,7 @@ async def retrieve_response_generator(
         )
     # Handle know LLS client errors only at stream creation time and shield execution
     except RuntimeError as e:  # library mode wraps 413 into runtime error
-        if "context_length" in str(e).lower():
+        if is_context_length_error(str(e)):
             error_response = PromptTooLongResponse(model=responses_params.model)
             raise HTTPException(**error_response.model_dump()) from e
         raise e
@@ -365,6 +371,61 @@ async def retrieve_response_generator(
         raise HTTPException(**error_response.model_dump()) from e
 
 
+async def _background_update_topic_summary(
+    context: ResponseGeneratorContext,
+    model: str,
+) -> None:
+    """Generate topic summary and update DB/cache in the background.
+
+    Runs as a fire-and-forget task after an interrupted turn is persisted.
+    All errors are caught and logged.
+    """
+    try:
+        topic_summary = await asyncio.wait_for(
+            get_topic_summary(
+                context.query_request.query,
+                context.client,
+                model,
+            ),
+            timeout=TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
+        )
+        if topic_summary:
+            update_conversation_topic_summary(
+                context.conversation_id,
+                topic_summary,
+                user_id=context.user_id,
+                skip_userid_check=context.skip_userid_check,
+            )
+    except asyncio.TimeoutError:
+        logger.warning(
+            "Topic summary timed out for interrupted turn, request %s",
+            context.request_id,
+        )
+    except Exception:  # pylint: disable=broad-except
+        logger.exception(
+            "Failed to generate topic summary for interrupted turn, request %s",
+            context.request_id,
+        )
+
+
+async def shutdown_background_topic_summary_tasks() -> None:
+    """Cancel and await outstanding background topic summary tasks on shutdown.
+
+    Ensures graceful shutdown so in-flight topic summary generation can be
+    cleaned up. Called from the application lifespan shutdown phase.
+    """
+    tasks = list(_background_topic_summary_tasks)
+    if not tasks:
+        return
+    logger.debug(
+        "Shutting down %d outstanding background topic summary task(s)",
+        len(tasks),
+    )
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+
+
 async def _persist_interrupted_turn(
     context: ResponseGeneratorContext,
     responses_params: ResponsesApiParams,
@@ -373,10 +434,12 @@ async def _persist_interrupted_turn(
     """Persist the user query and an interrupted response into the conversation.
 
     Called when a streaming request is cancelled so the exchange is not lost.
-    All errors are caught and logged to avoid masking the original
-    cancellation.
+    Persists immediately with topic_summary=None so the conversation exists
+    when the client fetches. Topic summary is generated in a background task
+    and updated when ready.
 
     Parameters:
+    ----------
         context: The response generator context.
         responses_params: The Responses API parameters.
         turn_summary: TurnSummary with llm_response already set to the
@@ -396,27 +459,6 @@ async def _persist_interrupted_turn(
         )
 
     try:
-        topic_summary = None
-        if not context.query_request.conversation_id:
-            should_generate = context.query_request.generate_topic_summary
-            if should_generate:
-                try:
-                    logger.debug(
-                        "Generating topic summary for interrupted new conversation"
-                    )
-                    topic_summary = await get_topic_summary(
-                        context.query_request.query,
-                        context.client,
-                        responses_params.model,
-                    )
-                except Exception as e:  # pylint: disable=broad-except
-                    logger.warning(
-                        "Failed to generate topic summary for interrupted turn, "
-                        "request %s: %s",
-                        context.request_id,
-                        e,
-                    )
-
         completed_at = datetime.datetime.now(datetime.UTC).strftime(
             "%Y-%m-%dT%H:%M:%SZ"
         )
@@ -429,8 +471,21 @@ async def _persist_interrupted_turn(
             summary=turn_summary,
             query=context.query_request.query,
             skip_userid_check=context.skip_userid_check,
-            topic_summary=topic_summary,
+            topic_summary=None,
         )
+
+        if (
+            not context.query_request.conversation_id
+            and context.query_request.generate_topic_summary
+        ):
+            task = asyncio.create_task(
+                _background_update_topic_summary(
+                    context=context,
+                    model=responses_params.model,
+                )
+            )
+            _background_topic_summary_tasks.append(task)
+            task.add_done_callback(_background_topic_summary_tasks.remove)
     except Exception:  # pylint: disable=broad-except
         logger.exception(
             "Failed to store interrupted query results for request %s",
@@ -445,8 +500,8 @@ def _register_interrupt_callback(
 ) -> list[bool]:
     """Build an interrupt callback and register the stream for cancellation.
 
-    The callback is scheduled as a **separate** asyncio task by
-    ``cancel_stream`` so it executes regardless of where the
+    The callback is invoked by ``cancel_stream`` when the client
+    interrupts, so persistence runs regardless of where the
     ``CancelledError`` is raised in the ASGI stack.
 
     A mutable one-element list is used as a shared guard so the
@@ -454,11 +509,13 @@ def _register_interrupt_callback(
     both persist the same turn.
 
     Parameters:
+    ----------
         context: The response generator context.
         responses_params: The Responses API parameters.
         turn_summary: TurnSummary populated during streaming.
 
     Returns:
+    -------
         A mutable list ``[False]`` used as a persist-done guard; the
         caller should check ``guard[0]`` before persisting and set
         it to ``True`` afterwards.
@@ -534,7 +591,7 @@ async def generate_response(
     except RuntimeError as e:  # library mode wraps 413 into runtime error
         error_response = (
             PromptTooLongResponse(model=responses_params.model)
-            if "context_length" in str(e).lower()
+            if is_context_length_error(str(e))
             else InternalServerErrorResponse.generic()
         )
         yield stream_http_error_event(error_response, context.query_request.media_type)
@@ -779,7 +836,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
             )
             error_response = (
                 PromptTooLongResponse(model=context.model_id)
-                if "context_length" in error_message.lower()
+                if is_context_length_error(error_message)
                 else InternalServerErrorResponse.query_failed(error_message)
             )
             yield stream_http_error_event(error_response, media_type)
@@ -824,6 +881,7 @@ def stream_http_error_event(
     Args:
         error: An AbstractErrorResponse instance representing the error.
         media_type: The media type for the response format. Defaults to MEDIA_TYPE_JSON if None.
+
     Returns:
         str: A Server-Sent Events (SSE) formatted error message containing
             the serialized error details.
@@ -850,9 +908,11 @@ def format_stream_data(d: dict) -> str:
     Create a response generator function for Responses API streaming.
 
     Parameters:
+    ----------
         d (dict): The data to be formatted as an SSE event.
 
     Returns:
+    -------
         str: The formatted SSE data string.
     """
     data = json.dumps(d)
@@ -867,11 +927,13 @@ def stream_start_event(conversation_id: str, request_id: str) -> str:
     use the request ID to issue an interrupt if needed.
 
     Parameters:
+    ----------
         conversation_id (str): Unique identifier for the conversation.
         request_id (str): Unique SUID for this streaming request,
             returned to the client for interrupt support.
 
     Returns:
+    -------
         str: SSE-formatted string representing the start event.
     """
     return format_stream_data(
@@ -893,9 +955,11 @@ def stream_interrupted_event(request_id: str) -> str:
     from an unexpected connection drop.
 
     Parameters:
+    ----------
         request_id (str): Unique identifier for the interrupted request.
 
     Returns:
+    -------
         str: SSE-formatted string representing the interrupted event.
     """
     return format_stream_data(
@@ -921,12 +985,14 @@ def stream_end_event(
     including referenced document metadata and token usage information.
 
     Parameters:
+    ----------
         token_usage (TokenCounter): Token usage information.
         available_quotas (dict[str, int]): Available quotas for the user.
         referenced_documents (list[ReferencedDocument]): List of referenced documents.
         media_type (str): The media type for the response format.
 
     Returns:
+    -------
         str: A Server-Sent Events (SSE) formatted string
         representing the end of the data stream.
     """

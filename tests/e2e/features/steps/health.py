@@ -24,6 +24,7 @@ def llama_stack_connection_broken(context: Context) -> None:
     error.
 
     Parameters:
+    ----------
         context (behave.runner.Context): Behave context used to store
         `llama_stack_was_running` and share state between steps.
     """
@@ -69,6 +70,7 @@ def stop_service(context: Context) -> None:
     Stop a service used by the current test scenario.
 
     Parameters:
+    ----------
         context (Context): Behave step context carrying scenario state and configuration.
     """
     # TODO: add step implementation

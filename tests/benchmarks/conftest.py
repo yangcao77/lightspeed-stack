@@ -14,9 +14,11 @@ def configuration_filename_sqlite_fixture() -> str:
     """Retrieve configuration file name to be used by benchmarks.
 
     Parameters:
+    ----------
         None
 
     Returns:
+    -------
         str: Path to the benchmark configuration file to load.
     """
     return "tests/configuration/benchmarks-sqlite.yaml"
@@ -27,9 +29,11 @@ def configuration_filename_postgres_fixture() -> str:
     """Retrieve configuration file name to be used by benchmarks.
 
     Parameters:
+    ----------
         None
 
     Returns:
+    -------
         str: Path to the benchmark configuration file to load.
     """
     return "tests/configuration/benchmarks-postgres.yaml"
@@ -46,10 +50,12 @@ def sqlite_database_fixture(configuration_filename_sqlite: str, tmp_path: Path) 
     - Initializes the DB engine and creates required tables.
 
     Parameters:
+    ----------
         configuration_filename_sqlite (str): Path to the YAML configuration file to load.
         tmp_path (Path): pytest-provided temporary directory for creating the DB file.
 
     Raises:
+    ------
         AssertionError: If the configuration does not include an sqlite configuration.
     """
     # try to load the configuration containing SQLite database setup
@@ -102,9 +108,11 @@ def postgres_database_fixture(configuration_filename_postgres: str) -> None:
     - Initializes the DB engine and creates required tables.
 
     Parameters:
+    ----------
         configuration_filename_postgres (str): Path to the YAML configuration file to load.
 
     Raises:
+    ------
         AssertionError: If the configuration does not include an postgres configuration.
     """
     # try to load the configuration containing postgres database setup

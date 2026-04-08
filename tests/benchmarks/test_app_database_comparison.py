@@ -27,10 +27,12 @@ def test_store_new_user_conversations(
     Benchmark is performed against small DB.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)
@@ -46,10 +48,12 @@ def test_update_user_conversation(
     """Benchmark updating conversation on small database.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)
@@ -65,10 +69,12 @@ def test_list_conversations_for_all_users(
     """Benchmark listing conversations on small database.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)
@@ -84,10 +90,12 @@ def test_list_conversations_for_one_user(
     """Benchmark listing conversations on an small database.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)
@@ -103,10 +111,12 @@ def test_retrieve_conversation_for_all_users(
     """Benchmark retrieving conversations on a small database.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)
@@ -122,10 +132,12 @@ def test_retrieve_conversation_for_one_user(
     """Benchmark retrieving conversations on a small database.
 
     Parameters:
+    ----------
         sqlite_database: Fixture that prepares a temporary SQLite DB.
         benchmark (BenchmarkFixture): pytest-benchmark fixture.
 
     Returns:
+    -------
         None
     """
     request.getfixturevalue(db_fixture)

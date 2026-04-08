@@ -60,9 +60,11 @@ class InterceptionProxy:
         """Create an SSL context with a certificate for the given hostname.
 
         Parameters:
+        ----------
             hostname: The hostname to generate a certificate for.
 
         Returns:
+        -------
             An ssl.SSLContext configured for server-side TLS with a cert
             signed by the proxy's CA for the given hostname.
         """
@@ -204,6 +206,7 @@ class InterceptionProxy:
         """Export the CA certificate to a PEM file.
 
         Parameters:
+        ----------
             path: File path to write the CA certificate PEM to.
         """
         self.ca.cert_pem.write_to_path(str(path))

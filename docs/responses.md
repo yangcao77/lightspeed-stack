@@ -24,6 +24,7 @@ This document describes the LCORE implementation of the OpenResponses API, expos
   * [Output Representation](#output-representation)
   * [Tool Configuration Differences](#tool-configuration-differences)
   * [LCORE-Specific Extensions](#lcore-specific-extensions-2)
+  * [System Prompt Resolution](#system-prompt-resolution)
   * [Streaming Differences](#streaming-differences)
 * [Examples](#examples)
   * [Basic Request (Non-Streaming)](#basic-request-non-streaming)
@@ -95,6 +96,8 @@ The following request attributes are supported as defined by the underlying Llam
 | `text` | object | Output format specification (JSON schema, JSON object, or text) | No |
 | `tool_choice` | string or object | Tool selection strategy (auto, required, none, or specific rules). Default: auto | No |
 | `tools` | array[object] | Tools available for request (file search, web search, functions, MCP). Default: all | No |
+
+**Note:** `reasoning` and `max_output_tokens` are accepted for OpenResponses compatibility but are **not yet supported** in LCORE: the endpoint clears them before processing and logs a warning.
 
 ### LCORE-Specific Extensions
 
@@ -268,7 +271,7 @@ JSON schema with optional name, description, and strict mode:
 
 #### `tool_choice`
 
-Optional. **Tool selection strategy** that controls whether and how the model uses tools.
+Optional. **Tool selection strategy** that controls whether and how the model uses tools. Does not affect inline RAG selection.
 
 **What it does:** When tools are supplied by `tools` attribute, `tool_choice` decides if the model may call them, must call at least one, or must not use any. You can pass a **simple mode string** or a **specific tool-config object** to force a particular tool (e.g. always use file search or a given function). Omitted or `null` behaves like `"auto"`. Typical use: disable tools for a plain-Q&A turn (`"none"`), force RAG-only (`file_search`), or constrain to a subset of tools (`allowed_tools`).
 
@@ -280,9 +283,9 @@ Optional. **Tool selection strategy** that controls whether and how the model us
 
 **Specific tool objects (object with `type`):**
 
-- `allowed_tools`: Restrict to a list of tool definitions; `mode` is `"auto"` or `"required"`, `tools` is a list of tool objects (same shapes as in [tools](#tools)).
-- `file_search`: Force the model to use file search.
-- `web_search`: Force the model to use web search (optionally with a variant such as `web_search_preview`).
+- `allowed_tools`: Restrict to a list of tool definitions; `mode` is `"auto"` or `"required"`, `tools` is a list of key-valued filters for tools configured by `tools` attribute.
+- `file_search`: Force the model to use file-only search.
+- `web_search`: Force the model to use only web search.
 - `function`: Force a specific function; `name` (required) is the function name.
 - `mcp`: Force a tool on an MCP server; `server_label` (required), `name` (optional) tool name.
 - `custom`: Force a custom tool; `name` (required).
@@ -297,7 +300,15 @@ Simple modes (string): use one of `"auto"`, `"required"`, or `"none"`.
 { "tool_choice": "none" }
 ```
 
-Restrict to specific tools with `allowed_tools` (mode `"auto"` or `"required"`, plus `tools` array):
+Restrict tool usage to a specific subset using `allowed_tools`. You can control behavior with the `mode` field (`"auto"` or `"required"`) and explicitly list permitted tools in the `tools` array.
+
+The `tools` array acts as a **key-value filter**: each object specifies matching criteria (such as `type`, `server_label`, or `name`), and only tools that satisfy all provided attributes are allowed.
+
+The example below limits tool usage to:
+- the `file_search` tool  
+- a specific MCP tools (`tool_1` and `tool_2`) available on `server_1` (for multiple `name`s act as union)
+
+If the `name` field is omitted for an MCP tool, the filter applies to all tools available on the specified server.
 
 ```json
 {
@@ -305,8 +316,9 @@ Restrict to specific tools with `allowed_tools` (mode `"auto"` or `"required"`, 
     "type": "allowed_tools",
     "mode": "required",
     "tools": [
-      { "type": "file_search", "vector_store_ids": ["vs_123"] },
-      { "type": "web_search" }
+      { "type": "file_search"},
+      { "type": "mcp", "server_label": "server_1", "name": "tool_1" },
+      { "type": "mcp", "server_label": "server_1", "name": "tool_2" }
     ]
   }
 }
@@ -396,8 +408,8 @@ The following response attributes are inherited directly from the LLS OpenAPI sp
 | `temperature` | float | Temperature parameter used for generation |
 | `text` | object | Text response configuration object used |
 | `top_p` | float | Top-p sampling used |
-| `tools` | array[object] | Tools available during generation |
-| `tool_choice` | string or object | Tool selection used |
+| `tools` | array[object] | Internally resolved tools available during generation |
+| `tool_choice` | string or object | Internally resolved tool selection used |
 | `truncation` | string | Truncation strategy applied (`"auto"` or `"disabled"`) |
 | `usage` | object | Token usage (input_tokens, output_tokens, total_tokens) |
 | `instructions` | string | System instructions used |
@@ -517,6 +529,10 @@ Vector store IDs are configured within the `tools` as `file_search` tools rather
 
 **Vector store IDs:** Accepts **LCORE format** in requests and also outputs it in responses; LCORE translates to/from Llama Stack format internally.
 
+The response includes `tools` and `tool_choice` fields that reflect the internally resolved configuration. More specifically, the final set of tools and selection constraints after internal resolution and filtering.
+
+`tool_choice` only constrains how the model may use tools (including RAG via the `file_search` tool). It does **not** change inline RAG: vector store IDs you list under `tools` for file search are still used to build inline RAG context even if you set `tool_choice` to `none` or use an allowlist that omits `file_search`.
+
 ### LCORE-Specific Extensions
 
 The API introduces extensions that are not part of the OpenResponses specification:
@@ -525,6 +541,19 @@ The API introduces extensions that are not part of the OpenResponses specificati
 - `shield_ids` (request) — Optional list of safety shield IDs to apply. If omitted, all configured shields are used.
 - `solr` (request) — Solr vector_io provider query parameters (e.g. filter queries).
 - `available_quotas` (response) — Provides real-time quota information from all configured quota limiters.
+
+### System Prompt Resolution
+
+The `instructions` field on the `/v1/responses` endpoint follows the same server-side system prompt resolution logic used by `/v1/query`. When the server processes a request, the `instructions` value is resolved using the following precedence (highest to lowest):
+
+1. **Client-provided `instructions`** — If the request includes a non-null `instructions` value and per-request customization is allowed, it is used as-is.
+2. **Custom profile default prompt** — If a custom profile is configured and defines a `"default"` prompt, that prompt is used.
+3. **Configured system prompt** — If `customization.system_prompt` is set in the server configuration, it is used.
+4. **Built-in default** — The hardcoded default system prompt (`"You are a helpful assistant"`) is used as a last resort.
+
+If the server configuration sets `disable_query_system_prompt` to `true`, any request that includes a non-null `instructions` value is rejected with a `422 Unprocessable Entity` error. The error message references the `instructions` field specifically.
+
+This means that even when `instructions` is omitted from the request, the response will always contain a resolved `instructions` value reflecting the server-side default or configured system prompt.
 
 ### Streaming Differences
 

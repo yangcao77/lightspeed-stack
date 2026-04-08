@@ -21,6 +21,7 @@ async def test_authorized_endpoint(
     - Response structure matches expected format
 
     Parameters:
+    ----------
         test_config (AppConfig): Loads root configuration
         test_auth (AuthTuple): noop authentication tuple
     """

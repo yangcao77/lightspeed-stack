@@ -242,10 +242,12 @@ def get_nested_value(obj: Any, path: str) -> Any:
     Returns None if any intermediate value is None or missing.
 
     Parameters:
+    ----------
         obj: The root object to traverse (Pydantic model or dict).
         path: Dotted path to the target field (e.g., "service.tls_config.tls_key_path").
 
     Returns:
+    -------
         The value at the specified path, or None if not found.
     """
     current = obj
@@ -263,9 +265,11 @@ def _serialize_passthrough(value: Any) -> Any:
     """Convert a passthrough value to JSON-serializable form.
 
     Parameters:
+    ----------
         value: The value to serialize.
 
     Returns:
+    -------
         A JSON-serializable representation of the value.
     """
     if value is None:
@@ -290,10 +294,12 @@ def mask_value(value: Any, masking: MaskingType) -> Any:
     """Apply masking to a configuration value.
 
     Parameters:
+    ----------
         value: The raw configuration value.
         masking: The masking type to apply.
 
     Returns:
+    -------
         The masked or serialized value.
     """
     if masking == MaskingType.SENSITIVE:
@@ -307,6 +313,7 @@ def _set_nested_value(target: dict[str, Any], path: str, value: Any) -> None:
     """Set a value in a nested dict by dotted path, creating intermediates.
 
     Parameters:
+    ----------
         target: The target dict to modify.
         path: Dotted path where the value should be set.
         value: The value to set.
@@ -324,10 +331,12 @@ def _extract_field(source: Any, spec: FieldSpec) -> Any:
     """Extract and mask a single field from a source object.
 
     Parameters:
+    ----------
         source: The source object (Pydantic model or dict).
         spec: The field specification.
 
     Returns:
+    -------
         The masked value of the field.
     """
     value = get_nested_value(source, spec.path)
@@ -340,10 +349,12 @@ def _extract_list_field(
     """Extract and mask a list field with per-item sub-fields.
 
     Parameters:
+    ----------
         source: The source object (Pydantic model or dict).
         spec: The list field specification.
 
     Returns:
+    -------
         A list of dicts with masked sub-fields, or NOT_CONFIGURED if the
         list is None.
     """
@@ -371,10 +382,12 @@ def _extract_snapshot_fields(
     """Extract and mask fields from a source according to the field registry.
 
     Parameters:
+    ----------
         source: The source object (Pydantic model or dict).
         field_registry: Tuple of field specifications defining what to extract.
 
     Returns:
+    -------
         A nested dict containing the extracted and masked fields.
     """
     snapshot: dict[str, Any] = {}
@@ -399,10 +412,12 @@ def _extract_store_info(ls_config: dict[str, Any], store_name: str) -> dict[str,
     storage config structure.
 
     Parameters:
+    ----------
         ls_config: The parsed llama-stack configuration dict.
         store_name: Name of the store to look up (e.g., "inference", "metadata").
 
     Returns:
+    -------
         A dict with 'type' and 'db_path' keys, plus 'namespace' for metadata store.
     """
     store = get_nested_value(ls_config, f"storage.stores.{store_name}")
@@ -442,9 +457,11 @@ def build_lightspeed_stack_snapshot(
     and passing through non-sensitive values (booleans, numbers, identifiers).
 
     Parameters:
+    ----------
         config: The lightspeed-stack Configuration object.
 
     Returns:
+    -------
         A nested dict containing the masked configuration snapshot.
     """
     return _extract_snapshot_fields(config, LIGHTSPEED_STACK_FIELDS)
@@ -454,9 +471,11 @@ def _read_yaml_file(config_path: str) -> Any:
     """Read and parse a YAML config file synchronously.
 
     Parameters:
+    ----------
         config_path: Path to the YAML file.
 
     Returns:
+    -------
         The parsed YAML content, or None on failure.
     """
     try:
@@ -477,10 +496,12 @@ async def build_llama_stack_snapshot(
     returns a status indicating the config is not available locally.
 
     Parameters:
+    ----------
         config_path: Path to the llama-stack YAML config file. If None
             (service mode), llama-stack fields are marked as not available.
 
     Returns:
+    -------
         A nested dict containing the masked llama-stack configuration snapshot,
         or a status dict if the config is not available.
     """
@@ -511,11 +532,13 @@ async def build_configuration_snapshot(
     whole configuration.
 
     Parameters:
+    ----------
         config: The lightspeed-stack Configuration object.
         llama_stack_config_path: Path to the llama-stack YAML config file.
             If None (service mode), llama-stack section is marked not available.
 
     Returns:
+    -------
         A dict with 'lightspeed_stack' and 'llama_stack' keys containing
         the respective masked snapshots, ready for JSON serialization.
     """

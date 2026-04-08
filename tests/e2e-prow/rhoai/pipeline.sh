@@ -194,8 +194,11 @@ echo "✅ Mock servers deployed"
 echo "===== Deploying Services ====="
 
 create_secret api-url-secret --from-literal=key="$KSVC_URL"
-oc create configmap llama-stack-config -n "$NAMESPACE" --from-file=configs/run.yaml
-oc create configmap lightspeed-stack-config -n "$NAMESPACE" --from-file=configs/lightspeed-stack.yaml
+# Llama run.yaml: vLLM layout (not under server-mode). Lightspeed: single source with GitHub E2E server-mode.
+oc create configmap llama-stack-config -n "$NAMESPACE" \
+  --from-file="$REPO_ROOT/tests/e2e-prow/rhoai/configs/run.yaml"
+oc create configmap lightspeed-stack-config -n "$NAMESPACE" \
+  --from-file="$REPO_ROOT/tests/e2e/configuration/server-mode/lightspeed-stack.yaml"
 
 # Create RAG data ConfigMap from the e2e test RAG data
 echo "Creating RAG data ConfigMap..."

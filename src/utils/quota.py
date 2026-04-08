@@ -28,6 +28,7 @@ def consume_tokens(
     """Consume tokens from cluster and/or user quotas.
 
     Parameters:
+    ----------
         quota_limiters: List of quota limiter instances to consume tokens from.
         token_usage_history: Optional instance of TokenUsageHistory class that records used tokens
         user_id: Identifier of the user consuming tokens.
@@ -37,6 +38,7 @@ def consume_tokens(
         provider_id: Provider identification
 
     Returns:
+    -------
         None
     """
     # record token usage history
@@ -61,13 +63,16 @@ def check_tokens_available(quota_limiters: list[QuotaLimiter], user_id: str) -> 
     """Check if tokens are available for user.
 
     Parameters:
+    ----------
         quota_limiters: List of quota limiter instances to check.
         user_id: Identifier of the user to check quota for.
 
     Returns:
+    -------
         None
 
     Raises:
+    ------
         HTTPException: With status 500 if database communication fails,
             or status 429 if quota is exceeded.
     """

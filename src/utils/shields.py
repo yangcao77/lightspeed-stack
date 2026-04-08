@@ -40,9 +40,11 @@ async def get_available_shields(client: AsyncLlamaStackClient) -> list[str]:
     Discover and return available shield identifiers.
 
     Parameters:
+    ----------
         client: The Llama Stack client to query for available shields.
 
     Returns:
+    -------
         list[str]: List of available shield identifiers; empty if no shields are available.
     """
     available_shields = [shield.identifier for shield in await client.shields.list()]
@@ -62,9 +64,11 @@ def detect_shield_violations(output_items: list[Any]) -> bool:
     metric and logs a warning.
 
     Parameters:
+    ----------
         output_items: List of output items from the LLM response to check.
 
     Returns:
+    -------
         bool: True if a shield violation was detected, False otherwise.
     """
     for output_item in output_items:
@@ -91,10 +95,12 @@ def validate_shield_ids_override(
     is raised instructing the client to remove the field.
 
     Parameters:
+    ----------
         query_request: The incoming query payload; may contain shield_ids.
         config: Application configuration which may include customization flags.
 
     Raises:
+    ------
         HTTPException: If shield_ids override is disabled but shield_ids is provided.
     """
     shield_ids_override_disabled = (
@@ -125,15 +131,18 @@ async def run_shield_moderation(
     Raises HTTPException if shield model is not found.
 
     Parameters:
+    ----------
         client: The Llama Stack client.
         input_text: The text to moderate.
         shield_ids: Optional list of shield IDs to use. If None, uses all shields.
                    If empty list, skips all shields.
 
     Returns:
+    -------
         ShieldModerationResult: Result indicating if content was blocked and the message.
 
     Raises:
+    ------
         HTTPException: If shield's provider_resource_id is not configured or model not found.
     """
     shields_to_run = await get_shields_for_request(client, shield_ids)
@@ -198,6 +207,7 @@ async def append_turn_to_conversation(
     storing both the user's original message and the violation response.
 
     Parameters:
+    ----------
         client: The Llama Stack client.
         conversation_id: The Llama Stack conversation ID.
         user_message: The user's input message.

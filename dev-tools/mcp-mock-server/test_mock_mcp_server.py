@@ -1,5 +1,4 @@
-"""
-Pytest tests for the MCP Mock Server.
+"""Pytest tests for the MCP Mock Server.
 
 This test suite verifies the mock server functionality without requiring
 the full Lightspeed Stack infrastructure.

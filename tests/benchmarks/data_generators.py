@@ -28,9 +28,11 @@ def generate_model_for_provider(provider: str) -> str:
     """Return a randomly chosen model ID for a given provider.
 
     Parameters:
+    ----------
         provider (str): Name of the provider for which to pick a model.
 
     Returns:
+    -------
         str: A model identifier associated with the given provider. If the
             provider is unknown, a fallback value of "foo" is returned.
     """

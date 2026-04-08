@@ -32,6 +32,7 @@ def test_loading_proper_configuration(configuration_filename: str) -> None:
     user data collection settings, and three MCP server entries.
 
     Parameters:
+    ----------
         configuration_filename (str): Path to the YAML configuration file used for the test.
     """
     cfg = configuration

@@ -20,12 +20,14 @@ class UserQuotaLimiter(RevokableQuotaLimiter):
         Create a user-specific quota limiter and initialize its persistent storage.
 
         Parameters:
+        ----------
             configuration (QuotaHandlersConfiguration): Configuration for quota
             handlers and storage.
             initial_quota (int): Starting quota value assigned to each user.
             increase_by (int): Amount to increase a user's quota when replenished.
 
         Notes:
+        -----
             Establishes the database connection and initializes required tables
             as part of construction.
         """

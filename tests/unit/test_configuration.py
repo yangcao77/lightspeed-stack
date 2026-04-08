@@ -20,6 +20,13 @@ from models.config import CustomProfile, ModelContextProtocolServer
 @pytest.fixture(autouse=True)
 def _reset_app_config_between_tests() -> Generator:
     # ensure clean state before each test
+    """
+    Reset AppConfig singleton internal state before and after a test to avoid test contamination.
+
+    Attempts to set AppConfig()._configuration to None and
+    AppConfig()._quota_limiters to an empty list, ignoring any exceptions, then
+    yields control to the test and repeats the cleanup after the test.
+    """
     try:
         AppConfig()._configuration = None  # type: ignore[attr-defined]
         AppConfig()._quota_limiters = []  # type: ignore[attr-defined]
@@ -277,7 +284,15 @@ def test_init_from_dict_with_mcp_servers() -> None:
 
 
 def test_init_from_dict_with_authorization_configuration() -> None:
-    """Test initialization with authorization configuration configuration."""
+    """Test initialization with authorization configuration configuration.
+
+    Verify AppConfig initializes authorization configuration when an empty
+    `authorization` block is provided.
+
+    Initializes the singleton AppConfig from a dict that includes an empty
+    `authorization` section and asserts that `authorization_configuration` is
+    not None.
+    """
     config_dict = {
         "name": "foo",
         "service": {
@@ -306,7 +321,15 @@ def test_init_from_dict_with_authorization_configuration() -> None:
 
 
 def test_load_proper_configuration(tmpdir: Path) -> None:
-    """Test loading proper configuration from YAML file."""
+    """Test loading proper configuration from YAML file.
+
+    Verify that a valid YAML configuration file loads and populates key AppConfig sections.
+
+    Writes a YAML configuration to a temporary file, loads it with
+    AppConfig.load_configuration, and asserts that `configuration`,
+    `llama_stack_configuration`, `service_configuration`, and
+    `user_data_collection_configuration` are populated.
+    """
     cfg_filename = tmpdir / "config.yaml"
     with open(cfg_filename, "w", encoding="utf-8") as fout:
         fout.write("""

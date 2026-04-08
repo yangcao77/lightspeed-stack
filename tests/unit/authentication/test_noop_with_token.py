@@ -9,6 +9,7 @@ from authentication.noop_with_token import NoopWithTokenAuthDependency
 from constants import DEFAULT_USER_NAME, DEFAULT_USER_UID
 
 
+@pytest.mark.asyncio
 async def test_noop_with_token_auth_dependency() -> None:
     """Test the NoopWithTokenAuthDependency class with default user ID."""
     dependency = NoopWithTokenAuthDependency()
@@ -33,6 +34,7 @@ async def test_noop_with_token_auth_dependency() -> None:
     assert user_token == "spongebob-token"
 
 
+@pytest.mark.asyncio
 async def test_noop_with_token_auth_dependency_custom_user_id() -> None:
     """Test the NoopWithTokenAuthDependency class with custom user ID."""
     dependency = NoopWithTokenAuthDependency()
@@ -58,6 +60,7 @@ async def test_noop_with_token_auth_dependency_custom_user_id() -> None:
     assert user_token == "spongebob-token"
 
 
+@pytest.mark.asyncio
 async def test_noop_with_token_auth_dependency_no_token() -> None:
     """
     Test if checks for Authorization header is in place.
@@ -89,6 +92,7 @@ async def test_noop_with_token_auth_dependency_no_token() -> None:
     assert detail["cause"] == "No Authorization header found"
 
 
+@pytest.mark.asyncio
 async def test_noop_with_token_auth_dependency_no_bearer() -> None:
     """Test the NoopWithTokenAuthDependency class with no token.
 
@@ -120,6 +124,7 @@ async def test_noop_with_token_auth_dependency_no_bearer() -> None:
     assert detail["cause"] == "No token found in Authorization header"
 
 
+@pytest.mark.asyncio
 async def test_noop_with_token_auth_dependency_empty_user_id() -> None:
     """Test that NoopWithTokenAuthDependency rejects empty user_id with HTTP 400."""
     dependency = NoopWithTokenAuthDependency()

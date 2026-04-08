@@ -24,11 +24,13 @@ async def register_mcp_servers_async(
     present in the client's toolgroups.
 
     Parameters:
+    ----------
         logger: Logger instance.
         configuration: Configuration containing the `mcp_servers` list and
         `llama_stack` client mode.
 
     Notes:
+    -----
         - The `logger` parameter is used for debug/info logging and is
           intentionally undocumented as a common service.
         - Exceptions from the LlamaStack client (network/errors during
@@ -72,6 +74,7 @@ async def _register_mcp_toolgroups_async(
     or HTTP errors) will propagate to the caller.
 
     Parameters:
+    ----------
         client (AsyncLlamaStackClient): The LlamaStack async client used to
                                         query and register toolgroups.
         mcp_servers (List[ModelContextProtocolServer]): MCP server descriptors

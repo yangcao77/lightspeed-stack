@@ -38,6 +38,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Create a revokable quota limiter configured for a specific subject type.
 
         Parameters:
+        ----------
             configuration (QuotaHandlersConfiguration): Configuration object
             containing `sqlite` and `postgres` connection settings.
             initial_quota (int): The starting quota value assigned when a
@@ -60,11 +61,13 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Get the available quota for a subject.
 
         Parameters:
+        ----------
             subject_id (str): Subject identifier. For limiters with
             subject_type "c", this value is ignored and treated as an empty
             string.
 
         Returns:
+        -------
             int: The available quota for the subject. Returns 0 if no backend is configured.
         """
         if self.subject_type == "c":
@@ -85,10 +88,12 @@ class RevokableQuotaLimiter(QuotaLimiter):
         and returns the limiter's initial quota.
 
         Parameters:
+        ----------
             query_statement (str): SQL statement used to select the quota.
             subject_id (str): Identifier of the subject whose quota is requested.
 
         Returns:
+        -------
             int: The available quota for the subject; `initial_quota` if a new
                  record was initialized.
         """
@@ -113,6 +118,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Revoke a subject's quota and record the revocation timestamp in the configured backend.
 
         Parameters:
+        ----------
                 subject_id (str): Identifier of the subject whose quota will be
                 revoked. If the limiter's `subject_type` is `"c"`, this value
                 is ignored and treated as an empty string.
@@ -134,6 +140,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         and record the revocation timestamp.
 
         Parameters:
+        ----------
             set_statement (str): SQL statement that updates the available quota
                                  and `revoked_at` for a subject.
             subject_id (str): Identifier of the subject whose quota will be
@@ -157,6 +164,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Increase the available quota for a subject by the limiter's configured increment.
 
         Parameters:
+        ----------
             subject_id (str): Identifier of the subject whose quota will be
             increased. When the limiter's `subject_type` is `"c"`, this value
             is normalized to the empty string and treated as a
@@ -184,6 +192,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         transaction.
 
         Parameters:
+        ----------
             set_statement (str): SQL statement that increments the available quota for a subject.
             subject_id (str): Identifier of the subject whose quota will be increased.
         """
@@ -203,11 +212,13 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Ensure the subject has available quota; raises if quota is exhausted.
 
         Parameters:
+        ----------
                 subject_id (str): Identifier of the subject to check. If this
                 limiter's `subject_type` is `"c"`, the value is ignored and
                 treated as an empty string.
 
         Raises:
+        ------
                 QuotaExceedError: If the available quota for the subject is
                 less than or equal to zero.
         """
@@ -237,6 +248,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         to an empty string before performing the operation.
 
         Parameters:
+        ----------
             input_tokens (int): Number of input tokens to consume.
             output_tokens (int): Number of output tokens to consume.
             subject_id (str): Identifier of the subject whose quota will be consumed.
@@ -275,12 +287,14 @@ class RevokableQuotaLimiter(QuotaLimiter):
         quota and persist the update.
 
         Parameters:
+        ----------
             update_statement (str): SQL statement used to apply the quota change.
             input_tokens (int): Number of input tokens to consume.
             output_tokens (int): Number of output tokens to consume.
             subject_id (str): Identifier of the subject whose quota will be updated.
 
         Notes:
+        -----
             The function updates the quota by -(input_tokens + output_tokens)
             and stamps the record with the current datetime, then commits the
             change.
@@ -325,6 +339,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         configured (SQLite and/or PostgreSQL) and commits the transaction.
 
         Parameters:
+        ----------
             subject_id (str): Identifier of the subject whose quota to
             initialize. Defaults to empty string.
         """

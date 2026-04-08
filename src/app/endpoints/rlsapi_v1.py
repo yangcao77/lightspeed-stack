@@ -29,6 +29,7 @@ from models.config import Action
 from models.responses import (
     ForbiddenResponse,
     InternalServerErrorResponse,
+    NotFoundResponse,
     PromptTooLongResponse,
     QuotaExceededResponse,
     ServiceUnavailableResponse,
@@ -38,16 +39,22 @@ from models.responses import (
 from models.rlsapi.requests import RlsapiV1InferRequest, RlsapiV1SystemInfo
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
 from observability import InferenceEventData, build_inference_event, send_splunk_event
+from utils.endpoints import check_configuration_loaded
 from utils.query import (
+    consume_query_tokens,
     extract_provider_and_model_from_model_id,
     handle_known_apistatus_errors,
+    is_context_length_error,
 )
+from utils.quota import check_tokens_available
 from utils.responses import (
     build_turn_summary,
+    check_model_configured,
     extract_text_from_response_items,
     extract_token_usage,
     get_mcp_tools,
 )
+from utils.shields import run_shield_moderation
 from utils.suid import get_suid
 
 logger = get_logger(__name__)
@@ -103,6 +110,7 @@ infer_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["model"]),
     413: PromptTooLongResponse.openapi_response(),
     422: UnprocessableEntityResponse.openapi_response(),
     429: QuotaExceededResponse.openapi_response(),
@@ -232,6 +240,28 @@ async def _get_default_model_id() -> str:
     return model.id
 
 
+async def _resolve_validated_model_id() -> str:
+    """Resolve and validate the default model against Llama Stack.
+
+    Combines model resolution with existence validation so callers get
+    either a known-good model ID or a clear 404 error.
+
+    Returns:
+        The validated model identifier string in "provider/model" format.
+
+    Raises:
+        HTTPException: 404 if the resolved model does not exist in Llama Stack.
+        HTTPException: 503 if Llama Stack is unreachable during resolution or validation.
+    """
+    model_id = await _get_default_model_id()
+    client = AsyncLlamaStackClientHolder().get_client()
+    if not await check_model_configured(client, model_id):
+        _, model_name = extract_provider_and_model_from_model_id(model_id)
+        error_response = NotFoundResponse(resource="model", resource_id=model_name)
+        raise HTTPException(**error_response.model_dump())
+    return model_id
+
+
 async def retrieve_simple_response(
     question: str,
     instructions: str,
@@ -257,6 +287,37 @@ async def retrieve_simple_response(
         APIConnectionError: If the Llama Stack service is unreachable.
         HTTPException: 503 if no default model is configured.
     """
+    resolved_model_id = model_id or await _get_default_model_id()
+    response = await _call_llm(question, instructions, tools, resolved_model_id)
+    extract_token_usage(response.usage, resolved_model_id)
+    return extract_text_from_response_items(response.output)
+
+
+async def _call_llm(
+    question: str,
+    instructions: str,
+    tools: Optional[list[Any]] = None,
+    model_id: Optional[str] = None,
+) -> OpenAIResponseObject:
+    """Call the LLM via the Responses API and return the full response object.
+
+    This is a transport-only function: it calls the LLM and returns the raw
+    response. Callers are responsible for token usage extraction and metrics.
+
+    Args:
+        question: The combined user input (question + context).
+        instructions: System instructions for the LLM.
+        tools: Optional list of MCP tool definitions for the LLM.
+        model_id: Fully qualified model identifier in provider/model format.
+            When omitted, the configured default model is used.
+
+    Returns:
+        The full OpenAIResponseObject from the LLM.
+
+    Raises:
+        APIConnectionError: If the Llama Stack service is unreachable.
+        HTTPException: 503 if no default model is configured.
+    """
     client = AsyncLlamaStackClientHolder().get_client()
     resolved_model_id = model_id or await _get_default_model_id()
     logger.debug("Using model %s for rlsapi v1 inference", resolved_model_id)
@@ -269,10 +330,7 @@ async def retrieve_simple_response(
         stream=False,
         store=False,
     )
-    response = cast(OpenAIResponseObject, response)
-    extract_token_usage(response.usage, resolved_model_id)
-
-    return extract_text_from_response_items(response.output)
+    return cast(OpenAIResponseObject, response)
 
 
 def _get_cla_version(request: Request) -> str:
@@ -318,6 +376,63 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
     background_tasks.add_task(send_splunk_event, event, sourcetype)
 
 
+async def _check_shield_moderation(
+    input_text: str,
+    request_id: str,
+    background_tasks: BackgroundTasks,
+    infer_request: RlsapiV1InferRequest,
+    request: Request,
+) -> Optional[RlsapiV1InferResponse]:
+    """Run shield moderation and return a refusal response if blocked.
+
+    Uses all configured shields in Llama Stack. When no shields are
+    registered, moderation is a no-op and returns None immediately.
+
+    Args:
+        input_text: The combined user input to moderate.
+        request_id: Unique identifier for the request.
+        background_tasks: FastAPI background tasks for async Splunk event sending.
+        infer_request: The original inference request (for Splunk event context).
+        request: The FastAPI request object (for Splunk event context).
+
+    Returns:
+        An RlsapiV1InferResponse containing the refusal message if the input
+        was blocked, or None if moderation passed.
+    """
+    client = AsyncLlamaStackClientHolder().get_client()
+    moderation_result = await run_shield_moderation(client, input_text)
+
+    if moderation_result.decision != "blocked":
+        return None
+
+    logger.info(
+        "Request %s blocked by shield moderation: %s",
+        request_id,
+        moderation_result.message,
+    )
+    _queue_splunk_event(
+        background_tasks,
+        infer_request,
+        request,
+        request_id,
+        moderation_result.message,
+        0.0,
+        "infer_shield_blocked",
+    )
+    return RlsapiV1InferResponse(
+        data=RlsapiV1InferData(
+            text=moderation_result.message,
+            request_id=request_id,
+            tool_calls=None,
+            tool_results=None,
+            rag_chunks=None,
+            referenced_documents=None,
+            input_tokens=None,
+            output_tokens=None,
+        )
+    )
+
+
 def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     background_tasks: BackgroundTasks,
     infer_request: RlsapiV1InferRequest,
@@ -355,6 +470,124 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
     return inference_time
 
 
+def _is_verbose_enabled(infer_request: RlsapiV1InferRequest) -> bool:
+    """Check whether verbose metadata should be included in the response.
+
+    Verbose mode requires dual opt-in: the server configuration must allow it
+    via ``allow_verbose_infer``, and the client must request it via the
+    ``include_metadata`` field.
+
+    Args:
+        infer_request: The inference request to check.
+
+    Returns:
+        True if both server config and client request enable verbose mode.
+    """
+    return (
+        configuration.rlsapi_v1.allow_verbose_infer and infer_request.include_metadata
+    )
+
+
+def _resolve_quota_subject(request: Request, auth: AuthTuple) -> str | None:
+    """Resolve the quota subject identifier based on rlsapi_v1 configuration.
+
+    Returns None when quota enforcement is disabled (quota_subject not set),
+    signaling the caller to skip quota checks entirely.
+
+    When the configured subject source (org_id or system_id) is unavailable
+    (e.g., rh-identity auth is not active), falls back to user_id from the
+    auth tuple so quota enforcement still applies.
+
+    Args:
+        request: The FastAPI request object (for accessing rh-identity state).
+        auth: Authentication tuple from the configured auth provider.
+
+    Returns:
+        The resolved subject identifier string, or None if quota is disabled.
+    """
+    quota_subject = configuration.rlsapi_v1.quota_subject
+    if quota_subject is None:
+        return None
+
+    user_id = auth[0]
+
+    if quota_subject == "user_id":
+        return user_id
+
+    org_id, system_id = _get_rh_identity_context(request)
+
+    if quota_subject == "org_id":
+        if org_id == AUTH_DISABLED:
+            logger.warning(
+                "quota_subject is 'org_id' but rh-identity data is unavailable, "
+                "falling back to user_id"
+            )
+            return user_id
+        return org_id
+
+    # quota_subject == "system_id"
+    if system_id == AUTH_DISABLED:
+        logger.warning(
+            "quota_subject is 'system_id' but rh-identity data is unavailable, "
+            "falling back to user_id"
+        )
+        return user_id
+    return system_id
+
+
+def _build_infer_response(
+    response_text: str,
+    request_id: str,
+    response: Optional[OpenAIResponseObject],
+    model_id: str,
+) -> RlsapiV1InferResponse:
+    """Build the final inference response, with optional verbose metadata.
+
+    When ``response`` is provided, verbose metadata (tool calls, RAG chunks,
+    token counts) is extracted via ``build_turn_summary`` and included.
+    When ``response`` is None, a minimal response with only text is returned.
+
+    Args:
+        response_text: The LLM-generated response text.
+        request_id: Unique identifier for the request.
+        response: The full LLM response object. Pass None for non-verbose
+            responses; pass the object to include extended metadata.
+        model_id: The model identifier used for inference.
+
+    Returns:
+        The assembled RlsapiV1InferResponse.
+    """
+    if response is not None:
+        turn_summary = build_turn_summary(
+            response, model_id, vector_store_ids=None, rag_id_mapping=None
+        )
+        return RlsapiV1InferResponse(
+            data=RlsapiV1InferData(
+                text=response_text,
+                request_id=request_id,
+                tool_calls=turn_summary.tool_calls,
+                tool_results=turn_summary.tool_results,
+                rag_chunks=turn_summary.rag_chunks,
+                referenced_documents=turn_summary.referenced_documents,
+                input_tokens=turn_summary.token_usage.input_tokens,
+                output_tokens=turn_summary.token_usage.output_tokens,
+            )
+        )
+
+    return RlsapiV1InferResponse(
+        data=RlsapiV1InferData(
+            text=response_text,
+            request_id=request_id,
+            tool_calls=None,
+            tool_results=None,
+            rag_chunks=None,
+            referenced_documents=None,
+            input_tokens=None,
+            output_tokens=None,
+        )
+    )
+
+
 def _map_inference_error_to_http_exception(  # pylint: disable=too-many-return-statements
     error: Exception, model_id: str, request_id: str
 ) -> Optional[HTTPException]:
@@ -372,8 +605,7 @@ def _map_inference_error_to_http_exception(  # pylint: disable=too-many-return-s
         return HTTPException(**error_response.model_dump())
 
     if isinstance(error, RuntimeError):
-        error_message = str(error).lower()
-        if "context_length" in error_message or "context length" in error_message:
+        if is_context_length_error(str(error)):
             logger.error("Prompt too long for request %s: %s", request_id, error)
             error_response = PromptTooLongResponse(model=model_id)
             return HTTPException(**error_response.model_dump())
@@ -434,56 +666,54 @@ async def infer_endpoint(  # pylint: disable=R0914
         HTTPException: 503 if the LLM service is unavailable.
     """
     # Authentication enforced by get_auth_dependency(), authorization by @authorize decorator.
-    _ = auth
+    check_configuration_loaded(configuration)
+
+    # Quota enforcement: resolve subject and check availability before any work.
+    # No-op when quota_subject is not configured or no quota limiters exist.
+    quota_id = _resolve_quota_subject(request, auth)
+    if quota_id is not None:
+        check_tokens_available(configuration.quota_limiters, quota_id)
 
     request_id = get_suid()
 
     logger.info("Processing rlsapi v1 /infer request %s", request_id)
 
     input_source = infer_request.get_input_source()
-    model_id = await _get_default_model_id()
-    provider, model = extract_provider_and_model_from_model_id(model_id)
-    mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
     logger.debug(
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
 
-    start_time = time.monotonic()
-
-    # Check if verbose metadata should be returned
-    verbose_enabled = (
-        configuration.customization is not None
-        and configuration.customization.allow_verbose_infer
-        and infer_request.include_metadata
+    # Run shield moderation on user input before inference.
+    # Uses all configured shields; no-op when no shields are registered.
+    # Runs before model/tool discovery so blocked requests short-circuit
+    # without incurring external I/O.
+    blocked_response = await _check_shield_moderation(
+        input_source, request_id, background_tasks, infer_request, request
     )
+    if blocked_response is not None:
+        return blocked_response
+
+    model_id = await _resolve_validated_model_id()
+    provider, model = extract_provider_and_model_from_model_id(model_id)
+    mcp_tools: list[Any] = await get_mcp_tools(request_headers=request.headers)
+
+    start_time = time.monotonic()
+    verbose_enabled = _is_verbose_enabled(infer_request)
 
     response = None
     try:
         instructions = _build_instructions(infer_request.context.systeminfo)
-
-        # For verbose mode, retrieve the full response object instead of just text
-        if verbose_enabled:
-            client = AsyncLlamaStackClientHolder().get_client()
-            response = await client.responses.create(
-                input=input_source,
-                model=model_id,
-                instructions=instructions,
-                tools=mcp_tools or [],
-                stream=False,
-                store=False,
-            )
-            response = cast(OpenAIResponseObject, response)
-            response_text = extract_text_from_response_items(response.output)
-        else:
-            response_text = await retrieve_simple_response(
-                input_source,
-                instructions,
-                tools=cast(list[Any], mcp_tools),
-                model_id=model_id,
-            )
+        response = await _call_llm(
+            input_source,
+            instructions,
+            tools=cast(list[Any], mcp_tools),
+            model_id=model_id,
+        )
+        response_text = extract_text_from_response_items(response.output)
+        token_usage = extract_token_usage(response.usage, model_id)
         inference_time = time.monotonic() - start_time
     except _INFER_HANDLED_EXCEPTIONS as error:
-        if verbose_enabled and response is not None:
+        if response is not None:
             extract_token_usage(response.usage, model_id)  # type: ignore[arg-type]
         _record_inference_failure(
             background_tasks,
@@ -508,6 +738,14 @@ async def infer_endpoint(  # pylint: disable=R0914
         logger.warning("Empty response from LLM for request %s", request_id)
         response_text = constants.UNABLE_TO_PROCESS_RESPONSE
 
+    # Consume quota tokens after successful inference.
+    if quota_id is not None:
+        consume_query_tokens(
+            user_id=quota_id,
+            model_id=model_id,
+            token_usage=token_usage,
+        )
+
     _queue_splunk_event(
         background_tasks,
         infer_request,
@@ -520,36 +758,9 @@ async def infer_endpoint(  # pylint: disable=R0914
 
     logger.info("Completed rlsapi v1 /infer request %s", request_id)
 
-    # Build response with optional extended metadata
-    if verbose_enabled and response is not None:
-        # Extract metadata from full response object
-        turn_summary = build_turn_summary(
-            response, model_id, vector_store_ids=None, rag_id_mapping=None
-        )
-
-        return RlsapiV1InferResponse(
-            data=RlsapiV1InferData(
-                text=response_text,
-                request_id=request_id,
-                tool_calls=turn_summary.tool_calls,
-                tool_results=turn_summary.tool_results,
-                rag_chunks=turn_summary.rag_chunks,
-                referenced_documents=turn_summary.referenced_documents,
-                input_tokens=turn_summary.token_usage.input_tokens,
-                output_tokens=turn_summary.token_usage.output_tokens,
-            )
-        )
-
-    # Standard minimal response
-    return RlsapiV1InferResponse(
-        data=RlsapiV1InferData(
-            text=response_text,
-            request_id=request_id,
-            tool_calls=None,
-            tool_results=None,
-            rag_chunks=None,
-            referenced_documents=None,
-            input_tokens=None,
-            output_tokens=None,
-        )
+    return _build_infer_response(
+        response_text,
+        request_id,
+        response if verbose_enabled else None,
+        model_id,
     )

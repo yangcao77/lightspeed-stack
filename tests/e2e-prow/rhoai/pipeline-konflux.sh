@@ -141,10 +141,13 @@ log "✅ Mock servers deployed"
 progress "Deploying lightspeed-stack and llama-stack"
 
 # Llama run config: single source with GitHub E2E (tests/e2e/configs/run-ci.yaml).
+# Lightspeed stack: same tree as local/docker E2E (tests/e2e/configuration/server-mode).
 oc create configmap llama-stack-config -n "$NAMESPACE" \
   --from-file=run.yaml="$REPO_ROOT/tests/e2e/configs/run-ci.yaml" \
   --dry-run=client -o yaml | oc apply -f -
-oc create configmap lightspeed-stack-config -n "$NAMESPACE" --from-file=configs/lightspeed-stack.yaml --dry-run=client -o yaml | oc apply -f -
+oc create configmap lightspeed-stack-config -n "$NAMESPACE" \
+  --from-file=lightspeed-stack.yaml="$REPO_ROOT/tests/e2e/configuration/server-mode/lightspeed-stack.yaml" \
+  --dry-run=client -o yaml | oc apply -f -
 
 # Create RAG data ConfigMap from the e2e test RAG data
 log "Creating RAG data ConfigMap..."

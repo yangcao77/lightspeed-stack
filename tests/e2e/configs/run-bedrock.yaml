@@ -1,0 +1,163 @@
+version: 2
+
+apis:
+- agents
+- batches
+- datasetio
+- eval
+- files
+- inference
+- safety
+- scoring
+- tool_runtime
+- vector_io
+      
+benchmarks: []
+datasets: []
+image_name: starter
+# external_providers_dir: /opt/app-root/src/.llama/providers.d
+
+providers:
+  inference:
+  - config:
+      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK}
+      region_name: us-east-2
+    provider_id: aws-bedrock
+    provider_type: remote::bedrock
+  - provider_id: openai
+    provider_type: remote::openai
+    config:
+      api_key: ${env.OPENAI_API_KEY}
+  - config: {}
+    provider_id: sentence-transformers
+    provider_type: inline::sentence-transformers
+  files:
+  - config:
+      metadata_store:
+        table_name: files_metadata
+        backend: sql_default
+      storage_dir: ${env.SQLITE_STORE_DIR:=~/.llama/storage/files}
+    provider_id: meta-reference-files
+    provider_type: inline::localfs
+  safety:
+  - config:
+      excluded_categories: []
+    provider_id: llama-guard
+    provider_type: inline::llama-guard
+  scoring:
+  - provider_id: basic
+    provider_type: inline::basic
+    config: {}
+  - provider_id: llm-as-judge
+    provider_type: inline::llm-as-judge
+    config: {}
+  - provider_id: braintrust
+    provider_type: inline::braintrust
+    config:
+      openai_api_key: '********'
+  tool_runtime:
+  - config: {} # Enable the RAG tool
+    provider_id: rag-runtime
+    provider_type: inline::rag-runtime
+  - config: {} # Enable MCP (Model Context Protocol) support
+    provider_id: model-context-protocol
+    provider_type: remote::model-context-protocol
+  vector_io:
+  - config: # Define the storage backend for RAG
+      persistence:
+        namespace: vector_io::faiss
+        backend: kv_default
+    provider_id: faiss
+    provider_type: inline::faiss
+  agents:
+  - config:
+      persistence:
+        agent_state:
+          namespace: agents_state
+          backend: kv_default
+        responses:
+          table_name: agents_responses
+          backend: sql_default
+    provider_id: meta-reference
+    provider_type: inline::meta-reference
+  batches:
+  - config:
+      kvstore:
+        namespace: batches_store
+        backend: kv_default
+    provider_id: reference
+    provider_type: inline::reference
+  datasetio:
+  - config:
+      kvstore:
+        namespace: huggingface_datasetio
+        backend: kv_default
+    provider_id: huggingface
+    provider_type: remote::huggingface
+  - config:
+      kvstore:
+        namespace: localfs_datasetio
+        backend: kv_default
+    provider_id: localfs
+    provider_type: inline::localfs
+  eval:
+  - config:
+      kvstore:
+        namespace: eval_store
+        backend: kv_default
+    provider_id: meta-reference
+    provider_type: inline::meta-reference
+scoring_fns: []
+server:
+  port: 8321
+storage:
+  backends:
+    kv_default:
+      type: kv_sqlite
+      db_path: ${env.KV_STORE_PATH:=~/.llama/storage/kv_store.db}
+    sql_default:
+      type: sql_sqlite
+      db_path: ${env.SQL_STORE_PATH:=~/.llama/storage/sql_store.db}
+  stores:
+    metadata:
+      namespace: registry
+      backend: kv_default
+    inference:
+      table_name: inference_store
+      backend: sql_default
+      max_write_queue_size: 10000
+      num_writers: 4
+    conversations:
+      table_name: openai_conversations
+      backend: sql_default
+    prompts:
+      namespace: prompts
+      backend: kv_default
+registered_resources:
+  models: 
+  - model_id: custom-bedrock-model
+    model_type: llm
+    provider_id: aws-bedrock
+    provider_model_id: deepseek.v3-v1:0
+  - model_id: all-mpnet-base-v2
+    model_type: embedding
+    provider_id: sentence-transformers
+    provider_model_id: all-mpnet-base-v2
+    metadata:
+      embedding_dimension: 768
+  shields:
+  - shield_id: llama-guard
+    provider_id: llama-guard
+    provider_shield_id: openai/gpt-4o-mini
+  vector_stores: []
+  datasets: []
+  scoring_fns: []
+  benchmarks: []
+  tool_groups:
+  - toolgroup_id: builtin::rag # Register the RAG tool
+    provider_id: rag-runtime
+vector_stores:
+  default_provider_id: faiss
+  default_embedding_model:
+    provider_id: sentence-transformers
+    model_id: all-mpnet-base-v2

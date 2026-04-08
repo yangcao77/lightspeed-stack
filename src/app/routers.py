@@ -42,6 +42,7 @@ def include_routers(app: FastAPI) -> None:
     authorized, metrics) are mounted without a version prefix.
 
     Parameters:
+    ----------
         app (FastAPI): The FastAPI application to which routers will be attached.
     """
     app.include_router(root.router)

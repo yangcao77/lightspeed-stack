@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+import pytest
 import yaml
 from pydantic import SecretStr
 
@@ -498,16 +499,19 @@ class TestBuildLightspeedStackSnapshot:
 class TestBuildLlamaStackSnapshot:
     """Tests for build_llama_stack_snapshot function."""
 
+    @pytest.mark.asyncio
     async def test_service_mode_returns_not_available(self) -> None:
         """Test that service mode (no path) returns not_available status."""
         assert await build_llama_stack_snapshot(None) == {"status": NOT_AVAILABLE}
 
+    @pytest.mark.asyncio
     async def test_nonexistent_file(self) -> None:
         """Test that missing file returns not_available status."""
         assert await build_llama_stack_snapshot("/nonexistent/path.yaml") == {
             "status": NOT_AVAILABLE
         }
 
+    @pytest.mark.asyncio
     async def test_invalid_yaml(self, tmp_path: Path) -> None:
         """Test that invalid YAML returns not_available status."""
         path = tmp_path / "invalid.yaml"
@@ -515,6 +519,7 @@ class TestBuildLlamaStackSnapshot:
         result = await build_llama_stack_snapshot(str(path))
         assert result == {"status": NOT_AVAILABLE}
 
+    @pytest.mark.asyncio
     async def test_valid_config(self, llama_stack_config_file: str) -> None:
         """Test snapshot from valid llama-stack config."""
         result = await build_llama_stack_snapshot(llama_stack_config_file)
@@ -523,6 +528,7 @@ class TestBuildLlamaStackSnapshot:
         assert result["apis"] == ["agents", "inference", "safety", "vector_io"]
         assert result["external_providers_dir"] == CONFIGURED
 
+    @pytest.mark.asyncio
     async def test_models_extraction(self, llama_stack_config_file: str) -> None:
         """Test models list extraction."""
         result = await build_llama_stack_snapshot(llama_stack_config_file)
@@ -531,6 +537,7 @@ class TestBuildLlamaStackSnapshot:
         assert models[0]["model_id"] == "gpt-4o-mini"
         assert models[0]["model_type"] == "llm"
 
+    @pytest.mark.asyncio
     async def test_providers_extraction(self, llama_stack_config_file: str) -> None:
         """Test provider lists extraction shows only id and type."""
         result = await build_llama_stack_snapshot(llama_stack_config_file)
@@ -540,6 +547,7 @@ class TestBuildLlamaStackSnapshot:
         assert inference[0]["provider_type"] == "remote::openai"
         assert "config" not in inference[0]
 
+    @pytest.mark.asyncio
     async def test_storage_fields(self, llama_stack_config_file: str) -> None:
         """Test storage store extraction."""
         result = await build_llama_stack_snapshot(llama_stack_config_file)
@@ -548,6 +556,7 @@ class TestBuildLlamaStackSnapshot:
         assert result["metadata_store"]["type"] == "kv_sqlite"
         assert result["metadata_store"]["namespace"] == "registry"
 
+    @pytest.mark.asyncio
     async def test_missing_providers_section(self, tmp_path: Path) -> None:
         """Test config without providers section."""
         path = tmp_path / "no_providers.yaml"
@@ -555,6 +564,7 @@ class TestBuildLlamaStackSnapshot:
         result = await build_llama_stack_snapshot(str(path))
         assert result["providers"]["inference"] == NOT_CONFIGURED
 
+    @pytest.mark.asyncio
     async def test_server_fields_masked(self, tmp_path: Path) -> None:
         """Test server host and TLS fields are masked."""
         config = {
@@ -583,6 +593,7 @@ class TestBuildLlamaStackSnapshot:
 class TestBuildConfigurationSnapshot:
     """Tests for build_configuration_snapshot function."""
 
+    @pytest.mark.asyncio
     async def test_combines_both_sources(self) -> None:
         """Test that snapshot contains both lightspeed_stack and llama_stack."""
         result = await build_configuration_snapshot(build_minimal_config(), None)
@@ -591,6 +602,7 @@ class TestBuildConfigurationSnapshot:
         assert result["llama_stack"] == {"status": NOT_AVAILABLE}
         assert result["lightspeed_stack"]["name"] == "minimal"
 
+    @pytest.mark.asyncio
     async def test_with_llama_stack_config(self, llama_stack_config_file: str) -> None:
         """Test snapshot with both config sources."""
         result = await build_configuration_snapshot(
@@ -618,6 +630,7 @@ class TestPiiLeakPrevention:
                 pii_value not in json_str
             ), f"PII leaked in lightspeed-stack snapshot: '{pii_value}'"
 
+    @pytest.mark.asyncio
     async def test_no_pii_in_llama_stack_snapshot(
         self, llama_stack_config_file: str
     ) -> None:
@@ -628,6 +641,7 @@ class TestPiiLeakPrevention:
                 pii_value not in json_str
             ), f"PII leaked in llama-stack snapshot: '{pii_value}'"
 
+    @pytest.mark.asyncio
     async def test_no_pii_in_combined_snapshot(
         self, llama_stack_config_file: str
     ) -> None:
@@ -650,6 +664,7 @@ class TestPiiLeakPrevention:
             not unexpected
         ), f"Snapshot contains unexpected top-level keys: {unexpected}"
 
+    @pytest.mark.asyncio
     async def test_provider_config_not_leaked(
         self, llama_stack_config_file: str
     ) -> None:
@@ -667,6 +682,7 @@ class TestPiiLeakPrevention:
         assert "P@ssw0rd!SuperSecret" not in json_str
         assert "**********" not in json_str
 
+    @pytest.mark.asyncio
     async def test_snapshot_is_json_serializable(self) -> None:
         """Verify the snapshot can be serialized to JSON without errors."""
         json_str = json.dumps(

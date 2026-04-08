@@ -22,10 +22,12 @@ def get_attribute_from_file(data: dict, file_name_key: str) -> Optional[str]:
     missing or maps to None, returns None.
 
     Parameters:
+    ----------
         data (dict): Mapping containing the file path under file_name_key.
         file_name_key (str): Key in `data` whose value is the path to the file.
 
     Returns:
+    -------
         Optional[str]: File contents with trailing whitespace stripped, or None
         if the key is not present or is None.
     """
@@ -44,11 +46,13 @@ def file_check(path: FilePath, desc: str) -> None:
     InvalidConfigurationError.
 
     Parameters:
+    ----------
         path (FilePath): Filesystem path to validate.
         desc (str): Short description of the value being checked; used in error
         messages.
 
     Raises:
+    ------
         InvalidConfigurationError: If `path` does not point to a file or is not
         readable.
     """
@@ -67,6 +71,7 @@ def directory_check(
     If the path is not a directory, raises InvalidConfigurationError.
 
     Parameters:
+    ----------
         path (FilePath): Filesystem path to validate.
         must_exists (bool): Should the directory exists?
         must_be_writable (bool): Should the check test if directory is writable?
@@ -74,6 +79,7 @@ def directory_check(
         messages.
 
     Raises:
+    ------
         InvalidConfigurationError: If `path` does not point to a directory or
         is not writable when required.
     """
@@ -93,10 +99,12 @@ def import_python_module(profile_name: str, profile_path: str) -> Optional[Modul
     Import a Python module from a filesystem path and return the loaded module.
 
     Parameters:
+    ----------
         profile_name (str): Name to assign to the imported module.
         profile_path (str): Filesystem path to the Python source file; must end with `.py`.
 
     Returns:
+    -------
         Optional[ModuleType]: The loaded module on success; `None` if
         `profile_path` does not end with `.py`, if a module spec or loader
         cannot be created, or if importing/executing the module fails.

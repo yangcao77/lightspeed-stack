@@ -11,7 +11,14 @@ from quota.connect_pg import connect_pg
 
 
 def test_connect_pg_when_connection_established(mocker: MockerFixture) -> None:
-    """Test the connection to PostgreSQL database."""
+    """Test the connection to PostgreSQL database.
+
+    Verify that connect_pg returns a non-None connection object when the
+    underlying psycopg2 connection succeeds.
+
+    Patches psycopg2.connect to avoid a real network call and asserts the
+    returned connection is not None.
+    """
     # any correct PostgreSQL configuration can be used
     configuration = PostgreSQLDatabaseConfiguration(
         db="db",
@@ -34,7 +41,15 @@ def test_connect_pg_when_connection_established(mocker: MockerFixture) -> None:
 
 
 def test_connect_pg_when_connection_error(mocker: MockerFixture) -> None:
-    """Test the connection to PostgreSQL database."""
+    """Test the connection to PostgreSQL database.
+
+    Verifies that connect_pg propagates psycopg2.OperationalError when the
+    underlying connection attempt fails.
+
+    Asserts that calling connect_pg with a valid configuration raises an
+    OperationalError with the original error message when psycopg2.connect
+    raises OperationalError.
+    """
     # any correct PostgreSQL configuration can be used
     configuration = PostgreSQLDatabaseConfiguration(
         host="foo",

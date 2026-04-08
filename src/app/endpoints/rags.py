@@ -112,10 +112,12 @@ def _resolve_rag_id_to_vector_db_id(rag_id: str, byok_rags: list[ByokRag]) -> st
     (assuming it is already a llama-stack vector store ID).
 
     Parameters:
+    ----------
         rag_id: The user-provided RAG identifier.
         byok_rags: List of BYOK RAG config entries.
 
     Returns:
+    -------
         The llama-stack vector_db_id, or the original ID if no mapping found.
     """
     for brag in byok_rags:

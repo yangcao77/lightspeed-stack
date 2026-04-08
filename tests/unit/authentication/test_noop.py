@@ -7,6 +7,7 @@ from authentication.noop import NoopAuthDependency
 from constants import DEFAULT_USER_NAME, DEFAULT_USER_UID, NO_USER_TOKEN
 
 
+@pytest.mark.asyncio
 async def test_noop_auth_dependency() -> None:
     """Test the NoopAuthDependency class with default user ID."""
     dependency = NoopAuthDependency()
@@ -24,6 +25,7 @@ async def test_noop_auth_dependency() -> None:
     assert user_token == NO_USER_TOKEN
 
 
+@pytest.mark.asyncio
 async def test_noop_auth_dependency_custom_user_id() -> None:
     """Test the NoopAuthDependency class."""
     dependency = NoopAuthDependency()
@@ -41,6 +43,7 @@ async def test_noop_auth_dependency_custom_user_id() -> None:
     assert user_token == NO_USER_TOKEN
 
 
+@pytest.mark.asyncio
 async def test_noop_auth_dependency_empty_user_id() -> None:
     """Test that NoopAuthDependency rejects empty user_id with HTTP 400."""
     dependency = NoopAuthDependency()

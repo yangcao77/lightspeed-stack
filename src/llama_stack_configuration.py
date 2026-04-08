@@ -31,6 +31,7 @@ class YamlDumper(yaml.Dumper):  # pylint: disable=too-many-ancestors
         never uses "indentless" indentation.
 
         Parameters:
+        ----------
             flow (bool): Whether the YAML flow style is being used; forwarded
             to the base implementation.
             indentless (bool): Ignored — this implementation always enforces
@@ -125,10 +126,12 @@ def construct_storage_backends_section(
     preserving existing backends and adding new ones for each BYOK RAG.
 
     Parameters:
+    ----------
         ls_config (dict[str, Any]): Existing Llama Stack configuration mapping.
         byok_rag (list[dict[str, Any]]): List of BYOK RAG definitions.
 
     Returns:
+    -------
         dict[str, Any]: The storage.backends dict with new backends added.
     """
     output: dict[str, Any] = {}
@@ -163,6 +166,7 @@ def construct_vector_stores_section(
     Builds the vector_stores section for a Llama Stack configuration.
 
     Parameters:
+    ----------
         ls_config (dict[str, Any]): Existing Llama Stack configuration mapping
         used as the base; existing `registered_resources.vector_stores` entries
         are preserved if present.
@@ -170,6 +174,7 @@ def construct_vector_stores_section(
         the `vector_stores` section.
 
     Returns:
+    -------
         list[dict[str, Any]]: The `vector_stores` list where each entry is a mapping with keys:
             - `vector_store_id`: identifier of the vector store (for Llama Stack config)
             - `provider_id`: provider identifier prefixed with `"byok_"`
@@ -228,10 +233,12 @@ def construct_models_section(
     Adds embedding model entries for each BYOK RAG configuration.
 
     Parameters:
+    ----------
         ls_config (dict[str, Any]): Existing Llama Stack configuration mapping.
         byok_rag (list[dict[str, Any]]): List of BYOK RAG definitions.
 
     Returns:
+    -------
         list[dict[str, Any]]: The models list with embedding models added.
     """
     output: list[dict[str, Any]] = []
@@ -290,6 +297,7 @@ def construct_vector_io_providers_section(
     entries.
 
     Parameters:
+    ----------
         ls_config (dict[str, Any]): Existing Llama Stack configuration
         dictionary; if it contains providers.vector_io, those entries are used
         as the starting list.
@@ -297,6 +305,7 @@ def construct_vector_io_providers_section(
         into provider entries.
 
     Returns:
+    -------
         list[dict[str, Any]]: The resulting providers/vector_io list containing
         the original entries (if any) plus one entry per item in `byok_rag`.
         Each appended entry has `provider_id` set to "byok_<vector_db_id>",

@@ -41,7 +41,13 @@ def test_inference_default_model_missing() -> None:
 
 def test_inference_default_provider_missing() -> None:
     """
-    Test case where only default model is set, should fail
+    Test case where only default model is set, should fail.
+
+    Checks that constructing InferenceConfiguration with only `default_model`
+    set raises a ValueError.
+
+    Asserts the error message equals "Default provider must be specified when
+    default model is set".
     """
     with pytest.raises(
         ValueError,

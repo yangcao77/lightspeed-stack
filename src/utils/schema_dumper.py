@@ -14,9 +14,11 @@ def recursive_update(
     """Recursively update the schema to be 100% OpenAPI-compatible.
 
     Parameters:
+    ----------
         original (dict): The original schema dictionary to transform.
 
     Returns:
+    -------
         dict: A new dictionary with OpenAPI-compatible transformations applied.
     """
     new: dict = {}
@@ -53,12 +55,15 @@ def dump_schema(filename: str) -> None:
     """Dump the configuration schema into OpenAPI-compatible JSON file.
 
     Parameters:
+    ----------
         - filename: str - name of file to export the schema to
 
     Returns:
+    -------
         - None
 
     Raises:
+    ------
         IOError: If the file cannot be written.
     """
     with open(filename, "w", encoding="utf-8") as fout:

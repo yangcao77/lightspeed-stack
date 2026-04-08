@@ -14,13 +14,16 @@ def connect_sqlite(config: SQLiteDatabaseConfiguration) -> Any:
     Create and return a SQLite database connection using the provided configuration.
 
     Parameters:
+    ----------
         config (SQLiteDatabaseConfiguration): Configuration containing the
         `db_path` used to open the SQLite database.
 
     Returns:
+    -------
         sqlite3.Connection: The open SQLite connection with autocommit enabled.
 
     Raises:
+    ------
         sqlite3.Error: If establishing the connection fails.
     """
     logger.info("Connecting to SQLite storage")

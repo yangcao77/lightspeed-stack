@@ -24,14 +24,17 @@ def get_auth_dependency(
     """Select the configured authentication dependency interface.
 
     Parameters:
+    ----------
         virtual_path (str): Virtual path passed to the authentication
                             dependency when it is constructed.
 
     Returns:
+    -------
         AuthInterface: An instance implementing AuthInterface for the
                        configured authentication module.
 
     Raises:
+    ------
         ValueError: If the configured authentication module is not supported.
     """
     try:

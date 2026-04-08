@@ -27,6 +27,9 @@ from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolChoice as ToolChoice,
 )
 from llama_stack_api.openai_responses import (
+    OpenAIResponseInputToolChoiceAllowedTools as AllowedTools,
+)
+from llama_stack_api.openai_responses import (
     OpenAIResponseInputToolChoiceMode as ToolChoiceMode,
 )
 from llama_stack_api.openai_responses import (
@@ -384,7 +387,6 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
 
     # Build x-llamastack-provider-data header from MCP tool headers
     extra_headers = _build_provider_data_headers(tools)
-
     return ResponsesApiParams(
         input=input_text,
         model=model,
@@ -403,9 +405,11 @@ def extract_vector_store_ids_from_tools(
     """Extract vector store IDs from prepared tool configurations.
 
     Parameters:
+    ----------
         tools: The prepared tools list of InputTool objects.
 
     Returns:
+    -------
         List of vector store IDs used in file_search tools, or empty list.
     """
     if not tools:
@@ -415,6 +419,195 @@ def extract_vector_store_ids_from_tools(
         if tool.type == "file_search":
             vector_store_ids.extend(tool.vector_store_ids)
     return vector_store_ids
+
+
+def tool_matches_allowed_entry(tool: InputTool, entry: dict[str, str]) -> bool:
+    """Check whether a tool matches every field on one allowlist row.
+
+    Parameters:
+    ----------
+        tool: Configured input tool.
+        entry: Single row from allowed_tools.tools (field names match tool attributes).
+
+    Returns:
+    -------
+        True if each entry key exists on the tool, the attribute is not None, and
+        the value matches (including string coercion).
+    """
+    for key, value in entry.items():
+        if not hasattr(tool, key):
+            return False
+        attr = getattr(tool, key)
+        if attr is None:
+            return False
+        if attr != value and str(attr) != value:
+            return False
+    return True
+
+
+def group_mcp_tools_by_server(
+    entries: list[dict[str, str]],
+) -> dict[str, Optional[list[str]]]:
+    """Group MCP tool filters by server_label.
+
+    Ignores non-mcp rows and rows without server_label. If any mcp row for a
+    server has no name field, that server is unrestricted. Otherwise unique
+    names are kept in first-seen order.
+
+    Parameters:
+    ----------
+        entries: Raw allowlist rows (typically allowed_tools.tools).
+
+    Returns:
+    -------
+        Mapping from server_label to None (no name restriction) or to the list
+        of allowed tool names on that server.
+    """
+    unrestricted_servers: set[str] = set()
+    server_to_names: dict[str, list[str]] = {}
+    for entry in entries:
+        if entry.get("type") != "mcp":
+            continue
+        server = entry.get("server_label")
+        if not server:
+            continue
+        # Unrestricted entry (no "name")
+        if "name" not in entry:
+            unrestricted_servers.add(server)
+            continue
+        # Skip collecting names if already unrestricted
+        if server in unrestricted_servers:
+            continue
+        name = entry["name"]
+        if server not in server_to_names:
+            server_to_names[server] = []
+
+        if name not in server_to_names[server]:
+            server_to_names[server].append(name)
+
+    # Build final result
+    result: dict[str, Optional[list[str]]] = {}
+    for server in unrestricted_servers:
+        result[server] = None
+
+    for server, names in server_to_names.items():
+        if server not in unrestricted_servers:
+            result[server] = names
+
+    return result
+
+
+def mcp_strip_name_from_allowlist_entries(
+    allowed_entries: list[dict[str, str]],
+) -> list[dict[str, str]]:
+    """Copy allowlist rows and remove the name field from mcp rows only.
+
+    Parameters:
+    ----------
+        allowed_entries: Original allowed_tools.tools rows.
+
+    Returns:
+    -------
+        Shallow-copied rows; name is dropped only when type is mcp.
+    """
+    result: list[dict[str, str]] = []
+    for entry in allowed_entries:
+        new_entry = entry.copy()
+        if new_entry.get("type") == "mcp":
+            new_entry.pop("name", None)
+
+        result.append(new_entry)
+
+    return result
+
+
+def mcp_project_allowed_tools_to_names(
+    tool: InputToolMCP, names: list[str]
+) -> list[str] | None:
+    """Intersect allowlist tool names with the MCP tool allowed_tools constraint.
+
+    Parameters:
+    ----------
+        tool: MCP tool; allowed_tools may be unset, a list of names, or a filter.
+        names: Names from grouped allowlist rows for this server_label.
+
+    Returns:
+    -------
+        List of names in the intersection, or None if names is empty or the
+        intersection is empty.
+    """
+    if not names:
+        return None
+    name_set = set(names)
+    allowed = tool.allowed_tools
+    if allowed is None:
+        permitted = name_set
+    elif isinstance(allowed, list):
+        permitted = name_set & set(allowed)
+    else:
+        if allowed.tool_names is None:
+            permitted = name_set
+        else:
+            permitted = name_set & set(allowed.tool_names)
+
+    if not permitted:
+        return None
+
+    return list(permitted)
+
+
+def filter_tools_by_allowed_entries(
+    tools: Optional[list[InputTool]],
+    allowed_entries: list[dict[str, str]],
+) -> Optional[list[InputTool]]:
+    """Drop tools that match no allowlist row; narrow MCP allowed_tools when needed.
+
+    Parameters:
+    ----------
+        tools: Candidate tools (e.g. after BYOK translation or prepare_tools).
+        allowed_entries: Rows from allowed_tools.tools.
+
+    Returns:
+    -------
+        Sublist of tools matching at least one sanitized row. MCP tools may be
+        copied with a tighter allowed_tools list when the allowlist names tools
+        per server. Empty allowlist yields an empty list.
+    """
+    if tools is None:
+        return None
+
+    if not allowed_entries:
+        return []
+
+    mcp_names_by_server = group_mcp_tools_by_server(allowed_entries)
+    sanitized_entries = mcp_strip_name_from_allowlist_entries(allowed_entries)
+    filtered: list[InputTool] = []
+    for tool in tools:
+        # Skip tools not matching any allowlist entry
+        if not any(tool_matches_allowed_entry(tool, e) for e in sanitized_entries):
+            continue
+        # Non-MCP tools pass through and are handled separately
+        if tool.type != "mcp":
+            filtered.append(tool)
+            continue
+
+        mcp_tool = cast(InputToolMCP, tool)
+        server = mcp_tool.server_label
+
+        narrowed_names = mcp_names_by_server.get(server)
+        # No filters specified for this MCP server
+        if narrowed_names is None:
+            filtered.append(tool)
+            continue
+
+        # Apply intersection
+        permitted = mcp_project_allowed_tools_to_names(mcp_tool, narrowed_names)
+        if permitted is None:
+            continue
+
+        filtered.append(mcp_tool.model_copy(update={"allowed_tools": permitted}))
+
+    return filtered
 
 
 def resolve_vector_store_ids(
@@ -429,11 +622,13 @@ def resolve_vector_store_ids(
     llama-stack vector store ID).
 
     Parameters:
+    ----------
         vector_store_ids: List of IDs from the client request (may be
             customer-facing rag_ids or raw llama-stack vector_db_ids).
         byok_rags: BYOK RAG configuration entries.
 
     Returns:
+    -------
         List of llama-stack vector_db_ids ready for the Llama Stack API.
     """
     rag_id_to_vector_db_id = {brag.rag_id: brag.vector_db_id for brag in byok_rags}
@@ -449,10 +644,12 @@ def translate_tools_vector_store_ids(
     """Translate user-facing vector_store_ids to llama-stack IDs in each file_search tool.
 
     Parameters:
+    ----------
         tools: List of request tools (may contain file_search with user-facing IDs).
         byok_rags: BYOK RAG configuration for ID resolution.
 
     Returns:
+    -------
         New list of tools with file_search vector_store_ids translated; other tools
         unchanged.
     """
@@ -547,6 +744,68 @@ async def get_mcp_tools(
     return tools
 
 
+def apply_mcp_headers_to_explicit_tools(
+    tools: list[InputTool],
+    token: Optional[str] = None,
+    mcp_headers: Optional[McpHeaders] = None,
+    request_headers: Optional[Mapping[str, str]] = None,
+) -> list[InputTool]:
+    """Merge resolved MCP headers into explicit request MCP tools.
+
+    Args:
+        tools: Tools from the request after BYOK translation.
+        token: Optional bearer token for kubernetes MCP auth.
+        mcp_headers: Per-request MCP-HEADERS map keyed by server name.
+        request_headers: Incoming HTTP headers for allowlist propagation.
+
+    Returns:
+        New tool list with MCP entries updated or omitted.
+    """
+    if not tools:
+        return tools
+
+    complete_headers = build_mcp_headers(
+        configuration, mcp_headers or {}, request_headers, token
+    )
+    servers_by_name = {s.name: s for s in configuration.mcp_servers}
+
+    out: list[InputTool] = []
+    for tool in tools:
+        if tool.type != "mcp":
+            out.append(tool)
+            continue
+
+        mcp_tool = cast(InputToolMCP, tool)
+        mcp_server = servers_by_name.get(mcp_tool.server_label)
+        if mcp_server is None:
+            out.append(tool)
+            continue
+
+        headers: dict[str, str] = dict(complete_headers.get(mcp_server.name, {}))
+        unresolved = find_unresolved_auth_headers(
+            mcp_server.authorization_headers, headers
+        )
+        if unresolved:
+            logger.warning(
+                "Skipping explicit MCP tool %s: required %d auth headers but only resolved %d",
+                mcp_server.name,
+                len(mcp_server.authorization_headers),
+                len(mcp_server.authorization_headers) - len(unresolved),
+            )
+            continue
+
+        authorization = headers.pop("Authorization", None)
+        out.append(
+            mcp_tool.model_copy(
+                update={
+                    "headers": headers if headers else None,
+                    "authorization": authorization,
+                }
+            )
+        )
+    return out
+
+
 def parse_referenced_documents(  # pylint: disable=too-many-locals
     response: Optional[ResponseObject],
     vector_store_ids: Optional[list[str]] = None,
@@ -624,6 +883,7 @@ def parse_rag_chunks(
         response: The OpenAI Response API response object
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         List of RAG chunks derived from tool file search results (not mutated in place).
     """
@@ -903,11 +1163,13 @@ def _resolve_source_for_result(
     to user-facing rag_ids from configuration.
 
     Parameters:
+    ----------
         result: A file search result object with optional attributes.
         vector_store_ids: The vector store IDs used in this query.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
 
     Returns:
+    -------
         The resolved index name, or None if resolution is not possible.
     """
     if len(vector_store_ids) == 1:
@@ -937,9 +1199,11 @@ def _build_chunk_attributes(result: Any) -> Optional[dict[str, Any]]:
     """Extract document metadata attributes from a file search result.
 
     Parameters:
+    ----------
         result: A file search result object with optional attributes.
 
     Returns:
+    -------
         Dictionary of metadata attributes, or None if no attributes available.
     """
     attributes = getattr(result, "attributes", None)
@@ -1046,6 +1310,12 @@ async def check_model_configured(
         for model in models:
             if model.id == model_id:
                 return True
+
+            # Workaround to llama-stack watsonx bug
+            if model_id.startswith("watsonx/") and model.id == model_id.removeprefix(
+                "watsonx/"
+            ):
+                return True
         return False
     except APIStatusError as e:
         response = InternalServerErrorResponse.generic()
@@ -1120,6 +1390,14 @@ async def select_model_for_responses(
 
     model = llm_models[0]
     logger.info("Selected first LLM model: %s", model.id)
+
+    # Workaround to llama-stack bug for watsonx
+    # model needs to be "watsonx/<model_id>" in the response request
+    metadata = model.custom_metadata or {}
+    if metadata.get("provider_id") == "watsonx":
+        provider_resource_id = metadata.get("provider_resource_id")
+        if isinstance(provider_resource_id, str):
+            return provider_resource_id
     return model.id
 
 
@@ -1136,6 +1414,7 @@ def build_turn_summary(
         model: The model identifier in "provider/model" format
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     Returns:
         TurnSummary with extracted response text, referenced_documents, rag_chunks,
         tool_calls, and tool_results. All fields are empty/default if response is None
@@ -1329,55 +1608,65 @@ async def resolve_tool_choice(
     token: str,
     mcp_headers: Optional[McpHeaders] = None,
     request_headers: Optional[Mapping[str, str]] = None,
-) -> tuple[Optional[list[InputTool]], Optional[ToolChoice], Optional[list[str]]]:
-    """Resolve tools and tool_choice for the Responses API.
+) -> tuple[Optional[list[InputTool]], Optional[ToolChoice]]:
+    """Resolve tools and tool choice for the Responses API.
 
-    If the request includes tools, uses them as-is and derives vector_store_ids
-    from tool configs; otherwise loads tools via prepare_tools (using all
-    configured vector stores) and honors tool_choice "none" via the no_tools
-    flag. When no tools end up configured, tool_choice is cleared to None.
+    When tool choice is mode none, returns (None, None) so Llama Stack sees no
+    tools, even if the request listed tools.
+
+    When tools is omitted, load tools from LCORE configuration via prepare_tools.
+    When tools are present, translate vector store IDs using BYOK configuration.
+
+    When filters are present, apply them to prepared tools and overwrite tool choice mode.
+
+    If no tools remain after filtering, both prepared tools and tool choice are cleared.
 
     Args:
-        tools: Tools from the request, or None to use LCORE-configured tools.
-        tool_choice: Requested tool choice (e.g. auto, required, none) or None.
-        token: User token for MCP/auth.
-        mcp_headers: Optional MCP headers to propagate.
-        request_headers: Optional request headers for tool resolution.
+        tools: Request tools, or None for LCORE-configured tools.
+        tool_choice: Requested strategy, or None.
+        token: User token for MCP and auth.
+        mcp_headers: Optional MCP headers.
+        request_headers: Optional headers for tool resolution.
 
     Returns:
-        A tuple of (prepared_tools, prepared_tool_choice, vector_store_ids):
-        prepared_tools is the list of tools to use, or None if none configured;
-        prepared_tool_choice is the resolved tool choice, or None when there
-        are no tools; vector_store_ids is extracted from tools (in user-facing format)
-        when provided, otherwise None.
+        Prepared tools and resolved tool choice, each possibly None.
     """
-    prepared_tools: Optional[list[InputTool]] = None
-    client = AsyncLlamaStackClientHolder().get_client()
-    if tools:  # explicitly specified in request
-        # Per-request override of vector stores (user-facing rag_ids)
-        vector_store_ids = extract_vector_store_ids_from_tools(tools)
-        # Translate user-facing rag_ids to llama-stack vector_store_ids in each file_search tool
-        byok_rags = configuration.configuration.byok_rag
-        prepared_tools = translate_tools_vector_store_ids(tools, byok_rags)
-        prepared_tool_choice = tool_choice or ToolChoiceMode.auto
-    else:
-        # Vector stores were not overwritten in request, use all configured vector stores
-        vector_store_ids = None
-        # Get all tools configured in LCORE (returns None or non-empty list)
-        no_tools = (
-            isinstance(tool_choice, ToolChoiceMode)
-            and tool_choice == ToolChoiceMode.none
-        )
-        # Vector stores are prepared in llama-stack format
+    # If tool_choice mode is "none", tools are explicitly disallowed
+    if isinstance(tool_choice, ToolChoiceMode) and tool_choice == ToolChoiceMode.none:
+        return None, None
+
+    if tools is None:
+        # Register all tools configured in LCORE configuration
+        client = AsyncLlamaStackClientHolder().get_client()
         prepared_tools = await prepare_tools(
             client=client,
-            vector_store_ids=vector_store_ids,  # allow all configured vector stores
-            no_tools=no_tools,
+            vector_store_ids=None,  # allow all vector stores configured
+            no_tools=False,
             token=token,
             mcp_headers=mcp_headers,
             request_headers=request_headers,
         )
-        # If there are no tools, tool_choice cannot be set at all - LLS implicit behavior
-        prepared_tool_choice = tool_choice if prepared_tools else None
+    else:
+        # Pass tools explicitly configured for this request
+        byok_rags = configuration.configuration.byok_rag
+        prepared_tools = translate_tools_vector_store_ids(tools, byok_rags)
+        prepared_tools = apply_mcp_headers_to_explicit_tools(
+            prepared_tools, token, mcp_headers, request_headers
+        )
 
-    return prepared_tools, prepared_tool_choice, vector_store_ids
+    if isinstance(tool_choice, AllowedTools):
+        # Apply filters to tools if specified and overwrite tool choice mode
+        prepared_tool_choice = ToolChoiceMode(tool_choice.mode)
+        prepared_tools = filter_tools_by_allowed_entries(
+            prepared_tools, tool_choice.tools
+        )
+    else:
+        # Use request tool choice mode or default to auto
+        prepared_tool_choice = tool_choice or ToolChoiceMode.auto
+
+    # Clear tools and tool choice if no tools remain for consistency with Responses API
+    if not prepared_tools:
+        prepared_tools = None
+        prepared_tool_choice = None
+
+    return prepared_tools, prepared_tool_choice

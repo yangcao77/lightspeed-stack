@@ -19,7 +19,12 @@ class TestQueryResponse:
         assert qr.response == "LLM answer"
 
     def test_optional_conversation_id(self) -> None:
-        """Test the QueryResponse with default conversation ID."""
+        """Test the QueryResponse with default conversation ID.
+
+        Verify that omitting `conversation_id` results in `conversation_id` being None.
+
+        Asserts that `conversation_id` is None and `response` equals the provided value.
+        """
         qr = QueryResponse(response="LLM answer")  # type: ignore[call-arg]
         assert qr.conversation_id is None
         assert qr.response == "LLM answer"

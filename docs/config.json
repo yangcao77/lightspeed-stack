@@ -457,6 +457,11 @@
             ],
             "default": null
           },
+          "rlsapi_v1": {
+            "$ref": "#/components/schemas/RlsapiV1Configuration",
+            "description": "Configuration for the rlsapi v1 /infer endpoint used by the RHEL Lightspeed Command Line Assistant (CLA).",
+            "title": "rlsapi v1 configuration"
+          },
           "splunk": {
             "anyOf": [
               {
@@ -628,11 +633,6 @@
               }
             ],
             "default": null
-          },
-          "allow_verbose_infer": {
-            "default": false,
-            "title": "Allow Verbose Infer",
-            "type": "boolean"
           }
         },
         "title": "Customization",
@@ -1178,6 +1178,27 @@
           }
         },
         "title": "RagConfiguration",
+        "type": "object"
+      },
+      "RlsapiV1Configuration": {
+        "additionalProperties": false,
+        "description": "Configuration for the rlsapi v1 /infer endpoint.\n\nSettings specific to the RHEL Lightspeed Command Line Assistant (CLA)\nstateless inference endpoint. Kept separate from shared configuration\nsections so that CLA-specific options do not affect other endpoints.",
+        "properties": {
+          "allow_verbose_infer": {
+            "default": false,
+            "description": "Allow /v1/infer to return extended metadata (tool_calls, rag_chunks, token_usage) when the client sends \"include_metadata\": true. Should NOT be enabled in production. If production use is needed, consider RBAC-based access control via an Action.RLSAPI_V1_INFER authorization rule.",
+            "title": "Allow verbose infer",
+            "type": "boolean"
+          },
+          "quota_subject": {
+            "type": "string",
+            "nullable": true,
+            "default": null,
+            "description": "Identity field used as the quota subject for /v1/infer. When set, token quota enforcement is enabled for this endpoint. Requires quota_handlers to be configured. \"org_id\" and \"system_id\" require rh-identity authentication; falls back to user_id when rh-identity data is unavailable.",
+            "title": "Quota subject"
+          }
+        },
+        "title": "RlsapiV1Configuration",
         "type": "object"
       },
       "SQLiteDatabaseConfiguration": {

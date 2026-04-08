@@ -25,9 +25,11 @@ def mock_llama_stack_client_fixture(
     as it represents an external service call.
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
 
     Returns:
+    -------
         mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.models where it's actually used by models_endpoint_handler_base
@@ -67,9 +69,11 @@ def mock_llama_stack_client_failing_fixture(
     as it represents an external service call.
 
     Parameters:
+    ----------
         mocker (MockerFixture): pytest-mock fixture used to create and patch mocks.
 
     Returns:
+    -------
         mock_client: The mocked Llama Stack client instance configured as described above.
     """
     # Patch in app.endpoints.models where it's actually used by models_endpoint_handler_base
@@ -86,19 +90,62 @@ def mock_llama_stack_client_failing_fixture(
     yield mock_client
 
 
+MODEL_FILTER_TEST_CASES = [
+    pytest.param(
+        {
+            "filter_type": None,
+            "expected_count": 2,
+            "expected_models": [
+                {"identifier": "test-provider/test-model-1", "api_model_type": "llm"},
+                {
+                    "identifier": "test-provider/test-model-2",
+                    "api_model_type": "embedding",
+                },
+            ],
+        },
+        id="no_filter_returns_all_models",
+    ),
+    pytest.param(
+        {
+            "filter_type": "llm",
+            "expected_count": 1,
+            "expected_models": [
+                {"identifier": "test-provider/test-model-1", "api_model_type": "llm"},
+            ],
+        },
+        id="filter_llm_returns_llm_model",
+    ),
+    pytest.param(
+        {
+            "filter_type": "foobar",
+            "expected_count": 0,
+            "expected_models": [],
+        },
+        id="filter_unknown_type_returns_empty",
+    ),
+]
+
+
 @pytest.mark.asyncio
-async def test_models_list(
+@pytest.mark.parametrize("test_case", MODEL_FILTER_TEST_CASES)
+async def test_models_list_with_filter(
+    test_case: dict,
     test_config: AppConfig,
     mock_llama_stack_client: AsyncMockType,
     test_request: Request,
     test_auth: AuthTuple,
 ) -> None:
-    """Test that models endpoint returns successful response.
+    """Tests for models endpoint filtering.
 
-    This integration test verifies:
-    - Model list handler
+    Tests different model_type filter scenarios:
+    - No filter (returns all models)
+    - Filter by llm type
+    - Filter by unknown type (returns empty)
 
     Parameters:
+    ----------
+        test_case: Dictionary containing test parameters (filter_type,
+            expected_count, expected_models)
         test_config: Test configuration
         mock_llama_stack_client: Mocked Llama Stack client
         test_request: FastAPI request
@@ -106,118 +153,25 @@ async def test_models_list(
     """
     _ = test_config
     _ = mock_llama_stack_client
+
+    filter_type = test_case["filter_type"]
+    expected_count = test_case["expected_count"]
+    expected_models = test_case["expected_models"]
 
     response = await models_endpoint_handler(
         request=test_request,
         auth=test_auth,
-        model_type=ModelFilter(model_type=None),
+        model_type=ModelFilter(model_type=filter_type),
     )
 
     # Verify response structure
     assert response is not None
-    assert len(response.models) == 2
-    assert response.models[0]["identifier"] == "test-provider/test-model-1"
-    assert response.models[0]["api_model_type"] == "llm"
-    assert response.models[1]["identifier"] == "test-provider/test-model-2"
-    assert response.models[1]["api_model_type"] == "embedding"
+    assert len(response.models) == expected_count
 
-
-@pytest.mark.asyncio
-async def test_models_list_filter_model_type_llm(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test that models endpoint returns successful response.
-
-    This integration test verifies:
-    - Model list handler
-
-    Parameters:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    response = await models_endpoint_handler(
-        request=test_request, auth=test_auth, model_type=ModelFilter(model_type="llm")
-    )
-
-    # Verify response structure
-    assert response is not None
-    assert len(response.models) == 1
-    assert response.models[0]["identifier"] == "test-provider/test-model-1"
-    assert response.models[0]["api_model_type"] == "llm"
-
-
-@pytest.mark.asyncio
-async def test_models_list_filter_model_type_embedding(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test that models endpoint returns successful response.
-
-    This integration test verifies:
-    - Model list handler
-
-    Parameters:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    response = await models_endpoint_handler(
-        request=test_request,
-        auth=test_auth,
-        model_type=ModelFilter(model_type="embedding"),
-    )
-
-    # Verify response structure
-    assert response is not None
-    assert len(response.models) == 1
-    assert response.models[0]["identifier"] == "test-provider/test-model-2"
-    assert response.models[0]["api_model_type"] == "embedding"
-
-
-@pytest.mark.asyncio
-async def test_models_list_filter_model_type_unknown(
-    test_config: AppConfig,
-    mock_llama_stack_client: AsyncMockType,
-    test_request: Request,
-    test_auth: AuthTuple,
-) -> None:
-    """Test that models endpoint returns successful response.
-
-    This integration test verifies:
-    - Model list handler
-
-    Parameters:
-        test_config: Test configuration
-        mock_llama_stack_client: Mocked Llama Stack client
-        test_request: FastAPI request
-        test_auth: noop authentication tuple
-    """
-    _ = test_config
-    _ = mock_llama_stack_client
-
-    response = await models_endpoint_handler(
-        request=test_request,
-        auth=test_auth,
-        model_type=ModelFilter(model_type="foobar"),
-    )
-
-    # Verify response structure
-    assert response is not None
-    assert len(response.models) == 0
+    # Verify each expected model
+    for i, expected_model in enumerate(expected_models):
+        assert response.models[i]["identifier"] == expected_model["identifier"]
+        assert response.models[i]["api_model_type"] == expected_model["api_model_type"]
 
 
 @pytest.mark.asyncio
@@ -234,6 +188,7 @@ async def test_models_list_on_api_connection_error(
     - Error handling when Llama Stack is unreachable
 
     Parameters:
+    ----------
         test_config: Test configuration
         mock_llama_stack_client_failing: Mocked Llama Stack client that raises APIConnectionError
         test_request: FastAPI request
@@ -252,5 +207,6 @@ async def test_models_list_on_api_connection_error(
 
     assert exc_info.value.status_code == 503
     assert isinstance(exc_info.value.detail, dict)
-    assert exc_info.value.detail["response"] == "Unable to connect to Llama Stack"
+    expected = "Unable to connect to Llama Stack"
+    assert exc_info.value.detail["response"] == expected  # type: ignore[reportArgumentType]
     assert "cause" in exc_info.value.detail

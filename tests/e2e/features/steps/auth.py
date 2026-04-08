@@ -28,6 +28,7 @@ def set_authorization_header_custom(context: Context, header_value: str) -> None
     """Set a custom Authorization header value.
 
     Parameters:
+    ----------
         header_value (str): The value to set for the `Authorization` header.
     """
     if not hasattr(context, "auth_headers"):
@@ -36,7 +37,7 @@ def set_authorization_header_custom(context: Context, header_value: str) -> None
     print(f"🔑 Set Authorization header to: {header_value}")
 
 
-@given("I remove the auth header")  # type: ignore
+@given("I remove the auth header")  # type: ignore[reportCallIssue]
 def remove_authorization_header(context: Context) -> None:
     """Remove Authorization header."""
     if hasattr(context, "auth_headers") and "Authorization" in context.auth_headers:
@@ -52,6 +53,7 @@ def access_rest_api_endpoint_post(
     The response is stored in `context.response` attribute.
 
     Parameters:
+    ----------
         endpoint (str): Endpoint path to call; will be normalized.
         user_id (str): Value used for the `user_id` query parameter (surrounding quotes are removed).
     """

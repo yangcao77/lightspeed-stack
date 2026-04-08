@@ -22,7 +22,7 @@ from tests.e2e.utils.llama_stack_utils import (
     unregister_shield,
 )
 from tests.e2e.utils.prow_utils import (
-    restart_lightspeed_stack_only,
+    restart_pod,
     restore_llama_stack_pod,
 )
 from tests.e2e.utils.utils import (
@@ -37,74 +37,29 @@ from tests.e2e.utils.utils import (
 FALLBACK_MODEL = "gpt-4o-mini"
 FALLBACK_PROVIDER = "openai"
 
-# Config file mappings: config_name -> (docker_path, prow_path)
+# Config file mappings: logical key -> path template (Docker and Prow use the same tree).
 _CONFIG_PATHS = {
-    "no-cache": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-cache.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-no-cache.yaml",
-    ),
-    "auth-noop-token": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-noop-token.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-auth-noop-token.yaml",
-    ),
-    "rbac": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-rbac.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-rbac.yaml",
-    ),
-    "invalid-feedback-storage": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-feedback-storage.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-invalid-feedback-storage.yaml",
-    ),
-    "rh-identity": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-auth-rh-identity.yaml",
-    ),
+    "no-cache": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-cache.yaml",
+    "auth-noop-token": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-noop-token.yaml",
+    "rbac": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-rbac.yaml",
+    "invalid-feedback-storage": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-feedback-storage.yaml",
+    "rh-identity": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
     # Default LCS config for @MCP feature; per-scenario tags select mcp-* variants in before_scenario.
-    "mcp": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp.yaml",
-    ),
-    "mcp-file-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-file-auth.yaml",
-    ),
-    "invalid-mcp-file-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-mcp-file-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-invalid-mcp-file-auth.yaml",
-    ),
-    "mcp-kubernetes-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-kubernetes-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-kubernetes-auth.yaml",
-    ),
-    "mcp-client-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-client-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-client-auth.yaml",
-    ),
-    "mcp-oauth-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-oauth-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-oauth-auth.yaml",
-    ),
-    "inline-rag": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-inline-rag.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-inline-rag.yaml",
-    ),
-    "mcp-auth": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-auth.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-mcp-auth.yaml",
-    ),
-    "no-mcp": (
-        "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-mcp.yaml",
-        "tests/e2e-prow/rhoai/configs/lightspeed-stack-no-mcp.yaml",
-    ),
+    "mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
+    "mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
+    "invalid-mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-mcp-file-auth.yaml",
+    "mcp-kubernetes-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-kubernetes-auth.yaml",
+    "mcp-client-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-client-auth.yaml",
+    "mcp-oauth-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-oauth-auth.yaml",
+    "inline-rag": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-inline-rag.yaml",
+    "mcp-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-auth.yaml",
+    "no-mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-mcp.yaml",
 }
 
 
 def _get_config_path(config_name: str, mode_dir: str) -> str:
-    """Get the appropriate config path based on environment."""
-    docker_path_template, prow_path = _CONFIG_PATHS[config_name]
-    if is_prow_environment():
-        return prow_path
-    return docker_path_template.format(mode_dir=mode_dir)
+    """Resolve repo-relative path to a Lightspeed stack YAML for the current mode."""
+    return _CONFIG_PATHS[config_name].format(mode_dir=mode_dir)
 
 
 def _fetch_models_from_service() -> dict:
@@ -147,6 +102,7 @@ def before_all(context: Context) -> None:
     "gpt-4-turbo" and "openai".
 
     Parameters:
+    ----------
         context (Context): Behave context into which this function writes:
             - deployment_mode (str): "server" or "library".
             - is_library_mode (bool): True when deployment_mode is "library".
@@ -288,6 +244,7 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
     health endpoint until it becomes healthy or a timeout is reached.
 
     Parameters:
+    ----------
         context (Context): Behave test context. Expected attributes used here include:
             - feature_config: path to the feature-level configuration to restore.
             - is_library_mode (bool): whether tests run in library mode.
@@ -380,7 +337,7 @@ def _restore_llama_stack(context: Context) -> None:
         ) = None
         for attempt in range(1, 4):
             try:
-                restart_lightspeed_stack_only()
+                restart_pod("lightspeed-stack")
                 print(
                     "✓ Prow: Llama Stack restored and lightspeed-stack restarted "
                     "for clean reconnect"
@@ -389,7 +346,7 @@ def _restore_llama_stack(context: Context) -> None:
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 last_lcs_err = e
                 print(
-                    f"Warning: restart_lightspeed after Llama restore "
+                    f"Warning: lightspeed-stack restart after Llama restore "
                     f"attempt {attempt}/3 failed: {e}"
                 )
                 if attempt < 3:
@@ -551,6 +508,17 @@ def after_feature(context: Context, feature: Feature) -> None:
         switch_config(context.default_config_backup)
         restart_container("lightspeed-stack")
         remove_config_backup(context.default_config_backup)
+
+    # Restore Lightspeed Stack config if the generic configure_service step switched it.
+    # This cleanup intentionally runs for any feature (not tag-gated) - any feature that
+    # leaves a backup file will trigger config restoration and container restarts.
+    backup_path = "lightspeed-stack.yaml.backup"
+    if os.path.exists(backup_path):
+        switch_config(backup_path)
+        remove_config_backup(backup_path)
+        if not context.is_library_mode:
+            restart_container("llama-stack")
+        restart_container("lightspeed-stack")
 
     # Clean up any proxy servers left from the last scenario
     if hasattr(context, "tunnel_proxy") or hasattr(context, "interception_proxy"):

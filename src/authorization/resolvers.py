@@ -32,10 +32,12 @@ class RolesResolver(ABC):  # pylint: disable=too-few-public-methods
         Resolve and return the set of user roles extracted from the provided authentication tuple.
 
         Parameters:
+        ----------
             auth (AuthTuple): Authentication tuple (for example, a token and
             associated metadata) used to determine roles.
 
         Returns:
+        -------
             UserRoles: A set of role names associated with the authenticated subject.
         """
 
@@ -80,6 +82,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         Create a JwtRolesResolver configured with JWT-to-role extraction rules.
 
         Parameters:
+        ----------
             role_rules (list[JwtRoleRule]): Ordered list of rules that map JWT
             claim matches to roles. Each rule specifies a JSONPath to evaluate,
             an operator to apply to matches, the roles to grant when the rule
@@ -111,12 +114,14 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         Determine which roles from a JwtRoleRule apply to the provided JWT claims.
 
         Parameters:
+        ----------
             rule (JwtRoleRule): Rule containing a JSONPath expression,
             operator, and associated roles to grant when matched.
             jwt_claims (dict[str, Any]): Decoded JWT claims to evaluate against
             the rule's JSONPath.
 
         Returns:
+        -------
             roles (set[str]): The set of roles from `rule.roles` if the rule
             matches `jwt_claims`, otherwise an empty set.
         """
@@ -136,9 +141,11 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         Extract JWT claims from an AuthTuple.
 
         Parameters:
+        ----------
             auth (AuthTuple): Authentication tuple where the fourth element is the JWT token.
 
         Returns:
+        -------
             dict[str, Any]: Decoded JWT claims as a dictionary. Returns an
             empty dict when the token equals constants.NO_USER_TOKEN (guest).
             The token payload is decoded without validating the JWT signature.
@@ -167,12 +174,14 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
           compiled_regex is provided).
 
         Parameters:
+        ----------
             rule (JwtRoleRule): The role rule containing operator, value,
                                 negate flag, and optionally compiled_regex.
             match (Any): The value(s) produced by evaluating the JSONPath; may
                          be a single value or an iterable of values for MATCH.
 
         Returns:
+        -------
             bool: `true` if the operator evaluation (after applying negation
             when set) succeeds, `false` otherwise.
         """
@@ -208,10 +217,12 @@ class AccessResolver(ABC):  # pylint: disable=too-few-public-methods
         Determine whether any of the given user roles permit performing the specified action.
 
         Parameters:
+        ----------
             action (Action): The action to authorize.
             user_roles (UserRoles): Set of role names assigned to the user.
 
         Returns:
+        -------
             bool: `true` if at least one role in `user_roles` grants the
             requested `action`, `false` otherwise.
         """
@@ -223,9 +234,11 @@ class AccessResolver(ABC):  # pylint: disable=too-few-public-methods
         Compute the set of actions permitted for the provided user roles.
 
         Parameters:
+        ----------
             user_roles (UserRoles): Set of role names to evaluate.
 
         Returns:
+        -------
             set[Action]: The aggregated set of allowed actions for the given
             roles. If `ADMIN` is included in the aggregated actions, returns
             all available non-`ADMIN` actions.
@@ -241,10 +254,12 @@ class NoopAccessResolver(AccessResolver):  # pylint: disable=too-few-public-meth
         Grant all access unconditionally.
 
         Parameters:
+        ----------
             action (Action): Ignored.
             user_roles (UserRoles): Ignored.
 
         Returns:
+        -------
             `true` always (access is always granted).
         """
         _ = action  # We're noop, it doesn't matter, everyone is allowed
@@ -276,11 +291,13 @@ class GenericAccessResolver(AccessResolver):  # pylint: disable=too-few-public-m
         Create a GenericAccessResolver and build an internal mapping of roles to allowed actions.
 
         Parameters:
+        ----------
             access_rules (list[AccessRule]): List of access rules used to
             populate the resolver. Each rule's `role` is mapped to the union of
             its `actions`.
 
         Raises:
+        ------
             ValueError: If any rule contains the `Action.ADMIN` action together
                         with other actions.
         """
@@ -309,10 +326,12 @@ class GenericAccessResolver(AccessResolver):  # pylint: disable=too-few-public-m
         actions (ADMIN acts as a full override).
 
         Parameters:
+        ----------
             action (Action): The action to check.
             user_roles (UserRoles): The set of roles assigned to the user.
 
         Returns:
+        -------
             true if at least one role permits the action or ADMIN override
             applies, false otherwise.
         """

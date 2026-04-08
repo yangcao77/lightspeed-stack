@@ -1,11 +1,14 @@
-|                          |                                                                       |
-|--------------------------|-----------------------------------------------------------------------|
-| **Date**                 | 2026-03-16                                                            |
-| **Component**            | lightspeed-stack                                                      |
-| **Authors**              | Maxim Svistunov                                                       |
-| **Feature / Initiative** | [LCORE-1311](https://issues.redhat.com/browse/LCORE-1311)             |
-| **Spike**                | [LCORE-1314](https://issues.redhat.com/browse/LCORE-1314)             |
-| **Links**                | Spike doc: `docs/design/conversation-compaction-spike.md` |
+# Conversation Compaction Design
+
+|                          |                                                                                   |
+|--------------------------|-----------------------------------------------------------------------------------|
+|--------------------------|-----------------------------------------------------------------------------------|
+| **Date**                 | 2026-03-16                                                                        |
+| **Component**            | lightspeed-stack                                                                  |
+| **Authors**              | Maxim Svistunov                                                                   |
+| **Feature / Initiative** | [LCORE-1311](https://issues.redhat.com/browse/LCORE-1311)                         |
+| **Spike**                | [LCORE-1314](https://issues.redhat.com/browse/LCORE-1314)                         |
+| **Links**                | Spike doc: `docs/design/conversation-compaction/conversation-compaction-spike.md` |
 
 # What
 

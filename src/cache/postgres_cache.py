@@ -139,6 +139,7 @@ class PostgresCache(Cache):
         connection, initializing the cache schema.
 
         Parameters:
+        ----------
             config (PostgreSQLDatabaseConfiguration): Configuration used to
             connect to the PostgreSQL server and configure the cache.
         """
@@ -213,10 +214,12 @@ class PostgresCache(Cache):
         """Initialize cache and create schema if needed.
 
         Parameters:
+        ----------
             namespace: PostgreSQL schema namespace to use for cache tables.
                       If not "public", the schema will be created if it doesn't exist.
 
         Raises:
+        ------
             CacheError: If the cache is disconnected.
         """
         if self.connection is None:
@@ -251,14 +254,17 @@ class PostgresCache(Cache):
         """Get the value associated with the given key.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             The value associated with the key, or None if not found.
 
         Raises:
+        ------
             CacheError: If the cache connection is not available.
         """
         if self.connection is None:
@@ -348,12 +354,14 @@ class PostgresCache(Cache):
         """Set the value associated with the given key.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
 
         Raises:
+        ------
             CacheError: If the cache is disconnected or a database error occurs
             while persisting the entry.
         """
@@ -442,14 +450,17 @@ class PostgresCache(Cache):
         """Delete conversation history for a given user_id and conversation_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             bool: True if the conversation was deleted, False if not found.
 
         Raises:
+        ------
             CacheError: If the cache is disconnected or a database error occurs.
         """
         if self.connection is None:
@@ -482,10 +493,12 @@ class PostgresCache(Cache):
         """List all conversations for a given user_id.
 
         Parameters:
+        ----------
             user_id: User identification.
             skip_user_id_check: Skip user_id suid check.
 
         Returns:
+        -------
             A list of ConversationData objects containing conversation_id, topic_summary, and
             last_message_timestamp
 
@@ -520,6 +533,7 @@ class PostgresCache(Cache):
         """Set the topic summary for the given conversation.
 
         Parameters:
+        ----------
             user_id: User identification.
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.

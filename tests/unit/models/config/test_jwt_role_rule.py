@@ -72,7 +72,14 @@ def test_jwt_role_rule_no_roles_specified() -> None:
 
 
 def test_jwt_role_rule_star_role_specified() -> None:
-    """Check the JwtRoleRule config class."""
+    """Check the JwtRoleRule config class.
+
+    Asserts that specifying the wildcard '*' role in JwtRoleRule raises a ValidationError.
+
+    Instantiates JwtRoleRule with roles=['*'] and expects a ValidationError
+    whose message contains "The wildcard role is not allowed in role
+    rules".
+    """
     with pytest.raises(
         ValidationError, match="The wildcard '\\*' role is not allowed in role rules"
     ):

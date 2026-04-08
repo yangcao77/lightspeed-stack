@@ -51,7 +51,12 @@ def test_get_logger_invalid_env_var_fallback(monkeypatch: pytest.MonkeyPatch) ->
 def test_get_logger_log_level(
     monkeypatch: pytest.MonkeyPatch, level_name: str, expected_level: int
 ) -> None:
-    """Test that all valid log levels work correctly, case-insensitively."""
+    """Test that all valid log levels work correctly, case-insensitively.
+
+    Verifies that setting the log-level environment variable
+    produces a logger with the corresponding numeric level,
+    matching level names case-insensitively.
+    """
     monkeypatch.setenv(LIGHTSPEED_STACK_LOG_LEVEL_ENV_VAR, level_name)
 
     logger = get_logger(f"test_{level_name}")

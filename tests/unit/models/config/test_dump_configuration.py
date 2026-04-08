@@ -34,6 +34,7 @@ def test_dump_configuration(tmp_path: Path) -> None:
     Please note that redaction process is not in place.
 
     Parameters:
+    ----------
         tmp_path (Path): Directory where the test JSON file will be written.
     """
     cfg = Configuration(
@@ -214,6 +215,10 @@ def test_dump_configuration(tmp_path: Path) -> None:
                 "offline": True,
                 "chunk_filter_query": None,
             },
+            "rlsapi_v1": {
+                "allow_verbose_infer": False,
+                "quota_subject": None,
+            },
             "splunk": None,
             "deployment_environment": "development",
         }
@@ -226,6 +231,7 @@ def test_dump_configuration_with_one_mcp_server(tmp_path: Path) -> None:
     present in the output.
 
     Parameters:
+    ----------
         tmp_path: Temporary directory path provided by pytest for file output.
     """
     mcp_servers = [
@@ -566,6 +572,10 @@ def test_dump_configuration_with_quota_limiters(tmp_path: Path) -> None:
                 "offline": True,
                 "chunk_filter_query": None,
             },
+            "rlsapi_v1": {
+                "allow_verbose_infer": False,
+                "quota_subject": None,
+            },
             "splunk": None,
             "deployment_environment": "development",
         }
@@ -796,6 +806,10 @@ def test_dump_configuration_with_quota_limiters_different_values(
                 "offline": True,
                 "chunk_filter_query": None,
             },
+            "rlsapi_v1": {
+                "allow_verbose_infer": False,
+                "quota_subject": None,
+            },
             "splunk": None,
             "deployment_environment": "development",
         }
@@ -1001,6 +1015,10 @@ def test_dump_configuration_byok(tmp_path: Path) -> None:
                 "offline": True,
                 "chunk_filter_query": None,
             },
+            "rlsapi_v1": {
+                "allow_verbose_infer": False,
+                "quota_subject": None,
+            },
             "splunk": None,
             "deployment_environment": "development",
         }
@@ -1190,6 +1208,10 @@ def test_dump_configuration_pg_namespace(tmp_path: Path) -> None:
                 "rhokp_url": None,
                 "offline": True,
                 "chunk_filter_query": None,
+            },
+            "rlsapi_v1": {
+                "allow_verbose_infer": False,
+                "quota_subject": None,
             },
             "splunk": None,
             "deployment_environment": "development",

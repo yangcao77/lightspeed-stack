@@ -68,10 +68,12 @@ class MockFastAPI(FastAPI):
         app for test inspection.
 
         Parameters:
+        ----------
             router (Any): Router object to register.
             prefix (str): Mount prefix to associate with the router.
 
         Notes:
+        -----
             Accepts additional FastAPI-compatible parameters for
             API compatibility but ignores them; only the (router,
             prefix) pair is recorded.
@@ -92,13 +94,16 @@ class MockFastAPI(FastAPI):
         Get the prefix associated with a registered router in the mock FastAPI.
 
         Parameters:
+        ----------
             router (Any): Router object to look up.
 
         Returns:
+        -------
             Optional[str]: The prefix string for the router, or `None` if the
             router was registered without a prefix.
 
         Raises:
+        ------
             IndexError: If the router is not registered in the mock app.
         """
         return list(filter(lambda r: r[0] == router, self.routers))[0][1]

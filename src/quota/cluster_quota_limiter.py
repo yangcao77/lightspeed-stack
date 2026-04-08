@@ -20,11 +20,13 @@ class ClusterQuotaLimiter(RevokableQuotaLimiter):
         Create a quota limiter and initialize its persistent storage.
 
         Parameters:
+        ----------
             configuration (QuotaHandlersConfiguration): Handlers and settings used by the limiter.
             initial_quota (int): Starting quota value for the entire cluster.
             increase_by (int): Amount by which the quota is increased when applicable.
 
         Notes:
+        -----
             Establishes the database connection and ensures required tables exist.
         """
         subject = "c"  # cluster

@@ -10,13 +10,16 @@ def extract_user_token(headers: Headers) -> str:
     """Extract the bearer token from an HTTP Authorization header.
 
     Parameters:
+    ----------
         headers (Headers): Incoming request headers from which the
         Authorization header will be read.
 
     Returns:
+    -------
         str: The bearer token string extracted from the header.
 
     Raises:
+    ------
         HTTPException: If the Authorization header is missing or malformed.
     """
     authorization_header = headers.get("Authorization")

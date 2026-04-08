@@ -26,6 +26,7 @@ def test_service_customization(subtests: SubTests) -> None:
       the disable flag remains True.
 
     Parameters:
+    ----------
         subtests (SubTests): Pytest SubTests context used to group related assertions.
     """
     with subtests.test(msg="System prompt is enabled"):
@@ -57,13 +58,30 @@ def test_service_customization(subtests: SubTests) -> None:
 
 
 def test_service_customization_wrong_system_prompt_path() -> None:
-    """Check the service customization class."""
+    """Check the service customization class.
+
+    Verify that providing a non-existent `system_prompt_path` raises a `ValidationError`.
+
+    Asserts that constructing `Customization` with a path that does not point
+    to a file raises `pydantic.ValidationError` with a message matching "Path
+    does not point to a file".
+    """
     with pytest.raises(ValidationError, match="Path does not point to a file"):
         _ = Customization(system_prompt_path=Path("/path/does/not/exists"))
 
 
 def test_service_customization_correct_system_prompt_path(subtests: SubTests) -> None:
-    """Check the service customization class."""
+    """Check the service customization class.
+
+    Validate that Customization loads system_prompt from a provided file for
+    both single-line and multi-line prompts.
+
+    One subtest verifies that a one-line prompt file yields the exact string
+    "This is system prompt." Another subtest verifies that a multi-line prompt
+    file is loaded and contains the expected substrings: "You are OpenShift
+    Lightspeed", "Here are your instructions", and "Here are some basic facts
+    about OpenShift".
+    """
     with subtests.test(msg="One line system prompt"):
         # pass a file containing system prompt
         c = Customization(
