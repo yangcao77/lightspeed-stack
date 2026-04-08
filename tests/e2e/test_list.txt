@@ -17,7 +17,7 @@ features/rlsapi_v1.feature
 features/rlsapi_v1_errors.feature
 features/streaming_query.feature
 features/rest_api.feature
-features/mcp.feature
 features/models.feature
 features/proxy.feature
 features/tls.feature
+features/mcp.feature

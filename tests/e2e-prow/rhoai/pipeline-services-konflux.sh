@@ -18,15 +18,19 @@ if [ -f "$REPO_ROOT/tests/e2e/secrets/invalid-mcp-token" ]; then
     --dry-run=client -o yaml | oc apply -f -
 fi
 
-# 1. Llama Stack (run from source; manifest is static, no envsubst)
+# 1. Llama Stack (run from source). Cluster DNS name matches oc expose --name=llama-stack-service-svc.
+# Secret must exist before the pod: both LCS and llama-stack-container use E2E_LLAMA_HOSTNAME from it.
+_LLAMA_SVC_FQDN="llama-stack-service-svc.${NAMESPACE}.svc.cluster.local"
+oc create secret generic llama-stack-ip-secret \
+  --from-literal=key="$_LLAMA_SVC_FQDN" \
+  -n "$NAMESPACE" \
+  --dry-run=client -o yaml | oc apply -f -
+
+timeout 120 oc delete pod llama-stack-service -n "$NAMESPACE" --ignore-not-found=true --wait=true 2>/dev/null || true
 oc apply -n "$NAMESPACE" -f "$BASE_DIR/manifests/lightspeed/llama-stack-openai.yaml"
 oc wait pod/llama-stack-service -n "$NAMESPACE" --for=condition=Ready --timeout=600s
-
 oc label pod llama-stack-service pod=llama-stack-service -n "$NAMESPACE"
 oc expose pod llama-stack-service --name=llama-stack-service-svc --port=8321 --type=ClusterIP -n "$NAMESPACE"
-
-export E2E_LLAMA_HOSTNAME="llama-stack-service-svc.${NAMESPACE}.svc.cluster.local"
-oc create secret generic llama-stack-ip-secret --from-literal=key="$E2E_LLAMA_HOSTNAME" -n "$NAMESPACE" || true
 
 # 2. Lightspeed Stack (image from env; default if unset)
 LIGHTSPEED_STACK_IMAGE="${LIGHTSPEED_STACK_IMAGE:-quay.io/lightspeed-core/lightspeed-stack:dev-latest}"

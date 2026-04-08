@@ -314,6 +314,7 @@ spec:
           #   script: |
           #     #!/bin/bash
           #     ls -la /workspace
+          # Optional: push /workspace to OCI (add Secret + workload volume ols-konflux-artifacts-bot-creds first).
           # - name: push-artifacts
           #   (requires volume ols-konflux-artifacts-bot-creds + Secret ols-konflux-artifacts-bot)
           #   onError: continue

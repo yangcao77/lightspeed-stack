@@ -22,7 +22,7 @@ from tests.e2e.utils.llama_stack_utils import (
     unregister_shield,
 )
 from tests.e2e.utils.prow_utils import (
-    restart_lightspeed_stack_only,
+    restart_pod,
     restore_llama_stack_pod,
 )
 from tests.e2e.utils.utils import (
@@ -337,7 +337,7 @@ def _restore_llama_stack(context: Context) -> None:
         ) = None
         for attempt in range(1, 4):
             try:
-                restart_lightspeed_stack_only()
+                restart_pod("lightspeed-stack")
                 print(
                     "✓ Prow: Llama Stack restored and lightspeed-stack restarted "
                     "for clean reconnect"
@@ -346,7 +346,7 @@ def _restore_llama_stack(context: Context) -> None:
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 last_lcs_err = e
                 print(
-                    f"Warning: restart_lightspeed after Llama restore "
+                    f"Warning: lightspeed-stack restart after Llama restore "
                     f"attempt {attempt}/3 failed: {e}"
                 )
                 if attempt < 3:

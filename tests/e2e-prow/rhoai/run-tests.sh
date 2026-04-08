@@ -59,10 +59,17 @@ ts "End: uv sync"
 
 ts "Start: e2e test-e2e"
 echo "Running e2e test suite..."
+set +e
 # Makefile target is: uv run behave ... (Konflux/ubi-minimal often has no make)
 if command -v make >/dev/null 2>&1; then
   make test-e2e
 else
   uv run behave --color --format pretty --tags=-skip -D dump_errors=true @tests/e2e/test_list.txt
 fi
+BEHAVE_RC=$?
+set -e
 ts "End: e2e test-e2e"
+if [[ -n "${E2E_EXIT_CODE_FILE:-}" ]]; then
+  echo "$BEHAVE_RC" >"$E2E_EXIT_CODE_FILE"
+fi
+exit "$BEHAVE_RC"

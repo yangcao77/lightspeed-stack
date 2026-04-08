@@ -90,7 +90,7 @@ free_local_tcp_port() {
     local port="${1:?port required}"
     local pid
     if command -v lsof >/dev/null >&2; then
-        for pid in $(lsof -ti:"$port" 2>/dev/null); do
+        for pid in $(lsof -ti:"$port" -sTCP:LISTEN 2>/dev/null); do
             kill -9 "$pid" 2>/dev/null || true
         done
     fi
@@ -219,7 +219,7 @@ wait_for_llama_stack_http_health() {
             return 0
         fi
         if [[ $attempt -lt $max_attempts ]]; then
-            sleep 3
+            sleep 2
         fi
     done
     echo "ERROR: Llama Stack did not respond on http://127.0.0.1:8321/v1/health inside the pod"
@@ -267,9 +267,20 @@ cmd_restart_lightspeed() {
 
 cmd_restart_llama_stack() {
     echo "===== Restoring llama-stack service ====="
-    echo "Applying pod manifest..."
+    # Pod.spec is largely immutable; delete so apply creates a pod with current volumes/env.
+    echo "Deleting llama-stack pod (if any) before apply..."
+    timeout 45 oc delete pod llama-stack-service -n "$NAMESPACE" --ignore-not-found=true --wait=true 2>/dev/null || {
+        oc delete pod llama-stack-service -n "$NAMESPACE" --ignore-not-found=true --force --grace-period=0 2>/dev/null || true
+        sleep 3
+    }
 
+    echo "Applying pod manifest..."
     if [[ "${E2E_KONFLUX_E2E:-0}" == "1" ]]; then
+        _LLAMA_SVC_FQDN="llama-stack-service-svc.${NAMESPACE}.svc.cluster.local"
+        oc create secret generic llama-stack-ip-secret \
+            --from-literal=key="$_LLAMA_SVC_FQDN" \
+            -n "$NAMESPACE" \
+            --dry-run=client -o yaml | oc apply -f -
         oc apply -n "$NAMESPACE" -f "$MANIFEST_DIR/llama-stack-openai.yaml"
         wait_for_pod "llama-stack-service" 60
         echo "Labeling pod for service..."
@@ -472,13 +483,11 @@ cmd_get_configmap_content() {
 
 cmd_disrupt_llama_stack() {
     local pod_name="llama-stack-service"
-    
-    # Check if pod exists and is running
+
     local phase
     phase=$(oc get pod "$pod_name" -n "$NAMESPACE" -o jsonpath='{.status.phase}' 2>/dev/null || echo "NotFound")
-    
+
     if [[ "$phase" == "Running" ]]; then
-        # Delete the pod to disrupt connection
         oc delete pod "$pod_name" -n "$NAMESPACE" --wait=true
         sleep 2
         echo "Llama Stack connection disrupted successfully (pod deleted)"
