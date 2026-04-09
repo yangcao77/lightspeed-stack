@@ -14,6 +14,7 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
+from constants import DEFAULT_MAX_FILE_UPLOAD_SIZE
 from log import get_logger
 from models.config import Action
 from models.requests import (
@@ -22,6 +23,7 @@ from models.requests import (
     VectorStoreUpdateRequest,
 )
 from models.responses import (
+    AbstractErrorResponse,
     FileResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
@@ -63,6 +65,7 @@ vector_store_responses: dict[int | str, dict[str, Any]] = {
 
 file_responses: dict[int | str, dict[str, Any]] = {
     200: FileResponse.openapi_response(),
+    400: {"description": "Bad Request - Invalid file upload"},
     401: UnauthorizedResponse.openapi_response(
         examples=["missing header", "missing token"]
     ),
@@ -434,22 +437,69 @@ async def create_file(
 
     Raises:
         HTTPException:
-            - 400: Bad request (e.g., file too large)
+            - 400: Bad request (e.g., file too large, invalid format)
             - 401: Authentication failed
             - 403: Authorization failed
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to Llama Stack
     """
     _ = auth
-    _ = request
 
     check_configuration_loaded(configuration)
+
+    # Check Content-Length header BEFORE reading to prevent DoS via memory exhaustion
+    content_length = request.headers.get("content-length")
+    if content_length:
+        try:
+            size = int(content_length)
+            if size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
+                response = AbstractErrorResponse(
+                    response="File too large",
+                    cause=(
+                        f"File size {size} bytes exceeds maximum allowed "
+                        f"size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
+                        f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
+                    ),
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                )
+                raise HTTPException(**response.model_dump())
+        except ValueError:
+            # Invalid Content-Length header, continue and validate after reading
+            pass
+
+    # file.size attribute if available
+    if hasattr(file, "size") and file.size is not None:
+        if file.size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
+            response = AbstractErrorResponse(
+                response="File too large",
+                cause=(
+                    f"File size {file.size} bytes exceeds maximum allowed "
+                    f"size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
+                    f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
+                ),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+            raise HTTPException(**response.model_dump())
 
     try:
         client = AsyncLlamaStackClientHolder().get_client()
 
-        # Read file content
+        # Read file content once
         content = await file.read()
+
+        # Verify actual size after reading
+        if len(content) > DEFAULT_MAX_FILE_UPLOAD_SIZE:
+            response = AbstractErrorResponse(
+                response="File too large",
+                cause=(
+                    f"File content size {len(content)} bytes exceeds maximum "
+                    f"allowed size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
+                    f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
+                ),
+                status_code=status.HTTP_400_BAD_REQUEST,
+            )
+            raise HTTPException(**response.model_dump())
+
         filename = file.filename or "uploaded_file"
 
         # Add .txt extension if no extension present
@@ -463,10 +513,8 @@ async def create_file(
             len(content),
         )
 
-        # Convert to BytesIO for Llama Stack client
-        # The client expects bytes, io.IOBase, PathLike, or a tuple
         file_bytes = BytesIO(content)
-        file_bytes.name = filename  # Set the filename attribute
+        file_bytes.name = filename
 
         file_obj = await client.files.create(
             file=file_bytes,
@@ -487,7 +535,13 @@ async def create_file(
         raise HTTPException(**response.model_dump()) from e
     except BadRequestError as e:
         logger.error("Bad request for file upload: %s", e)
-        response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        # BadRequestError from Llama Stack indicates client error (e.g., file too large)
+        # Map to 400 Bad Request, not 503 Service Unavailable
+        response = AbstractErrorResponse(
+            response="Invalid file upload",
+            cause=f"File upload rejected by Llama Stack: {str(e)}",
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
         raise HTTPException(**response.model_dump()) from e
     except Exception as e:
         full_trace = traceback.format_exc()
@@ -572,9 +626,12 @@ async def add_file_to_vector_store(
                 else:
                     raise  # Re-raise if not a lock error or max retries reached
         if not vs_file:
-            raise HTTPException(
-                status_code=500, detail="Failed to create vector store file"
+            # Use standard error response model for consistency
+            response = InternalServerErrorResponse(
+                response="Failed to create vector store file",
+                cause="All retry attempts failed to create the vector store file",
             )
+            raise HTTPException(**response.model_dump())
         logger.info(
             "Vector store file created - ID: %s, status: %s, last_error: %s",
             vs_file.id,
