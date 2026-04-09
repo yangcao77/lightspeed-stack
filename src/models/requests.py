@@ -1069,6 +1069,22 @@ class VectorStoreUpdateRequest(BaseModel):
         },
     }
 
+    @model_validator(mode="after")
+    def check_at_least_one_field(self) -> Self:
+        """Ensure at least one field is provided for update.
+
+        Raises:
+            ValueError: If all fields are None (empty update).
+
+        Returns:
+            Self: The validated model instance.
+        """
+        if self.name is None and self.expires_at is None and self.metadata is None:
+            raise ValueError(
+                "At least one field must be provided: name, expires_at, or metadata"
+            )
+        return self
+
 
 class VectorStoreFileCreateRequest(BaseModel):
     """Model representing a request to add a file to a vector store.
@@ -1115,3 +1131,39 @@ class VectorStoreFileCreateRequest(BaseModel):
             ]
         },
     }
+
+    @field_validator("attributes")
+    @classmethod
+    def validate_attributes(
+        cls, value: Optional[dict[str, str | float | bool]]
+    ) -> Optional[dict[str, str | float | bool]]:
+        """Validate attributes field constraints.
+
+        Ensures:
+        - Maximum 16 key-value pairs
+        - Keys are max 64 characters
+        - String values are max 512 characters
+
+        Parameters:
+            value: The attributes dictionary to validate.
+
+        Raises:
+            ValueError: If constraints are violated.
+
+        Returns:
+            The validated attributes dictionary.
+        """
+        if value is None:
+            return value
+
+        if len(value) > 16:
+            raise ValueError(f"attributes can have at most 16 pairs, got {len(value)}")
+
+        for key, val in value.items():
+            if len(key) > 64:
+                raise ValueError(f"attribute key '{key}' exceeds 64 characters")
+
+            if isinstance(val, str) and len(val) > 512:
+                raise ValueError(f"attribute value for '{key}' exceeds 512 characters")
+
+        return value

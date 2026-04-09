@@ -6,8 +6,7 @@ import traceback
 from io import BytesIO
 from typing import Annotated, Any
 
-from fastapi import APIRouter, File, HTTPException, Request, UploadFile
-from fastapi.params import Depends
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from llama_stack_client import APIConnectionError, BadRequestError
 
 from authentication import get_auth_dependency
@@ -89,6 +88,7 @@ vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    404: NotFoundResponse.openapi_response(examples=["vector_store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
@@ -136,7 +136,7 @@ async def create_vector_store(
         if "embedding_dimension" in body_dict:
             extra_body["embedding_dimension"] = body_dict.pop("embedding_dimension")
 
-        logger.info(
+        logger.debug(
             "Creating vector store - body_dict: %s, extra_body: %s",
             body_dict,
             extra_body,
@@ -365,6 +365,7 @@ async def update_vector_store(
 @router.delete(
     "/vector-stores/{vector_store_id}",
     responses={"204": {"description": "Vector store deleted"}},
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
 async def delete_vector_store(
@@ -599,8 +600,10 @@ async def add_file_to_vector_store(
         raise HTTPException(**response.model_dump()) from e
     except BadRequestError as e:
         logger.error("Vector store file operation failed: %s", e)
+        # Don't assume which resource is missing - could be vector_store_id OR file_id
         response = NotFoundResponse(
-            resource="vector_store_file", resource_id=body.file_id
+            resource="vector_store_or_file",
+            resource_id=f"vector_store={vector_store_id}, file={body.file_id}",
         )
         raise HTTPException(**response.model_dump()) from e
     except Exception as e:
@@ -639,6 +642,7 @@ async def list_vector_store_files(
         HTTPException:
             - 401: Authentication failed
             - 403: Authorization failed
+            - 404: Vector store not found
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to Llama Stack
     """
@@ -670,6 +674,12 @@ async def list_vector_store_files(
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)
         response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
+        raise HTTPException(**response.model_dump()) from e
+    except BadRequestError as e:
+        logger.error("Vector store not found: %s", e)
+        response = NotFoundResponse(
+            resource="vector_store", resource_id=vector_store_id
+        )
         raise HTTPException(**response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to list vector store files: %s", e)
@@ -760,6 +770,7 @@ async def get_vector_store_file(
 @router.delete(
     "/vector-stores/{vector_store_id}/files/{file_id}",
     responses={"204": {"description": "File deleted from vector store"}},
+    status_code=status.HTTP_204_NO_CONTENT,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
 async def delete_vector_store_file(

@@ -172,8 +172,9 @@ async def test_create_vector_store_configuration_not_loaded(
 
     with pytest.raises(HTTPException) as e:
         await create_vector_store(request=request, auth=auth, body=body)
-        assert e.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
-        assert e.value.detail["response"] == "Configuration is not loaded"  # type: ignore
+
+    assert e.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
+    assert e.value.detail["response"] == "Configuration is not loaded"  # type: ignore
 
 
 @pytest.mark.asyncio
@@ -227,8 +228,9 @@ async def test_create_vector_store_connection_error(mocker: MockerFixture) -> No
 
     with pytest.raises(HTTPException) as e:
         await create_vector_store(request=request, auth=auth, body=body)
-        assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
-        assert e.value.detail["response"] == "Unable to connect to Llama Stack"  # type: ignore
+
+    assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+    assert e.value.detail["response"] == "Unable to connect to Llama Stack"  # type: ignore
 
 
 @pytest.mark.asyncio
@@ -952,6 +954,38 @@ async def test_list_vector_store_files_connection_error(
             request=request, vector_store_id="vs_123", auth=auth
         )
     assert e.value.status_code == status.HTTP_503_SERVICE_UNAVAILABLE
+
+
+@pytest.mark.asyncio
+async def test_list_vector_store_files_not_found(mocker: MockerFixture) -> None:
+    """Test list vector store files with invalid vector store ID."""
+    mock_authorization_resolvers(mocker)
+
+    config_dict = get_test_config()
+    cfg = AppConfig()
+    cfg.init_from_dict(config_dict)
+
+    mock_client = mocker.AsyncMock()
+    mock_response = mocker.Mock()
+    mock_response.request = mocker.Mock()
+    mock_client.vector_stores.files.list.side_effect = BadRequestError(
+        message="Vector store not found", response=mock_response, body=None
+    )
+    mock_lsc = mocker.patch(
+        "app.endpoints.vector_stores.AsyncLlamaStackClientHolder.get_client"
+    )
+    mock_lsc.return_value = mock_client
+    mocker.patch("app.endpoints.vector_stores.configuration", cfg)
+
+    request = get_test_request()
+    auth = get_test_auth()
+
+    with pytest.raises(HTTPException) as e:
+        await list_vector_store_files(
+            request=request, vector_store_id="vs_999", auth=auth
+        )
+
+    assert e.value.status_code == status.HTTP_404_NOT_FOUND
 
 
 @pytest.mark.asyncio
