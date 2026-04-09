@@ -596,7 +596,7 @@ async def add_file_to_vector_store(  # pylint: disable=too-many-locals
 
         # Retry logic for database lock errors
         max_retries = 3
-        retry_delay = 0.3  # seconds
+        retry_delay = 0.5  # seconds
         vs_file = None
         last_lock_error: Exception | None = None
 
