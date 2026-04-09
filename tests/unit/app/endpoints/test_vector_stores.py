@@ -883,7 +883,7 @@ async def test_create_file_too_large(mocker: MockerFixture) -> None:
     mock_file = mocker.AsyncMock()
     mock_file.filename = "large_file.pdf"
     mock_file.size = 200 * 1024 * 1024  # 200 MB (exceeds 100 MB limit)
-    mock_file.read.return_value = b"x" * (200 * 1024 * 1024)
+    mock_file.read.side_effect = AssertionError("File too large")
 
     with pytest.raises(HTTPException) as e:
         await create_file(request=request, auth=auth, file=mock_file)

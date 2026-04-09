@@ -561,7 +561,7 @@ async def create_file(
     "/vector-stores/{vector_store_id}/files", responses=vector_store_file_responses
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
-async def add_file_to_vector_store(
+async def add_file_to_vector_store(  # pylint: disable=too-many-locals
     request: Request,
     vector_store_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
@@ -596,8 +596,9 @@ async def add_file_to_vector_store(
 
         # Retry logic for database lock errors
         max_retries = 3
-        retry_delay = 0.5  # seconds
+        retry_delay = 0.3  # seconds
         vs_file = None
+        last_lock_error: Exception | None = None
 
         for attempt in range(max_retries):
             try:
@@ -613,25 +614,30 @@ async def add_file_to_vector_store(
                 )
                 is_last_attempt = attempt == max_retries - 1
 
-                if is_lock_error and not is_last_attempt:
-                    logger.warning(
-                        "Database locked while adding file to vector store, "
-                        "retrying in %s seconds (attempt %d/%d)",
-                        retry_delay,
-                        attempt + 1,
-                        max_retries,
-                    )
-                    await asyncio.sleep(retry_delay)
-                    retry_delay *= 2  # Exponential backoff
-                else:
-                    raise  # Re-raise if not a lock error or max retries reached
-        if not vs_file:
-            # Use standard error response model for consistency
-            response = InternalServerErrorResponse(
-                response="Failed to create vector store file",
-                cause="All retry attempts failed to create the vector store file",
-            )
-            raise HTTPException(**response.model_dump())
+                if is_lock_error:
+                    last_lock_error = retry_error
+                    if not is_last_attempt:
+                        logger.warning(
+                            "Database locked while adding file to vector store, "
+                            "retrying in %s seconds (attempt %d/%d)",
+                            retry_delay,
+                            attempt + 1,
+                            max_retries,
+                        )
+                        await asyncio.sleep(retry_delay)
+                        retry_delay *= 2  # Exponential backoff
+                        continue
+                    break
+                raise  # Re-raise if not a lock error
+        if vs_file is None:
+            if last_lock_error is not None:
+                # Use standard error response model for consistency
+                response = InternalServerErrorResponse(
+                    response="Failed to create vector store file",
+                    cause="All retry attempts failed to create the vector store file",
+                )
+                raise HTTPException(**response.model_dump()) from last_lock_error
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
         logger.info(
             "Vector store file created - ID: %s, status: %s, last_error: %s",
             vs_file.id,
