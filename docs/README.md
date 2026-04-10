@@ -70,6 +70,8 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [Supporting backport changes for releases](https://lightspeed-core.github.io/lightspeed-stack/design/supporting-backport-changes-for-releases/supporting-backport-changes-for-releases.html)
 
+
+
 ## Testing
 
 [Testing](https://lightspeed-core.github.io/lightspeed-stack/testing.html)
@@ -77,4 +79,11 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 [End-to-End Tests Guide](https://lightspeed-core.github.io/lightspeed-stack/e2e_testing.html)
 
 [List of e2e scenarios](https://lightspeed-core.github.io/lightspeed-stack/e2e_scenarios.html)
+
+
+## Demos
+
+[LCORE introduction](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/lcore.html#/)
+
+[CodeRabbitAI](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/coderabbit.html#/)
 
