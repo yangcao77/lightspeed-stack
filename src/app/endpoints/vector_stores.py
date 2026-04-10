@@ -7,7 +7,14 @@ from io import BytesIO
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
-from llama_stack_client import APIConnectionError, BadRequestError
+from llama_stack_client import (
+    APIConnectionError,
+    BadRequestError,
+)
+from llama_stack_client import (
+    APIStatusError as LLSApiStatusError,
+)
+from openai._exceptions import APIStatusError as OpenAIAPIStatusError
 
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
@@ -23,8 +30,9 @@ from models.requests import (
     VectorStoreUpdateRequest,
 )
 from models.responses import (
-    AbstractErrorResponse,
+    BadRequestResponse,
     FileResponse,
+    FileTooLargeResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -36,6 +44,7 @@ from models.responses import (
     VectorStoresListResponse,
 )
 from utils.endpoints import check_configuration_loaded
+from utils.query import handle_known_apistatus_errors
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["vector-stores"])
@@ -65,7 +74,8 @@ vector_store_responses: dict[int | str, dict[str, Any]] = {
 
 file_responses: dict[int | str, dict[str, Any]] = {
     200: FileResponse.openapi_response(),
-    400: {"description": "Bad Request - Invalid file upload"},
+    400: BadRequestResponse.openapi_response(examples=["file_upload"]),
+    413: FileTooLargeResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
         examples=["missing header", "missing token"]
     ),
@@ -164,6 +174,10 @@ async def create_vector_store(
         logger.error("Unable to connect to Llama Stack: %s", e)
         response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while creating vector store: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to create vector store: %s", e)
         response = InternalServerErrorResponse(
@@ -223,6 +237,10 @@ async def list_vector_stores(
         logger.error("Unable to connect to Llama Stack: %s", e)
         response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while listing vector stores: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to list vector stores: %s", e)
         response = InternalServerErrorResponse(
@@ -286,6 +304,10 @@ async def get_vector_store(
             resource="vector_store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while getting vector store: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to get vector store: %s", e)
         response = InternalServerErrorResponse(
@@ -356,6 +378,10 @@ async def update_vector_store(
             resource="vector_store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while updating vector store: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to update vector store: %s", e)
         response = InternalServerErrorResponse(
@@ -409,6 +435,10 @@ async def delete_vector_store(
             resource="vector_store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while deleting vector store: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to delete vector store: %s", e)
         response = InternalServerErrorResponse(
@@ -420,7 +450,7 @@ async def delete_vector_store(
 
 @router.post("/files", responses=file_responses)
 @authorize(Action.MANAGE_FILES)
-async def create_file(
+async def create_file(  # pylint: disable=too-many-branches,too-many-statements
     request: Request,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
     file: UploadFile = File(...),
@@ -453,14 +483,9 @@ async def create_file(
         try:
             size = int(content_length)
             if size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-                response = AbstractErrorResponse(
-                    response="File too large",
-                    cause=(
-                        f"File size {size} bytes exceeds maximum allowed "
-                        f"size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
-                        f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
-                    ),
-                    status_code=status.HTTP_400_BAD_REQUEST,
+                response = FileTooLargeResponse(
+                    file_size=size,
+                    max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
                 )
                 raise HTTPException(**response.model_dump())
         except ValueError:
@@ -470,14 +495,9 @@ async def create_file(
     # file.size attribute if available
     if hasattr(file, "size") and file.size is not None:
         if file.size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-            response = AbstractErrorResponse(
-                response="File too large",
-                cause=(
-                    f"File size {file.size} bytes exceeds maximum allowed "
-                    f"size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
-                    f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
-                ),
-                status_code=status.HTTP_400_BAD_REQUEST,
+            response = FileTooLargeResponse(
+                file_size=file.size,
+                max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
             )
             raise HTTPException(**response.model_dump())
 
@@ -489,14 +509,9 @@ async def create_file(
 
         # Verify actual size after reading
         if len(content) > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-            response = AbstractErrorResponse(
-                response="File too large",
-                cause=(
-                    f"File content size {len(content)} bytes exceeds maximum "
-                    f"allowed size of {DEFAULT_MAX_FILE_UPLOAD_SIZE} bytes "
-                    f"({DEFAULT_MAX_FILE_UPLOAD_SIZE // (1024 * 1024)} MB)"
-                ),
-                status_code=status.HTTP_400_BAD_REQUEST,
+            response = FileTooLargeResponse(
+                file_size=len(content),
+                max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
             )
             raise HTTPException(**response.model_dump())
 
@@ -535,14 +550,25 @@ async def create_file(
         raise HTTPException(**response.model_dump()) from e
     except BadRequestError as e:
         logger.error("Bad request for file upload: %s", e)
-        # BadRequestError from Llama Stack indicates client error (e.g., file too large)
-        # Map to 400 Bad Request, not 503 Service Unavailable
-        response = AbstractErrorResponse(
-            response="Invalid file upload",
-            cause=f"File upload rejected by Llama Stack: {str(e)}",
-            status_code=status.HTTP_400_BAD_REQUEST,
-        )
+        # Check if backend rejected due to file size
+        error_msg = str(e).lower()
+        if "too large" in error_msg or "size" in error_msg or "exceeds" in error_msg:
+            response = FileTooLargeResponse(
+                response="Invalid file upload",
+                cause=f"File upload rejected by Llama Stack: {str(e)}",
+            )
+        else:
+            response = InternalServerErrorResponse.query_failed(
+                cause=f"File upload rejected by Llama Stack: {str(e)}"
+            )
+            # Override to use 400 status code since it's a client error
+            response.status_code = status.HTTP_400_BAD_REQUEST
+            response.detail.response = "Invalid file upload"
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while uploading file: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         full_trace = traceback.format_exc()
         logger.error("Unable to upload file: %s", e)
@@ -561,7 +587,7 @@ async def create_file(
     "/vector-stores/{vector_store_id}/files", responses=vector_store_file_responses
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
-async def add_file_to_vector_store(  # pylint: disable=too-many-locals
+async def add_file_to_vector_store(  # pylint: disable=too-many-locals,too-many-statements
     request: Request,
     vector_store_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
@@ -669,6 +695,10 @@ async def add_file_to_vector_store(  # pylint: disable=too-many-locals
             resource_id=f"vector_store={vector_store_id}, file={body.file_id}",
         )
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while adding file to vector store: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to add file to vector store: %s", e)
         response = InternalServerErrorResponse(
@@ -744,6 +774,10 @@ async def list_vector_store_files(
             resource="vector_store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while listing vector store files: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to list vector store files: %s", e)
         response = InternalServerErrorResponse(
@@ -818,6 +852,10 @@ async def get_vector_store_file(
         logger.error("Vector store file not found: %s", e)
         response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while getting vector store file: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to get vector store file: %s", e)
         response = InternalServerErrorResponse(
@@ -877,6 +915,10 @@ async def delete_vector_store_file(
         logger.error("Vector store file not found: %s", e)
         response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
         raise HTTPException(**response.model_dump()) from e
+    except (LLSApiStatusError, OpenAIAPIStatusError) as e:
+        logger.error("API status error while deleting vector store file: %s", e)
+        error_response = handle_known_apistatus_errors(e, "llama-stack")
+        raise HTTPException(**error_response.model_dump()) from e
     except Exception as e:
         logger.error("Unable to delete vector store file: %s", e)
         response = InternalServerErrorResponse(

@@ -862,7 +862,7 @@ async def test_create_file_bad_request(mocker: MockerFixture) -> None:
     with pytest.raises(HTTPException) as e:
         await create_file(request=request, auth=auth, file=mock_file)
 
-    assert e.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert e.value.status_code == status.HTTP_413_CONTENT_TOO_LARGE
 
 
 @pytest.mark.asyncio
@@ -888,7 +888,7 @@ async def test_create_file_too_large(mocker: MockerFixture) -> None:
     with pytest.raises(HTTPException) as e:
         await create_file(request=request, auth=auth, file=mock_file)
 
-    assert e.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert e.value.status_code == status.HTTP_413_CONTENT_TOO_LARGE
     assert "too large" in str(e.value.detail).lower()
 
 
@@ -923,7 +923,7 @@ async def test_create_file_content_length_too_large(mocker: MockerFixture) -> No
     with pytest.raises(HTTPException) as e:
         await create_file(request=request, auth=auth, file=mock_file)
 
-    assert e.value.status_code == status.HTTP_400_BAD_REQUEST
+    assert e.value.status_code == status.HTTP_413_CONTENT_TOO_LARGE
     assert "too large" in str(e.value.detail).lower()
 
 
