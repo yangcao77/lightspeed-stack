@@ -44,13 +44,17 @@ async def info_endpoint_handler(
     Process GET requests to the /info endpoint, returning the
     service name, version and Llama-stack version.
 
-    Raises:
+    ### Parameters:
+        - request: The incoming HTTP request.
+        - auth: Authentication tuple from the auth dependency.
+
+    ### Raises:
         HTTPException: with status 500 and a detail object
         containing `response` and `cause` when unable to connect to
         Llama Stack. It can also return status 401 or 403 for
         unauthorized access.
 
-    Returns:
+    ### Returns:
         InfoResponse: An object containing the service's name and version.
     """
     # Used only for authorization
