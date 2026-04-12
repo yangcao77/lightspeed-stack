@@ -4770,6 +4770,26 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                },
+                                "examples": {
+                                    "model": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Model with ID gpt-4-turbo is not configured",
+                                                "response": "Model not found"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "413": {
                         "description": "Prompt is too long",
                         "content": {
@@ -9157,7 +9177,35 @@
                         "title": "Call Id"
                     },
                     "output": {
-                        "type": "string",
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "items": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
+                                        }
+                                    ],
+                                    "discriminator": {
+                                        "propertyName": "type",
+                                        "mapping": {
+                                            "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile",
+                                            "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
+                                            "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        }
+                                    }
+                                },
+                                "type": "array"
+                            }
+                        ],
                         "title": "Output"
                     },
                     "type": {
