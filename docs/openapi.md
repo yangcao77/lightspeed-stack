@@ -62,11 +62,14 @@ Lightspeed Core Service (LCS) service API specification.
 
 Handle GET requests to the root ("/") endpoint and returns the static HTML index page.
 
-Returns:
+### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+
+### Returns:
     HTMLResponse: The HTML content of the index page, including a heading,
     embedded image with the service icon, and links to the API documentation
     via Swagger UI and ReDoc.
-Handle GET requests to the root ("/") endpoint and returns the static HTML index page.
 
 
 
@@ -118,13 +121,17 @@ Handle request to the /info endpoint.
 Process GET requests to the /info endpoint, returning the
 service name, version and Llama-stack version.
 
-Raises:
+### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+
+### Raises:
     HTTPException: with status 500 and a detail object
     containing `response` and `cause` when unable to connect to
     Llama Stack. It can also return status 401 or 403 for
     unauthorized access.
 
-Returns:
+### Returns:
     InfoResponse: An object containing the service's name and version.
 
 
@@ -249,9 +256,9 @@ The "model_type" query parameter is optional. When not specified, all models
 will be returned.
 
 ### Parameters:
-    request: The incoming HTTP request.
-    auth: Authentication tuple from the auth dependency.
-    model_type: Optional filter to return only models matching this type.
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+    - model_type: Optional filter to return only models matching this type.
 
 ### Raises:
     HTTPException: If unable to connect to the Llama Stack server or if
@@ -864,10 +871,14 @@ Examples
 
 List all available providers grouped by API type.
 
-Returns:
+### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+
+### Returns:
     ProvidersListResponse: Mapping from API type to list of providers.
 
-Raises:
+### Raises:
     HTTPException:
         - 401: Authentication failed
         - 403: Authorization failed
@@ -949,10 +960,15 @@ Examples
 
 Retrieve a single provider identified by its unique ID.
 
-Returns:
+### Parameters:
+    - request: The incoming HTTP request.
+    - provider_id: Provider identification string
+    - auth: Authentication tuple from the auth dependency.
+
+### Returns:
     ProviderResponse: Provider details.
 
-Raises:
+### Raises:
     HTTPException:
         - 401: Authentication failed
         - 403: Authorization failed
@@ -1890,7 +1906,11 @@ current service configuration.
 
 Ensures the application configuration is loaded before returning it.
 
-Returns:
+### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+
+### Returns:
     ConfigurationResponse: The loaded service configuration response.
 
 

@@ -28,7 +28,7 @@
                     "root"
                 ],
                 "summary": "Root Endpoint Handler",
-                "description": "Handle GET requests to the root (\"/\") endpoint and returns the static HTML index page.\n\nReturns:\n    HTMLResponse: The HTML content of the index page, including a heading,\n    embedded image with the service icon, and links to the API documentation\n    via Swagger UI and ReDoc.",
+                "description": "Handle GET requests to the root (\"/\") endpoint and returns the static HTML index page.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - auth: Authentication tuple from the auth dependency.\n\n### Returns:\n    HTMLResponse: The HTML content of the index page, including a heading,\n    embedded image with the service icon, and links to the API documentation\n    via Swagger UI and ReDoc.",
                 "operationId": "root_endpoint_handler__get",
                 "responses": {
                     "200": {
@@ -102,7 +102,7 @@
                     "info"
                 ],
                 "summary": "Info Endpoint Handler",
-                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\nRaises:\n    HTTPException: with status 500 and a detail object\n    containing `response` and `cause` when unable to connect to\n    Llama Stack. It can also return status 401 or 403 for\n    unauthorized access.\n\nReturns:\n    InfoResponse: An object containing the service's name and version.",
+                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - auth: Authentication tuple from the auth dependency.\n\n### Raises:\n    HTTPException: with status 500 and a detail object\n    containing `response` and `cause` when unable to connect to\n    Llama Stack. It can also return status 401 or 403 for\n    unauthorized access.\n\n### Returns:\n    InfoResponse: An object containing the service's name and version.",
                 "operationId": "info_endpoint_handler_v1_info_get",
                 "responses": {
                     "200": {
@@ -253,7 +253,7 @@
                     "models"
                 ],
                 "summary": "Models Endpoint Handler",
-                "description": "Handle requests to the /models endpoint.\n\nProcess GET requests to the /models endpoint, returning a list of available\nmodels from the Llama Stack service. It is possible to specify \"model_type\"\nquery parameter that is used as a filter. For example, if model type is set\nto \"llm\", only LLM models will be returned:\n\n    curl http://localhost:8080/v1/models?model_type=llm\n\nThe \"model_type\" query parameter is optional. When not specified, all models\nwill be returned.\n\n### Parameters:\n    request: The incoming HTTP request.\n    auth: Authentication tuple from the auth dependency.\n    model_type: Optional filter to return only models matching this type.\n\n### Raises:\n    HTTPException: If unable to connect to the Llama Stack server or if\n    model retrieval fails for any reason.\n\n### Returns:\n    ModelsResponse: An object containing the list of available models.",
+                "description": "Handle requests to the /models endpoint.\n\nProcess GET requests to the /models endpoint, returning a list of available\nmodels from the Llama Stack service. It is possible to specify \"model_type\"\nquery parameter that is used as a filter. For example, if model type is set\nto \"llm\", only LLM models will be returned:\n\n    curl http://localhost:8080/v1/models?model_type=llm\n\nThe \"model_type\" query parameter is optional. When not specified, all models\nwill be returned.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - auth: Authentication tuple from the auth dependency.\n    - model_type: Optional filter to return only models matching this type.\n\n### Raises:\n    HTTPException: If unable to connect to the Llama Stack server or if\n    model retrieval fails for any reason.\n\n### Returns:\n    ModelsResponse: An object containing the list of available models.",
                 "operationId": "models_endpoint_handler_v1_models_get",
                 "parameters": [
                     {
@@ -1223,7 +1223,7 @@
                     "providers"
                 ],
                 "summary": "Providers Endpoint Handler",
-                "description": "List all available providers grouped by API type.\n\nReturns:\n    ProvidersListResponse: Mapping from API type to list of providers.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "List all available providers grouped by API type.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - auth: Authentication tuple from the auth dependency.\n\n### Returns:\n    ProvidersListResponse: Mapping from API type to list of providers.\n\n### Raises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
                 "operationId": "providers_endpoint_handler_v1_providers_get",
                 "responses": {
                     "200": {
@@ -1361,7 +1361,7 @@
                     "providers"
                 ],
                 "summary": "Get Provider Endpoint Handler",
-                "description": "Retrieve a single provider identified by its unique ID.\n\nReturns:\n    ProviderResponse: Provider details.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Provider not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "Retrieve a single provider identified by its unique ID.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - provider_id: Provider identification string\n    - auth: Authentication tuple from the auth dependency.\n\n### Returns:\n    ProviderResponse: Provider details.\n\n### Raises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Provider not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
                 "operationId": "get_provider_endpoint_handler_v1_providers__provider_id__get",
                 "parameters": [
                     {
@@ -2544,7 +2544,7 @@
                     "config"
                 ],
                 "summary": "Config Endpoint Handler",
-                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nEnsures the application configuration is loaded before returning it.\n\nReturns:\n    ConfigurationResponse: The loaded service configuration response.",
+                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nEnsures the application configuration is loaded before returning it.\n\n### Parameters:\n    - request: The incoming HTTP request.\n    - auth: Authentication tuple from the auth dependency.\n\n### Returns:\n    ConfigurationResponse: The loaded service configuration response.",
                 "operationId": "config_endpoint_handler_v1_config_get",
                 "responses": {
                     "200": {

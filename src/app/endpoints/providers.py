@@ -60,10 +60,14 @@ async def providers_endpoint_handler(
     """
     List all available providers grouped by API type.
 
-    Returns:
+    ### Parameters:
+        - request: The incoming HTTP request.
+        - auth: Authentication tuple from the auth dependency.
+
+    ### Returns:
         ProvidersListResponse: Mapping from API type to list of providers.
 
-    Raises:
+    ### Raises:
         HTTPException:
             - 401: Authentication failed
             - 403: Authorization failed
@@ -123,10 +127,15 @@ async def get_provider_endpoint_handler(
     """
     Retrieve a single provider identified by its unique ID.
 
-    Returns:
+    ### Parameters:
+        - request: The incoming HTTP request.
+        - provider_id: Provider identification string
+        - auth: Authentication tuple from the auth dependency.
+
+    ### Returns:
         ProviderResponse: Provider details.
 
-    Raises:
+    ### Raises:
         HTTPException:
             - 401: Authentication failed
             - 403: Authorization failed
