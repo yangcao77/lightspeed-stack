@@ -2,9 +2,9 @@
 #    uv pip compile requirements.source.txt --refresh --generate-hashes --python-version 3.12 --emit-index-url --no-deps --no-annotate
 --index-url https://pypi.org/simple
 
-a2a-sdk==0.3.25 \
-    --hash=sha256:2fce38faea82eb0b6f9f9c2bcf761b0d78612c80ef0e599b50d566db1b2654b5 \
-    --hash=sha256:afda85bab8d6af0c5d15e82f326c94190f6be8a901ce562d045a338b7127242f
+a2a-sdk==0.3.26 \
+    --hash=sha256:44068e2d037afbb07ab899267439e9bc7eaa7ac2af94f1e8b239933c993ad52d \
+    --hash=sha256:754e0573f6d33b225c1d8d51f640efa69cbbed7bdfb06ce9c3540ea9f58d4a91
 accelerate==1.13.0 \
     --hash=sha256:cf1a3efb96c18f7b152eb0fa7490f3710b19c3f395699358f08decca2b8b62e0 \
     --hash=sha256:d631b4e0f5b3de4aff2d7e9e6857d164810dfc3237d54d017f075122d057b236
