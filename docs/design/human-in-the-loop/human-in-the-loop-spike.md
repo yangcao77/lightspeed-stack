@@ -13,9 +13,6 @@ approval request details. Clients submit approvals via POST, and LCS continues
 the agent loop. Allow/deny lists in YAML config enable permanent pre-approval
 for trusted tools.
 
-**PoC validation**: Not yet built. The core mechanism (Llama Stack approval
-types) is already implemented and tested in the codebase.
-
 ## Decisions for Product/Architecture Review
 
 These are the high-level decisions that determine scope, approach, and cost.
