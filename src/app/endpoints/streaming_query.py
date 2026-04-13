@@ -165,7 +165,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     - request: The incoming HTTP request (used by middleware).
     - query_request: Request to the LLM.
     - auth: Auth context tuple resolved from the authentication dependency.
-    - mcp_headers: Headers that should be pass to MCP servers.
+    - mcp_headers: Headers that should be passed to MCP servers.
 
     ### Returns:
     - SSE-formatted events for the query lifecycle.
