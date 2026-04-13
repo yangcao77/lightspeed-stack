@@ -199,7 +199,7 @@ async def delete_mcp_server_handler(
     can be deleted; statically configured servers cannot be removed.
 
     ### Parameters:
-    - request: Model containing attributes to dynamically registering an MCP server.
+    - request: The incoming HTTP request (used by middleware).
     - auth: Authentication tuple from the auth dependency (used by middleware).
     - name: MCP server name
 
