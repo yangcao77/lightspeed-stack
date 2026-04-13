@@ -1713,8 +1713,12 @@ class AbstractErrorResponse(BaseModel):
         detail (DetailModel): The detail model containing error summary and cause.
     """
 
-    status_code: int
-    detail: DetailModel
+    status_code: int = Field(
+        ..., description="HTTP status code for the errors response"
+    )
+    detail: DetailModel = Field(
+        ..., description="The detail model containing error summary and cause"
+    )
 
     def __init__(self, *, response: str, cause: str, status_code: int):
         """
