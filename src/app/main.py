@@ -210,9 +210,10 @@ class GlobalExceptionMiddleware:  # pylint: disable=too-few-public-methods
             if response_started:
                 raise
             error_response = InternalServerErrorResponse.generic()
+            model_dump = error_response.detail.model_dump()  # pylint: disable=no-member
             response = JSONResponse(
                 status_code=error_response.status_code,
-                content={"detail": error_response.detail.model_dump()},
+                content={"detail": model_dump},
             )
             await response(scope, receive, send)
 
