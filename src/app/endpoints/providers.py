@@ -60,15 +60,19 @@ async def providers_endpoint_handler(
     """
     List all available providers grouped by API type.
 
-    Returns:
-        ProvidersListResponse: Mapping from API type to list of providers.
+    ### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
 
-    Raises:
-        HTTPException:
-            - 401: Authentication failed
-            - 403: Authorization failed
-            - 500: Lightspeed Stack configuration not loaded
-            - 503: Unable to connect to Llama Stack
+    ### Returns:
+    - ProvidersListResponse: Mapping from API type to list of providers.
+
+    ### Raises:
+    - HTTPException:
+    - 401: Authentication failed
+    - 403: Authorization failed
+    - 500: Lightspeed Stack configuration not loaded
+    - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth
@@ -123,16 +127,21 @@ async def get_provider_endpoint_handler(
     """
     Retrieve a single provider identified by its unique ID.
 
-    Returns:
-        ProviderResponse: Provider details.
+    ### Parameters:
+    - request: The incoming HTTP request.
+    - provider_id: Provider identification string
+    - auth: Authentication tuple from the auth dependency.
 
-    Raises:
-        HTTPException:
-            - 401: Authentication failed
-            - 403: Authorization failed
-            - 404: Provider not found
-            - 500: Lightspeed Stack configuration not loaded
-            - 503: Unable to connect to Llama Stack
+    ### Returns:
+    - ProviderResponse: Provider details.
+
+    ### Raises:
+    - HTTPException:
+    - 401: Authentication failed
+    - 403: Authorization failed
+    - 404: Provider not found
+    - 500: Lightspeed Stack configuration not loaded
+    - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth

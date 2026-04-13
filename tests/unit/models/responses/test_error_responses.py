@@ -1,4 +1,4 @@
-# pylint: disable=unsupported-membership-test,unsubscriptable-object
+# pylint: disable=unsupported-membership-test,unsubscriptable-object,no-member
 
 """Unit tests for all error response models."""
 

@@ -62,10 +62,14 @@ Lightspeed Core Service (LCS) service API specification.
 
 Handle GET requests to the root ("/") endpoint and returns the static HTML index page.
 
-Returns:
-    HTMLResponse: The HTML content of the index page, including a heading,
-    embedded image with the service icon, and links to the API documentation
-    via Swagger UI and ReDoc.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- HTMLResponse: The HTML content of the index page, including a heading,
+  embedded image with the service icon, and links to the API documentation
+  via Swagger UI and ReDoc.
 
 
 
@@ -117,14 +121,18 @@ Handle request to the /info endpoint.
 Process GET requests to the /info endpoint, returning the
 service name, version and Llama-stack version.
 
-Raises:
-    HTTPException: with status 500 and a detail object
-    containing `response` and `cause` when unable to connect to
-    Llama Stack. It can also return status 401 or 403 for
-    unauthorized access.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
 
-Returns:
-    InfoResponse: An object containing the service's name and version.
+### Raises:
+- HTTPException: with status 500 and a detail object
+  containing `response` and `cause` when unable to connect to
+  Llama Stack. It can also return status 401 or 403 for
+  unauthorized access.
+
+### Returns:
+- InfoResponse: An object containing the service's name and version.
 
 
 
@@ -248,16 +256,16 @@ The "model_type" query parameter is optional. When not specified, all models
 will be returned.
 
 ### Parameters:
-    request: The incoming HTTP request.
-    auth: Authentication tuple from the auth dependency.
-    model_type: Optional filter to return only models matching this type.
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- model_type: Optional filter to return only models matching this type.
 
 ### Raises:
-    HTTPException: If unable to connect to the Llama Stack server or if
-    model retrieval fails for any reason.
+- HTTPException: If unable to connect to the Llama Stack server or if
+  model retrieval fails for any reason.
 
 ### Returns:
-    ModelsResponse: An object containing the list of available models.
+- ModelsResponse: An object containing the list of available models.
 
 
 
@@ -335,13 +343,18 @@ Handle requests to the /tools endpoint.
 Process GET requests to the /tools endpoint, returning a consolidated list of
 available tools from all configured MCP servers.
 
-Raises:
-    HTTPException: If unable to connect to the Llama Stack server or if
-    tool retrieval fails for any reason.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
 
-Returns:
-    ToolsResponse: An object containing the consolidated list of available tools
-    with metadata including tool name, description, parameters, and server source.
+### Raises:
+- HTTPException: If unable to connect to the Llama Stack server or if tool
+  retrieval fails for any reason.
+
+### Returns:
+- ToolsResponse: An object containing the consolidated list of available
+  tools with metadata including tool name, description, parameters, and
+  server source.
 
 
 
@@ -418,13 +431,14 @@ should provide these tokens.
 This endpoint helps clients discover which MCP servers they can
 authenticate with using their own tokens.
 
-Args:
-    request: The incoming HTTP request (used by middleware).
-    auth: Authentication tuple from the auth dependency (used by middleware).
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- mcp_headers: Headers that should be pass to MCP servers.
 
-Returns:
-    MCPClientAuthOptionsResponse: List of MCP servers and their
-        accepted client authentication headers.
+### Returns:
+- MCPClientAuthOptionsResponse: List of MCP servers and their
+  accepted client authentication headers.
 
 
 
@@ -490,11 +504,15 @@ List all registered MCP servers.
 Returns both statically configured (from YAML) and dynamically
 registered (via API) MCP servers.
 
-Raises:
-    HTTPException: If configuration is not loaded.
+### Parameters:
+- request: Model containing attributes to dynamically registering an MCP server.
+- auth: Authentication tuple from the auth dependency (used by middleware).
 
-Returns:
-    MCPServerListResponse: List of all registered MCP servers with source info.
+### Raises:
+- HTTPException: If configuration is not loaded.
+
+### Returns:
+- MCPServerListResponse: List of all registered MCP servers with source info.
 
 
 
@@ -562,12 +580,17 @@ Register an MCP server dynamically at runtime.
 Adds the MCP server to the runtime configuration and registers it
 as a toolgroup with Llama Stack so it becomes available for queries.
 
-Raises:
-    HTTPException: On duplicate name, Llama Stack connection error,
-        or registration failure.
+### Parameters:
+- request: Model containing attributes to dynamically registering an MCP server.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- body: Headers that should be pass to MCP servers.
 
-Returns:
-    MCPServerRegistrationResponse: Details of the newly registered server.
+### Raises:
+- HTTPException: On duplicate name, Llama Stack connection error, or
+  registration failure.
+
+### Returns:
+- MCPServerRegistrationResponse: Details of the newly registered server.
 
 
 
@@ -669,12 +692,17 @@ Removes the MCP server from the runtime configuration and unregisters
 its toolgroup from Llama Stack. Only servers registered via the API
 can be deleted; statically configured servers cannot be removed.
 
-Raises:
-    HTTPException: If the server is not found, is statically configured,
-        or Llama Stack unregistration fails.
+### Parameters:
+- request: Model containing attributes to dynamically registering an MCP server.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- name: MCP server name
 
-Returns:
-    MCPServerDeleteResponse: Confirmation of the deletion.
+### Raises:
+- HTTPException: If the server is not found, is statically configured, or
+  Llama Stack unregistration fails.
+
+### Returns:
+- MCPServerDeleteResponse: Confirmation of the deletion.
 
 
 
@@ -782,12 +810,16 @@ Handle requests to the /shields endpoint.
 Process GET requests to the /shields endpoint, returning a list of available
 shields from the Llama Stack service.
 
-Raises:
-    HTTPException: If unable to connect to the Llama Stack server or if
-    shield retrieval fails for any reason.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
 
-Returns:
-    ShieldsResponse: An object containing the list of available shields.
+### Returns:
+- ShieldsResponse: An object containing the list of available shields.
+
+### Raises:
+- HTTPException: If unable to connect to the Llama Stack server or if
+  shield retrieval fails for any reason.
 
 
 
@@ -863,15 +895,19 @@ Examples
 
 List all available providers grouped by API type.
 
-Returns:
-    ProvidersListResponse: Mapping from API type to list of providers.
+### Parameters:
+- request: The incoming HTTP request.
+- auth: Authentication tuple from the auth dependency.
 
-Raises:
-    HTTPException:
-        - 401: Authentication failed
-        - 403: Authorization failed
-        - 500: Lightspeed Stack configuration not loaded
-        - 503: Unable to connect to Llama Stack
+### Returns:
+- ProvidersListResponse: Mapping from API type to list of providers.
+
+### Raises:
+- HTTPException:
+- 401: Authentication failed
+- 403: Authorization failed
+- 500: Lightspeed Stack configuration not loaded
+- 503: Unable to connect to Llama Stack
 
 
 
@@ -948,16 +984,21 @@ Examples
 
 Retrieve a single provider identified by its unique ID.
 
-Returns:
-    ProviderResponse: Provider details.
+### Parameters:
+- request: The incoming HTTP request.
+- provider_id: Provider identification string
+- auth: Authentication tuple from the auth dependency.
 
-Raises:
-    HTTPException:
-        - 401: Authentication failed
-        - 403: Authorization failed
-        - 404: Provider not found
-        - 500: Lightspeed Stack configuration not loaded
-        - 503: Unable to connect to Llama Stack
+### Returns:
+- ProviderResponse: Provider details.
+
+### Raises:
+- HTTPException:
+- 401: Authentication failed
+- 403: Authorization failed
+- 404: Provider not found
+- 500: Lightspeed Stack configuration not loaded
+- 503: Unable to connect to Llama Stack
 
 
 
@@ -1257,19 +1298,25 @@ Handle request to the /query endpoint using Responses API.
 Processes a POST request to a query endpoint, forwarding the
 user's query to a selected Llama Stack LLM and returning the generated response.
 
-Returns:
-    QueryResponse: Contains the conversation ID and the LLM-generated response.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- query_request: Request to the LLM.
+- auth: Auth context tuple resolved from the authentication dependency.
+- mcp_headers: Headers that should be pass to MCP servers.
 
-Raises:
-    HTTPException:
-        - 401: Unauthorized - Missing or invalid credentials
-        - 403: Forbidden - Insufficient permissions or model override not allowed
-        - 404: Not Found - Conversation, model, or provider not found
-        - 413: Prompt too long - Prompt exceeded model's context window size
-        - 422: Unprocessable Entity - Request validation failed
-        - 429: Quota limit exceeded - The token quota for model or user has been exceeded
-        - 500: Internal Server Error - Configuration not loaded or other server errors
-        - 503: Service Unavailable - Unable to connect to Llama Stack backend
+### Returns:
+- QueryResponse: Contains the conversation ID and the LLM-generated response.
+
+### Raises:
+- HTTPException:
+- 401: Unauthorized - Missing or invalid credentials
+- 403: Forbidden - Insufficient permissions or model override not allowed
+- 404: Not Found - Conversation, model, or provider not found
+- 413: Prompt too long - Prompt exceeded model's context window size
+- 422: Unprocessable Entity - Request validation failed
+- 429: Quota limit exceeded - The token quota for model or user has been exceeded
+- 500: Internal Server Error - Configuration not loaded or other server errors
+- 503: Service Unavailable - Unable to connect to Llama Stack backend
 
 
 
@@ -1534,19 +1581,25 @@ Handle request to the /streaming_query endpoint using Responses API.
 Returns a streaming response using Server-Sent Events (SSE) format with
 content type text/event-stream.
 
-Returns:
-    SSE-formatted events for the query lifecycle.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- query_request: Request to the LLM.
+- auth: Auth context tuple resolved from the authentication dependency.
+- mcp_headers: Headers that should be pass to MCP servers.
 
-Raises:
-    HTTPException:
-        - 401: Unauthorized - Missing or invalid credentials
-        - 403: Forbidden - Insufficient permissions or model override not allowed
-        - 404: Not Found - Conversation, model, or provider not found
-        - 413: Prompt too long - Prompt exceeded model's context window size
-        - 422: Unprocessable Entity - Request validation failed
-        - 429: Quota limit exceeded - The token quota for model or user has been exceeded
-        - 500: Internal Server Error - Configuration not loaded or other server errors
-        - 503: Service Unavailable - Unable to connect to Llama Stack backend
+### Returns:
+- SSE-formatted events for the query lifecycle.
+
+### Raises:
+- HTTPException:
+- 401: Unauthorized - Missing or invalid credentials
+- 403: Forbidden - Insufficient permissions or model override not allowed
+- 404: Not Found - Conversation, model, or provider not found
+- 413: Prompt too long - Prompt exceeded model's context window size
+- 422: Unprocessable Entity - Request validation failed
+- 429: Quota limit exceeded - The token quota for model or user has been exceeded
+- 500: Internal Server Error - Configuration not loaded or other server errors
+- 503: Service Unavailable - Unable to connect to Llama Stack backend
 
 
 
@@ -1808,16 +1861,16 @@ Examples
 
 Interrupt an in-progress streaming query by request identifier.
 
-Parameters:
-    interrupt_request: Request payload containing the stream request ID.
-    auth: Auth context tuple resolved from the authentication dependency.
-    registry: Stream interrupt registry dependency used to cancel streams.
+### Parameters:
+- interrupt_request: Request payload containing the stream request ID.
+- auth: Auth context tuple resolved from the authentication dependency.
+- registry: Stream interrupt registry dependency used to cancel streams.
 
-Returns:
-    StreamingInterruptResponse: Confirmation payload when interruption succeeds.
+### Returns:
+- StreamingInterruptResponse: Confirmation payload when interruption succeeds.
 
-Raises:
-    HTTPException: If no active stream for the given request ID can be interrupted.
+### Raises:
+- HTTPException: If no active stream for the given request ID can be interrupted.
 
 
 
@@ -1889,8 +1942,12 @@ current service configuration.
 
 Ensures the application configuration is loaded before returning it.
 
-Returns:
-    ConfigurationResponse: The loaded service configuration response.
+### Parameters:
+- request: The incoming HTTP request.
+- auth: Authentication tuple from the auth dependency.
+
+### Returns:
+- ConfigurationResponse: The loaded service configuration response.
 
 
 
@@ -1962,20 +2019,20 @@ Handle feedback requests.
 Processes a user feedback submission, storing the feedback and
 returning a confirmation response.
 
-Args:
-    feedback_request: The request containing feedback information.
-    ensure_feedback_enabled: The feedback handler (FastAPI Depends) that
-        will handle feedback status checks.
-    auth: The Authentication handler (FastAPI Depends) that will
-        handle authentication Logic.
+### Parameters:
+- feedback_request: The request containing feedback information.
+- ensure_feedback_enabled: The feedback handler (FastAPI Depends) that will
+  handle feedback status checks.
+- auth: The Authentication handler (FastAPI Depends) that will handle
+  authentication Logic.
 
-Returns:
-    Response indicating the status of the feedback storage request.
+### Returns:
+- Response indicating the status of the feedback storage request.
 
-Raises:
-    HTTPException: Returns HTTP 404 if conversation does not exist.
-    HTTPException: Returns HTTP 403 if conversation belongs to a different user.
-    HTTPException: Returns HTTP 500 if feedback storage fails.
+### Raises:
+- HTTPException: Returns HTTP 404 if conversation does not exist.
+- HTTPException: Returns HTTP 403 if conversation belongs to a different user.
+- HTTPException: Returns HTTP 500 if feedback storage fails.
 
 
 
@@ -2088,8 +2145,11 @@ Handle feedback status requests.
 Return the current enabled status of the feedback
 functionality.
 
-Returns:
-    StatusResponse: Indicates whether feedback collection is enabled.
+### Parameters:
+- None
+
+### Returns:
+- StatusResponse: Indicates whether feedback collection is enabled.
 
 
 
@@ -2111,8 +2171,13 @@ Takes a request with the desired state of the feedback status.
 Returns the updated state of the feedback status based on the request's value.
 These changes are for the life of the service and are on a per-worker basis.
 
-Returns:
-    FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.
+### Parameters:
+- feedback_update_request: Structure containing desired state of the
+  feedback status.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.
 
 
 
@@ -3642,10 +3707,14 @@ If any provider reports an error status, responds with HTTP 503
 and details of unhealthy providers; otherwise, indicates the
 service is ready.
 
-Returns:
-    ReadinessResponse: Object with `ready` indicating overall readiness,
-    `reason` explaining the outcome, and `providers` containing the list of
-    unhealthy ProviderHealthStatus entries (empty when ready).
+### Parameters:
+- response: The outgoing HTTP response (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- ReadinessResponse: Object with `ready` indicating overall readiness,
+  `reason` explaining the outcome, and `providers` containing the list of
+  unhealthy ProviderHealthStatus entries (empty when ready).
 
 
 
@@ -3719,8 +3788,11 @@ Examples
 
 Return the liveness status of the service.
 
-Returns:
-    LivenessResponse: Indicates that the service is alive.
+### Parameters:
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- LivenessResponse: Indicates that the service is alive.
 
 
 
@@ -3783,8 +3855,11 @@ the authenticated user's ID and username.
 
 The response intentionally omits any authentication token.
 
-Returns:
-    AuthorizedResponse: Contains the user ID and username of the authenticated user.
+### Parameters:
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- AuthorizedResponse: Contains the user ID and username of the authenticated user.
 
 
 
@@ -3848,9 +3923,13 @@ Initializes model metrics on the first request if not already
 set up, then responds with the current metrics snapshot in
 Prometheus format.
 
-Returns:
-    PlainTextResponse: Response body containing the Prometheus metrics text
-    and the Prometheus content type.
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Returns:
+- PlainTextResponse: Response body containing the Prometheus metrics text
+  and the Prometheus content type.
 
 
 
@@ -4382,8 +4461,8 @@ Microsoft Entra ID authentication attributes for Azure.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ByokRag
@@ -4463,6 +4542,7 @@ Global service configuration.
 | a2a_state |  | Configuration for A2A protocol persistent state storage. |
 | quota_handlers |  | Quota handlers configuration |
 | azure_entra_id |  |  |
+| rlsapi_v1 |  | Configuration for the rlsapi v1 /infer endpoint used by the RHEL Lightspeed Command Line Assistant (CLA). |
 | splunk |  | Splunk HEC configuration for sending telemetry events. |
 | deployment_environment | string | Deployment environment name (e.g., 'development', 'staging', 'production'). Used in telemetry events. |
 | rag |  | Configuration for all RAG strategies (inline and tool-based). |
@@ -4488,8 +4568,8 @@ Success response model for the config endpoint.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ConversationData
@@ -4727,7 +4807,6 @@ Service customization.
 | agent_card_path |  |  |
 | agent_card_config |  |  |
 | custom_profile |  |  |
-| allow_verbose_infer | boolean |  |
 
 
 ## DatabaseConfiguration
@@ -4876,8 +4955,8 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## HTTPAuthSecurityScheme
@@ -4988,8 +5067,8 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## JsonPathOperator
@@ -5315,8 +5394,8 @@ Defines a security scheme using mTLS authentication.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## OAuth2SecurityScheme
@@ -5467,7 +5546,7 @@ This represents the output of a function call that gets passed back to the model
 | Field | Type | Description |
 |-------|------|-------------|
 | call_id | string |  |
-| output | string |  |
+| output |  |  |
 | type | string |  |
 | id |  |  |
 | status |  |  |
@@ -6146,8 +6225,8 @@ Useful resources:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ProviderHealthStatus
@@ -6275,8 +6354,8 @@ Attributes:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## QuotaHandlersConfiguration
@@ -6661,6 +6740,22 @@ Attributes:
 | version | string | Command line assistant version |
 
 
+## RlsapiV1Configuration
+
+
+Configuration for the rlsapi v1 /infer endpoint.
+
+Settings specific to the RHEL Lightspeed Command Line Assistant (CLA)
+stateless inference endpoint. Kept separate from shared configuration
+sections so that CLA-specific options do not affect other endpoints.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| allow_verbose_infer | boolean | Allow /v1/infer to return extended metadata (tool_calls, rag_chunks, token_usage) when the client sends "include_metadata": true. Should NOT be enabled in production. If production use is needed, consider RBAC-based access control via an Action.RLSAPI_V1_INFER authorization rule. |
+| quota_subject |  | Identity field used as the quota subject for /v1/infer. When set, token quota enforcement is enabled for this endpoint. Requires quota_handlers to be configured. "org_id" and "system_id" require rh-identity authentication; falls back to user_id when rh-identity data is unavailable. |
+
+
 ## RlsapiV1Context
 
 
@@ -6896,8 +6991,8 @@ the service can handle requests concurrently.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ShieldsResponse
@@ -7075,8 +7170,8 @@ Model representing a response to tools request.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## UnprocessableEntityResponse
@@ -7087,8 +7182,8 @@ Model representing a response to tools request.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## UserDataCollection

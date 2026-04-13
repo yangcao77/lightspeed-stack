@@ -46,8 +46,12 @@ async def config_endpoint_handler(
 
     Ensures the application configuration is loaded before returning it.
 
-    Returns:
-        ConfigurationResponse: The loaded service configuration response.
+    ### Parameters:
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
+
+    ### Returns:
+    - ConfigurationResponse: The loaded service configuration response.
     """
     # Used only for authorization
     _ = auth

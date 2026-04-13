@@ -49,12 +49,16 @@ async def shields_endpoint_handler(
     Process GET requests to the /shields endpoint, returning a list of available
     shields from the Llama Stack service.
 
-    Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        shield retrieval fails for any reason.
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
 
-    Returns:
-        ShieldsResponse: An object containing the list of available shields.
+    ### Returns:
+    - ShieldsResponse: An object containing the list of available shields.
+
+    ### Raises:
+    - HTTPException: If unable to connect to the Llama Stack server or if
+      shield retrieval fails for any reason.
     """
     # Used only by the middleware
     _ = auth

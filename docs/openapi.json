@@ -28,7 +28,7 @@
                     "root"
                 ],
                 "summary": "Root Endpoint Handler",
-                "description": "Handle GET requests to the root (\"/\") endpoint and returns the static HTML index page.\n\nReturns:\n    HTMLResponse: The HTML content of the index page, including a heading,\n    embedded image with the service icon, and links to the API documentation\n    via Swagger UI and ReDoc.",
+                "description": "Handle GET requests to the root (\"/\") endpoint and returns the static HTML index page.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- HTMLResponse: The HTML content of the index page, including a heading,\n  embedded image with the service icon, and links to the API documentation\n  via Swagger UI and ReDoc.",
                 "operationId": "root_endpoint_handler__get",
                 "responses": {
                     "200": {
@@ -102,7 +102,7 @@
                     "info"
                 ],
                 "summary": "Info Endpoint Handler",
-                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\nRaises:\n    HTTPException: with status 500 and a detail object\n    containing `response` and `cause` when unable to connect to\n    Llama Stack. It can also return status 401 or 403 for\n    unauthorized access.\n\nReturns:\n    InfoResponse: An object containing the service's name and version.",
+                "description": "Handle request to the /info endpoint.\n\nProcess GET requests to the /info endpoint, returning the\nservice name, version and Llama-stack version.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Raises:\n- HTTPException: with status 500 and a detail object\n  containing `response` and `cause` when unable to connect to\n  Llama Stack. It can also return status 401 or 403 for\n  unauthorized access.\n\n### Returns:\n- InfoResponse: An object containing the service's name and version.",
                 "operationId": "info_endpoint_handler_v1_info_get",
                 "responses": {
                     "200": {
@@ -253,7 +253,7 @@
                     "models"
                 ],
                 "summary": "Models Endpoint Handler",
-                "description": "Handle requests to the /models endpoint.\n\nProcess GET requests to the /models endpoint, returning a list of available\nmodels from the Llama Stack service. It is possible to specify \"model_type\"\nquery parameter that is used as a filter. For example, if model type is set\nto \"llm\", only LLM models will be returned:\n\n    curl http://localhost:8080/v1/models?model_type=llm\n\nThe \"model_type\" query parameter is optional. When not specified, all models\nwill be returned.\n\n### Parameters:\n    request: The incoming HTTP request.\n    auth: Authentication tuple from the auth dependency.\n    model_type: Optional filter to return only models matching this type.\n\n### Raises:\n    HTTPException: If unable to connect to the Llama Stack server or if\n    model retrieval fails for any reason.\n\n### Returns:\n    ModelsResponse: An object containing the list of available models.",
+                "description": "Handle requests to the /models endpoint.\n\nProcess GET requests to the /models endpoint, returning a list of available\nmodels from the Llama Stack service. It is possible to specify \"model_type\"\nquery parameter that is used as a filter. For example, if model type is set\nto \"llm\", only LLM models will be returned:\n\n    curl http://localhost:8080/v1/models?model_type=llm\n\nThe \"model_type\" query parameter is optional. When not specified, all models\nwill be returned.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- model_type: Optional filter to return only models matching this type.\n\n### Raises:\n- HTTPException: If unable to connect to the Llama Stack server or if\n  model retrieval fails for any reason.\n\n### Returns:\n- ModelsResponse: An object containing the list of available models.",
                 "operationId": "models_endpoint_handler_v1_models_get",
                 "parameters": [
                     {
@@ -418,7 +418,7 @@
                     "tools"
                 ],
                 "summary": "Tools Endpoint Handler",
-                "description": "Handle requests to the /tools endpoint.\n\nProcess GET requests to the /tools endpoint, returning a consolidated list of\navailable tools from all configured MCP servers.\n\nRaises:\n    HTTPException: If unable to connect to the Llama Stack server or if\n    tool retrieval fails for any reason.\n\nReturns:\n    ToolsResponse: An object containing the consolidated list of available tools\n    with metadata including tool name, description, parameters, and server source.",
+                "description": "Handle requests to the /tools endpoint.\n\nProcess GET requests to the /tools endpoint, returning a consolidated list of\navailable tools from all configured MCP servers.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- mcp_headers: Headers that should be passed to MCP servers.\n### Raises:\n- HTTPException: If unable to connect to the Llama Stack server or if tool\n  retrieval fails for any reason.\n\n### Returns:\n- ToolsResponse: An object containing the consolidated list of available\n  tools with metadata including tool name, description, parameters, and\n  server source.",
                 "operationId": "tools_endpoint_handler_v1_tools_get",
                 "responses": {
                     "200": {
@@ -556,7 +556,7 @@
                     "mcp-auth"
                 ],
                 "summary": "Get Mcp Client Auth Options",
-                "description": "Get MCP servers that accept client-provided authorization.\n\nReturns a list of MCP servers configured to accept client-provided\nauthorization tokens, along with the header names where clients\nshould provide these tokens.\n\nThis endpoint helps clients discover which MCP servers they can\nauthenticate with using their own tokens.\n\nArgs:\n    request: The incoming HTTP request (used by middleware).\n    auth: Authentication tuple from the auth dependency (used by middleware).\n\nReturns:\n    MCPClientAuthOptionsResponse: List of MCP servers and their\n        accepted client authentication headers.",
+                "description": "Get MCP servers that accept client-provided authorization.\n\nReturns a list of MCP servers configured to accept client-provided\nauthorization tokens, along with the header names where clients\nshould provide these tokens.\n\nThis endpoint helps clients discover which MCP servers they can\nauthenticate with using their own tokens.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- mcp_headers: Headers that should be pass to MCP servers.\n\n### Returns:\n- MCPClientAuthOptionsResponse: List of MCP servers and their\n  accepted client authentication headers.",
                 "operationId": "get_mcp_client_auth_options_v1_mcp_auth_client_options_get",
                 "responses": {
                     "200": {
@@ -663,7 +663,7 @@
                     "mcp-servers"
                 ],
                 "summary": "List Mcp Servers Handler",
-                "description": "List all registered MCP servers.\n\nReturns both statically configured (from YAML) and dynamically\nregistered (via API) MCP servers.\n\nRaises:\n    HTTPException: If configuration is not loaded.\n\nReturns:\n    MCPServerListResponse: List of all registered MCP servers with source info.",
+                "description": "List all registered MCP servers.\n\nReturns both statically configured (from YAML) and dynamically\nregistered (via API) MCP servers.\n\n### Parameters:\n- request: Model containing attributes to dynamically registering an MCP server.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Raises:\n- HTTPException: If configuration is not loaded.\n\n### Returns:\n- MCPServerListResponse: List of all registered MCP servers with source info.",
                 "operationId": "list_mcp_servers_handler_v1_mcp_servers_get",
                 "responses": {
                     "200": {
@@ -767,7 +767,7 @@
                     "mcp-servers"
                 ],
                 "summary": "Register Mcp Server Handler",
-                "description": "Register an MCP server dynamically at runtime.\n\nAdds the MCP server to the runtime configuration and registers it\nas a toolgroup with Llama Stack so it becomes available for queries.\n\nRaises:\n    HTTPException: On duplicate name, Llama Stack connection error,\n        or registration failure.\n\nReturns:\n    MCPServerRegistrationResponse: Details of the newly registered server.",
+                "description": "Register an MCP server dynamically at runtime.\n\nAdds the MCP server to the runtime configuration and registers it\nas a toolgroup with Llama Stack so it becomes available for queries.\n\n### Parameters:\n- request: Model containing attributes to dynamically registering an MCP server.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- body: Headers that should be pass to MCP servers.\n\n### Raises:\n- HTTPException: On duplicate name, Llama Stack connection error, or\n  registration failure.\n\n### Returns:\n- MCPServerRegistrationResponse: Details of the newly registered server.",
                 "operationId": "register_mcp_server_handler_v1_mcp_servers_post",
                 "requestBody": {
                     "content": {
@@ -931,7 +931,7 @@
                     "mcp-servers"
                 ],
                 "summary": "Delete Mcp Server Handler",
-                "description": "Unregister a dynamically registered MCP server.\n\nRemoves the MCP server from the runtime configuration and unregisters\nits toolgroup from Llama Stack. Only servers registered via the API\ncan be deleted; statically configured servers cannot be removed.\n\nRaises:\n    HTTPException: If the server is not found, is statically configured,\n        or Llama Stack unregistration fails.\n\nReturns:\n    MCPServerDeleteResponse: Confirmation of the deletion.",
+                "description": "Unregister a dynamically registered MCP server.\n\nRemoves the MCP server from the runtime configuration and unregisters\nits toolgroup from Llama Stack. Only servers registered via the API\ncan be deleted; statically configured servers cannot be removed.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- name: MCP server name\n\n### Raises:\n- HTTPException: If the server is not found, is statically configured, or\n  Llama Stack unregistration fails.\n\n### Returns:\n- MCPServerDeleteResponse: Confirmation of the deletion.",
                 "operationId": "delete_mcp_server_handler_v1_mcp_servers__name__delete",
                 "parameters": [
                     {
@@ -1094,7 +1094,7 @@
                     "shields"
                 ],
                 "summary": "Shields Endpoint Handler",
-                "description": "Handle requests to the /shields endpoint.\n\nProcess GET requests to the /shields endpoint, returning a list of available\nshields from the Llama Stack service.\n\nRaises:\n    HTTPException: If unable to connect to the Llama Stack server or if\n    shield retrieval fails for any reason.\n\nReturns:\n    ShieldsResponse: An object containing the list of available shields.",
+                "description": "Handle requests to the /shields endpoint.\n\nProcess GET requests to the /shields endpoint, returning a list of available\nshields from the Llama Stack service.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- ShieldsResponse: An object containing the list of available shields.\n\n### Raises:\n- HTTPException: If unable to connect to the Llama Stack server or if\n  shield retrieval fails for any reason.",
                 "operationId": "shields_endpoint_handler_v1_shields_get",
                 "responses": {
                     "200": {
@@ -1223,7 +1223,7 @@
                     "providers"
                 ],
                 "summary": "Providers Endpoint Handler",
-                "description": "List all available providers grouped by API type.\n\nReturns:\n    ProvidersListResponse: Mapping from API type to list of providers.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "List all available providers grouped by API type.\n\n### Parameters:\n- request: The incoming HTTP request.\n- auth: Authentication tuple from the auth dependency.\n\n### Returns:\n- ProvidersListResponse: Mapping from API type to list of providers.\n\n### Raises:\n- HTTPException:\n- 401: Authentication failed\n- 403: Authorization failed\n- 500: Lightspeed Stack configuration not loaded\n- 503: Unable to connect to Llama Stack",
                 "operationId": "providers_endpoint_handler_v1_providers_get",
                 "responses": {
                     "200": {
@@ -1361,7 +1361,7 @@
                     "providers"
                 ],
                 "summary": "Get Provider Endpoint Handler",
-                "description": "Retrieve a single provider identified by its unique ID.\n\nReturns:\n    ProviderResponse: Provider details.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Provider not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "Retrieve a single provider identified by its unique ID.\n\n### Parameters:\n- request: The incoming HTTP request.\n- provider_id: Provider identification string\n- auth: Authentication tuple from the auth dependency.\n\n### Returns:\n- ProviderResponse: Provider details.\n\n### Raises:\n- HTTPException:\n- 401: Authentication failed\n- 403: Authorization failed\n- 404: Provider not found\n- 500: Lightspeed Stack configuration not loaded\n- 503: Unable to connect to Llama Stack",
                 "operationId": "get_provider_endpoint_handler_v1_providers__provider_id__get",
                 "parameters": [
                     {
@@ -1825,7 +1825,7 @@
                     "query"
                 ],
                 "summary": "Query Endpoint Handler",
-                "description": "Handle request to the /query endpoint using Responses API.\n\nProcesses a POST request to a query endpoint, forwarding the\nuser's query to a selected Llama Stack LLM and returning the generated response.\n\nReturns:\n    QueryResponse: Contains the conversation ID and the LLM-generated response.\n\nRaises:\n    HTTPException:\n        - 401: Unauthorized - Missing or invalid credentials\n        - 403: Forbidden - Insufficient permissions or model override not allowed\n        - 404: Not Found - Conversation, model, or provider not found\n        - 413: Prompt too long - Prompt exceeded model's context window size\n        - 422: Unprocessable Entity - Request validation failed\n        - 429: Quota limit exceeded - The token quota for model or user has been exceeded\n        - 500: Internal Server Error - Configuration not loaded or other server errors\n        - 503: Service Unavailable - Unable to connect to Llama Stack backend",
+                "description": "Handle request to the /query endpoint using Responses API.\n\nProcesses a POST request to a query endpoint, forwarding the\nuser's query to a selected Llama Stack LLM and returning the generated response.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- query_request: Request to the LLM.\n- auth: Auth context tuple resolved from the authentication dependency.\n- mcp_headers: Headers that should be pass to MCP servers.\n\n### Returns:\n- QueryResponse: Contains the conversation ID and the LLM-generated response.\n\n### Raises:\n- HTTPException:\n- 401: Unauthorized - Missing or invalid credentials\n- 403: Forbidden - Insufficient permissions or model override not allowed\n- 404: Not Found - Conversation, model, or provider not found\n- 413: Prompt too long - Prompt exceeded model's context window size\n- 422: Unprocessable Entity - Request validation failed\n- 429: Quota limit exceeded - The token quota for model or user has been exceeded\n- 500: Internal Server Error - Configuration not loaded or other server errors\n- 503: Service Unavailable - Unable to connect to Llama Stack backend",
                 "operationId": "query_endpoint_handler_v1_query_post",
                 "requestBody": {
                     "content": {
@@ -2143,7 +2143,7 @@
                     "streaming_query"
                 ],
                 "summary": "Streaming Query Endpoint Handler",
-                "description": "Handle request to the /streaming_query endpoint using Responses API.\n\nReturns a streaming response using Server-Sent Events (SSE) format with\ncontent type text/event-stream.\n\nReturns:\n    SSE-formatted events for the query lifecycle.\n\nRaises:\n    HTTPException:\n        - 401: Unauthorized - Missing or invalid credentials\n        - 403: Forbidden - Insufficient permissions or model override not allowed\n        - 404: Not Found - Conversation, model, or provider not found\n        - 413: Prompt too long - Prompt exceeded model's context window size\n        - 422: Unprocessable Entity - Request validation failed\n        - 429: Quota limit exceeded - The token quota for model or user has been exceeded\n        - 500: Internal Server Error - Configuration not loaded or other server errors\n        - 503: Service Unavailable - Unable to connect to Llama Stack backend",
+                "description": "Handle request to the /streaming_query endpoint using Responses API.\n\nReturns a streaming response using Server-Sent Events (SSE) format with\ncontent type text/event-stream.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- query_request: Request to the LLM.\n- auth: Auth context tuple resolved from the authentication dependency.\n- mcp_headers: Headers that should be passed to MCP servers.\n\n### Returns:\n- SSE-formatted events for the query lifecycle.\n\n### Raises:\n- HTTPException:\n- 401: Unauthorized - Missing or invalid credentials\n- 403: Forbidden - Insufficient permissions or model override not allowed\n- 404: Not Found - Conversation, model, or provider not found\n- 413: Prompt too long - Prompt exceeded model's context window size\n- 422: Unprocessable Entity - Request validation failed\n- 429: Quota limit exceeded - The token quota for model or user has been exceeded\n- 500: Internal Server Error - Configuration not loaded or other server errors\n- 503: Service Unavailable - Unable to connect to Llama Stack backend",
                 "operationId": "streaming_query_endpoint_handler_v1_streaming_query_post",
                 "requestBody": {
                     "content": {
@@ -2429,7 +2429,7 @@
                     "streaming_query_interrupt"
                 ],
                 "summary": "Streaming Query Interrupt Endpoint Handler",
-                "description": "Interrupt an in-progress streaming query by request identifier.\n\nParameters:\n----------\n    interrupt_request: Request payload containing the stream request ID.\n    auth: Auth context tuple resolved from the authentication dependency.\n    registry: Stream interrupt registry dependency used to cancel streams.\n\nReturns:\n-------\n    StreamingInterruptResponse: Confirmation payload when interruption succeeds.\n\nRaises:\n------\n    HTTPException: If no active stream for the given request ID can be interrupted.",
+                "description": "Interrupt an in-progress streaming query by request identifier.\n\n### Parameters:\n- interrupt_request: Request payload containing the stream request ID.\n- auth: Auth context tuple resolved from the authentication dependency.\n- registry: Stream interrupt registry dependency used to cancel streams.\n\n### Returns:\n- StreamingInterruptResponse: Confirmation payload when interruption succeeds.\n\n### Raises:\n- HTTPException: If no active stream for the given request ID can be interrupted.",
                 "operationId": "stream_interrupt_endpoint_handler_v1_streaming_query_interrupt_post",
                 "requestBody": {
                     "content": {
@@ -2544,7 +2544,7 @@
                     "config"
                 ],
                 "summary": "Config Endpoint Handler",
-                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nEnsures the application configuration is loaded before returning it.\n\nReturns:\n    ConfigurationResponse: The loaded service configuration response.",
+                "description": "Handle requests to the /config endpoint.\n\nProcess GET requests to the /config endpoint and returns the\ncurrent service configuration.\n\nEnsures the application configuration is loaded before returning it.\n\n### Parameters:\n- request: The incoming HTTP request.\n- auth: Authentication tuple from the auth dependency.\n\n### Returns:\n- ConfigurationResponse: The loaded service configuration response.",
                 "operationId": "config_endpoint_handler_v1_config_get",
                 "responses": {
                     "200": {
@@ -2703,7 +2703,7 @@
                     "feedback"
                 ],
                 "summary": "Feedback Endpoint Handler",
-                "description": "Handle feedback requests.\n\nProcesses a user feedback submission, storing the feedback and\nreturning a confirmation response.\n\nArgs:\n    feedback_request: The request containing feedback information.\n    ensure_feedback_enabled: The feedback handler (FastAPI Depends) that\n        will handle feedback status checks.\n    auth: The Authentication handler (FastAPI Depends) that will\n        handle authentication Logic.\n\nReturns:\n    Response indicating the status of the feedback storage request.\n\nRaises:\n    HTTPException: Returns HTTP 404 if conversation does not exist.\n    HTTPException: Returns HTTP 403 if conversation belongs to a different user.\n    HTTPException: Returns HTTP 500 if feedback storage fails.",
+                "description": "Handle feedback requests.\n\nProcesses a user feedback submission, storing the feedback and\nreturning a confirmation response.\n\n### Parameters:\n- feedback_request: The request containing feedback information.\n- ensure_feedback_enabled: The feedback handler (FastAPI Depends) that will\n  handle feedback status checks.\n- auth: The Authentication handler (FastAPI Depends) that will handle\n  authentication Logic.\n\n### Returns:\n- Response indicating the status of the feedback storage request.\n\n### Raises:\n- HTTPException: Returns HTTP 404 if conversation does not exist.\n- HTTPException: Returns HTTP 403 if conversation belongs to a different user.\n- HTTPException: Returns HTTP 500 if feedback storage fails.",
                 "operationId": "feedback_endpoint_handler_v1_feedback_post",
                 "requestBody": {
                     "content": {
@@ -2852,7 +2852,7 @@
                     "feedback"
                 ],
                 "summary": "Feedback Status",
-                "description": "Handle feedback status requests.\n\nReturn the current enabled status of the feedback\nfunctionality.\n\nReturns:\n    StatusResponse: Indicates whether feedback collection is enabled.",
+                "description": "Handle feedback status requests.\n\nReturn the current enabled status of the feedback\nfunctionality.\n\n### Parameters:\n- None\n\n### Returns:\n- StatusResponse: Indicates whether feedback collection is enabled.",
                 "operationId": "feedback_status_v1_feedback_status_get",
                 "responses": {
                     "200": {
@@ -2878,7 +2878,7 @@
                     "feedback"
                 ],
                 "summary": "Update Feedback Status",
-                "description": "Handle feedback status update requests.\n\nTakes a request with the desired state of the feedback status.\nReturns the updated state of the feedback status based on the request's value.\nThese changes are for the life of the service and are on a per-worker basis.\n\nReturns:\n    FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.",
+                "description": "Handle feedback status update requests.\n\nTakes a request with the desired state of the feedback status.\nReturns the updated state of the feedback status based on the request's value.\nThese changes are for the life of the service and are on a per-worker basis.\n\n### Parameters:\n- feedback_update_request: Structure containing desired state of the\n  feedback status.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.",
                 "operationId": "update_feedback_status_v1_feedback_status_put",
                 "requestBody": {
                     "content": {
@@ -4770,6 +4770,26 @@
                             }
                         }
                     },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                },
+                                "examples": {
+                                    "model": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Model with ID gpt-4-turbo is not configured",
+                                                "response": "Model not found"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "413": {
                         "description": "Prompt is too long",
                         "content": {
@@ -4941,7 +4961,7 @@
                     "health"
                 ],
                 "summary": "Readiness Probe Get Method",
-                "description": "Handle the readiness probe endpoint, returning service readiness.\n\nIf any provider reports an error status, responds with HTTP 503\nand details of unhealthy providers; otherwise, indicates the\nservice is ready.\n\nReturns:\n    ReadinessResponse: Object with `ready` indicating overall readiness,\n    `reason` explaining the outcome, and `providers` containing the list of\n    unhealthy ProviderHealthStatus entries (empty when ready).",
+                "description": "Handle the readiness probe endpoint, returning service readiness.\n\nIf any provider reports an error status, responds with HTTP 503\nand details of unhealthy providers; otherwise, indicates the\nservice is ready.\n\n### Parameters:\n- response: The outgoing HTTP response (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- ReadinessResponse: Object with `ready` indicating overall readiness,\n  `reason` explaining the outcome, and `providers` containing the list of\n  unhealthy ProviderHealthStatus entries (empty when ready).",
                 "operationId": "readiness_probe_get_method_readiness_get",
                 "responses": {
                     "200": {
@@ -5044,7 +5064,7 @@
                     "health"
                 ],
                 "summary": "Liveness Probe Get Method",
-                "description": "Return the liveness status of the service.\n\nReturns:\n    LivenessResponse: Indicates that the service is alive.",
+                "description": "Return the liveness status of the service.\n\n### Parameters:\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- LivenessResponse: Indicates that the service is alive.",
                 "operationId": "liveness_probe_get_method_liveness_get",
                 "responses": {
                     "200": {
@@ -5117,7 +5137,7 @@
                     "authorized"
                 ],
                 "summary": "Authorized Endpoint Handler",
-                "description": "Handle request to the /authorized endpoint.\n\nProcess POST requests to the /authorized endpoint, returning\nthe authenticated user's ID and username.\n\nThe response intentionally omits any authentication token.\n\nReturns:\n    AuthorizedResponse: Contains the user ID and username of the authenticated user.",
+                "description": "Handle request to the /authorized endpoint.\n\nProcess POST requests to the /authorized endpoint, returning\nthe authenticated user's ID and username.\n\nThe response intentionally omits any authentication token.\n\n### Parameters:\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- AuthorizedResponse: Contains the user ID and username of the authenticated user.",
                 "operationId": "authorized_endpoint_handler_authorized_post",
                 "responses": {
                     "200": {
@@ -5192,7 +5212,7 @@
                     "metrics"
                 ],
                 "summary": "Metrics Endpoint Handler",
-                "description": "Handle request to the /metrics endpoint.\n\nProcess GET requests to the /metrics endpoint, returning the\nlatest Prometheus metrics in form of a plain text.\n\nInitializes model metrics on the first request if not already\nset up, then responds with the current metrics snapshot in\nPrometheus format.\n\nReturns:\n    PlainTextResponse: Response body containing the Prometheus metrics text\n    and the Prometheus content type.",
+                "description": "Handle request to the /metrics endpoint.\n\nProcess GET requests to the /metrics endpoint, returning the\nlatest Prometheus metrics in form of a plain text.\n\nInitializes model metrics on the first request if not already\nset up, then responds with the current metrics snapshot in\nPrometheus format.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Returns:\n- PlainTextResponse: Response body containing the Prometheus metrics text\n  and the Prometheus content type.",
                 "operationId": "metrics_endpoint_handler_metrics_get",
                 "responses": {
                     "200": {
@@ -6415,10 +6435,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -6810,10 +6832,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -7730,10 +7754,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -7993,10 +8019,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -8797,10 +8825,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -9157,7 +9187,35 @@
                         "title": "Call Id"
                     },
                     "output": {
-                        "type": "string",
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "items": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
+                                        }
+                                    ],
+                                    "discriminator": {
+                                        "propertyName": "type",
+                                        "mapping": {
+                                            "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile",
+                                            "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
+                                            "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        }
+                                    }
+                                },
+                                "type": "array"
+                            }
+                        ],
                         "title": "Output"
                     },
                     "type": {
@@ -10920,10 +10978,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -11538,10 +11598,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13426,10 +13488,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13827,10 +13891,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13903,10 +13969,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",

@@ -101,20 +101,20 @@ async def feedback_endpoint_handler(
     Processes a user feedback submission, storing the feedback and
     returning a confirmation response.
 
-    Args:
-        feedback_request: The request containing feedback information.
-        ensure_feedback_enabled: The feedback handler (FastAPI Depends) that
-            will handle feedback status checks.
-        auth: The Authentication handler (FastAPI Depends) that will
-            handle authentication Logic.
+    ### Parameters:
+    - feedback_request: The request containing feedback information.
+    - ensure_feedback_enabled: The feedback handler (FastAPI Depends) that will
+      handle feedback status checks.
+    - auth: The Authentication handler (FastAPI Depends) that will handle
+      authentication Logic.
 
-    Returns:
-        Response indicating the status of the feedback storage request.
+    ### Returns:
+    - Response indicating the status of the feedback storage request.
 
-    Raises:
-        HTTPException: Returns HTTP 404 if conversation does not exist.
-        HTTPException: Returns HTTP 403 if conversation belongs to a different user.
-        HTTPException: Returns HTTP 500 if feedback storage fails.
+    ### Raises:
+    - HTTPException: Returns HTTP 404 if conversation does not exist.
+    - HTTPException: Returns HTTP 403 if conversation belongs to a different user.
+    - HTTPException: Returns HTTP 500 if feedback storage fails.
     """
     logger.debug("Feedback received %s", str(feedback_request))
 
@@ -186,8 +186,11 @@ def feedback_status() -> StatusResponse:
     Return the current enabled status of the feedback
     functionality.
 
-    Returns:
-        StatusResponse: Indicates whether feedback collection is enabled.
+    ### Parameters:
+    - None
+
+    ### Returns:
+    - StatusResponse: Indicates whether feedback collection is enabled.
     """
     logger.debug("Feedback status requested")
     feedback_status_enabled = is_feedback_enabled()
@@ -209,8 +212,13 @@ async def update_feedback_status(
     Returns the updated state of the feedback status based on the request's value.
     These changes are for the life of the service and are on a per-worker basis.
 
-    Returns:
-        FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.
+    ### Parameters:
+    - feedback_update_request: Structure containing desired state of the
+      feedback status.
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+
+    ### Returns:
+    - FeedbackStatusUpdateResponse: Indicates whether feedback is enabled.
     """
     user_id, _, _, _ = auth
     check_configuration_loaded(configuration)

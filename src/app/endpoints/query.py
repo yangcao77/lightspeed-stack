@@ -106,19 +106,25 @@ async def query_endpoint_handler(
     Processes a POST request to a query endpoint, forwarding the
     user's query to a selected Llama Stack LLM and returning the generated response.
 
-    Returns:
-        QueryResponse: Contains the conversation ID and the LLM-generated response.
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - query_request: Request to the LLM.
+    - auth: Auth context tuple resolved from the authentication dependency.
+    - mcp_headers: Headers that should be pass to MCP servers.
 
-    Raises:
-        HTTPException:
-            - 401: Unauthorized - Missing or invalid credentials
-            - 403: Forbidden - Insufficient permissions or model override not allowed
-            - 404: Not Found - Conversation, model, or provider not found
-            - 413: Prompt too long - Prompt exceeded model's context window size
-            - 422: Unprocessable Entity - Request validation failed
-            - 429: Quota limit exceeded - The token quota for model or user has been exceeded
-            - 500: Internal Server Error - Configuration not loaded or other server errors
-            - 503: Service Unavailable - Unable to connect to Llama Stack backend
+    ### Returns:
+    - QueryResponse: Contains the conversation ID and the LLM-generated response.
+
+    ### Raises:
+    - HTTPException:
+    - 401: Unauthorized - Missing or invalid credentials
+    - 403: Forbidden - Insufficient permissions or model override not allowed
+    - 404: Not Found - Conversation, model, or provider not found
+    - 413: Prompt too long - Prompt exceeded model's context window size
+    - 422: Unprocessable Entity - Request validation failed
+    - 429: Quota limit exceeded - The token quota for model or user has been exceeded
+    - 500: Internal Server Error - Configuration not loaded or other server errors
+    - 503: Service Unavailable - Unable to connect to Llama Stack backend
     """
     check_configuration_loaded(configuration)
 
