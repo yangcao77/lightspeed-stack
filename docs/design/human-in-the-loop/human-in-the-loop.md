@@ -173,8 +173,10 @@ CREATE INDEX IF NOT EXISTS idx_approval_requests_expires
 **YAML config example:**
 
 ```yaml
-# Global approval TTL (seconds)
-approval_ttl_seconds: 300  # Default: 5 minutes
+# Approval settings
+approvals:
+  ttl_seconds: 300         # How long approvals stay pending (default: 300)
+  retention_days: 30       # How long to retain decided approvals (default: 30)
 
 mcp_servers:
   # Example 1: Require approval for all tools
@@ -204,8 +206,8 @@ mcp_servers:
 **Configuration class:**
 
 ```python
-from typing import Literal, Optional
-from pydantic import Field, model_validator
+from typing import Literal
+from pydantic import Field, PositiveInt, model_validator
 from typing_extensions import Self
 
 class ApprovalFilter(ConfigurationBase):
@@ -238,6 +240,26 @@ class ApprovalFilter(ConfigurationBase):
         return self
 
 
+class ApprovalsConfiguration(ConfigurationBase):
+    """Configuration for human-in-the-loop approvals.
+
+    Attributes:
+        ttl_seconds: How long approval requests remain pending before expiring.
+        retention_days: How long to retain decided approvals for audit purposes.
+    """
+
+    ttl_seconds: PositiveInt = Field(
+        300,
+        title="Approval TTL",
+        description="Seconds before pending approval requests expire",
+    )
+    retention_days: PositiveInt = Field(
+        30,
+        title="Retention period",
+        description="Days to retain decided approvals before cleanup",
+    )
+
+
 class ModelContextProtocolServer(ConfigurationBase):
     """Model context protocol server configuration."""
 
@@ -255,6 +277,15 @@ class ModelContextProtocolServer(ConfigurationBase):
             "or use ApprovalFilter for granular control."
         ),
     )
+```
+
+Main configuration adds:
+```python
+approvals: ApprovalsConfiguration = Field(
+    default_factory=ApprovalsConfiguration,
+    title="Approvals configuration",
+    description="Settings for human-in-the-loop approval workflow",
+)
 ```
 
 ### API changes
@@ -392,6 +423,52 @@ For streaming, emit an event:
 5. **Rate limiting**: Approval endpoints should be rate-limited to prevent
    abuse (handled by existing rate limiting infrastructure).
 
+### Data retention
+
+Approval records are retained for audit purposes but purged after a
+configurable retention period to prevent database bloat.
+
+**Retention policy:**
+
+1. **Completed records** (approved/denied): Retained for a configurable period
+   (default: 30 days from decision), then purged by a background cleanup task
+2. **Expired records**: Purged after 24 hours past expiration
+3. **Pending records**: Subject to TTL expiration, then treated as expired
+
+**Configuration:**
+
+```yaml
+approvals:
+  retention_days: 30  # How long to keep decided approvals (default: 30)
+```
+
+**Cleanup queries:**
+
+SQLite:
+```sql
+DELETE FROM approval_requests
+WHERE (status IN ('approved', 'denied')
+       AND datetime(decided_at) < datetime('now', '-30 days'))
+   OR (status = 'expired'
+       AND datetime(expires_at) < datetime('now', '-1 day'));
+```
+
+PostgreSQL:
+```sql
+DELETE FROM approval_requests
+WHERE (status IN ('approved', 'denied')
+       AND decided_at < NOW() - INTERVAL '30 days')
+   OR (status = 'expired'
+       AND expires_at < NOW() - INTERVAL '1 day');
+```
+
+**Implementation options:**
+
+- **Scheduled task**: Run cleanup periodically (e.g., hourly or daily)
+- **Lazy cleanup**: Trigger cleanup during read operations when record count
+  exceeds a threshold
+- **Database-level**: Use PostgreSQL's `pg_cron` or application-level scheduler
+
 ### Migration / backwards compatibility
 
 - **No breaking changes**: Default `require_approval="never"` maintains current
@@ -407,10 +484,10 @@ For streaming, emit an event:
 
 | File | What to do |
 |------|------------|
-| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `approval_ttl_seconds` to main config |
+| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `ApprovalsConfiguration` class with `ttl_seconds` and `retention_days` |
 | `src/utils/responses.py` | Modify `get_mcp_tools()` to pass `require_approval` from config |
-| `src/cache/sqlite_cache.py` | Add `approval_requests` table and CRUD methods |
-| `src/cache/postgres_cache.py` | Add `approval_requests` table and CRUD methods |
+| `src/cache/sqlite_cache.py` | Add `approval_requests` table, CRUD methods, and cleanup method |
+| `src/cache/postgres_cache.py` | Add `approval_requests` table, CRUD methods, and cleanup method |
 | `src/app/endpoints/approvals.py` | New file: `/approvals` endpoint handlers |
 | `src/app/endpoints/query.py` | Handle `mcp_approval_request`, return `requires_action` |
 | `src/app/endpoints/streaming_query.py` | Handle approval request events, emit `approval_required` |
@@ -495,6 +572,7 @@ Example config files go in `examples/`.
 
 | Date | Change | Reason |
 |------|--------|--------|
+| 2026-04-13 | Added data retention policy section | Prevent database bloat from accumulated approval records |
 | 2026-04-01 | Initial version | LCORE-1589 spike |
 
 ## Appendix A: Llama Stack Types Reference
