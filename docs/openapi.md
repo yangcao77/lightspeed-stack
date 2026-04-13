@@ -4461,8 +4461,8 @@ Microsoft Entra ID authentication attributes for Azure.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ByokRag
@@ -4568,8 +4568,8 @@ Success response model for the config endpoint.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ConversationData
@@ -4955,8 +4955,8 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## HTTPAuthSecurityScheme
@@ -5067,8 +5067,8 @@ Example:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## JsonPathOperator
@@ -5394,8 +5394,8 @@ Defines a security scheme using mTLS authentication.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## OAuth2SecurityScheme
@@ -6225,8 +6225,8 @@ Useful resources:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ProviderHealthStatus
@@ -6354,8 +6354,8 @@ Attributes:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## QuotaHandlersConfiguration
@@ -6991,8 +6991,8 @@ the service can handle requests concurrently.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ShieldsResponse
@@ -7170,8 +7170,8 @@ Model representing a response to tools request.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## UnprocessableEntityResponse
@@ -7182,8 +7182,8 @@ Model representing a response to tools request.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| status_code | integer |  |
-| detail |  |  |
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## UserDataCollection

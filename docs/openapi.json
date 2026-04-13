@@ -418,7 +418,7 @@
                     "tools"
                 ],
                 "summary": "Tools Endpoint Handler",
-                "description": "Handle requests to the /tools endpoint.\n\nProcess GET requests to the /tools endpoint, returning a consolidated list of\navailable tools from all configured MCP servers.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Raises:\n- HTTPException: If unable to connect to the Llama Stack server or if tool\n  retrieval fails for any reason.\n\n### Returns:\n- ToolsResponse: An object containing the consolidated list of available\n  tools with metadata including tool name, description, parameters, and\n  server source.",
+                "description": "Handle requests to the /tools endpoint.\n\nProcess GET requests to the /tools endpoint, returning a consolidated list of\navailable tools from all configured MCP servers.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- mcp_headers: Headers that should be passed to MCP servers.\n### Raises:\n- HTTPException: If unable to connect to the Llama Stack server or if tool\n  retrieval fails for any reason.\n\n### Returns:\n- ToolsResponse: An object containing the consolidated list of available\n  tools with metadata including tool name, description, parameters, and\n  server source.",
                 "operationId": "tools_endpoint_handler_v1_tools_get",
                 "responses": {
                     "200": {
@@ -931,7 +931,7 @@
                     "mcp-servers"
                 ],
                 "summary": "Delete Mcp Server Handler",
-                "description": "Unregister a dynamically registered MCP server.\n\nRemoves the MCP server from the runtime configuration and unregisters\nits toolgroup from Llama Stack. Only servers registered via the API\ncan be deleted; statically configured servers cannot be removed.\n\n### Parameters:\n- request: Model containing attributes to dynamically registering an MCP server.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- name: MCP server name\n\n### Raises:\n- HTTPException: If the server is not found, is statically configured, or\n  Llama Stack unregistration fails.\n\n### Returns:\n- MCPServerDeleteResponse: Confirmation of the deletion.",
+                "description": "Unregister a dynamically registered MCP server.\n\nRemoves the MCP server from the runtime configuration and unregisters\nits toolgroup from Llama Stack. Only servers registered via the API\ncan be deleted; statically configured servers cannot be removed.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- name: MCP server name\n\n### Raises:\n- HTTPException: If the server is not found, is statically configured, or\n  Llama Stack unregistration fails.\n\n### Returns:\n- MCPServerDeleteResponse: Confirmation of the deletion.",
                 "operationId": "delete_mcp_server_handler_v1_mcp_servers__name__delete",
                 "parameters": [
                     {
@@ -2143,7 +2143,7 @@
                     "streaming_query"
                 ],
                 "summary": "Streaming Query Endpoint Handler",
-                "description": "Handle request to the /streaming_query endpoint using Responses API.\n\nReturns a streaming response using Server-Sent Events (SSE) format with\ncontent type text/event-stream.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- query_request: Request to the LLM.\n- auth: Auth context tuple resolved from the authentication dependency.\n- mcp_headers: Headers that should be pass to MCP servers.\n\n### Returns:\n- SSE-formatted events for the query lifecycle.\n\n### Raises:\n- HTTPException:\n- 401: Unauthorized - Missing or invalid credentials\n- 403: Forbidden - Insufficient permissions or model override not allowed\n- 404: Not Found - Conversation, model, or provider not found\n- 413: Prompt too long - Prompt exceeded model's context window size\n- 422: Unprocessable Entity - Request validation failed\n- 429: Quota limit exceeded - The token quota for model or user has been exceeded\n- 500: Internal Server Error - Configuration not loaded or other server errors\n- 503: Service Unavailable - Unable to connect to Llama Stack backend",
+                "description": "Handle request to the /streaming_query endpoint using Responses API.\n\nReturns a streaming response using Server-Sent Events (SSE) format with\ncontent type text/event-stream.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- query_request: Request to the LLM.\n- auth: Auth context tuple resolved from the authentication dependency.\n- mcp_headers: Headers that should be passed to MCP servers.\n\n### Returns:\n- SSE-formatted events for the query lifecycle.\n\n### Raises:\n- HTTPException:\n- 401: Unauthorized - Missing or invalid credentials\n- 403: Forbidden - Insufficient permissions or model override not allowed\n- 404: Not Found - Conversation, model, or provider not found\n- 413: Prompt too long - Prompt exceeded model's context window size\n- 422: Unprocessable Entity - Request validation failed\n- 429: Quota limit exceeded - The token quota for model or user has been exceeded\n- 500: Internal Server Error - Configuration not loaded or other server errors\n- 503: Service Unavailable - Unable to connect to Llama Stack backend",
                 "operationId": "streaming_query_endpoint_handler_v1_streaming_query_post",
                 "requestBody": {
                     "content": {
@@ -6435,10 +6435,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -6830,10 +6832,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -7750,10 +7754,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -8013,10 +8019,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -8817,10 +8825,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -10968,10 +10978,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -11586,10 +11598,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13474,10 +13488,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13875,10 +13891,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
@@ -13951,10 +13969,12 @@
                 "properties": {
                     "status_code": {
                         "type": "integer",
-                        "title": "Status Code"
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
                     },
                     "detail": {
-                        "$ref": "#/components/schemas/DetailModel"
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
                     }
                 },
                 "type": "object",
