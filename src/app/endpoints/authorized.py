@@ -33,8 +33,11 @@ async def authorized_endpoint_handler(
 
     The response intentionally omits any authentication token.
 
-    Returns:
-        AuthorizedResponse: Contains the user ID and username of the authenticated user.
+    ### Parameters:
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+
+    ### Returns:
+    - AuthorizedResponse: Contains the user ID and username of the authenticated user.
     """
     # Ignore the user token, we should not return it in the response
     user_id, user_name, skip_userid_check, _ = auth

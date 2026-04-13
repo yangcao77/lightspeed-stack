@@ -114,13 +114,18 @@ async def tools_endpoint_handler(  # pylint: disable=too-many-locals,too-many-st
     Process GET requests to the /tools endpoint, returning a consolidated list of
     available tools from all configured MCP servers.
 
-    Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        tool retrieval fails for any reason.
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+    - mcp_headers: Headers that should be passed to MCP servers.
+    ### Raises:
+    - HTTPException: If unable to connect to the Llama Stack server or if tool
+      retrieval fails for any reason.
 
-    Returns:
-        ToolsResponse: An object containing the consolidated list of available tools
-        with metadata including tool name, description, parameters, and server source.
+    ### Returns:
+    - ToolsResponse: An object containing the consolidated list of available
+      tools with metadata including tool name, description, parameters, and
+      server source.
     """
     _, _, _, token = auth
 

@@ -108,10 +108,14 @@ async def readiness_probe_get_method(
     and details of unhealthy providers; otherwise, indicates the
     service is ready.
 
-    Returns:
-        ReadinessResponse: Object with `ready` indicating overall readiness,
-        `reason` explaining the outcome, and `providers` containing the list of
-        unhealthy ProviderHealthStatus entries (empty when ready).
+    ### Parameters:
+    - response: The outgoing HTTP response (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+
+    ### Returns:
+    - ReadinessResponse: Object with `ready` indicating overall readiness,
+      `reason` explaining the outcome, and `providers` containing the list of
+      unhealthy ProviderHealthStatus entries (empty when ready).
     """
     # Used only for authorization
     _ = auth
@@ -145,8 +149,11 @@ async def liveness_probe_get_method(
     """
     Return the liveness status of the service.
 
-    Returns:
-        LivenessResponse: Indicates that the service is alive.
+    ### Parameters:
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+
+    ### Returns:
+    - LivenessResponse: Indicates that the service is alive.
     """
     # Used only for authorization
     _ = auth
