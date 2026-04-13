@@ -33,7 +33,7 @@ def parse_llama_stack_model(model: Any) -> dict[str, Any]:
 
     Converting the new llama-stack model format (0.4.x) with custom_metadata.
 
-    Args:
+    Parameters:
         model: Model object from llama-stack (has id, custom_metadata, object fields)
 
     Returns:
@@ -92,16 +92,16 @@ async def models_endpoint_handler(
     will be returned.
 
     ### Parameters:
-        - request: The incoming HTTP request.
-        - auth: Authentication tuple from the auth dependency.
-        - model_type: Optional filter to return only models matching this type.
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+    - model_type: Optional filter to return only models matching this type.
 
     ### Raises:
-        HTTPException: If unable to connect to the Llama Stack server or if
-        model retrieval fails for any reason.
+    - HTTPException: If unable to connect to the Llama Stack server or if
+      model retrieval fails for any reason.
 
     ### Returns:
-        ModelsResponse: An object containing the list of available models.
+    - ModelsResponse: An object containing the list of available models.
     """
     # Used only by the middleware
     _ = auth

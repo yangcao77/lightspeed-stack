@@ -61,18 +61,18 @@ async def providers_endpoint_handler(
     List all available providers grouped by API type.
 
     ### Parameters:
-        - request: The incoming HTTP request.
-        - auth: Authentication tuple from the auth dependency.
+    - request: The incoming HTTP request.
+    - auth: Authentication tuple from the auth dependency.
 
     ### Returns:
-        ProvidersListResponse: Mapping from API type to list of providers.
+    - ProvidersListResponse: Mapping from API type to list of providers.
 
     ### Raises:
-        HTTPException:
-            - 401: Authentication failed
-            - 403: Authorization failed
-            - 500: Lightspeed Stack configuration not loaded
-            - 503: Unable to connect to Llama Stack
+    - HTTPException:
+    - 401: Authentication failed
+    - 403: Authorization failed
+    - 500: Lightspeed Stack configuration not loaded
+    - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth
@@ -128,20 +128,20 @@ async def get_provider_endpoint_handler(
     Retrieve a single provider identified by its unique ID.
 
     ### Parameters:
-        - request: The incoming HTTP request.
-        - provider_id: Provider identification string
-        - auth: Authentication tuple from the auth dependency.
+    - request: The incoming HTTP request.
+    - provider_id: Provider identification string
+    - auth: Authentication tuple from the auth dependency.
 
     ### Returns:
-        ProviderResponse: Provider details.
+    - ProviderResponse: Provider details.
 
     ### Raises:
-        HTTPException:
-            - 401: Authentication failed
-            - 403: Authorization failed
-            - 404: Provider not found
-            - 500: Lightspeed Stack configuration not loaded
-            - 503: Unable to connect to Llama Stack
+    - HTTPException:
+    - 401: Authentication failed
+    - 403: Authorization failed
+    - 404: Provider not found
+    - 500: Lightspeed Stack configuration not loaded
+    - 503: Unable to connect to Llama Stack
     """
     # Used only by the middleware
     _ = auth

@@ -161,19 +161,25 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     Returns a streaming response using Server-Sent Events (SSE) format with
     content type text/event-stream.
 
-    Returns:
-        SSE-formatted events for the query lifecycle.
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - query_request: Request to the LLM.
+    - auth: Auth context tuple resolved from the authentication dependency.
+    - mcp_headers: Headers that should be pass to MCP servers.
 
-    Raises:
-        HTTPException:
-            - 401: Unauthorized - Missing or invalid credentials
-            - 403: Forbidden - Insufficient permissions or model override not allowed
-            - 404: Not Found - Conversation, model, or provider not found
-            - 413: Prompt too long - Prompt exceeded model's context window size
-            - 422: Unprocessable Entity - Request validation failed
-            - 429: Quota limit exceeded - The token quota for model or user has been exceeded
-            - 500: Internal Server Error - Configuration not loaded or other server errors
-            - 503: Service Unavailable - Unable to connect to Llama Stack backend
+    ### Returns:
+    - SSE-formatted events for the query lifecycle.
+
+    ### Raises:
+    - HTTPException:
+    - 401: Unauthorized - Missing or invalid credentials
+    - 403: Forbidden - Insufficient permissions or model override not allowed
+    - 404: Not Found - Conversation, model, or provider not found
+    - 413: Prompt too long - Prompt exceeded model's context window size
+    - 422: Unprocessable Entity - Request validation failed
+    - 429: Quota limit exceeded - The token quota for model or user has been exceeded
+    - 500: Internal Server Error - Configuration not loaded or other server errors
+    - 503: Service Unavailable - Unable to connect to Llama Stack backend
     """
     check_configuration_loaded(configuration)
 

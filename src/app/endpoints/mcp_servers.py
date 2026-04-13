@@ -59,12 +59,17 @@ async def register_mcp_server_handler(
     Adds the MCP server to the runtime configuration and registers it
     as a toolgroup with Llama Stack so it becomes available for queries.
 
-    Raises:
-        HTTPException: On duplicate name, Llama Stack connection error,
-            or registration failure.
+    ### Parameters:
+    - request: Model containing attributes to dynamically registering an MCP server.
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+    - body: Headers that should be pass to MCP servers.
 
-    Returns:
-        MCPServerRegistrationResponse: Details of the newly registered server.
+    ### Raises:
+    - HTTPException: On duplicate name, Llama Stack connection error, or
+      registration failure.
+
+    ### Returns:
+    - MCPServerRegistrationResponse: Details of the newly registered server.
     """
     _ = auth
     _ = request
@@ -138,11 +143,15 @@ async def list_mcp_servers_handler(
     Returns both statically configured (from YAML) and dynamically
     registered (via API) MCP servers.
 
-    Raises:
-        HTTPException: If configuration is not loaded.
+    ### Parameters:
+    - request: Model containing attributes to dynamically registering an MCP server.
+    - auth: Authentication tuple from the auth dependency (used by middleware).
 
-    Returns:
-        MCPServerListResponse: List of all registered MCP servers with source info.
+    ### Raises:
+    - HTTPException: If configuration is not loaded.
+
+    ### Returns:
+    - MCPServerListResponse: List of all registered MCP servers with source info.
     """
     _ = auth
     _ = request
@@ -189,12 +198,17 @@ async def delete_mcp_server_handler(
     its toolgroup from Llama Stack. Only servers registered via the API
     can be deleted; statically configured servers cannot be removed.
 
-    Raises:
-        HTTPException: If the server is not found, is statically configured,
-            or Llama Stack unregistration fails.
+    ### Parameters:
+    - request: Model containing attributes to dynamically registering an MCP server.
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+    - name: MCP server name
 
-    Returns:
-        MCPServerDeleteResponse: Confirmation of the deletion.
+    ### Raises:
+    - HTTPException: If the server is not found, is statically configured, or
+      Llama Stack unregistration fails.
+
+    ### Returns:
+    - MCPServerDeleteResponse: Confirmation of the deletion.
     """
     _ = auth
     _ = request

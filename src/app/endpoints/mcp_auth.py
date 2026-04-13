@@ -52,13 +52,14 @@ async def get_mcp_client_auth_options(
     This endpoint helps clients discover which MCP servers they can
     authenticate with using their own tokens.
 
-    Args:
-        request: The incoming HTTP request (used by middleware).
-        auth: Authentication tuple from the auth dependency (used by middleware).
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+    - mcp_headers: Headers that should be pass to MCP servers.
 
-    Returns:
-        MCPClientAuthOptionsResponse: List of MCP servers and their
-            accepted client authentication headers.
+    ### Returns:
+    - MCPClientAuthOptionsResponse: List of MCP servers and their
+      accepted client authentication headers.
     """
     # Used only by the middleware
     _ = auth

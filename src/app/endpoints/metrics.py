@@ -52,9 +52,13 @@ async def metrics_endpoint_handler(
     set up, then responds with the current metrics snapshot in
     Prometheus format.
 
-    Returns:
-        PlainTextResponse: Response body containing the Prometheus metrics text
-        and the Prometheus content type.
+    ### Parameters:
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
+
+    ### Returns:
+    - PlainTextResponse: Response body containing the Prometheus metrics text
+      and the Prometheus content type.
     """
     # Used only for authorization
     _ = auth
