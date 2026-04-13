@@ -117,7 +117,7 @@ async def tools_endpoint_handler(  # pylint: disable=too-many-locals,too-many-st
     ### Parameters:
     - request: The incoming HTTP request (used by middleware).
     - auth: Authentication tuple from the auth dependency (used by middleware).
-
+    - mcp_headers: Headers that should be passed to MCP servers.
     ### Raises:
     - HTTPException: If unable to connect to the Llama Stack server or if tool
       retrieval fails for any reason.
