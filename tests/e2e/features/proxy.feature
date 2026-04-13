@@ -5,9 +5,17 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
   remote inference providers are configured with proxy and TLS settings
   via the run.yaml NetworkConfig.
 
+  Query bodies use shield_ids: [] because Llama Guard moderation issues a separate
+  OpenAI request inside Llama Stack that does not inherit the same proxy/TLS CA
+  trust as remote::openai inference, which breaks MITM interception tests.
+
   Background:
     Given The service is started locally
+      And The system is in default state
       And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack.yaml configuration
+      And The service is restarted
       And The original Llama Stack config is restored if modified
 
 
@@ -21,7 +29,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 200
       And The tunnel proxy handled at least 1 CONNECT request to the LLM provider
@@ -37,7 +45,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 500
 
@@ -52,7 +60,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 200
       And The interception proxy intercepted at least 1 connection
@@ -65,7 +73,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 500
 
@@ -79,7 +87,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 200
 
@@ -90,7 +98,7 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 200
 
@@ -101,6 +109,6 @@ Feature: Proxy and TLS networking tests for Llama Stack providers
       And Lightspeed Stack is restarted
      When I use "query" to ask question
     """
-    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}"}
+    {"query": "What is 2+2?", "model": "{MODEL}", "provider": "{PROVIDER}", "shield_ids": []}
     """
      Then The status code of the response is 200

@@ -10,24 +10,21 @@ Currently four events have been registered:
 import os
 import subprocess
 import time
-from typing import Optional
 
 import requests
 from behave.model import Feature, Scenario
 from behave.runner import Context
 
-from tests.e2e.utils.llama_stack_utils import (
-    register_shield,
-    unregister_mcp_toolgroups,
-    unregister_shield,
+from tests.e2e.features.steps.common import (
+    reset_active_lightspeed_stack_config_basename,
 )
+from tests.e2e.features.steps.health import reset_llama_stack_disrupt_once_tracking
+from tests.e2e.utils.llama_stack_utils import register_shield, unregister_shield
 from tests.e2e.utils.prow_utils import (
     restart_pod,
     restore_llama_stack_pod,
 )
 from tests.e2e.utils.utils import (
-    clear_llama_stack_storage,
-    create_config_backup,
     is_prow_environment,
     remove_config_backup,
     restart_container,
@@ -36,30 +33,6 @@ from tests.e2e.utils.utils import (
 
 FALLBACK_MODEL = "gpt-4o-mini"
 FALLBACK_PROVIDER = "openai"
-
-# Config file mappings: logical key -> path template (Docker and Prow use the same tree).
-_CONFIG_PATHS = {
-    "no-cache": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-cache.yaml",
-    "auth-noop-token": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-noop-token.yaml",
-    "rbac": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-rbac.yaml",
-    "invalid-feedback-storage": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-feedback-storage.yaml",
-    "rh-identity": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-auth-rh-identity.yaml",
-    # Default LCS config for @MCP feature; per-scenario tags select mcp-* variants in before_scenario.
-    "mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp.yaml",
-    "mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-file-auth.yaml",
-    "invalid-mcp-file-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-invalid-mcp-file-auth.yaml",
-    "mcp-kubernetes-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-kubernetes-auth.yaml",
-    "mcp-client-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-client-auth.yaml",
-    "mcp-oauth-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-oauth-auth.yaml",
-    "inline-rag": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-inline-rag.yaml",
-    "mcp-auth": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-mcp-auth.yaml",
-    "no-mcp": "tests/e2e/configuration/{mode_dir}/lightspeed-stack-no-mcp.yaml",
-}
-
-
-def _get_config_path(config_name: str, mode_dir: str) -> str:
-    """Resolve repo-relative path to a Lightspeed stack YAML for the current mode."""
-    return _CONFIG_PATHS[config_name].format(mode_dir=mode_dir)
 
 
 def _fetch_models_from_service() -> dict:
@@ -156,14 +129,13 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
     """Run before each scenario is run.
 
     Prepare scenario execution by skipping scenarios based on tags and
-    selecting a scenario-specific configuration.
+    resetting per-scenario Lightspeed override tracking and skip-restart flags.
 
     Skips the scenario if it has the `skip` tag, if it has the `local` tag
     while the test run is not in local mode, or if it has
-    `skip-in-library-mode` when running in library mode. When the scenario is
-    tagged with `InvalidFeedbackStorageConfig` or `NoCacheConfig`, sets
-    `context.scenario_config` to the appropriate configuration file path for
-    the current deployment mode (library-mode or server-mode).
+    `skip-in-library-mode` when running in library mode. Scenario-specific
+    Lightspeed YAML is applied in the feature files (``The service uses the
+    ... configuration`` steps).
     """
     if "skip" in scenario.effective_tags:
         scenario.skip("Marked with @skip")
@@ -176,6 +148,9 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
     if context.is_library_mode and "skip-in-library-mode" in scenario.effective_tags:
         scenario.skip("Skipped in library mode (no separate llama-stack container)")
         return
+
+    context.scenario_lightspeed_override_active = False
+    context.lightspeed_stack_skip_restart = False
 
     # @disable-shields: unregister shield via client.shields.delete("llama-guard").
     # Only in server mode: in library mode there is no separate Llama Stack to call,
@@ -198,36 +173,6 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
             )
             return
 
-    mode_dir = "library-mode" if context.is_library_mode else "server-mode"
-
-    if "InvalidFeedbackStorageConfig" in scenario.effective_tags:
-        context.scenario_config = _get_config_path("invalid-feedback-storage", mode_dir)
-    if "NoCacheConfig" in scenario.effective_tags:
-        context.scenario_config = _get_config_path("no-cache", mode_dir)
-        switch_config(context.scenario_config)
-        restart_container("lightspeed-stack")
-
-    config_name: Optional[str] = None
-    if "MCPFileAuthConfig" in scenario.effective_tags:
-        config_name = "mcp-file-auth"
-    elif "InvalidMCPFileAuthConfig" in scenario.effective_tags:
-        config_name = "invalid-mcp-file-auth"
-    elif "MCPKubernetesAuthConfig" in scenario.effective_tags:
-        config_name = "mcp-kubernetes-auth"
-    elif "MCPClientAuthConfig" in scenario.effective_tags:
-        config_name = "mcp-client-auth"
-    elif "MCPOAuthAuthConfig" in scenario.effective_tags:
-        config_name = "mcp-oauth-auth"
-
-    if config_name is not None:
-        if not context.is_library_mode:
-            unregister_mcp_toolgroups()
-        else:
-            clear_llama_stack_storage()
-        context.scenario_config = _get_config_path(config_name, mode_dir)
-        switch_config(context.scenario_config)
-        restart_container("lightspeed-stack")
-
 
 def after_scenario(context: Context, scenario: Scenario) -> None:
     """Run after each scenario is run.
@@ -236,45 +181,34 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
     in server mode, attempt to restart and verify the Llama Stack container if
     it was previously running.
 
-    If the scenario used an alternate feedback storage or no-cache
-    configuration, the original feature configuration is restored and the
-    lightspeed-stack container is restarted. When not running in library mode
-    and the context indicates the Llama Stack was running before the scenario,
-    this function attempts to start the llama-stack container and polls its
-    health endpoint until it becomes healthy or a timeout is reached.
+    If ``configure_service`` applied a non-baseline YAML during the scenario
+    (``context.scenario_lightspeed_override_active``), copies
+    ``context.feature_config`` back and restarts lightspeed-stack.
+
+    When not running in library mode and the context indicates the Llama Stack
+    was running before the scenario, this function attempts to start the
+    llama-stack container and polls its health endpoint until it becomes
+    healthy or a timeout is reached.
 
     Parameters:
     ----------
         context (Context): Behave test context. Expected attributes used here include:
             - feature_config: path to the feature-level configuration to restore.
+            - scenario_lightspeed_override_active: set by ``configure_service``
+              when a scenario switches YAML after Background.
             - is_library_mode (bool): whether tests run in library mode.
             - llama_stack_was_running (bool, optional): whether llama-stack was
               running before the scenario.
             - hostname_llama, port_llama (str/int, optional): host and port
               used for the llama-stack health check.
-        scenario (Scenario): Behave scenario whose tags determine which
-        scenario-specific teardown actions to run (e.g.,
-        "InvalidFeedbackStorageConfig", "NoCacheConfig").
+        scenario (Scenario): Behave scenario (used for shield re-register tag).
     """
-    # Restore Llama Stack FIRST (before any lightspeed-stack restart)
-    llama_was_running = getattr(context, "llama_stack_was_running", False)
-    if llama_was_running:
-        _restore_llama_stack(context)
-        context.llama_stack_was_running = False
-
-    # Tags that require config restoration after scenario
-    config_restore_tags = {
-        "InvalidFeedbackStorageConfig",
-        "NoCacheConfig",
-        "MCPFileAuthConfig",
-        "InvalidMCPFileAuthConfig",
-        "MCPKubernetesAuthConfig",
-        "MCPClientAuthConfig",
-        "MCPOAuthAuthConfig",
-    }
-    if config_restore_tags & set(scenario.effective_tags):
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
+    if getattr(context, "scenario_lightspeed_override_active", False):
+        context.scenario_lightspeed_override_active = False
+        feature_cfg = getattr(context, "feature_config", None)
+        if feature_cfg:
+            switch_config(feature_cfg)
+            restart_container("lightspeed-stack")
 
     # @disable-shields: re-register shield only if we unregistered one (avoid creating a shield that did not exist)
     if "disable-shields" in scenario.effective_tags:
@@ -342,6 +276,7 @@ def _restore_llama_stack(context: Context) -> None:
                     "✓ Prow: Llama Stack restored and lightspeed-stack restarted "
                     "for clean reconnect"
                 )
+                reset_llama_stack_disrupt_once_tracking()
                 return
             except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
                 last_lcs_err = e
@@ -350,7 +285,7 @@ def _restore_llama_stack(context: Context) -> None:
                     f"attempt {attempt}/3 failed: {e}"
                 )
                 if attempt < 3:
-                    time.sleep(8)
+                    time.sleep(5)
         print(
             "Warning: Could not restart lightspeed-stack after Llama restore "
             f"after 3 attempts: {last_lcs_err}"
@@ -365,10 +300,8 @@ def _restore_llama_stack(context: Context) -> None:
 
         # Wait for the service to be healthy
         print("Restoring Llama Stack connection...")
-        time.sleep(20)
-
-        # Check if it's healthy
-        for attempt in range(6):  # Try for 30 seconds
+        max_attempts = 24
+        for attempt in range(max_attempts):
             try:
                 result = subprocess.run(
                     [
@@ -376,24 +309,28 @@ def _restore_llama_stack(context: Context) -> None:
                         "exec",
                         "llama-stack",
                         "curl",
-                        "-f",
+                        "-sf",
                         f"http://{context.hostname_llama}:{context.port_llama}/v1/health",
                     ],
                     capture_output=True,
                     timeout=5,
-                    check=True,
+                    check=False,
                 )
                 if result.returncode == 0:
                     print("✓ Llama Stack connection restored successfully")
+                    reset_llama_stack_disrupt_once_tracking()
                     break
             except subprocess.TimeoutExpired:
-                print(f"⏱ Health check timed out on attempt {attempt + 1}/6")
-
-            if attempt < 5:
                 print(
-                    f"Waiting for Llama Stack to be healthy... (attempt {attempt + 1}/6)"
+                    f"⏱ Health check timed out on attempt {attempt + 1}/{max_attempts}"
                 )
-                time.sleep(5)
+
+            if attempt < max_attempts - 1:
+                print(
+                    f"Waiting for Llama Stack to be healthy... "
+                    f"(attempt {attempt + 1}/{max_attempts})"
+                )
+                time.sleep(2)
             else:
                 print("Warning: Llama Stack may not be fully healthy after restoration")
                 _print_llama_stack_diagnostics()
@@ -410,56 +347,18 @@ def _restore_llama_stack(context: Context) -> None:
 def before_feature(context: Context, feature: Feature) -> None:
     """Run before each feature file is exercised.
 
-    Prepare per-feature test environment and apply feature-specific configuration.
+    Per-feature setup that is not expressed in Gherkin (e.g. feedback cleanup state).
+    Lightspeed YAML is applied in feature Backgrounds via ``configure_service``.
     """
-    mode_dir = "library-mode" if context.is_library_mode else "server-mode"
-    if "Authorized" in feature.tags:
-        context.feature_config = _get_config_path("auth-noop-token", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
-
-    if "RBAC" in feature.tags:
-        context.feature_config = _get_config_path("rbac", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
-
-    if "RHIdentity" in feature.tags:
-        context.feature_config = _get_config_path("rh-identity", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
+    reset_active_lightspeed_stack_config_basename()
+    context.active_lightspeed_stack_config_basename = None
+    # One real Llama disruption per feature (module-level flag; survives context resets)
+    reset_llama_stack_disrupt_once_tracking()
 
     if "Feedback" in feature.tags:
         context.hostname = os.getenv("E2E_LSC_HOSTNAME", "localhost")
         context.port = os.getenv("E2E_LSC_PORT", "8080")
         context.feedback_conversations = []
-
-    if "MCP" in feature.tags:
-        mode_dir = "library-mode" if context.is_library_mode else "server-mode"
-        context.feature_config = _get_config_path("mcp", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
-
-    if "MCPFileAuth" in feature.tags:
-        context.feature_config = _get_config_path("mcp-file-auth", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
-
-    if "MCPServerAPIAuth" in feature.tags:
-        context.feature_config = _get_config_path("mcp-auth", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
-
-    if "MCPNoConfig" in feature.tags:
-        context.feature_config = _get_config_path("no-mcp", mode_dir)
-        context.default_config_backup = create_config_backup("lightspeed-stack.yaml")
-        switch_config(context.feature_config)
-        restart_container("lightspeed-stack")
 
 
 def after_feature(context: Context, feature: Feature) -> None:
@@ -468,46 +367,19 @@ def after_feature(context: Context, feature: Feature) -> None:
     Perform feature-level teardown: restore any modified configuration and
     clean up feedback conversations.
     """
-    if "Authorized" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
-
-    if "RBAC" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
-
-    if "RHIdentity" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
+    # Restore Llama Stack FIRST (before any lightspeed-stack restart)
+    llama_was_running = getattr(context, "llama_stack_was_running", False)
+    if llama_was_running:
+        _restore_llama_stack(context)
+        context.llama_stack_was_running = False
 
     if "Feedback" in feature.tags:
+        token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva"
         for conversation_id in context.feedback_conversations:
             url = f"http://{context.hostname}:{context.port}/v1/conversations/{conversation_id}"
-            response = requests.delete(url, timeout=10)
+            headers = {"Authorization": f"Bearer {token}"}
+            response = requests.delete(url, headers=headers, timeout=10)
             assert response.status_code == 200, f"{url} returned {response.status_code}"
-
-    if "MCP" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
-
-    if "MCPFileAuth" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
-
-    if "MCPServerAPIAuth" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
-
-    if "MCPNoConfig" in feature.tags:
-        switch_config(context.default_config_backup)
-        restart_container("lightspeed-stack")
-        remove_config_backup(context.default_config_backup)
 
     # Restore Lightspeed Stack config if the generic configure_service step switched it.
     # This cleanup intentionally runs for any feature (not tag-gated) - any feature that

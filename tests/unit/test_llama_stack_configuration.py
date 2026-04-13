@@ -11,6 +11,8 @@ from llama_stack_configuration import (
     construct_storage_backends_section,
     construct_vector_io_providers_section,
     construct_vector_stores_section,
+    dedupe_providers_vector_io,
+    enrich_byok_rag,
     enrich_solr,
     generate_configuration,
 )
@@ -191,6 +193,73 @@ def test_construct_vector_io_providers_section_adds_new() -> None:
     assert output[0]["config"]["persistence"]["namespace"] == "vector_io::faiss"
 
 
+def test_construct_vector_io_providers_section_idempotent_reenrichment() -> None:
+    """Re-running enrichment on already-enriched config must not duplicate BYOK providers."""
+    byok_rag = [
+        {
+            "rag_id": "rag1",
+            "vector_db_id": "store1",
+            "rag_type": "inline::faiss",
+        },
+    ]
+    ls_config: dict[str, Any] = {"providers": {}}
+    first = construct_vector_io_providers_section(ls_config, byok_rag)
+    ls_config["providers"] = {"vector_io": first}
+    second = construct_vector_io_providers_section(ls_config, byok_rag)
+    assert len(second) == 1
+    assert second[0]["provider_id"] == "byok_rag1"
+
+
+def test_construct_vector_io_providers_section_collapses_existing_duplicates() -> None:
+    """Legacy run.yaml may list the same provider_id multiple times; keep one."""
+    dup = {
+        "provider_id": "byok_rag1",
+        "provider_type": "inline::faiss",
+        "config": {
+            "persistence": {
+                "namespace": "vector_io::faiss",
+                "backend": "byok_rag1_storage",
+            }
+        },
+    }
+    ls_config: dict[str, Any] = {
+        "providers": {"vector_io": [dup, dup, dup]},
+    }
+    byok_rag = [
+        {
+            "rag_id": "rag1",
+            "vector_db_id": "store1",
+            "rag_type": "inline::faiss",
+        },
+    ]
+    output = construct_vector_io_providers_section(ls_config, byok_rag)
+    assert len(output) == 1
+    assert output[0]["provider_id"] == "byok_rag1"
+
+
+def test_enrich_byok_rag_skipped_still_dedupes_vector_io() -> None:
+    """When BYOK is off, existing duplicate vector_io entries are still collapsed."""
+    dup = {
+        "provider_id": "byok_x",
+        "provider_type": "inline::faiss",
+        "config": {"persistence": {"namespace": "vector_io::faiss", "backend": "b"}},
+    }
+    ls_config: dict[str, Any] = {"providers": {"vector_io": [dup, dup, dup]}}
+    enrich_byok_rag(ls_config, [])
+    assert len(ls_config["providers"]["vector_io"]) == 1
+
+
+def test_dedupe_providers_vector_io_in_place() -> None:
+    """dedupe_providers_vector_io keeps one entry per provider_id."""
+    a = {"provider_id": "p1", "provider_type": "inline::faiss", "config": {}}
+    ls_config: dict[str, Any] = {
+        "providers": {"vector_io": [a, a, {"provider_id": "p2"}]}
+    }
+    dedupe_providers_vector_io(ls_config)
+    ids = [p["provider_id"] for p in ls_config["providers"]["vector_io"]]
+    assert ids == ["p1", "p2"]
+
+
 # =============================================================================
 # Test construct_storage_backends_section
 # =============================================================================
@@ -350,6 +419,42 @@ def test_generate_configuration_no_input_file(tmp_path: Path) -> None:
 
     with pytest.raises(FileNotFoundError):
         generate_configuration("/nonexistent/file.yaml", str(outfile), config)
+
+
+def test_generate_configuration_dedupes_vector_io_on_load(tmp_path: Path) -> None:
+    """Repeated vector_io entries with the same provider_id collapse on write."""
+    entry: dict[str, Any] = {
+        "provider_id": "byok_dupme",
+        "provider_type": "inline::faiss",
+        "config": {
+            "persistence": {
+                "namespace": "vector_io::faiss",
+                "backend": "byok_dupme_storage",
+            }
+        },
+    }
+    infile = tmp_path / "in.yaml"
+    outfile = tmp_path / "out.yaml"
+    with open(infile, "w", encoding="utf-8") as f:
+        yaml.dump(
+            {
+                "version": 2,
+                "providers": {"vector_io": [entry, entry, entry]},
+                "registered_resources": {},
+            },
+            f,
+        )
+    generate_configuration(
+        str(infile), str(outfile), {}, env_file=str(tmp_path / ".env")
+    )
+    with open(outfile, encoding="utf-8") as f:
+        result = yaml.safe_load(f)
+    dupme = [
+        p
+        for p in result["providers"]["vector_io"]
+        if p.get("provider_id") == "byok_dupme"
+    ]
+    assert len(dupme) == 1
 
 
 def test_generate_configuration_with_dict(tmp_path: Path) -> None:

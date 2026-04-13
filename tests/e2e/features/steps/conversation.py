@@ -4,14 +4,13 @@ import json
 
 import requests
 from behave import (
-    given,
     step,
     then,
     when,
 )  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
-from tests.e2e.utils.utils import replace_placeholders, restart_container, switch_config
+from tests.e2e.utils.utils import replace_placeholders
 
 # default timeout for HTTP operations
 DEFAULT_TIMEOUT = 10
@@ -411,10 +410,3 @@ def check_conversation_model_provider(
         assert (
             actual_provider == expected_provider
         ), f"Turn {idx} expected provider '{expected_provider}', got '{actual_provider}'"
-
-
-@given("An invalid conversation cache path is configured")  # type: ignore[reportCallIssue]
-def configure_invalid_conversation_cache_path(context: Context) -> None:
-    """Set an invalid conversation cache path and restart the container."""
-    switch_config(context.scenario_config)
-    restart_container("lightspeed-stack")

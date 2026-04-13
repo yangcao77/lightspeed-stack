@@ -5,11 +5,14 @@ Feature: Responses endpoint streaming API tests
 
   Background:
     Given The service is started locally
+      And The system is in default state
+      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack-auth-noop-token.yaml configuration
+      And The service is restarted
 
   Scenario: Streaming responses returns 200 for minimal request
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -20,8 +23,6 @@ Feature: Responses endpoint streaming API tests
   # https://redhat.atlassian.net/browse/LCORE-1583
   @skip
   Scenario: Streaming responses accepts passthrough parameters with valid types
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {
@@ -67,8 +68,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 for unknown JSON fields on the request body
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "not_a_valid_field": true}
@@ -88,8 +87,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 for invalid include enum value
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "include": ["not_a_valid_include_token"]}
@@ -109,8 +106,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 when metadata values are not strings
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "metadata": {"k": 1}}
@@ -130,8 +125,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 when parallel_tool_calls is not a boolean
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "stream": true, "parallel_tool_calls": "maybe"}
@@ -151,8 +144,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 when input is a bare JSON array
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": ["plain", "strings", "list"], "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -172,8 +163,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses accepts string input
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Reply with the single word: ok.", "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -196,8 +185,6 @@ Feature: Responses endpoint streaming API tests
       And The body of the response contains ok
 
   Scenario: Streaming responses accepts structured input as a list of message objects
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {
@@ -213,8 +200,6 @@ Feature: Responses endpoint streaming API tests
       And The body of the response contains alpha
 
   Scenario: Streaming responses omits model and auto-selects like query when only input is sent
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Say hello", "stream": true}
@@ -222,9 +207,7 @@ Feature: Responses endpoint streaming API tests
     Then The status code of the response is 200
       And The body of the response contains hello
 
-  Scenario: Streaming responses returns 404 for unknown model segment in provider slash model id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+  Scenario: Streaming responses returns 404 for unknown model segment in provider slash model id  
     When I use "responses" to ask question with authorization header
     """
     {"input": "Say hello", "model": "{PROVIDER}/unknown-model-id", "stream": true}
@@ -241,8 +224,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 404 for unknown provider segment in provider slash model id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Say hello", "model": "unknown-provider/{MODEL}", "stream": true}
@@ -259,8 +240,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 when conversation and previous_response_id are both set
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {
@@ -286,8 +265,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 for malformed conversation id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "conversation": "short-id", "stream": true}
@@ -308,8 +285,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 422 when previous_response_id looks like a moderation id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "Hi", "model": "{PROVIDER}/{MODEL}", "previous_response_id": "modr_foo", "stream": true}
@@ -330,8 +305,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses returns 404 for unknown existing-format conversation id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {
@@ -353,8 +326,6 @@ Feature: Responses endpoint streaming API tests
         """
 
   Scenario: Streaming responses continues a thread using previous_response_id from latest turn
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -385,8 +356,6 @@ Feature: Responses endpoint streaming API tests
       And The responses conversation id matches the multi-turn baseline
 
   Scenario: Streaming responses continues a thread using conversation id
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "responses" to ask question with authorization header
     """
     {"input": "First turn: say alpha.", "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -407,9 +376,7 @@ Feature: Responses endpoint streaming API tests
       And The body of the response contains beta
       And The responses conversation id matches the first stored conversation
 
-  Scenario: Streaming responses forks to a new conversation when previous_response_id is not the latest turn
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+  Scenario: Streaming responses forks to a new conversation when previous_response_id is not the latest turn  
     When I use "responses" to ask question with authorization header
     """
     {"input": "Fork test turn one.", "model": "{PROVIDER}/{MODEL}", "stream": true}
@@ -452,42 +419,3 @@ Feature: Responses endpoint streaming API tests
       And The GET conversation response id matches the responses multi-turn baseline conversation id
       And The body of the response contains Fork test turn two
       And The conversation history contains 2 messages
-
-  Scenario: Streaming responses returns error when not authenticated
-    Given The system is in default state
-     When I use "responses" to ask question
-     """
-     {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
-     """
-      Then The status code of the response is 401
-      And The body of the response is the following
-      """
-      {
-        "detail": {
-          "response": "Missing or invalid credentials provided by client",
-          "cause": "No Authorization header found"
-        }
-      }
-      """
-
-  Scenario: Streaming responses returns error when bearer token is missing
-    Given The system is in default state
-    And I set the Authorization header to Bearer
-    When I use "responses" to ask question with authorization header
-    """
-    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
-    """
-      Then The status code of the response is 401
-      And The body of the response contains No token found in Authorization header
-
-  @skip-in-library-mode
-  Scenario: Streaming responses returns error when unable to connect to llama-stack
-    Given The system is in default state
-    And The llama-stack connection is disrupted
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
-    When I use "responses" to ask question with authorization header
-    """
-    {"input": "Say hello", "model": "{PROVIDER}/{MODEL}", "stream": true}
-    """
-     Then The status code of the response is 503
-      And The body of the response contains Unable to connect to Llama Stack

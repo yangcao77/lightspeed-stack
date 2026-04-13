@@ -8,6 +8,7 @@ import time
 from typing import Any
 
 import jsonschema
+import requests
 from behave.runner import Context
 
 from tests.e2e.utils.prow_utils import (
@@ -166,7 +167,7 @@ def wait_for_container_health(container_name: str, max_attempts: int = 6) -> Non
     Parameters:
     ----------
         container_name (str): Docker container name or ID to check.
-        max_attempts (int): Maximum number of health check attempts (default 3).
+        max_attempts (int): Maximum number of health check attempts (default 6).
     """
     if is_prow_environment():
         wait_for_pod_health(container_name, max_attempts)
@@ -184,25 +185,23 @@ def wait_for_container_health(container_name: str, max_attempts: int = 6) -> Non
                 capture_output=True,
                 text=True,
                 check=True,
-                timeout=10,
+                timeout=5,
             )
             if result.stdout.strip() == "healthy":
-                break
-            else:
-                if attempt < max_attempts - 1:
-                    time.sleep(5)
-                else:
-                    print(
-                        f"{container_name} not healthy after {max_attempts * 5} seconds"
-                    )
+                return
         except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
             pass
 
         if attempt < max_attempts - 1:
-            print(f"⏱ Attempt {attempt + 1}/{max_attempts} - waiting...")
-            time.sleep(5)
-        else:
-            print(f"Could not check health status for {container_name}")
+            print(
+                f"⏱ Attempt {attempt + 1}/{max_attempts} - waiting for {container_name}..."
+            )
+            time.sleep(2)
+
+    print(
+        f"Could not confirm Docker health=healthy for {container_name} "
+        f"after {max_attempts} attempts"
+    )
 
 
 def validate_json_partially(actual: Any, expected: Any) -> None:
@@ -416,6 +415,12 @@ def restart_container(container_name: str) -> None:
     """
     if is_prow_environment():
         restart_pod(container_name)
+        if container_name == "llama-stack":
+            from tests.e2e.features.steps.health import (
+                reset_llama_stack_disrupt_once_tracking,
+            )
+
+            reset_llama_stack_disrupt_once_tracking()
         return
 
     try:
@@ -426,7 +431,7 @@ def restart_container(container_name: str) -> None:
             check=True,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
-        print(f"Failed to restart container {container_name}: {e.stderr!s}")
+        print(f"Failed to restart container {container_name}: {e}")
         raise
 
     # Wait for container to be healthy.
@@ -435,14 +440,62 @@ def restart_container(container_name: str) -> None:
     # MCP-auth scenarios that restart the container don't time out.
     wait_for_container_health(container_name, max_attempts=12)
 
+    if container_name == "llama-stack":
+        from tests.e2e.features.steps.health import (
+            reset_llama_stack_disrupt_once_tracking,
+        )
 
-def replace_placeholders(context: Context, text: str) -> str:
-    """Replace {MODEL} and {PROVIDER} placeholders with actual values from context.
+        reset_llama_stack_disrupt_once_tracking()
+
+
+def wait_for_lightspeed_stack_http_ready(
+    max_attempts: int = 40,
+    delay_s: float = 1.5,
+) -> None:
+    """Block until Lightspeed Stack accepts HTTP on the host-mapped port.
+
+    Used from proxy e2e steps only: ``docker inspect`` health can report
+    ``healthy`` before the published port accepts connections (Podman/Docker
+    timing). Polls ``/liveness`` using the same host/port as Behave
+    (``E2E_LSC_*``).
 
     Parameters:
     ----------
-        context (Context): Behave context containing default_model and default_provider
-        text (str): String that may contain {MODEL} and {PROVIDER} placeholders
+        max_attempts: Maximum GET attempts.
+        delay_s: Sleep between attempts.
+    Raises:
+    ------
+        AssertionError: If ``/liveness`` does not return HTTP 200 in time.
+    """
+    if is_prow_environment():
+        return
+    host = os.getenv("E2E_LSC_HOSTNAME", "localhost")
+    port = os.getenv("E2E_LSC_PORT", "8080")
+    url = f"http://{host}:{port}/liveness"
+    for attempt in range(max_attempts):
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                return
+        except requests.RequestException:
+            pass
+        if attempt < max_attempts - 1:
+            print(f"⏱ HTTP wait LSC {attempt + 1}/{max_attempts} ({url})...")
+            time.sleep(delay_s)
+    raise AssertionError(
+        f"Lightspeed Stack did not become reachable at {url!r} "
+        f"after {max_attempts} attempts (~{max_attempts * delay_s:.0f}s)"
+    )
+
+
+def replace_placeholders(context: Context, text: str) -> str:
+    """Replace {MODEL}, {PROVIDER}, and {VECTOR_STORE_ID} placeholders from context.
+
+    Parameters:
+    ----------
+        context (Context): Behave context (default_model, default_provider,
+            optional faiss_vector_store_id from ``FAISS_VECTOR_STORE_ID``).
+        text (str): String that may contain placeholders to replace.
 
     Returns:
     -------
@@ -450,7 +503,8 @@ def replace_placeholders(context: Context, text: str) -> str:
     """
     result = text.replace("{MODEL}", context.default_model)
     result = result.replace("{PROVIDER}", context.default_provider)
-    result = result.replace("{VECTOR_STORE_ID}", context.faiss_vector_store_id)
+    vector_store_id = getattr(context, "faiss_vector_store_id", None) or ""
+    result = result.replace("{VECTOR_STORE_ID}", vector_store_id)
     if hasattr(context, "responses_first_response_id"):
         result = result.replace(
             "{RESPONSES_FIRST_RESPONSE_ID}", context.responses_first_response_id

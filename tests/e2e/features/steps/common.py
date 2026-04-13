@@ -5,14 +5,25 @@ import os
 from behave import given  # pyright: ignore[reportAttributeAccessIssue]
 from behave.runner import Context
 
+from tests.e2e.utils.llama_stack_utils import unregister_mcp_toolgroups
 from tests.e2e.utils.utils import (
     absolute_repo_path,
+    clear_llama_stack_storage,
     create_config_backup,
     is_prow_environment,
     restart_container,
     switch_config,
-    wait_for_container_health,
 )
+
+# Behave may clear user attributes on ``context`` between scenarios; keep the
+# last applied config basename here so Background can skip re-applying the same
+# YAML across scenarios in one feature. Mutate the dict entry (no global).
+_active_lightspeed_stack_config_basename: dict[str, str | None] = {"basename": None}
+
+
+def reset_active_lightspeed_stack_config_basename() -> None:
+    """Reset before each feature; see ``environment.before_feature``."""
+    _active_lightspeed_stack_config_basename["basename"] = None
 
 
 @given("The service is started locally")
@@ -53,12 +64,20 @@ def set_lightspeed_stack_config_directory(context: Context, directory: str) -> N
 
 @given("The service uses the {config_name} configuration")  # type: ignore
 def configure_service(context: Context, config_name: str) -> None:
-    """Switch to the given configuration if not already active.
+    """Switch to the given configuration when the basename differs from the last apply.
 
-    On first call creates a backup of the current config, switches to the
-    named config, and restarts the container.  Subsequent calls within
-    the same feature are no-ops (detected by backup file existence in Docker
-    or backup key presence in Prow).
+    If ``config_name`` matches the last applied basename (tracked in module
+    state, not only ``context``, so it survives per-scenario context resets),
+    returns immediately: no backup, no copy, and sets
+    ``context.lightspeed_stack_skip_restart`` so the next ``The service is
+    restarted`` step can no-op—except after ``MCP toolgroups are reset for a new
+    MCP configuration`` (library ``~/.llama`` clear or server-mode unregister),
+    in which case the restart is not skipped so Lightspeed reloads config and
+    Llama MCP state stays consistent. When the basename differs from the last apply, creates the
+    backup on first use,
+    copies the YAML, updates ``context.feature_config`` / override flags, and
+    stores the basename for the next check. Cleared in ``before_feature`` so a
+    new feature file always applies at least once.
 
     Build path from ``lightspeed_stack_config_directory`` (directory step),
     defaulting base to ``tests/e2e/configuration`` if that step was omitted; then
@@ -71,8 +90,22 @@ def configure_service(context: Context, config_name: str) -> None:
         context (Context): Behave context.
         config_name (str): Config filename (e.g. lightspeed-stack-inline-rag.yaml).
     """
-    if not is_prow_environment() and os.path.exists("lightspeed-stack.yaml.backup"):
+    config_name = config_name.strip()
+    if _active_lightspeed_stack_config_basename["basename"] == config_name:
+        # ``MCP toolgroups are reset for a new MCP configuration`` may have run
+        # (library: clear ``~/.llama``; server: unregister toolgroups). The next
+        # restart must not be skipped or SQLite handles / MCP registration state
+        # diverges from the running process.
+        if getattr(
+            context, "force_lightspeed_restart_after_mcp_toolgroup_reset", False
+        ):
+            context.lightspeed_stack_skip_restart = False
+            context.force_lightspeed_restart_after_mcp_toolgroup_reset = False
+        else:
+            context.lightspeed_stack_skip_restart = True
         return
+
+    had_backup_before = os.path.exists("lightspeed-stack.yaml.backup")
 
     mode_dir = "library-mode" if context.is_library_mode else "server-mode"
     raw_base = getattr(context, "lightspeed_stack_config_directory", None)
@@ -82,32 +115,72 @@ def configure_service(context: Context, config_name: str) -> None:
         base = "tests/e2e/configuration"
     mode_base = os.path.join(base, mode_dir)
     if is_prow_environment():
-        abs_mode_base = absolute_repo_path(mode_base)
-        abs_base = absolute_repo_path(base)
-        if os.path.isdir(abs_mode_base):
-            config_path = os.path.join(abs_mode_base, config_name)
-        else:
-            config_path = os.path.join(abs_base, config_name)
+        mode_base = absolute_repo_path(mode_base)
+        base = absolute_repo_path(base)
+    if os.path.isdir(mode_base):
+        config_path = os.path.join(mode_base, config_name)
     else:
-        if os.path.isdir(mode_base):
-            config_path = os.path.join(mode_base, config_name)
-        else:
-            config_path = os.path.join(base, config_name)
+        config_path = os.path.join(base, config_name)
+
+    normalized = (
+        os.path.normpath(config_path)
+        if is_prow_environment()
+        else os.path.normpath(os.path.abspath(config_path))
+    )
+
     create_config_backup("lightspeed-stack.yaml")
     switch_config(config_path)
+
+    if not had_backup_before:
+        context.feature_config = normalized
+    else:
+        baseline = getattr(context, "feature_config", None)
+        baseline_norm = os.path.normpath(baseline) if baseline is not None else None
+        if baseline_norm != normalized:
+            context.scenario_lightspeed_override_active = True
+
+    _active_lightspeed_stack_config_basename["basename"] = config_name
+    context.active_lightspeed_stack_config_basename = config_name
+    context.lightspeed_stack_skip_restart = False
+    context.force_lightspeed_restart_after_mcp_toolgroup_reset = False
+
+
+@given("MCP toolgroups are reset for a new MCP configuration")
+def reset_mcp_toolgroups_for_new_configuration(context: Context) -> None:
+    """Clear MCP toolgroups on Llama Stack (server) or ~/.llama storage (library).
+
+    Run before applying a different MCP-related ``lightspeed-stack-*.yaml`` in a
+    scenario so tool registration matches the new config. Sets
+    ``force_lightspeed_restart_after_mcp_toolgroup_reset`` so the next
+    ``The service uses ...`` step cannot skip ``The service is restarted`` when
+    the YAML basename is unchanged—library mode needs a real restart after
+    clearing ``~/.llama`` (SQLite); server mode needs it after unregister so
+    Lightspeed re-registers MCP toolgroups on startup.
+    """
+    context.force_lightspeed_restart_after_mcp_toolgroup_reset = True
+    context.lightspeed_stack_skip_restart = False
+    if context.is_library_mode:
+        clear_llama_stack_storage()
+    else:
+        unregister_mcp_toolgroups()
 
 
 @given("The service is restarted")
 def restart_service(context: Context) -> None:
     """Restart the lightspeed-stack container and wait for it to be healthy.
 
+    If ``context.lightspeed_stack_skip_restart`` is True (set when the previous
+    ``The service uses the ... configuration`` step did not change the active
+    YAML), skips the restart and clears the flag.
+
     Parameters:
     ----------
         context (Context): Behave context.
     """
+    if getattr(context, "lightspeed_stack_skip_restart", False):
+        context.lightspeed_stack_skip_restart = False
+        return
     restart_container("lightspeed-stack")
-    # Library mode needs extra time to load embedding models after restart
-    wait_for_container_health("lightspeed-stack", max_attempts=12)
 
 
 @given("The system is in default state")

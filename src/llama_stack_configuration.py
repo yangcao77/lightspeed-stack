@@ -117,6 +117,38 @@ def setup_azure_entra_id_token(
 # =============================================================================
 
 
+def _dedupe_vector_io_list(entries: list[Any]) -> list[dict[str, Any]]:
+    """Keep the first dict per stripped ``provider_id``; keep entries without an id."""
+    seen: set[str] = set()
+    out: list[dict[str, Any]] = []
+    for item in entries:
+        if not isinstance(item, dict):
+            continue
+        raw_pid = item.get("provider_id")
+        if raw_pid is None:
+            out.append(item)
+            continue
+        key = str(raw_pid).strip()
+        if not key:
+            out.append(item)
+            continue
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append(item)
+    return out
+
+
+def dedupe_providers_vector_io(ls_config: dict[str, Any]) -> None:
+    """Collapse ``providers.vector_io`` to one entry per ``provider_id``."""
+    if "providers" not in ls_config or "vector_io" not in ls_config["providers"]:
+        return
+    raw = ls_config["providers"]["vector_io"]
+    if not isinstance(raw, list):
+        return
+    ls_config["providers"]["vector_io"] = _dedupe_vector_io_list(raw)
+
+
 def construct_storage_backends_section(
     ls_config: dict[str, Any], byok_rag: list[dict[str, Any]]
 ) -> dict[str, Any]:
@@ -312,19 +344,32 @@ def construct_vector_io_providers_section(
         `provider_type` set from the RAG item, and a `config` with `persistence`
         referencing the corresponding backend.
     """
-    output = []
+    output: list[dict[str, Any]] = []
 
-    # fill-in existing vector_io entries
     if "providers" in ls_config and "vector_io" in ls_config["providers"]:
-        output = ls_config["providers"]["vector_io"].copy()
+        raw = ls_config["providers"]["vector_io"]
+        if isinstance(raw, list):
+            output = _dedupe_vector_io_list(raw)
+        else:
+            output = []
 
-    # append new vector_io entries
+    existing_ids = {
+        str(p["provider_id"]).strip()
+        for p in output
+        if p.get("provider_id") is not None and str(p["provider_id"]).strip()
+    }
+
+    added = 0
     for brag in byok_rag:
         if not brag.get("rag_id"):
             raise ValueError(f"BYOK RAG entry is missing required 'rag_id': {brag}")
-        rag_id = brag["rag_id"]
+        rag_id = str(brag["rag_id"]).strip()
         backend_name = f"byok_{rag_id}_storage"
         provider_id = f"byok_{rag_id}"
+        if provider_id in existing_ids:
+            continue
+        existing_ids.add(provider_id)
+        added += 1
         output.append(
             {
                 "provider_id": provider_id,
@@ -339,7 +384,7 @@ def construct_vector_io_providers_section(
         )
     logger.info(
         "Added %s items into providers/vector_io section, total items %s",
-        len(byok_rag),
+        added,
         len(output),
     )
     return output
@@ -354,6 +399,7 @@ def enrich_byok_rag(ls_config: dict[str, Any], byok_rag: list[dict[str, Any]]) -
     """
     if len(byok_rag) == 0:
         logger.info("BYOK RAG is not configured: skipping")
+        dedupe_providers_vector_io(ls_config)
         return
 
     logger.info("Enriching Llama Stack config with BYOK RAG")
@@ -567,6 +613,8 @@ def generate_configuration(
     with open(input_file, "r", encoding="utf-8") as file:
         ls_config = yaml.safe_load(file)
 
+    dedupe_providers_vector_io(ls_config)
+
     # Enrichment: Azure Entra ID token
     setup_azure_entra_id_token(config.get("azure_entra_id"), env_file)
 
@@ -575,6 +623,8 @@ def generate_configuration(
 
     # Enrichment: Solr - enabled when "okp" appears in either inline or tool list
     enrich_solr(ls_config, config.get("rag", {}), config.get("okp", {}))
+
+    dedupe_providers_vector_io(ls_config)
 
     logger.info("Writing Llama Stack configuration into file %s", output_file)
 

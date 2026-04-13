@@ -1,6 +1,7 @@
 """Implementation of common test steps for the feedback API."""
 
 import json
+import os
 from typing import Optional
 
 import requests
@@ -12,7 +13,12 @@ from behave import (  # pyright: ignore[reportAttributeAccessIssue]  # pyright: 
 from behave.runner import Context
 
 from tests.e2e.features.steps.common_http import access_rest_api_endpoint_get
-from tests.e2e.utils.utils import restart_container, switch_config
+from tests.e2e.utils.utils import (
+    absolute_repo_path,
+    is_prow_environment,
+    restart_container,
+    switch_config,
+)
 
 # default timeout for HTTP operations
 DEFAULT_TIMEOUT = 10
@@ -140,8 +146,19 @@ def create_conversation_with_user_id(
     context.response = response
 
 
+def _lightspeed_yaml_path(context: Context, filename: str) -> str:
+    """Repo-relative path to a mode-specific Lightspeed YAML (absolute on Prow)."""
+    mode = "library-mode" if context.is_library_mode else "server-mode"
+    rel = os.path.join("tests/e2e/configuration", mode, filename)
+    if is_prow_environment():
+        return absolute_repo_path(rel)
+    return rel
+
+
 @given("An invalid feedback storage path is configured")  # type: ignore[reportCallIssue]
 def configure_invalid_feedback_storage_path(context: Context) -> None:
     """Set an invalid feedback storage path and restart the container."""
-    switch_config(context.scenario_config)
+    switch_config(
+        _lightspeed_yaml_path(context, "lightspeed-stack-invalid-feedback-storage.yaml")
+    )
     restart_container("lightspeed-stack")

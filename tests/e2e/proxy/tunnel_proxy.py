@@ -15,7 +15,7 @@ Usage::
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +37,25 @@ class TunnelProxy:
         self.connect_count = 0
         self.last_connect_target: Optional[str] = None
         self._server: Optional[asyncio.Server] = None
+        self._handler_tasks: set[asyncio.Task[Any]] = set()
 
     async def _handle_client(
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
         """Handle an incoming client connection."""
+        handle_task = asyncio.current_task()
+        if handle_task is not None:
+            self._handler_tasks.add(handle_task)
+        try:
+            await self._handle_client_inner(reader, writer)
+        finally:
+            if handle_task is not None:
+                self._handler_tasks.discard(handle_task)
+
+    async def _handle_client_inner(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
+        """Handle an incoming client connection (body)."""
         try:
             request_line = await reader.readline()
             if not request_line:
@@ -141,11 +155,18 @@ class TunnelProxy:
 
     async def stop(self) -> None:
         """Stop the proxy server."""
-        if self._server is not None:
-            self._server.close()
-            await self._server.wait_closed()
-            self._server = None
-            logger.info("Tunnel proxy stopped")
+        if self._server is None:
+            return
+        self._server.close()
+        for task in list(self._handler_tasks):
+            if not task.done():
+                task.cancel()
+        if self._handler_tasks:
+            await asyncio.gather(*self._handler_tasks, return_exceptions=True)
+        await self._server.wait_closed()
+        self._server = None
+        self._handler_tasks.clear()
+        logger.info("Tunnel proxy stopped")
 
     def reset_counters(self) -> None:
         """Reset request counters."""

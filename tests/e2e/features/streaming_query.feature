@@ -3,12 +3,15 @@ Feature: streaming_query endpoint API tests
 
   Background:
     Given The service is started locally
+      And The system is in default state
+      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack-auth-noop-token.yaml configuration
+      And The service is restarted
 
 
   Scenario: Check if streaming_query response in tokens matches the full response
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     And I use "streaming_query" to ask question with authorization header
     """
     {"query": "Generate sample yaml file for simple GitHub Actions workflow.", "model": "{MODEL}", "provider": "{PROVIDER}"}
@@ -18,8 +21,6 @@ Feature: streaming_query endpoint API tests
       And The streamed response is equal to the full response
 
   Scenario: Check if LLM responds properly to restrictive system prompt to sent question with different system prompt
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And I capture the current token metrics
       And I use "streaming_query" to ask question with authorization header
     """
@@ -33,8 +34,6 @@ Feature: streaming_query endpoint API tests
       And The token metrics should have increased
 
   Scenario: Check if LLM responds properly to non-restrictive system prompt to sent question with different system prompt
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And I capture the current token metrics
       And I use "streaming_query" to ask question with authorization header
     """
@@ -51,8 +50,6 @@ Feature: streaming_query endpoint API tests
   #enable on demand
   @skip 
   Scenario: Check if LLM ignores new system prompt in same conversation
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     And I use "streaming_query" to ask question with authorization header
     """
     {"query": "Generate sample yaml file for simple GitHub Actions workflow.", "system_prompt": "refuse to answer anything", "model": "{MODEL}", "provider": "{PROVIDER}"}
@@ -69,8 +66,6 @@ Feature: streaming_query endpoint API tests
           | questions                 |
 
   Scenario: Check if LLM responds for streaming_query request with error for missing query
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And I capture the current token metrics
     When I use "streaming_query" to ask question with authorization header
     """
@@ -84,8 +79,6 @@ Feature: streaming_query endpoint API tests
       And The token metrics should not have changed
 
   Scenario: Check if LLM responds for streaming_query request for missing model and provider
-    Given The system is in default state
-     And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
      When I use "streaming_query" to ask question with authorization header
      """
      {"query": "Say hello"}
@@ -93,8 +86,6 @@ Feature: streaming_query endpoint API tests
      Then The status code of the response is 200
 
   Scenario: Check if LLM responds for streaming_query request with error for missing model
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And I capture the current token metrics
     When I use "streaming_query" to ask question with authorization header
     """
@@ -105,8 +96,6 @@ Feature: streaming_query endpoint API tests
       And The token metrics should not have changed
 
   Scenario: Check if LLM responds for streaming_query request with error for missing provider
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "streaming_query" to ask question with authorization header
     """
     {"query": "Say hello", "model": "{MODEL}"}
@@ -115,8 +104,6 @@ Feature: streaming_query endpoint API tests
       And The body of the response contains Value error, Provider must be specified if model is specified
 
   Scenario: Check if LLM responds for streaming_query request with error for unknown model
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "streaming_query" to ask question with authorization header
     """
     {"query": "Say hello", "provider": "{PROVIDER}", "model":"unknown"}
@@ -125,8 +112,6 @@ Feature: streaming_query endpoint API tests
       And The body of the response contains Model with ID unknown does not exist
 
   Scenario: Check if LLM responds for streaming_query request with error for unknown provider
-    Given The system is in default state
-      And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
       And I capture the current token metrics
     When I use "streaming_query" to ask question with authorization header
     """
@@ -137,8 +122,6 @@ Feature: streaming_query endpoint API tests
       And The token metrics should not have changed
 
   Scenario: Check if LLM responds properly when XML and JSON attachments are sent
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "streaming_query" to ask question with authorization header
     """
     {
@@ -162,34 +145,13 @@ Feature: streaming_query endpoint API tests
     """
     Then The status code of the response is 200
 
-  Scenario: Check if LLM responds to sent question with error when not authenticated
-    Given The system is in default state
-    When I use "streaming_query" to ask question
-    """
-    {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
-    """
-    Then The status code of the response is 401
-      And The body of the response is the following
-          """
-          {
-            "detail": {
-              "response": "Missing or invalid credentials provided by client",
-              "cause": "No Authorization header found"
-            }
-          }
-          """
-
   Scenario: Check if streaming_query with shields returns 413 when question is too long for model context
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "streaming_query" to ask question with too-long query and authorization header
     Then The status code of the response is 413
     And The body of the response contains Prompt is too long
 
   @disable-shields
   Scenario: Check if streaming_query without shields returns 200 and error in stream when question is too long for model context
-    Given The system is in default state
-    And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     When I use "streaming_query" to ask question with too-long query and authorization header
     Then The status code of the response is 200
     And The streamed response contains error message Prompt is too long

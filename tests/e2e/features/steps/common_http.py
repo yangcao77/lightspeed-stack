@@ -440,9 +440,22 @@ def check_response_partially(context: Context) -> None:
 
 @given('I set the "{header_name}" header to')
 def set_header(context: Context, header_name: str) -> None:
-    """Set a header in the request."""
+    """Set a header in the request.
+
+    For ``MCP-HEADERS``, normalizes JSON to a single line. Multi-line or
+    indented docstrings from Gherkin must not be sent as raw header values:
+    HTTP forbids newlines in field values, which can cause proxies or clients
+    to drop or truncate the header so the server sees no MCP client auth.
+    """
     assert context.text is not None, "Header value needs to be specified"
 
     if not hasattr(context, "auth_headers"):
         context.auth_headers = {}
-    context.auth_headers[header_name] = context.text
+    value = context.text.strip()
+    if header_name.upper() == "MCP-HEADERS":
+        try:
+            parsed = json.loads(value)
+            value = json.dumps(parsed, separators=(",", ":"))
+        except json.JSONDecodeError:
+            pass
+    context.auth_headers[header_name] = value

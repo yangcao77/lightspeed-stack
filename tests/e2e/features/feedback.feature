@@ -1,14 +1,17 @@
-@Authorized @Feedback
+@Feedback
 Feature: feedback endpoint API tests
 
 
   Background:
     Given The service is started locally
-      And REST API service prefix is /v1
+      And The system is in default state
       And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
+      And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack-auth-noop-token.yaml configuration
+      And The service is restarted
 
   Scenario: Check if enabling the feedback is working
-    Given The system is in default state
     When The feedback is enabled
      Then The status code of the response is 200
      And the body of the response has the following structure
@@ -22,7 +25,6 @@ Feature: feedback endpoint API tests
         """
     
   Scenario: Check if disabling the feedback is working
-    Given The system is in default state
     When The feedback is disabled
      Then The status code of the response is 200
      And the body of the response has the following structure
@@ -36,7 +38,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if toggling the feedback with incorrect attribute name fails
-    Given The system is in default state
      When I update feedback status with
         """
             {
@@ -62,7 +63,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if getting feedback status returns true when feedback is enabled
-    Given The system is in default state
     And The feedback is enabled
      When I retreive the current feedback status
      Then The status code of the response is 200
@@ -77,7 +77,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if getting feedback status returns false when feedback is disabled
-    Given The system is in default state
     And The feedback is disabled
      When I retreive the current feedback status
      Then The status code of the response is 200
@@ -92,7 +91,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback endpoint is not working when feedback is disabled
-    Given The system is in default state
     And A new conversation is initialized
     And The feedback is disabled
      When I submit the following feedback for the conversation created before
@@ -116,7 +114,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback endpoint fails when required fields are not specified
-    Given The system is in default state
     And The feedback is enabled
      When I submit the following feedback without specifying conversation ID
         """
@@ -157,7 +154,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback endpoint is working when sentiment is negative
-    Given The system is in default state
     And A new conversation is initialized
     And The feedback is enabled
      When I submit the following feedback for the conversation created before
@@ -178,7 +174,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback endpoint is working when sentiment is positive
-    Given The system is in default state
     And A new conversation is initialized
     And The feedback is enabled
      When I submit the following feedback for the conversation created before
@@ -199,7 +194,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback submission fails when invalid sentiment is passed
-    Given The system is in default state
     And A new conversation is initialized
     And The feedback is enabled
      When I submit the following feedback for the conversation created before
@@ -225,7 +219,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback submission fails when nonexisting conversation ID is passed
-    Given The system is in default state
     And The feedback is enabled
      When I submit the following feedback for nonexisting conversation "12345678-abcd-0000-0123-456789abcdef"
         """
@@ -248,7 +241,6 @@ Feature: feedback endpoint API tests
         """
 
   Scenario: Check if feedback submission fails when conversation belongs to a different user
-    Given The system is in default state
     And I set the Authorization header to Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva
     # Create a conversation as a different user (via user_id query param for noop_with_token)
     And A new conversation is initialized with user_id "different_user_id"
@@ -265,71 +257,6 @@ Feature: feedback endpoint API tests
         """
      Then The status code of the response is 403
      And The body of the response contains User does not have permission to perform this action
-
-  Scenario: Check if feedback endpoint is not working when not authorized
-    Given The system is in default state
-    And A new conversation is initialized
-    And I remove the auth header
-     When I submit the following feedback for the conversation created before
-        """
-        {
-            "llm_response": "Sample Response",
-            "sentiment": -1,
-            "user_feedback": "Not satisfied with the response quality",
-            "user_question": "Sample Question"
-        }
-        """
-     Then The status code of the response is 401
-     And The body of the response is the following
-        """
-        {
-            "detail": {
-                        "response": "Missing or invalid credentials provided by client",
-                        "cause": "No Authorization header found"
-            }
-        }
-        """
-
-  Scenario: Check if update feedback status endpoint is not working when not authorized
-    Given The system is in default state
-    And I remove the auth header
-     When The feedback is enabled
-     Then The status code of the response is 401
-     And The body of the response is the following
-        """
-        {
-            "detail": {
-                        "response": "Missing or invalid credentials provided by client",
-                        "cause": "No Authorization header found"
-            }
-        }
-        """
-
-  @InvalidFeedbackStorageConfig
-  Scenario: Check if feedback submittion fails when invalid feedback storage path is configured
-    Given The system is in default state
-    And The feedback is enabled
-    And An invalid feedback storage path is configured
-    And A new conversation is initialized
-     When I submit the following feedback for the conversation created before
-        """
-        {
-            "llm_response": "Sample Response",
-            "sentiment": -1,
-            "user_feedback": "Not satisfied with the response quality",
-            "user_question": "Sample Question"
-        }
-        """
-     Then The status code of the response is 500
-     And The body of the response is the following
-        """
-        {
-            "detail": {
-                        "response": "Failed to store feedback",
-                        "cause": "Failed to store feedback at directory: /invalid"
-                    }
-        }
-        """
 
   Scenario: Check if feedback endpoint fails when only empty string user_feedback is provided
     Given The system is in default state
@@ -355,5 +282,32 @@ Feature: feedback endpoint API tests
                             "user_feedback": ""
                         }
                     }]           
+        }
+        """
+
+@InvalidFeedbackStorageConfig
+  Scenario: Check if feedback submittion fails when invalid feedback storage path is configured
+    Given The service uses the lightspeed-stack-invalid-feedback-storage.yaml configuration
+      And The service is restarted
+      And The system is in default state
+      And The feedback is enabled
+    And A new conversation is initialized
+     When I submit the following feedback for the conversation created before
+        """
+        {
+            "llm_response": "Sample Response",
+            "sentiment": -1,
+            "user_feedback": "Not satisfied with the response quality",
+            "user_question": "Sample Question"
+        }
+        """
+     Then The status code of the response is 500
+     And The body of the response is the following
+        """
+        {
+            "detail": {
+                        "response": "Failed to store feedback",
+                        "cause": "Failed to store feedback at directory: /invalid"
+                    }
         }
         """

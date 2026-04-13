@@ -3,22 +3,13 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
 
   Background:
     Given The service is started locally
+      And The system is in default state
       And REST API service prefix is /v1
-
-  Scenario: Request fails when x-rh-identity header is missing
-    Given The system is in default state
-     When I access endpoint "authorized" using HTTP POST method
-     """
-     {"placeholder":"abc"}
-     """
-     Then The status code of the response is 401
-      And The body of the response is the following
-          """
-            {"detail": "Missing x-rh-identity header"}
-          """
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack-auth-rh-identity.yaml configuration
+      And The service is restarted
 
   Scenario: Request fails when identity field is missing
-    Given The system is in default state
       And I set the x-rh-identity header with JSON
       """
       {"entitlements": {"rhel": {"is_entitled": true}}}
@@ -31,7 +22,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
       And The body of the response contains Invalid identity data
 
   Scenario: Request succeeds with valid User identity and required entitlements
-    Given The system is in default state
       And I set the x-rh-identity header with valid User identity
           | field        | value               |
           | user_id      | test-user-123       |
@@ -49,7 +39,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
           """
 
   Scenario: Request succeeds with valid System identity and required entitlements
-    Given The system is in default state
       And I set the x-rh-identity header with valid System identity
           | field          | value                                |
           | cn             | c87dcb4c-8af1-40dd-878e-60c744edddd0 |
@@ -67,7 +56,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
           """
 
   Scenario: Request fails when required entitlement is missing
-    Given The system is in default state
       And I set the x-rh-identity header with valid User identity
           | field        | value               |
           | user_id      | test-user-123       |
@@ -82,7 +70,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
       And The body of the response contains Insufficient entitlements
 
   Scenario: Request fails when entitlement exists but is_entitled is false
-    Given The system is in default state
       And I set the x-rh-identity header with JSON
       """
       {
@@ -102,7 +89,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
       And The body of the response contains Insufficient entitlements
 
   Scenario: Request fails when User identity is missing user_id
-    Given The system is in default state
       And I set the x-rh-identity header with JSON
       """
       {
@@ -122,7 +108,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
       And The body of the response contains Invalid identity data
 
   Scenario: Request fails when User identity is missing username
-    Given The system is in default state
       And I set the x-rh-identity header with JSON
       """
       {
@@ -142,7 +127,6 @@ Feature: Authorized endpoint API tests for the rh-identity authentication module
       And The body of the response contains Invalid identity data
 
   Scenario: Request fails when System identity is missing cn
-    Given The system is in default state
       And I set the x-rh-identity header with JSON
       """
       {

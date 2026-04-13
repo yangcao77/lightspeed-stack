@@ -24,7 +24,7 @@ import asyncio
 import logging
 import ssl
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import trustme
 
@@ -55,6 +55,7 @@ class InterceptionProxy:
         self.intercepted_hosts: set[str] = set()
         self.connect_count = 0
         self._server: Optional[asyncio.Server] = None
+        self._handler_tasks: set[asyncio.Task[Any]] = set()
 
     def _make_server_ssl_context(self, hostname: str) -> ssl.SSLContext:
         """Create an SSL context with a certificate for the given hostname.
@@ -110,6 +111,19 @@ class InterceptionProxy:
         self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
     ) -> None:
         """Handle an incoming client connection."""
+        handle_task = asyncio.current_task()
+        if handle_task is not None:
+            self._handler_tasks.add(handle_task)
+        try:
+            await self._handle_client_inner(reader, writer)
+        finally:
+            if handle_task is not None:
+                self._handler_tasks.discard(handle_task)
+
+    async def _handle_client_inner(
+        self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter
+    ) -> None:
+        """Handle an incoming client connection (body)."""
         try:
             request_line = await reader.readline()
             if not request_line:
@@ -196,11 +210,18 @@ class InterceptionProxy:
 
     async def stop(self) -> None:
         """Stop the interception proxy server."""
-        if self._server is not None:
-            self._server.close()
-            await self._server.wait_closed()
-            self._server = None
-            logger.info("Interception proxy stopped")
+        if self._server is None:
+            return
+        self._server.close()
+        for task in list(self._handler_tasks):
+            if not task.done():
+                task.cancel()
+        if self._handler_tasks:
+            await asyncio.gather(*self._handler_tasks, return_exceptions=True)
+        await self._server.wait_closed()
+        self._server = None
+        self._handler_tasks.clear()
+        logger.info("Interception proxy stopped")
 
     def export_ca_cert(self, path: Path) -> None:
         """Export the CA certificate to a PEM file.

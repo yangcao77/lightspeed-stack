@@ -27,6 +27,7 @@ from behave.runner import Context
 from tests.e2e.utils.utils import (
     is_prow_environment,
     restart_container,
+    wait_for_lightspeed_stack_http_ready,
 )
 
 # Llama Stack config — mounted into the container from the host
@@ -35,10 +36,9 @@ _LLAMA_STACK_CONFIG_BACKUP = "run.yaml.proxy-backup"
 
 
 def _is_docker_mode() -> bool:
-    """Check if services are running in Docker containers."""
+    """Check if services are running in Docker containers (local e2e)."""
     if is_prow_environment():
         return False
-
     result = subprocess.run(
         ["docker", "ps", "--filter", "name=llama-stack", "--format", "{{.Names}}"],
         capture_output=True,
@@ -48,32 +48,79 @@ def _is_docker_mode() -> bool:
     return "llama-stack" in result.stdout
 
 
-def _get_proxy_host(is_docker: bool) -> str:
-    """Get the host address that Docker containers can use to reach the proxy.
+def _host_special_dns_from_container(hostname: str) -> str | None:
+    """Resolve a host-gateway hostname inside llama-stack to an IPv4 address.
+
+    Docker exposes ``host.docker.internal`` or ``host.containers.internal``
+    for reaching the host. Resolving from inside the container matches the address
+    the runtime uses and fixes proxy routing when the bridge gateway IP is wrong.
 
     Parameters:
     ----------
-        is_docker: Whether services are running in Docker containers.
+        hostname: Name to resolve (e.g. ``host.docker.internal``).
+
+    Returns:
+    -------
+        IPv4 dotted-quad string, or ``None`` if the name does not resolve.
     """
-    if is_docker:
-        result = subprocess.run(
-            [
-                "docker",
-                "network",
-                "inspect",
-                "lightspeednet",
-                "--format",
-                "{{(index .IPAM.Config 0).Gateway}}",
-            ],
-            capture_output=True,
-            text=True,
-            check=False,
-        )
-        gateway = result.stdout.strip()
-        if gateway:
-            return gateway
-        return "172.17.0.1"
-    return "127.0.0.1"
+    probe = (
+        "import socket,sys\n"
+        "try:\n"
+        "    print(socket.gethostbyname(sys.argv[1]))\n"
+        "except OSError:\n"
+        "    raise SystemExit(1)\n"
+    )
+    result = subprocess.run(
+        [
+            "docker",
+            "exec",
+            "llama-stack",
+            "python3",
+            "-c",
+            probe,
+            hostname,
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=15,
+    )
+    if result.returncode != 0:
+        return None
+    ip = result.stdout.strip()
+    return ip or None
+
+
+def _get_proxy_host(is_docker: bool) -> str:
+    """Get the host address that containers can use to reach the proxy on the host.
+
+    Parameters:
+    ----------
+        is_docker: Whether services are running in Docker (local e2e).
+    """
+    if not is_docker:
+        return "127.0.0.1"
+    for hostname in ("host.docker.internal", "host.containers.internal"):
+        resolved = _host_special_dns_from_container(hostname)
+        if resolved:
+            return resolved
+    result = subprocess.run(
+        [
+            "docker",
+            "network",
+            "inspect",
+            "lightspeednet",
+            "--format",
+            "{{(index .IPAM.Config 0).Gateway}}",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    gateway = result.stdout.strip()
+    if gateway:
+        return gateway
+    return "172.17.0.1"
 
 
 def _load_llama_config() -> dict[str, Any]:
@@ -115,15 +162,13 @@ def _stop_proxy(context: Context, attr: str, loop_attr: str) -> None:
     proxy = getattr(context, attr, None)
     loop = getattr(context, loop_attr, None)
     if proxy is not None and loop is not None:
-        # Schedule proxy stop and loop shutdown
-        async def _shutdown() -> None:
-            await proxy.stop()
-
-        loop.call_soon_threadsafe(lambda: asyncio.ensure_future(_shutdown()))
-        time.sleep(1)
+        fut = asyncio.run_coroutine_threadsafe(proxy.stop(), loop)
+        try:
+            fut.result(timeout=30)
+        except Exception:
+            pass
         loop.call_soon_threadsafe(loop.stop)
         time.sleep(0.5)
-    # Clear references
     if hasattr(context, attr):
         delattr(context, attr)
     if hasattr(context, loop_attr):
@@ -149,6 +194,7 @@ def restore_if_modified(context: Context) -> None:
         shutil.move(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
         restart_container("llama-stack")
         restart_container("lightspeed-stack")
+        wait_for_lightspeed_stack_http_ready()
 
 
 # --- Service Restart Steps ---
@@ -164,6 +210,7 @@ def restart_llama_stack(context: Context) -> None:
 def restart_lightspeed_stack(context: Context) -> None:
     """Restart the Lightspeed Stack container."""
     restart_container("lightspeed-stack")
+    wait_for_lightspeed_stack_http_ready()
 
 
 # --- Tunnel Proxy Steps ---

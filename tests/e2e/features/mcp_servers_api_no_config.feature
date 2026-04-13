@@ -6,7 +6,11 @@ Feature: MCP Server API tests without configured MCP servers
 
   Background:
     Given The service is started locally
+      And The system is in default state
       And REST API service prefix is /v1
+      And the Lightspeed stack configuration directory is "tests/e2e/configuration"
+      And The service uses the lightspeed-stack-no-mcp.yaml configuration
+      And The service is restarted
 
   Scenario: List MCP servers returns empty list when none configured
     Given The system is in default state
