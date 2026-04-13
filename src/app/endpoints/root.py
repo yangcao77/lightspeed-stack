@@ -794,13 +794,13 @@ async def root_endpoint_handler(
     Handle GET requests to the root ("/") endpoint and returns the static HTML index page.
 
     ### Parameters:
-        - request: The incoming HTTP request.
-        - auth: Authentication tuple from the auth dependency.
+    - request: The incoming HTTP request (used by middleware).
+    - auth: Authentication tuple from the auth dependency (used by middleware).
 
     ### Returns:
-        HTMLResponse: The HTML content of the index page, including a heading,
-        embedded image with the service icon, and links to the API documentation
-        via Swagger UI and ReDoc.
+    - HTMLResponse: The HTML content of the index page, including a heading,
+      embedded image with the service icon, and links to the API documentation
+      via Swagger UI and ReDoc.
     """
     # Used only for authorization
     _ = auth
