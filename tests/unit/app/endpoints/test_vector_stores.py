@@ -533,7 +533,10 @@ async def test_add_file_to_vector_store_max_retries_exceeded(
 async def test_add_file_to_vector_store_non_lock_error_no_retry(
     mocker: MockerFixture,
 ) -> None:
-    """Test that non-lock errors are not retried."""
+    """Test that non-lock errors are not retried.
+
+    Non-lock errors are re-raised and handled by global exception middleware.
+    """
     mock_authorization_resolvers(mocker)
 
     config_dict = get_test_config()
@@ -556,11 +559,11 @@ async def test_add_file_to_vector_store_non_lock_error_no_retry(
     auth = get_test_auth()
     body = VectorStoreFileCreateRequest(file_id="file_123")
 
-    with pytest.raises(HTTPException) as e:
+    # Non-lock errors are re-raised as-is (global middleware handles them)
+    with pytest.raises(Exception, match="Some other error"):
         await add_file_to_vector_store(
             request=request, vector_store_id="vs_123", auth=auth, body=body
         )
-    assert e.value.status_code == status.HTTP_500_INTERNAL_SERVER_ERROR
 
     # Verify only one attempt was made (no retries for non-lock errors)
     assert mock_client.vector_stores.files.create.call_count == 1
