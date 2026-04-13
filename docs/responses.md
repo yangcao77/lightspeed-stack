@@ -23,6 +23,7 @@ This document describes the LCORE implementation of the OpenResponses API, expos
   * [Conversation Handling](#conversation-handling)
   * [Output Representation](#output-representation)
   * [Tool Configuration Differences](#tool-configuration-differences)
+  * [Server-Tool Merging](#server-tool-merging)
   * [LCORE-Specific Extensions](#lcore-specific-extensions-2)
   * [System Prompt Resolution](#system-prompt-resolution)
   * [Streaming Differences](#streaming-differences)
@@ -532,6 +533,65 @@ Vector store IDs are configured within the `tools` as `file_search` tools rather
 The response includes `tools` and `tool_choice` fields that reflect the internally resolved configuration. More specifically, the final set of tools and selection constraints after internal resolution and filtering.
 
 `tool_choice` only constrains how the model may use tools (including RAG via the `file_search` tool). It does **not** change inline RAG: vector store IDs you list under `tools` for file search are still used to build inline RAG context even if you set `tool_choice` to `none` or use an allowlist that omits `file_search`.
+
+### Server-Tool Merging
+
+By default, the `tools` field acts as a per-request override: when provided, only the specified tools are available for that request, and server-configured tools (RAG, MCP) are not included. The **server-tool merging** feature allows clients to provide their own tools while also retaining all server-configured tools.
+
+This is useful for hybrid MCP architectures where a client (e.g. Goose) runs its own local MCP servers or function tools but also needs access to server-configured RAG and MCP tools.
+
+#### Enabling Server-Tool Merging
+
+Set the `X-LCS-Merge-Server-Tools: true` request header to enable merging:
+
+```bash
+curl -X POST http://localhost:8090/v1/responses \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "X-LCS-Merge-Server-Tools: true" \
+  -d '{
+    "input": "Find relevant docs and run my analysis tool",
+    "tools": [
+      { "type": "mcp", "server_label": "my-local-tool", "server_url": "http://localhost:3000/sse" }
+    ]
+  }'
+```
+
+When this header is set:
+
+1. **Client-provided tools** are resolved first (BYOK translation, MCP header injection).
+2. **Server-configured tools** (RAG file_search, server MCP tools) are loaded from the LCORE configuration.
+3. The two sets are **merged** into a single tool list, with client tools appearing first.
+
+When the header is absent or `false`, the `tools` field behaves as a standard per-request override: only the explicitly listed tools are used.
+
+#### Conflict Detection
+
+Merging rejects conflicting tools with an HTTP **409 Conflict** error:
+
+- **MCP conflict**: A client-provided MCP tool has the same `server_label` as a server-configured MCP tool.
+- **file_search conflict**: The client provides a `file_search` tool when the server also configures one.
+
+Example 409 response:
+
+```json
+{
+  "status_code": 409,
+  "detail": {
+    "response": "Tool conflict detected",
+    "cause": "Client MCP tool 'my-server' conflicts with a server-configured MCP tool with the same server_label."
+  }
+}
+```
+
+#### Stream Filtering
+
+When server-tool merging is active, the response stream and output include items from both client and server tools. To keep streams clean for clients that manage their own tool execution, LCORE automatically distinguishes between server-deployed and client-provided tool output:
+
+- **Server-deployed tool events** (`mcp_call`, `mcp_list_tools`, `mcp_approval_request` from server-configured MCP servers, plus `file_search_call` and `web_search_call`) are included in turn summaries, metrics, and conversation storage.
+- **Client-provided tool events** (`function_call` items and MCP events from non-server-configured labels) are passed through in the response but excluded from server-side processing (turn summary, metrics, storage).
+
+In streaming mode, server-deployed MCP events (e.g. `mcp_call`, `mcp_list_tools`) are filtered from the SSE stream so clients only see standard output types (`message`, `function_call`, etc.) for their own tools.
 
 ### LCORE-Specific Extensions
 
