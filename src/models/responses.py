@@ -2134,6 +2134,20 @@ class NotFoundResponse(AbstractErrorResponse):
                         "cause": "Mcp Server with ID test-mcp-server does not exist",
                     },
                 },
+                {
+                    "label": "vector store",
+                    "detail": {
+                        "response": "Vector Store not found",
+                        "cause": "Vector Store with ID vs_abc123 does not exist",
+                    },
+                },
+                {
+                    "label": "file",
+                    "detail": {
+                        "response": "File not found",
+                        "cause": "File with ID file_abc123 does not exist",
+                    },
+                },
             ]
         }
     }

@@ -2,7 +2,6 @@
 
 import asyncio
 import os
-import traceback
 from io import BytesIO
 from typing import Annotated, Any
 
@@ -67,7 +66,7 @@ vector_store_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
-    404: NotFoundResponse.openapi_response(examples=["vector_store"]),
+    404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
@@ -90,7 +89,7 @@ vector_store_file_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
-    404: NotFoundResponse.openapi_response(examples=["vector_store_file"]),
+    404: NotFoundResponse.openapi_response(examples=["file"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
@@ -101,7 +100,7 @@ vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
         examples=["missing header", "missing token"]
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
-    404: NotFoundResponse.openapi_response(examples=["vector_store"]),
+    404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
 }
@@ -178,13 +177,6 @@ async def create_vector_store(
         logger.error("API status error while creating vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to create vector store: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to create vector store",
-            cause=f"Error creating vector store: {type(e).__name__}: {str(e)}",
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.get("/vector-stores", responses=vector_stores_list_responses)
@@ -241,13 +233,6 @@ async def list_vector_stores(
         logger.error("API status error while listing vector stores: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to list vector stores: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to list vector stores",
-            cause=f"Error listing vector stores: {type(e).__name__}: {str(e)}",
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.get("/vector-stores/{vector_store_id}", responses=vector_store_responses)
@@ -308,16 +293,6 @@ async def get_vector_store(
         logger.error("API status error while getting vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to get vector store: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to retrieve vector store",
-            cause=(
-                f"Error retrieving vector store '{vector_store_id}': "
-                f"{type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.put("/vector-stores/{vector_store_id}", responses=vector_store_responses)
@@ -382,13 +357,6 @@ async def update_vector_store(
         logger.error("API status error while updating vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to update vector store: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to update vector store",
-            cause=f"Error updating vector store '{vector_store_id}': {type(e).__name__}: {str(e)}",
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.delete(
@@ -439,13 +407,6 @@ async def delete_vector_store(
         logger.error("API status error while deleting vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to delete vector store: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to delete vector store",
-            cause=f"Error deleting vector store '{vector_store_id}': {type(e).__name__}: {str(e)}",
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.post("/files", responses=file_responses)
@@ -569,18 +530,6 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
         logger.error("API status error while uploading file: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        full_trace = traceback.format_exc()
-        logger.error("Unable to upload file: %s", e)
-        logger.error("Full traceback:\n%s", full_trace)
-        response = InternalServerErrorResponse(
-            response="Unable to upload file",
-            cause=(
-                f"Error uploading file '{file.filename or 'unknown'}': "
-                f"{type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.post(
@@ -699,16 +648,6 @@ async def add_file_to_vector_store(  # pylint: disable=too-many-locals,too-many-
         logger.error("API status error while adding file to vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to add file to vector store: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to add file to vector store",
-            cause=(
-                f"Error adding file '{body.file_id}' to vector store "
-                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.get(
@@ -778,16 +717,6 @@ async def list_vector_store_files(
         logger.error("API status error while listing vector store files: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to list vector store files: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to list vector store files",
-            cause=(
-                f"Error listing files in vector store '{vector_store_id}': "
-                f"{type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.get(
@@ -850,22 +779,12 @@ async def get_vector_store_file(
         raise HTTPException(**response.model_dump()) from e
     except BadRequestError as e:
         logger.error("Vector store file not found: %s", e)
-        response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
+        response = NotFoundResponse(resource="file", resource_id=file_id)
         raise HTTPException(**response.model_dump()) from e
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
         logger.error("API status error while getting vector store file: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to get vector store file: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to retrieve vector store file",
-            cause=(
-                f"Error retrieving file '{file_id}' from vector store "
-                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
 
 
 @router.delete(
@@ -913,19 +832,9 @@ async def delete_vector_store_file(
         raise HTTPException(**response.model_dump()) from e
     except BadRequestError as e:
         logger.error("Vector store file not found: %s", e)
-        response = NotFoundResponse(resource="vector_store_file", resource_id=file_id)
+        response = NotFoundResponse(resource="file", resource_id=file_id)
         raise HTTPException(**response.model_dump()) from e
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
         logger.error("API status error while deleting vector store file: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
         raise HTTPException(**error_response.model_dump()) from e
-    except Exception as e:
-        logger.error("Unable to delete vector store file: %s", e)
-        response = InternalServerErrorResponse(
-            response="Unable to delete vector store file",
-            cause=(
-                f"Error deleting file '{file_id}' from vector store "
-                f"'{vector_store_id}': {type(e).__name__}: {str(e)}"
-            ),
-        )
-        raise HTTPException(**response.model_dump()) from e
