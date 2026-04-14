@@ -50,6 +50,33 @@ def test_builds_event_with_all_fields(
     assert event["total_llm_tokens"] == 0
 
 
+def test_builds_event_with_token_counts(mocker: MockerFixture) -> None:
+    """Test total_llm_tokens is computed from input and output token counts."""
+    mocker.patch(
+        "observability.formats.rlsapi.configuration"
+    ).deployment_environment = "production"
+
+    data = InferenceEventData(
+        question="test",
+        response="test",
+        inference_time=1.0,
+        model="test-model",
+        org_id="org1",
+        system_id="sys1",
+        request_id="req_1",
+        cla_version="CLA/1.0",
+        system_os="RHEL",
+        system_version="9.4",
+        system_arch="x86_64",
+        input_tokens=150,
+        output_tokens=75,
+    )
+
+    event = build_inference_event(data)
+
+    assert event["total_llm_tokens"] == 225
+
+
 def test_handles_auth_disabled_values(mocker: MockerFixture) -> None:
     """Test event handles auth_disabled placeholder values."""
     data = InferenceEventData(

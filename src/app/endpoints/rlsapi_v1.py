@@ -353,8 +353,22 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
     response_text: str,
     inference_time: float,
     sourcetype: str,
+    input_tokens: int = 0,
+    output_tokens: int = 0,
 ) -> None:
-    """Build and queue a Splunk telemetry event for background sending."""
+    """Build and queue a Splunk telemetry event for background sending.
+
+    Args:
+        background_tasks: FastAPI background task manager.
+        infer_request: Original rlsapi v1 inference request.
+        request: FastAPI request object used to resolve identity context.
+        request_id: Unique identifier for the request.
+        response_text: Response text to include in the telemetry event.
+        inference_time: Request processing duration in seconds.
+        sourcetype: Splunk sourcetype to use when sending the event.
+        input_tokens: Number of prompt tokens consumed by the LLM call.
+        output_tokens: Number of completion tokens produced by the LLM call.
+    """
     org_id, system_id = _get_rh_identity_context(request)
     systeminfo = infer_request.context.systeminfo
 
@@ -370,6 +384,8 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
         system_os=systeminfo.os,
         system_version=systeminfo.version,
         system_arch=systeminfo.arch,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
     )
 
     event = build_inference_event(event_data)
@@ -754,6 +770,8 @@ async def infer_endpoint(  # pylint: disable=R0914
         response_text,
         inference_time,
         "infer_with_llm",
+        input_tokens=token_usage.input_tokens,
+        output_tokens=token_usage.output_tokens,
     )
 
     logger.info("Completed rlsapi v1 /infer request %s", request_id)
