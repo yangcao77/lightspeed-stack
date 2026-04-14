@@ -1,4 +1,4 @@
-@skip-in-library-mode @Authorized
+@e2e_group_3 @skip-in-library-mode @Authorized
 Feature: Llama Stack connection disrupted
 
   End-to-end scenarios that stop the Llama Stack container (or simulate disconnect) and

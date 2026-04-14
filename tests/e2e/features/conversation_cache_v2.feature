@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_2 @Authorized
 Feature: Conversation Cache V2 API tests
 
   Background:

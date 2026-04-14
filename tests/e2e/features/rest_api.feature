@@ -1,3 +1,4 @@
+@e2e_group_1
 Feature: REST API tests
 
 

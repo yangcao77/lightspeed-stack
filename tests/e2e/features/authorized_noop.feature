@@ -1,3 +1,4 @@
+@e2e_group_1
 Feature: Authorized endpoint API tests for the noop authentication module
 
   Background:

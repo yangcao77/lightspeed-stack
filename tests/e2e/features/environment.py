@@ -34,6 +34,9 @@ from tests.e2e.utils.utils import (
 FALLBACK_MODEL = "gpt-4o-mini"
 FALLBACK_PROVIDER = "openai"
 
+# Wall-clock start for each feature (on ``Feature``; survives Behave context resets).
+_E2E_FEATURE_PERF_START_ATTR = "_lightspeed_e2e_feature_perf_start"
+
 
 def _fetch_models_from_service() -> dict:
     """Query /v1/models endpoint and return first LLM model.
@@ -349,7 +352,11 @@ def before_feature(context: Context, feature: Feature) -> None:
 
     Per-feature setup that is not expressed in Gherkin (e.g. feedback cleanup state).
     Lightspeed YAML is applied in feature Backgrounds via ``configure_service``.
+
+    Records monotonic start time on ``feature`` for duration logging in
+    ``after_feature`` (includes scenarios and feature teardown).
     """
+    setattr(feature, _E2E_FEATURE_PERF_START_ATTR, time.perf_counter())
     reset_active_lightspeed_stack_config_basename()
     context.active_lightspeed_stack_config_basename = None
     # One real Llama disruption per feature (module-level flag; survives context resets)
@@ -398,3 +405,19 @@ def after_feature(context: Context, feature: Feature) -> None:
 
         _stop_proxy(context, "tunnel_proxy", "proxy_loop")
         _stop_proxy(context, "interception_proxy", "interception_proxy_loop")
+
+    start = getattr(feature, _E2E_FEATURE_PERF_START_ATTR, None)
+    if start is not None:
+        elapsed_s = time.perf_counter() - start
+        try:
+            delattr(feature, _E2E_FEATURE_PERF_START_ATTR)
+        except AttributeError:
+            pass
+        feat_path = getattr(feature, "filename", "") or ""
+        label = os.path.basename(feat_path) if feat_path else feature.name
+        print(f"[e2e feature timing] {elapsed_s:.2f}s  {label}", flush=True)
+
+
+# Behave captures hook stdout by default; output is only shown in some failure paths.
+# Disable capture so feature timing lines always appear on the real console/CI log.
+after_feature.capture = False  # type: ignore[attr-defined]

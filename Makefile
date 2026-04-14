@@ -32,8 +32,18 @@ test-integration: ## Run integration tests tests
 test-e2e: ## Run end to end tests for the service
 	script -q -e -c "uv run behave --color --format pretty --tags=-skip -D dump_errors=true @tests/e2e/test_list.txt"
 
-test-e2e-local: ## Run end to end tests for the service
+test-e2e-local: ## Run end to end tests for the service (no script wrapper)
 	uv run behave --color --format pretty --tags=-skip -D dump_errors=true @tests/e2e/test_list.txt
+
+# Tag-based subsets (@e2e_group_* on feature files). Default runs all groups; override for one shard, e.g.
+#   E2E_BEHAVE_TAG_EXPR='not @skip and @e2e_group_2' make test-e2e-tagged-local
+E2E_BEHAVE_TAG_EXPR ?= not @skip and (e2e_group_1 or e2e_group_2 or e2e_group_3)
+
+test-e2e-tagged: ## Run e2e tests with E2E_BEHAVE_TAG_EXPR (default: all @e2e_group_*)
+	script -q -e -c "uv run behave --color --format pretty --tags=\"$(E2E_BEHAVE_TAG_EXPR)\" -D dump_errors=true @tests/e2e/test_list.txt"
+
+test-e2e-tagged-local: ## Same as test-e2e-tagged without script wrapper
+	uv run behave --color --format pretty --tags="$(E2E_BEHAVE_TAG_EXPR)" -D dump_errors=true @tests/e2e/test_list.txt
 
 benchmarks: ## Run benchmarks
 	uv run python -m pytest -vv tests/benchmarks/

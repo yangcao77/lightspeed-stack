@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_2 @Authorized
 Feature: streaming_query endpoint API tests
 
   Background:

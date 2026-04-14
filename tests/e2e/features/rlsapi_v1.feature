@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_2 @Authorized
 Feature: rlsapi v1 /infer endpoint API tests
 
   Background:

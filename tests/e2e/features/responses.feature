@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_1 @Authorized
 Feature: Responses endpoint API tests
 
   Background:

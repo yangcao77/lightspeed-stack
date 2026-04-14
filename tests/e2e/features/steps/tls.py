@@ -91,9 +91,8 @@ def _configure_tls(tls_config: dict[str, Any], base_url: Optional[str] = None) -
 
 
 # --- Background Steps ---
-# Restart steps ("The original Llama Stack config is restored if modified",
-# "Llama Stack is restarted", "Lightspeed Stack is restarted") are defined in
-# proxy.py and shared across features by behave.
+# ``The original Llama Stack config is restored if modified`` only restores
+# run.yaml (see proxy.py). Restart steps are listed in tls.feature / proxy.feature.
 
 
 # --- TLS Configuration Steps ---

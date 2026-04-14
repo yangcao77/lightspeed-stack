@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_2 @Authorized
 Feature: Authorized endpoint API tests for the noop-with-token authentication module
 
   Background:

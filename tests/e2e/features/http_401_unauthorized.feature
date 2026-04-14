@@ -1,4 +1,4 @@
-@Authorized @Feedback @RHIdentity @RBAC
+@e2e_group_3 @Authorized @Feedback @RHIdentity @RBAC
 Feature: HTTP 401 Unauthorized
 
   Aggregates end-to-end scenarios that assert a 401 response when authentication

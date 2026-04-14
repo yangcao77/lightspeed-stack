@@ -1,4 +1,4 @@
-@MCPNoConfig
+@e2e_group_1 @MCPNoConfig
 Feature: MCP Server API tests without configured MCP servers
 
   Tests that the MCP server management endpoints work correctly

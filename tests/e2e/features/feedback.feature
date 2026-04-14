@@ -1,4 +1,4 @@
-@Feedback
+@e2e_group_3 @Feedback
 Feature: feedback endpoint API tests
 
 

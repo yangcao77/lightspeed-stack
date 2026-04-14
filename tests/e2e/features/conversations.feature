@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_2 @Authorized
 Feature: conversations endpoint API tests
 
   Background:

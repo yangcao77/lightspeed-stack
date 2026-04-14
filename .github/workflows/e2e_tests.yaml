@@ -11,8 +11,9 @@ jobs:
       matrix:
         mode: ["server", "library"]
         environment: ["ci"]
-    
-    name: "E2E: ${{ matrix.mode }} mode / ${{ matrix.environment }}"
+        e2e_group: [1, 2, 3]
+
+    name: "E2E: ${{ matrix.mode }} mode / ${{ matrix.environment }} / group ${{ matrix.e2e_group }}"
     
     env:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -103,6 +104,7 @@ jobs:
           echo "=== Configuration Summary ==="
           echo "Deployment mode: ${{ matrix.mode }}"
           echo "Environment: ${{ matrix.environment }}"
+          echo "E2E shard (Makefile test-e2e-tagged): @e2e_group_${{ matrix.e2e_group }} (with not @skip)"
           echo "Source config: tests/e2e/configs/run-${{ matrix.environment }}.yaml"
           echo ""
           echo "=== Configuration Preview ==="
@@ -187,13 +189,15 @@ jobs:
           TERM: xterm-256color
           FORCE_COLOR: 1
           E2E_DEPLOYMENT_MODE: ${{ matrix.mode }}
+          # Matches Makefile test-e2e-tagged / E2E_BEHAVE_TAG_EXPR (one @e2e_group_* per job).
+          E2E_BEHAVE_TAG_EXPR: "not @skip and @e2e_group_${{ matrix.e2e_group }}"
         run: |
           echo "Installing test dependencies..."
           pip install uv
           uv sync
 
-          echo "Running comprehensive e2e test suite..."
-          make test-e2e
+          echo "Running e2e tests (E2E_BEHAVE_TAG_EXPR=${E2E_BEHAVE_TAG_EXPR})..."
+          make test-e2e-tagged
 
       - name: Show logs on failure
         if: failure()

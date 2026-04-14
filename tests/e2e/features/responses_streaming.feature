@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_1 @Authorized
 Feature: Responses endpoint streaming API tests
 
 # Same coverage as ``responses.feature`` with ``stream=true`` (SSE for success paths;

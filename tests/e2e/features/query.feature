@@ -1,4 +1,4 @@
-@Authorized
+@e2e_group_3 @Authorized
 Feature: Query endpoint API tests
 
   Background:

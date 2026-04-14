@@ -1,4 +1,4 @@
-@RBAC
+@e2e_group_2 @RBAC
 Feature: Role-Based Access Control (RBAC)
 
   Comprehensive tests for role-based access control to ensure

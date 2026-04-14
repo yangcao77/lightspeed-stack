@@ -1,4 +1,4 @@
-@MCPServerAPIAuth
+@e2e_group_1 @MCPServerAPIAuth
 Feature: MCP Server Management API authentication tests
 
   Tests that the MCP server management endpoints enforce authentication

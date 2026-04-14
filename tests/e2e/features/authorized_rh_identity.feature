@@ -1,4 +1,4 @@
-@RHIdentity
+@e2e_group_3 @RHIdentity
 Feature: Authorized endpoint API tests for the rh-identity authentication module
 
   Background:

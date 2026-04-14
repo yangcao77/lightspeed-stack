@@ -5,8 +5,11 @@ These tests configure Llama Stack's run.yaml with NetworkConfig settings
 The proxy sits between Llama Stack and the LLM provider (e.g., OpenAI).
 
 Config switching uses the same pattern as other e2e tests: overwrite the
-host-mounted run.yaml and restart Docker containers. Cleanup is handled
-by a Background step that restores the backup before each scenario.
+host-mounted run.yaml and restart Docker containers. Restarts are not
+triggered from ``The original Llama Stack config is restored if modified``;
+list ``Llama Stack is restarted`` / ``Lightspeed Stack is restarted`` in the
+feature file so readers see every restart. Cleanup restores the backup file
+(and stops proxy servers) before each scenario.
 """
 
 import asyncio
@@ -192,9 +195,6 @@ def restore_if_modified(context: Context) -> None:
             f"Restoring original Llama Stack config from {_LLAMA_STACK_CONFIG_BACKUP}..."
         )
         shutil.move(_LLAMA_STACK_CONFIG_BACKUP, _LLAMA_STACK_CONFIG)
-        restart_container("llama-stack")
-        restart_container("lightspeed-stack")
-        wait_for_lightspeed_stack_http_ready()
 
 
 # --- Service Restart Steps ---

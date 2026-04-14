@@ -1,3 +1,4 @@
+@e2e_group_3
 Feature: Info tests
 
 
