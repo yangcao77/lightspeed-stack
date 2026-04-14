@@ -164,25 +164,29 @@ Key files: src/models/config.py, src/configuration.py.
 <!-- key: LCORE-???? -->
 ### LCORE-???? Implement approval request storage
 
-**Description**: Create storage layer for pending approval requests using
-existing cache backend infrastructure (SQLite/PostgreSQL).
+**Description**: Create storage layer for pending approval requests following
+the existing `src/quota/` module pattern (SQLite/PostgreSQL).
 
 **Scope**:
-- Add `approval_requests` table to cache schemas
+- Create `src/approvals/` module following `src/quota/` structure
+- Add `approval_requests` table schemas
 - Implement CRUD operations for approval requests
-- Add TTL-based expiration cleanup
+- Add daemon thread scheduler for cleanup
 - Unit tests for storage operations
 
 **Acceptance criteria**:
+- [ ] New `src/approvals/` module with: `sql.py`, `connect_sqlite.py`, `connect_pg.py`, `storage.py`
+- [ ] SQL statements follow `_PG`/`_SQLITE` suffix convention from `src/quota/sql.py`
 - [ ] Approval requests stored with: id, conversation_id, user_id, server_label, tool_name, arguments, status, created_at, expires_at
-- [ ] SQLite and PostgreSQL implementations
-- [ ] Expired requests cleaned up on access or via background task
-- [ ] Storage operations are async
+- [ ] SQLite and PostgreSQL implementations using raw DB-API connections
+- [ ] `src/runners/approval_scheduler.py` for cleanup (following `quota_scheduler` pattern)
+- [ ] `start_approval_scheduler()` called in `lightspeed_stack.py`
 
 **Agentic tool instruction**:
 ```text
 Read the "Storage / data model changes" section in docs/design/human-in-the-loop/human-in-the-loop.md.
-Key files: src/cache/sqlite_cache.py, src/cache/postgres_cache.py.
+Reference implementation: src/quota/ module (sql.py, connect_sqlite.py, connect_pg.py).
+Scheduler reference: src/runners/quota_scheduler.py.
 ```
 
 ---

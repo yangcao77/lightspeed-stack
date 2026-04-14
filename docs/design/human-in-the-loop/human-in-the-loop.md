@@ -75,7 +75,7 @@ With HIL:
 ├──────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌────────┐   POST /query    ┌─────────────────┐   responses.create   ┌───────────┐
-│  │ Client │ ───────────────► │ LCS Query       │ ───────────────────► │ Llama     │
+│  │  User  │ ───────────────► │ LCS Query       │ ───────────────────► │ Llama     │
 │  │        │                  │ Endpoint        │                      │ Stack     │
 │  └────────┘                  └─────────────────┘                      └───────────┘
 │       │                             │                                        │
@@ -167,6 +167,22 @@ CREATE INDEX IF NOT EXISTS idx_approval_requests_conversation
 CREATE INDEX IF NOT EXISTS idx_approval_requests_expires
     ON approval_requests(expires_at) WHERE status = 'pending';
 ```
+
+**Implementation pattern:** Follow the existing `src/quota/` module structure:
+
+| Component | Pattern to follow | New file |
+|-----------|-------------------|----------|
+| SQL statements | `src/quota/sql.py` - centralized constants with `_PG` and `_SQLITE` suffixes | `src/approvals/sql.py` |
+| SQLite connection | `src/quota/connect_sqlite.py` - simple connection factory | `src/approvals/connect_sqlite.py` |
+| PostgreSQL connection | `src/quota/connect_pg.py` - simple connection factory | `src/approvals/connect_pg.py` |
+| Cleanup scheduler | `src/runners/quota_scheduler.py` - daemon thread with periodic execution | `src/runners/approval_scheduler.py` |
+
+Key characteristics:
+- Use raw DB-API connections (`psycopg2`/`sqlite3`), not SQLAlchemy
+- SQL statements as module-level string constants
+- Separate `_PG` and `_SQLITE` variants for dialect differences
+- Scheduler runs as daemon thread started at application startup via
+  `start_approval_scheduler()` in `lightspeed_stack.py`
 
 ### Configuration
 
@@ -462,12 +478,11 @@ WHERE (status IN ('approved', 'denied')
        AND expires_at < NOW() - INTERVAL '1 day');
 ```
 
-**Implementation options:**
-
-- **Scheduled task**: Run cleanup periodically (e.g., hourly or daily)
-- **Lazy cleanup**: Trigger cleanup during read operations when record count
-  exceeds a threshold
-- **Database-level**: Use PostgreSQL's `pg_cron` or application-level scheduler
+**Implementation:** Use an in-process daemon thread scheduler following the
+existing `quota_scheduler` pattern ([quota_scheduler.py](../../../src/runners/quota_scheduler.py)).
+This runs cleanup periodically (e.g., hourly) as a background thread started at
+application startup, maintaining consistency with how quota management already
+handles scheduled database operations.
 
 ### Migration / backwards compatibility
 
@@ -484,10 +499,14 @@ WHERE (status IN ('approved', 'denied')
 
 | File | What to do |
 |------|------------|
-| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `ApprovalsConfiguration` class with `ttl_seconds` and `retention_days` |
+| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `ApprovalsConfiguration` class with `ttl_seconds`, `retention_days`, and `scheduler` settings |
 | `src/utils/responses.py` | Modify `get_mcp_tools()` to pass `require_approval` from config |
-| `src/cache/sqlite_cache.py` | Add `approval_requests` table, CRUD methods, and cleanup method |
-| `src/cache/postgres_cache.py` | Add `approval_requests` table, CRUD methods, and cleanup method |
+| `src/approvals/sql.py` | New file: SQL statements for `approval_requests` table (following `src/quota/sql.py` pattern) |
+| `src/approvals/connect_sqlite.py` | New file: SQLite connection factory (following `src/quota/connect_sqlite.py` pattern) |
+| `src/approvals/connect_pg.py` | New file: PostgreSQL connection factory (following `src/quota/connect_pg.py` pattern) |
+| `src/approvals/storage.py` | New file: CRUD operations for approval requests |
+| `src/runners/approval_scheduler.py` | New file: Daemon thread scheduler for cleanup (following `src/runners/quota_scheduler.py` pattern) |
+| `src/lightspeed_stack.py` | Add `start_approval_scheduler()` call at startup |
 | `src/app/endpoints/approvals.py` | New file: `/approvals` endpoint handlers |
 | `src/app/endpoints/query.py` | Handle `mcp_approval_request`, return `requires_action` |
 | `src/app/endpoints/streaming_query.py` | Handle approval request events, emit `approval_required` |
