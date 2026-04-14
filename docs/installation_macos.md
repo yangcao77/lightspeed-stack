@@ -15,4 +15,3 @@
 `git clone https://github.com/lightspeed-core/lightspeed-stack`
 1. `cd lightspeed-stack`
 1. `uv sync`
-
