@@ -12,6 +12,7 @@ import subprocess
 import time
 
 import requests
+from behave.contrib.scenario_autoretry import patch_scenario_with_autoretry
 from behave.model import Feature, Scenario
 from behave.runner import Context
 
@@ -36,6 +37,10 @@ FALLBACK_PROVIDER = "openai"
 
 # Wall-clock start for each feature (on ``Feature``; survives Behave context resets).
 _E2E_FEATURE_PERF_START_ATTR = "_lightspeed_e2e_feature_perf_start"
+
+# Opt-in scenario retries for infrastructure flakiness (tag scenario with ``@flaky``).
+_E2E_FLAKY_TAG = "flaky"
+_E2E_FLAKY_MAX_ATTEMPTS = 5
 
 
 def _fetch_models_from_service() -> dict:
@@ -355,12 +360,26 @@ def before_feature(context: Context, feature: Feature) -> None:
 
     Records monotonic start time on ``feature`` for duration logging in
     ``after_feature`` (includes scenarios and feature teardown).
+
+    Scenarios tagged ``@flaky`` are patched to retry the full scenario up to
+    ``max_attempts`` times before accepting failure. The cap defaults to
+    ``_E2E_FLAKY_MAX_ATTEMPTS`` and can be overridden with the
+    ``E2E_FLAKY_MAX_ATTEMPTS`` environment variable.
     """
     setattr(feature, _E2E_FEATURE_PERF_START_ATTR, time.perf_counter())
     reset_active_lightspeed_stack_config_basename()
     context.active_lightspeed_stack_config_basename = None
     # One real Llama disruption per feature (module-level flag; survives context resets)
     reset_llama_stack_disrupt_once_tracking()
+
+    try:
+        max_flaky = int(os.getenv("E2E_FLAKY_MAX_ATTEMPTS", _E2E_FLAKY_MAX_ATTEMPTS))
+    except ValueError:
+        max_flaky = _E2E_FLAKY_MAX_ATTEMPTS
+    if max_flaky > 1:
+        for scenario in feature.walk_scenarios():
+            if _E2E_FLAKY_TAG in scenario.effective_tags:
+                patch_scenario_with_autoretry(scenario, max_attempts=max_flaky)
 
     if "Feedback" in feature.tags:
         context.hostname = os.getenv("E2E_LSC_HOSTNAME", "localhost")

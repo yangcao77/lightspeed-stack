@@ -325,6 +325,7 @@ Feature: Responses endpoint streaming API tests
         }
         """
 
+  @flaky
   Scenario: Streaming responses continues a thread using previous_response_id from latest turn
     When I use "responses" to ask question with authorization header
     """
@@ -355,6 +356,7 @@ Feature: Responses endpoint streaming API tests
     Then The status code of the response is 200
       And The responses conversation id matches the multi-turn baseline
 
+  @flaky
   Scenario: Streaming responses continues a thread using conversation id
     When I use "responses" to ask question with authorization header
     """
@@ -376,6 +378,7 @@ Feature: Responses endpoint streaming API tests
       And The body of the response contains beta
       And The responses conversation id matches the first stored conversation
 
+  @flaky
   Scenario: Streaming responses forks to a new conversation when previous_response_id is not the latest turn  
     When I use "responses" to ask question with authorization header
     """

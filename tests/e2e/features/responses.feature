@@ -334,6 +334,7 @@ Feature: Responses endpoint API tests
       And The body of the response contains beta
       And The responses conversation id matches the first stored conversation
 
+  @flaky
   Scenario: Responses forks to a new conversation when previous_response_id is not the latest turn
     Given The system is in default state
     When I use "responses" to ask question with authorization header

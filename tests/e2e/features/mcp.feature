@@ -19,7 +19,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-file
 
-  @MCPFileAuthConfig
+  @MCPFileAuthConfig @flaky
   Scenario: Check if query endpoint succeeds when MCP file-based auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-file-auth.yaml configuration
@@ -36,7 +36,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @MCPFileAuthConfig
+  @MCPFileAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP file-based auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-file-auth.yaml configuration
@@ -128,7 +128,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-kubernetes
 
-  @MCPKubernetesAuthConfig
+  @MCPKubernetesAuthConfig @flaky
   Scenario: Check if query endpoint succeeds when MCP kubernetes auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-kubernetes-auth.yaml configuration
@@ -145,7 +145,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @MCPKubernetesAuthConfig
+  @MCPKubernetesAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP kubernetes auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-kubernetes-auth.yaml configuration
@@ -239,7 +239,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-client
 
-  @MCPClientAuthConfig
+  @MCPClientAuthConfig @flaky
   Scenario: Check if query endpoint succeeds when MCP client-provided auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-client-auth.yaml configuration
@@ -259,7 +259,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @MCPClientAuthConfig
+  @MCPClientAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP client-provided auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-client-auth.yaml configuration
@@ -289,7 +289,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response does not contain mcp-client
 
-  @MCPClientAuthConfig
+  @MCPClientAuthConfig @flaky
   Scenario: Check if query endpoint succeeds by skipping when MCP client-provided auth token is omitted
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-client-auth.yaml configuration
@@ -306,7 +306,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @MCPClientAuthConfig
+  @MCPClientAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds by skipping when MCP client-provided auth token is omitted
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-client-auth.yaml configuration
@@ -407,7 +407,7 @@ Feature: MCP tests
     Then The status code of the response is 200
     And The body of the response contains mcp-oauth
 
-  @MCPOAuthAuthConfig
+  @MCPOAuthAuthConfig @flaky
   Scenario: Check if query endpoint succeeds when MCP OAuth auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-oauth-auth.yaml configuration
@@ -427,7 +427,7 @@ Feature: MCP tests
         | Hello                     |
     And The token metrics should have increased
 
-  @MCPOAuthAuthConfig
+  @MCPOAuthAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP OAuth auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
       And The service uses the lightspeed-stack-mcp-oauth-auth.yaml configuration

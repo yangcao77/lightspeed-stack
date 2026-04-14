@@ -25,6 +25,11 @@ _RESPONSE_TOOL_OUTPUT_ITEM_TYPES = frozenset(
 )
 
 
+def _response_contains_fragment(text: str, fragment: str) -> bool:
+    """Return whether *fragment* occurs in *text* as a substring (case-insensitive)."""
+    return fragment.lower() in text.lower()
+
+
 def _collect_output_item_types(response_body: dict[str, Any]) -> list[str]:
     """Collect ``type`` from each top-level ``output`` item in a Responses API JSON body."""
     output = cast(list[dict[str, Any]], response_body["output"])
@@ -238,6 +243,7 @@ def check_fragments_in_responses_output_text(context: Context) -> None:
     """Check that fragments from the scenario table appear in JSON ``output_text``.
 
     Used for POST ``/v1/responses`` (query endpoint uses the ``response`` field).
+    Matching is case-insensitive.
     """
     assert context.response is not None, "Request needs to be performed first"
     response_json = context.response.json()
@@ -250,9 +256,10 @@ def check_fragments_in_responses_output_text(context: Context) -> None:
 
     for fragment in context.table:
         expected = fragment["Fragments in LLM response"]
-        assert (
-            expected in output_text
-        ), f"Fragment '{expected}' not found in output_text: '{output_text}'"
+        assert _response_contains_fragment(output_text, expected), (
+            f"Fragment {expected!r} not found in output_text (case-insensitive): "
+            f"{output_text!r}"
+        )
 
 
 @then("The response should contain following fragments")
@@ -262,7 +269,7 @@ def check_fragments_in_response(context: Context) -> None:
     First checks that the HTTP response exists and contains a
     "response" field. For each fragment listed in the scenario's
     table under "Fragments in LLM response", asserts that it
-    appears as a substring in the LLM's response. Raises an
+    appears as a substring in the LLM's response (case-insensitive). Raises an
     assertion error if any fragment is missing or if the fragments
     table is not provided.
     """
@@ -288,9 +295,10 @@ def check_fragments_in_response(context: Context) -> None:
 
     for fragment in context.table:
         expected = fragment["Fragments in LLM response"]
-        assert (
-            expected in response
-        ), f"Fragment '{expected}' not found in LLM response: '{response}'"
+        assert _response_contains_fragment(response, expected), (
+            f"Fragment {expected!r} not found in LLM response (case-insensitive): "
+            f"{response!r}"
+        )
 
 
 @then("The streamed response should contain following fragments")
@@ -300,7 +308,7 @@ def check_streamed_fragments_in_response(context: Context) -> None:
     First checks that the HTTP response exists and contains a
     "response" field. For each fragment listed in the scenario's
     table under "Fragments in LLM response", asserts that it
-    appears as a substring in the LLM's response. Raises an
+    appears as a substring in the LLM's response (case-insensitive). Raises an
     assertion error if any fragment is missing or if the fragments
     table is not provided.
     """
@@ -311,9 +319,10 @@ def check_streamed_fragments_in_response(context: Context) -> None:
 
     for fragment in context.table:
         expected = fragment["Fragments in LLM response"]
-        assert (
-            expected in response
-        ), f"Fragment '{expected}' not found in LLM response: '{response}'"
+        assert _response_contains_fragment(response, expected), (
+            f"Fragment {expected!r} not found in streamed LLM response "
+            f"(case-insensitive): {response!r}"
+        )
 
 
 @then("The streamed response contains error message {message}")

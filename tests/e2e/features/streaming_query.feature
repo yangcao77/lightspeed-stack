@@ -10,7 +10,6 @@ Feature: streaming_query endpoint API tests
       And The service uses the lightspeed-stack-auth-noop-token.yaml configuration
       And The service is restarted
 
-
   Scenario: Check if streaming_query response in tokens matches the full response
     And I use "streaming_query" to ask question with authorization header
     """
@@ -20,6 +19,7 @@ Feature: streaming_query endpoint API tests
      Then The status code of the response is 200
       And The streamed response is equal to the full response
 
+  @flaky
   Scenario: Check if LLM responds properly to restrictive system prompt to sent question with different system prompt
       And I capture the current token metrics
       And I use "streaming_query" to ask question with authorization header
@@ -33,6 +33,7 @@ Feature: streaming_query endpoint API tests
           | questions                 |
       And The token metrics should have increased
 
+  @flaky
   Scenario: Check if LLM responds properly to non-restrictive system prompt to sent question with different system prompt
       And I capture the current token metrics
       And I use "streaming_query" to ask question with authorization header

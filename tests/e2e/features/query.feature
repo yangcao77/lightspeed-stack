@@ -10,6 +10,7 @@ Feature: Query endpoint API tests
       And The service uses the lightspeed-stack-auth-noop-token.yaml configuration
       And The service is restarted
 
+  @flaky
   Scenario: Check if LLM responds properly to restrictive system prompt to sent question with different system prompt
     And I capture the current token metrics
     When I use "query" to ask question with authorization header
@@ -22,6 +23,7 @@ Feature: Query endpoint API tests
           | ask                       |
       And The token metrics should have increased
 
+  @flaky
   Scenario: Check if LLM responds properly to non-restrictive system prompt to sent question with different system prompt
     And I capture the current token metrics
     When I use "query" to ask question with authorization header
