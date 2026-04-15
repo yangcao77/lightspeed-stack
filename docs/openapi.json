@@ -1819,6 +1819,1480 @@
                 }
             }
         },
+        "/v1/vector-stores": {
+            "get": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "List Vector Stores",
+                "description": "List all vector stores.\n\nParameters:\n    request: The incoming HTTP request.\n    auth: Authentication tuple from the auth dependency.\n\nReturns:\n    VectorStoresListResponse: List of all vector stores.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "list_vector_stores_v1_vector_stores_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoresListResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "created_at": 1704067200,
+                                            "id": "vs_abc123",
+                                            "last_active_at": 1704153600,
+                                            "metadata": {
+                                                "conversation_id": "conv_123"
+                                            },
+                                            "name": "customer_support_docs",
+                                            "status": "active",
+                                            "usage_bytes": 1048576
+                                        },
+                                        {
+                                            "created_at": 1704070800,
+                                            "id": "vs_def456",
+                                            "last_active_at": 1704157200,
+                                            "name": "product_documentation",
+                                            "status": "active",
+                                            "usage_bytes": 2097152
+                                        }
+                                    ],
+                                    "object": "list"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Create Vector Store",
+                "description": "Create a new vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    auth: Authentication tuple from the auth dependency.\n    body: Vector store creation parameters.\n\nReturns:\n    VectorStoreResponse: The created vector store object.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "create_vector_store_v1_vector_stores_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VectorStoreCreateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreResponse"
+                                },
+                                "example": {
+                                    "created_at": 1704067200,
+                                    "id": "vs_abc123",
+                                    "last_active_at": 1704153600,
+                                    "metadata": {
+                                        "conversation_id": "conv_123",
+                                        "document_ids": [
+                                            "doc_456",
+                                            "doc_789"
+                                        ]
+                                    },
+                                    "name": "customer_support_docs",
+                                    "status": "active",
+                                    "usage_bytes": 1048576
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                },
+                                "examples": {
+                                    "vector store": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Vector Store with ID vs_abc123 does not exist",
+                                                "response": "Vector Store not found"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/vector-stores/{vector_store_id}": {
+            "get": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Get Vector Store",
+                "description": "Retrieve a vector store by ID.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store to retrieve.\n    auth: Authentication tuple from the auth dependency.\n\nReturns:\n    VectorStoreResponse: The vector store object.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "get_vector_store_v1_vector_stores__vector_store_id__get",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreResponse"
+                                },
+                                "example": {
+                                    "created_at": 1704067200,
+                                    "id": "vs_abc123",
+                                    "last_active_at": 1704153600,
+                                    "metadata": {
+                                        "conversation_id": "conv_123",
+                                        "document_ids": [
+                                            "doc_456",
+                                            "doc_789"
+                                        ]
+                                    },
+                                    "name": "customer_support_docs",
+                                    "status": "active",
+                                    "usage_bytes": 1048576
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "vector store": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Vector Store with ID vs_abc123 does not exist",
+                                                "response": "Vector Store not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Update Vector Store",
+                "description": "Update a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store to update.\n    auth: Authentication tuple from the auth dependency.\n    body: Vector store update parameters.\n\nReturns:\n    VectorStoreResponse: The updated vector store object.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "update_vector_store_v1_vector_stores__vector_store_id__put",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VectorStoreUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreResponse"
+                                },
+                                "example": {
+                                    "created_at": 1704067200,
+                                    "id": "vs_abc123",
+                                    "last_active_at": 1704153600,
+                                    "metadata": {
+                                        "conversation_id": "conv_123",
+                                        "document_ids": [
+                                            "doc_456",
+                                            "doc_789"
+                                        ]
+                                    },
+                                    "name": "customer_support_docs",
+                                    "status": "active",
+                                    "usage_bytes": 1048576
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "vector store": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Vector Store with ID vs_abc123 does not exist",
+                                                "response": "Vector Store not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Delete Vector Store",
+                "description": "Delete a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "delete_vector_store_v1_vector_stores__vector_store_id__delete",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Vector store deleted"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/files": {
+            "post": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Create File",
+                "description": "Upload a file.\n\nParameters:\n    request: The incoming HTTP request.\n    auth: Authentication tuple from the auth dependency.\n    file: The file to upload.\n\nReturns:\n    FileResponse: The uploaded file object.\n\nRaises:\n    HTTPException:\n        - 400: Bad request (e.g., file too large, invalid format)\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "create_file_v1_files_post",
+                "requestBody": {
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_create_file_v1_files_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FileResponse"
+                                },
+                                "example": {
+                                    "bytes": 524288,
+                                    "created_at": 1704067200,
+                                    "filename": "documentation.pdf",
+                                    "id": "file_abc123",
+                                    "object": "file",
+                                    "purpose": "assistants"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/BadRequestResponse"
+                                },
+                                "examples": {
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "File upload exceeds size limit",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/FileTooLargeResponse"
+                                },
+                                "examples": {
+                                    "file upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File size 150000000 bytes exceeds maximum allowed size of 104857600 bytes (100 MB)",
+                                                "response": "File too large"
+                                            }
+                                        }
+                                    },
+                                    "backend rejection": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected by Llama Stack: File size exceeds limit",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/vector-stores/{vector_store_id}/files": {
+            "post": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Add File To Vector Store",
+                "description": "Add a file to a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    auth: Authentication tuple from the auth dependency.\n    body: File addition parameters.\n\nReturns:\n    VectorStoreFileResponse: The vector store file object.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store or file not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "add_file_to_vector_store_v1_vector_stores__vector_store_id__files_post",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VectorStoreFileCreateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreFileResponse"
+                                },
+                                "example": {
+                                    "attributes": {
+                                        "chunk_size": "512",
+                                        "indexed": true
+                                    },
+                                    "id": "file_abc123",
+                                    "object": "vector_store.file",
+                                    "status": "completed",
+                                    "vector_store_id": "vs_abc123"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "file": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File with ID file_abc123 does not exist",
+                                                "response": "File not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "get": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "List Vector Store Files",
+                "description": "List files in a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    auth: Authentication tuple from the auth dependency.\n\nReturns:\n    VectorStoreFilesListResponse: List of files in the vector store.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "list_vector_store_files_v1_vector_stores__vector_store_id__files_get",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreFilesListResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "attributes": {
+                                                "chunk_size": "512"
+                                            },
+                                            "id": "file_abc123",
+                                            "object": "vector_store.file",
+                                            "status": "completed",
+                                            "vector_store_id": "vs_abc123"
+                                        },
+                                        {
+                                            "id": "file_def456",
+                                            "object": "vector_store.file",
+                                            "status": "processing",
+                                            "vector_store_id": "vs_abc123"
+                                        }
+                                    ],
+                                    "object": "list"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "vector store": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Vector Store with ID vs_abc123 does not exist",
+                                                "response": "Vector Store not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/vector-stores/{vector_store_id}/files/{file_id}": {
+            "get": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Get Vector Store File",
+                "description": "Retrieve a file from a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    file_id: ID of the file.\n    auth: Authentication tuple from the auth dependency.\n\nReturns:\n    VectorStoreFileResponse: The vector store file object.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: File not found in vector store\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "get_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__get",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    },
+                    {
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "File Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreFileResponse"
+                                },
+                                "example": {
+                                    "attributes": {
+                                        "chunk_size": "512",
+                                        "indexed": true
+                                    },
+                                    "id": "file_abc123",
+                                    "object": "vector_store.file",
+                                    "status": "completed",
+                                    "vector_store_id": "vs_abc123"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "file": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File with ID file_abc123 does not exist",
+                                                "response": "File not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "vector-stores"
+                ],
+                "summary": "Delete Vector Store File",
+                "description": "Delete a file from a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    file_id: ID of the file to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: File not found in vector store\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "operationId": "delete_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__delete",
+                "parameters": [
+                    {
+                        "name": "vector_store_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Vector Store Id"
+                        }
+                    },
+                    {
+                        "name": "file_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "File Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "File deleted from vector store"
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/query": {
             "post": {
                 "tags": [
@@ -3174,6 +4648,14 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -3383,6 +4865,14 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -3569,6 +5059,14 @@
                                             "detail": {
                                                 "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
                                                 "response": "Invalid conversation ID format"
+                                            }
+                                        }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
                                             }
                                         }
                                     }
@@ -3888,6 +5386,14 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -4061,6 +5567,14 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -4211,6 +5725,14 @@
                                             "detail": {
                                                 "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
                                                 "response": "Invalid conversation ID format"
+                                            }
+                                        }
+                                    },
+                                    "file_upload": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "File upload rejected: Invalid file format",
+                                                "response": "Invalid file upload"
                                             }
                                         }
                                     }
@@ -4505,6 +6027,34 @@
                                             "detail": {
                                                 "cause": "Model with ID gpt-4-turbo is not configured",
                                                 "response": "Model not found"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Resource already exists",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ConflictResponse"
+                                },
+                                "examples": {
+                                    "mcp tool conflict": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Client MCP tool with server_label 'my-server' conflicts with a server-configured MCP tool. Rename the client tool to avoid the conflict.",
+                                                "response": "Tool conflict"
+                                            }
+                                        }
+                                    },
+                                    "file search conflict": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Client file_search tool conflicts with a server-configured file_search tool. Remove the client file_search to use the server's configuration.",
+                                                "response": "Tool conflict"
                                             }
                                         }
                                     }
@@ -5383,7 +6933,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -5401,7 +6951,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -5589,7 +7139,10 @@
                     "a2a_agent_card",
                     "a2a_task_execution",
                     "a2a_message",
-                    "a2a_jsonrpc"
+                    "a2a_jsonrpc",
+                    "manage_vector_stores",
+                    "read_vector_stores",
+                    "manage_files"
                 ],
                 "title": "Action",
                 "description": "Available actions in the system.\n\nNote: this is not a real model, just an enumeration of all action names."
@@ -6457,8 +8010,29 @@
                             "response": "Invalid conversation ID format"
                         },
                         "label": "conversation_id"
+                    },
+                    {
+                        "detail": {
+                            "cause": "File upload rejected: Invalid file format",
+                            "response": "Invalid file upload"
+                        },
+                        "label": "file_upload"
                     }
                 ]
+            },
+            "Body_create_file_v1_files_post": {
+                "properties": {
+                    "file": {
+                        "type": "string",
+                        "contentMediaType": "application/octet-stream",
+                        "title": "File"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "file"
+                ],
+                "title": "Body_create_file_v1_files_post"
             },
             "ByokRag": {
                 "properties": {
@@ -6854,6 +8428,20 @@
                             "response": "Mcp Server already exists"
                         },
                         "label": "mcp server"
+                    },
+                    {
+                        "detail": {
+                            "cause": "Client MCP tool with server_label 'my-server' conflicts with a server-configured MCP tool. Rename the client tool to avoid the conflict.",
+                            "response": "Tool conflict"
+                        },
+                        "label": "mcp tool conflict"
+                    },
+                    {
+                        "detail": {
+                            "cause": "Client file_search tool conflicts with a server-configured file_search tool. Remove the client file_search to use the server's configuration.",
+                            "response": "Tool conflict"
+                        },
+                        "label": "file search conflict"
                     }
                 ]
             },
@@ -7747,6 +9335,98 @@
                             "updated_by": "user/test",
                             "updated_status": false
                         }
+                    }
+                ]
+            },
+            "FileResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "File ID"
+                    },
+                    "filename": {
+                        "type": "string",
+                        "title": "Filename",
+                        "description": "File name"
+                    },
+                    "bytes": {
+                        "type": "integer",
+                        "title": "Bytes",
+                        "description": "File size in bytes"
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "title": "Created At",
+                        "description": "Unix timestamp when created"
+                    },
+                    "purpose": {
+                        "type": "string",
+                        "title": "Purpose",
+                        "description": "File purpose",
+                        "default": "assistants"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "description": "Object type",
+                        "default": "file"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "id",
+                    "filename",
+                    "bytes",
+                    "created_at"
+                ],
+                "title": "FileResponse",
+                "description": "Response model containing a file object.\n\nAttributes:\n    id: File ID.\n    filename: File name.\n    bytes: File size in bytes.\n    created_at: Unix timestamp when created.\n    purpose: File purpose.\n    object: Object type (always \"file\").",
+                "examples": [
+                    {
+                        "bytes": 524288,
+                        "created_at": 1704067200,
+                        "filename": "documentation.pdf",
+                        "id": "file_abc123",
+                        "object": "file",
+                        "purpose": "assistants"
+                    }
+                ]
+            },
+            "FileTooLargeResponse": {
+                "properties": {
+                    "status_code": {
+                        "type": "integer",
+                        "title": "Status Code",
+                        "description": "HTTP status code for the errors response"
+                    },
+                    "detail": {
+                        "$ref": "#/components/schemas/DetailModel",
+                        "description": "The detail model containing error summary and cause"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "status_code",
+                    "detail"
+                ],
+                "title": "FileTooLargeResponse",
+                "description": "413 Content Too Large - File upload exceeds size limit.",
+                "examples": [
+                    {
+                        "detail": {
+                            "cause": "File size 150000000 bytes exceeds maximum allowed size of 104857600 bytes (100 MB)",
+                            "response": "File too large"
+                        },
+                        "label": "file upload"
+                    },
+                    {
+                        "detail": {
+                            "cause": "File upload rejected by Llama Stack: File size exceeds limit",
+                            "response": "Invalid file upload"
+                        },
+                        "label": "backend rejection"
                     }
                 ]
             },
@@ -8882,6 +10562,20 @@
                             "response": "Mcp Server not found"
                         },
                         "label": "mcp server"
+                    },
+                    {
+                        "detail": {
+                            "cause": "Vector Store with ID vs_abc123 does not exist",
+                            "response": "Vector Store not found"
+                        },
+                        "label": "vector store"
+                    },
+                    {
+                        "detail": {
+                            "cause": "File with ID file_abc123 does not exist",
+                            "response": "File not found"
+                        },
+                        "label": "file"
                     }
                 ]
             },
@@ -9879,7 +11573,7 @@
                 "title": "OpenAIResponseMCPApprovalResponse",
                 "description": "A response to an MCP approval request."
             },
-            "OpenAIResponseMessage-Input": {
+            "OpenAIResponseMessage": {
                 "properties": {
                     "content": {
                         "anyOf": [
@@ -9914,7 +11608,7 @@
                                 "items": {
                                     "oneOf": [
                                         {
-                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input"
+                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText"
                                         },
                                         {
                                             "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
@@ -9923,7 +11617,7 @@
                                     "discriminator": {
                                         "propertyName": "type",
                                         "mapping": {
-                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input",
+                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText",
                                             "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
                                         }
                                     }
@@ -9991,181 +11685,7 @@
                 "title": "OpenAIResponseMessage",
                 "description": "Corresponds to the various Message types in the Responses API.\nThey are all under one type because the Responses API gives them all\nthe same \"type\" value, and there is no way to tell them apart in certain\nscenarios."
             },
-            "OpenAIResponseMessage-Output": {
-                "properties": {
-                    "content": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "items": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentText"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
-                                        }
-                                    ],
-                                    "discriminator": {
-                                        "propertyName": "type",
-                                        "mapping": {
-                                            "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile",
-                                            "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
-                                            "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText"
-                                        }
-                                    }
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "items": {
-                                    "oneOf": [
-                                        {
-                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output"
-                                        },
-                                        {
-                                            "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                                        }
-                                    ],
-                                    "discriminator": {
-                                        "propertyName": "type",
-                                        "mapping": {
-                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output",
-                                            "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
-                                        }
-                                    }
-                                },
-                                "type": "array"
-                            }
-                        ],
-                        "title": "Content"
-                    },
-                    "role": {
-                        "anyOf": [
-                            {
-                                "type": "string",
-                                "const": "system"
-                            },
-                            {
-                                "type": "string",
-                                "const": "developer"
-                            },
-                            {
-                                "type": "string",
-                                "const": "user"
-                            },
-                            {
-                                "type": "string",
-                                "const": "assistant"
-                            }
-                        ],
-                        "title": "Role"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "message",
-                        "title": "Type",
-                        "default": "message"
-                    },
-                    "id": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Id"
-                    },
-                    "status": {
-                        "anyOf": [
-                            {
-                                "type": "string"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Status"
-                    }
-                },
-                "type": "object",
-                "required": [
-                    "content",
-                    "role"
-                ],
-                "title": "OpenAIResponseMessage",
-                "description": "Corresponds to the various Message types in the Responses API.\nThey are all under one type because the Responses API gives them all\nthe same \"type\" value, and there is no way to tell them apart in certain\nscenarios."
-            },
-            "OpenAIResponseOutputMessageContentOutputText-Input": {
-                "properties": {
-                    "text": {
-                        "type": "string",
-                        "title": "Text"
-                    },
-                    "type": {
-                        "type": "string",
-                        "const": "output_text",
-                        "title": "Type",
-                        "default": "output_text"
-                    },
-                    "annotations": {
-                        "items": {
-                            "oneOf": [
-                                {
-                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationFileCitation"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationCitation"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationContainerFileCitation"
-                                },
-                                {
-                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationFilePath"
-                                }
-                            ],
-                            "discriminator": {
-                                "propertyName": "type",
-                                "mapping": {
-                                    "container_file_citation": "#/components/schemas/OpenAIResponseAnnotationContainerFileCitation",
-                                    "file_citation": "#/components/schemas/OpenAIResponseAnnotationFileCitation",
-                                    "file_path": "#/components/schemas/OpenAIResponseAnnotationFilePath",
-                                    "url_citation": "#/components/schemas/OpenAIResponseAnnotationCitation"
-                                }
-                            }
-                        },
-                        "type": "array",
-                        "title": "Annotations"
-                    },
-                    "logprobs": {
-                        "anyOf": [
-                            {
-                                "items": {
-                                    "$ref": "#/components/schemas/OpenAITokenLogProb"
-                                },
-                                "type": "array"
-                            },
-                            {
-                                "type": "null"
-                            }
-                        ],
-                        "title": "Logprobs"
-                    }
-                },
-                "type": "object",
-                "required": [
-                    "text"
-                ],
-                "title": "OpenAIResponseOutputMessageContentOutputText"
-            },
-            "OpenAIResponseOutputMessageContentOutputText-Output": {
+            "OpenAIResponseOutputMessageContentOutputText": {
                 "properties": {
                     "text": {
                         "type": "string",
@@ -12144,7 +13664,7 @@
             "ResponseItem": {
                 "anyOf": [
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseMessage-Input"
+                        "$ref": "#/components/schemas/OpenAIResponseMessage"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
@@ -12543,7 +14063,7 @@
                         "items": {
                             "oneOf": [
                                 {
-                                    "$ref": "#/components/schemas/OpenAIResponseMessage-Output"
+                                    "$ref": "#/components/schemas/OpenAIResponseMessage"
                                 },
                                 {
                                     "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
@@ -12572,7 +14092,7 @@
                                     "mcp_approval_request": "#/components/schemas/OpenAIResponseMCPApprovalRequest",
                                     "mcp_call": "#/components/schemas/OpenAIResponseOutputMessageMCPCall",
                                     "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools",
-                                    "message": "#/components/schemas/OpenAIResponseMessage-Output",
+                                    "message": "#/components/schemas/OpenAIResponseMessage",
                                     "web_search_call": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
                                 }
                             }
@@ -14091,6 +15611,553 @@
                     "type"
                 ],
                 "title": "ValidationError"
+            },
+            "VectorStoreCreateRequest": {
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 256,
+                        "minLength": 1,
+                        "title": "Name",
+                        "description": "Name of the vector store",
+                        "examples": [
+                            "my_vector_store"
+                        ]
+                    },
+                    "embedding_model": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Embedding Model",
+                        "description": "Embedding model to use for the vector store",
+                        "examples": [
+                            "text-embedding-ada-002"
+                        ]
+                    },
+                    "embedding_dimension": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Embedding Dimension",
+                        "description": "Dimension of the embedding vectors",
+                        "examples": [
+                            1536
+                        ]
+                    },
+                    "chunking_strategy": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Chunking Strategy",
+                        "description": "Chunking strategy configuration",
+                        "examples": [
+                            {
+                                "chunk_overlap": 50,
+                                "chunk_size": 512,
+                                "type": "fixed"
+                            }
+                        ]
+                    },
+                    "provider_id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Provider Id",
+                        "description": "Vector store provider identifier",
+                        "examples": [
+                            "rhdh-docs"
+                        ]
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Metadata dictionary for storing session information",
+                        "examples": [
+                            {
+                                "session_id": "sess456",
+                                "user_id": "user123"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "name"
+                ],
+                "title": "VectorStoreCreateRequest",
+                "description": "Model representing a request to create a vector store.\n\nAttributes:\n    name: Name of the vector store.\n    embedding_model: Optional embedding model to use.\n    embedding_dimension: Optional embedding dimension.\n    chunking_strategy: Optional chunking strategy configuration.\n    provider_id: Optional vector store provider identifier.\n    metadata: Optional metadata dictionary for storing session information.",
+                "examples": [
+                    {
+                        "embedding_dimension": 1536,
+                        "embedding_model": "text-embedding-ada-002",
+                        "metadata": {
+                            "user_id": "user123"
+                        },
+                        "name": "my_vector_store",
+                        "provider_id": "rhdh-docs"
+                    }
+                ]
+            },
+            "VectorStoreFileCreateRequest": {
+                "properties": {
+                    "file_id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "File Id",
+                        "description": "ID of the file to add to the vector store",
+                        "examples": [
+                            "file-abc123"
+                        ]
+                    },
+                    "attributes": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "number"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Attributes",
+                        "description": "Set of up to 16 key-value pairs for storing additional information. Keys: strings (max 64 chars). Values: strings (max 512 chars), booleans, or numbers.",
+                        "examples": [
+                            {
+                                "created_at": "2026-04-04T15:20:00Z",
+                                "updated_at": "2026-04-04T15:20:00Z"
+                            }
+                        ]
+                    },
+                    "chunking_strategy": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Chunking Strategy",
+                        "description": "Chunking strategy configuration for this file",
+                        "examples": [
+                            {
+                                "chunk_overlap": 50,
+                                "chunk_size": 512,
+                                "type": "fixed"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "file_id"
+                ],
+                "title": "VectorStoreFileCreateRequest",
+                "description": "Model representing a request to add a file to a vector store.\n\nAttributes:\n    file_id: ID of the file to add to the vector store.\n    attributes: Optional metadata key-value pairs (max 16 pairs).\n    chunking_strategy: Optional chunking strategy configuration.",
+                "examples": [
+                    {
+                        "attributes": {
+                            "created_at": "2026-04-04T15:20:00Z"
+                        },
+                        "chunking_strategy": {
+                            "chunk_size": 512,
+                            "type": "fixed"
+                        },
+                        "file_id": "file-abc123"
+                    }
+                ]
+            },
+            "VectorStoreFileResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "Vector store file ID"
+                    },
+                    "vector_store_id": {
+                        "type": "string",
+                        "title": "Vector Store Id",
+                        "description": "ID of the vector store"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "description": "File processing status"
+                    },
+                    "attributes": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": {
+                                    "anyOf": [
+                                        {
+                                            "type": "string"
+                                        },
+                                        {
+                                            "type": "number"
+                                        },
+                                        {
+                                            "type": "boolean"
+                                        }
+                                    ]
+                                },
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Attributes",
+                        "description": "Set of up to 16 key-value pairs for storing additional information. Keys: strings (max 64 chars). Values: strings (max 512 chars), booleans, or numbers."
+                    },
+                    "last_error": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Error",
+                        "description": "Error message if processing failed"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "description": "Object type",
+                        "default": "vector_store.file"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "id",
+                    "vector_store_id",
+                    "status"
+                ],
+                "title": "VectorStoreFileResponse",
+                "description": "Response model containing a vector store file object.\n\nAttributes:\n    id: Vector store file ID.\n    vector_store_id: ID of the vector store.\n    status: File processing status.\n    attributes: Optional metadata key-value pairs.\n    last_error: Optional error message if processing failed.\n    object: Object type (always \"vector_store.file\").",
+                "examples": [
+                    {
+                        "attributes": {
+                            "chunk_size": "512",
+                            "indexed": true
+                        },
+                        "id": "file_abc123",
+                        "object": "vector_store.file",
+                        "status": "completed",
+                        "vector_store_id": "vs_abc123"
+                    }
+                ]
+            },
+            "VectorStoreFilesListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/VectorStoreFileResponse"
+                        },
+                        "type": "array",
+                        "title": "Data",
+                        "description": "List of vector store files"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "description": "Object type",
+                        "default": "list"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "VectorStoreFilesListResponse",
+                "description": "Response model containing a list of vector store files.\n\nAttributes:\n    data: List of vector store file objects.\n    object: Object type (always \"list\").",
+                "examples": [
+                    {
+                        "data": [
+                            {
+                                "attributes": {
+                                    "chunk_size": "512"
+                                },
+                                "id": "file_abc123",
+                                "object": "vector_store.file",
+                                "status": "completed",
+                                "vector_store_id": "vs_abc123"
+                            },
+                            {
+                                "id": "file_def456",
+                                "object": "vector_store.file",
+                                "status": "processing",
+                                "vector_store_id": "vs_abc123"
+                            }
+                        ],
+                        "object": "list"
+                    }
+                ]
+            },
+            "VectorStoreResponse": {
+                "properties": {
+                    "id": {
+                        "type": "string",
+                        "title": "Id",
+                        "description": "Vector store ID"
+                    },
+                    "name": {
+                        "type": "string",
+                        "title": "Name",
+                        "description": "Vector store name"
+                    },
+                    "created_at": {
+                        "type": "integer",
+                        "title": "Created At",
+                        "description": "Unix timestamp when created"
+                    },
+                    "last_active_at": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Last Active At",
+                        "description": "Unix timestamp of last activity"
+                    },
+                    "expires_at": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expires At",
+                        "description": "Unix timestamp when it expires"
+                    },
+                    "status": {
+                        "type": "string",
+                        "title": "Status",
+                        "description": "Vector store status"
+                    },
+                    "usage_bytes": {
+                        "type": "integer",
+                        "title": "Usage Bytes",
+                        "description": "Storage usage in bytes",
+                        "default": 0
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Metadata dictionary for storing session information",
+                        "examples": [
+                            {
+                                "conversation_id": "conv_123",
+                                "document_ids": [
+                                    "doc_456",
+                                    "doc_789"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "id",
+                    "name",
+                    "created_at",
+                    "status"
+                ],
+                "title": "VectorStoreResponse",
+                "description": "Response model containing a single vector store.\n\nAttributes:\n    id: Vector store ID.\n    name: Vector store name.\n    created_at: Unix timestamp when created.\n    last_active_at: Unix timestamp of last activity.\n    expires_at: Optional Unix timestamp when it expires.\n    status: Vector store status.\n    usage_bytes: Storage usage in bytes.\n    metadata: Optional metadata dictionary for storing session information.",
+                "examples": [
+                    {
+                        "created_at": 1704067200,
+                        "id": "vs_abc123",
+                        "last_active_at": 1704153600,
+                        "metadata": {
+                            "conversation_id": "conv_123",
+                            "document_ids": [
+                                "doc_456",
+                                "doc_789"
+                            ]
+                        },
+                        "name": "customer_support_docs",
+                        "status": "active",
+                        "usage_bytes": 1048576
+                    }
+                ]
+            },
+            "VectorStoreUpdateRequest": {
+                "properties": {
+                    "name": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "maxLength": 256,
+                                "minLength": 1
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Name",
+                        "description": "New name for the vector store",
+                        "examples": [
+                            "updated_vector_store"
+                        ]
+                    },
+                    "expires_at": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "exclusiveMinimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Expires At",
+                        "description": "Unix timestamp when the vector store should expire",
+                        "examples": [
+                            1735689600
+                        ]
+                    },
+                    "metadata": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Metadata",
+                        "description": "Metadata dictionary for storing session information",
+                        "examples": [
+                            {
+                                "session_id": "sess456",
+                                "user_id": "user123"
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "VectorStoreUpdateRequest",
+                "description": "Model representing a request to update a vector store.\n\nAttributes:\n    name: New name for the vector store.\n    expires_at: Optional expiration timestamp.\n    metadata: Optional metadata dictionary for storing session information.",
+                "examples": [
+                    {
+                        "expires_at": 1735689600,
+                        "metadata": {
+                            "user_id": "user123"
+                        },
+                        "name": "updated_vector_store"
+                    }
+                ]
+            },
+            "VectorStoresListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/VectorStoreResponse"
+                        },
+                        "type": "array",
+                        "title": "Data",
+                        "description": "List of vector stores"
+                    },
+                    "object": {
+                        "type": "string",
+                        "title": "Object",
+                        "description": "Object type",
+                        "default": "list"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "VectorStoresListResponse",
+                "description": "Response model containing a list of vector stores.\n\nAttributes:\n    data: List of vector store objects.\n    object: Object type (always \"list\").",
+                "examples": [
+                    {
+                        "data": [
+                            {
+                                "created_at": 1704067200,
+                                "id": "vs_abc123",
+                                "last_active_at": 1704153600,
+                                "metadata": {
+                                    "conversation_id": "conv_123"
+                                },
+                                "name": "customer_support_docs",
+                                "status": "active",
+                                "usage_bytes": 1048576
+                            },
+                            {
+                                "created_at": 1704070800,
+                                "id": "vs_def456",
+                                "last_active_at": 1704157200,
+                                "name": "product_documentation",
+                                "status": "active",
+                                "usage_bytes": 2097152
+                            }
+                        ],
+                        "object": "list"
+                    }
+                ]
             }
         }
     }
