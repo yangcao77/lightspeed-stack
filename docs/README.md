@@ -87,3 +87,4 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [CodeRabbitAI](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/coderabbit.html#/)
 
+[Lunch and Learn 2026](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/LnL_2026.html#/)
