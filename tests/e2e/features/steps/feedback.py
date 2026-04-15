@@ -12,7 +12,7 @@ from behave import (  # pyright: ignore[reportAttributeAccessIssue]  # pyright: 
 )
 from behave.runner import Context
 
-from tests.e2e.features.steps.common_http import access_rest_api_endpoint_get
+from tests.e2e.features.steps.common_http import access_rest_api_endpoint
 from tests.e2e.utils.utils import (
     absolute_repo_path,
     is_prow_environment,
@@ -101,7 +101,7 @@ def access_feedback_post_endpoint(
 @when("I retreive the current feedback status")  # type: ignore[reportCallIssue]
 def access_feedback_get_endpoint(context: Context) -> None:
     """Retrieve the current feedback status via GET request."""
-    access_rest_api_endpoint_get(context, "feedback/status")
+    access_rest_api_endpoint(context, "feedback/status", "GET")
 
 
 @given("A new conversation is initialized")  # type: ignore[reportCallIssue]

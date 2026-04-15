@@ -20,7 +20,7 @@ from tests.e2e.features.steps.common import (
     reset_active_lightspeed_stack_config_basename,
 )
 from tests.e2e.features.steps.health import reset_llama_stack_disrupt_once_tracking
-from tests.e2e.utils.llama_stack_utils import register_shield, unregister_shield
+from tests.e2e.utils.llama_stack_utils import register_shield
 from tests.e2e.utils.prow_utils import (
     restart_pod,
     restore_llama_stack_pod,
@@ -160,26 +160,14 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
     context.scenario_lightspeed_override_active = False
     context.lightspeed_stack_skip_restart = False
 
-    # @disable-shields: unregister shield via client.shields.delete("llama-guard").
-    # Only in server mode: in library mode there is no separate Llama Stack to call,
-    # and unregistering in the test process would not affect the app's in-process instance.
-    if "disable-shields" in scenario.effective_tags:
-        if context.is_library_mode:
-            scenario.skip(
-                "Shield unregister/register only applies in server mode (Llama Stack as a "
-                "separate service). In library mode the app's shields cannot be disabled from e2e."
-            )
-            return
-        try:
-            saved = unregister_shield("llama-guard")
-            context.llama_guard_provider_id = saved[0] if saved else None
-            context.llama_guard_provider_shield_id = saved[1] if saved else None
-            print("Unregistered shield llama-guard for this scenario")
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            scenario.skip(
-                f"Could not unregister shield (is Llama Stack reachable?): {e}"
-            )
-            return
+    # Clear shield unregister state from previous scenarios (see ``shields_are_disabled_for_scenario``).
+    for _attr in (
+        "shields_disabled_for_scenario",
+        "llama_guard_provider_id",
+        "llama_guard_provider_shield_id",
+    ):
+        if hasattr(context, _attr):
+            delattr(context, _attr)
 
 
 def after_scenario(context: Context, scenario: Scenario) -> None:
@@ -209,7 +197,7 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
               running before the scenario.
             - hostname_llama, port_llama (str/int, optional): host and port
               used for the llama-stack health check.
-        scenario (Scenario): Behave scenario (used for shield re-register tag).
+        scenario (Scenario): Behave scenario (unused; shield restore uses context flags).
     """
     if getattr(context, "scenario_lightspeed_override_active", False):
         context.scenario_lightspeed_override_active = False
@@ -218,8 +206,8 @@ def after_scenario(context: Context, scenario: Scenario) -> None:
             switch_config(feature_cfg)
             restart_container("lightspeed-stack")
 
-    # @disable-shields: re-register shield only if we unregistered one (avoid creating a shield that did not exist)
-    if "disable-shields" in scenario.effective_tags:
+    # Re-register shield if ``Given shields are disabled for this scenario`` unregistered it.
+    if getattr(context, "shields_disabled_for_scenario", False):
         provider_id = getattr(context, "llama_guard_provider_id", None)
         provider_shield_id = getattr(context, "llama_guard_provider_shield_id", None)
         if provider_id is not None and provider_shield_id is not None:

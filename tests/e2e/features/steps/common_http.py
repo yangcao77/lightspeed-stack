@@ -229,8 +229,7 @@ def access_rest_api_endpoint(context: Context, endpoint: str, method: str) -> No
 
     # perform REST API call
     context.response = requests.request(
-        method,
-        url, json=data, headers=headers, timeout=DEFAULT_TIMEOUT
+        method, url, json=data, headers=headers, timeout=DEFAULT_TIMEOUT
     )
 
 
