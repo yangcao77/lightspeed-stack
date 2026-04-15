@@ -83,24 +83,24 @@ Where should pending approval requests be stored?
 |--------|-------------|
 | A. In-memory only | Simple, no persistence |
 | B. Existing cache backends (SQLite/PostgreSQL) | Reuse infrastructure |
-| C. New dedicated store (following A2A pattern) | Clean separation |
+| C. New dedicated store | Clean separation |
 
 **Recommendation**: Option B (Existing cache backends). Approval requests are
 ephemeral (configurable TTL), similar to conversation cache entries. Adding a
 new table to existing cache backends minimizes infrastructure changes.
 
-See: [A2A storage pattern](../../../src/a2a_storage/context_store.py)
+See: [quota module pattern](../../../src/quota/) (sql.py, connect_sqlite.py, connect_pg.py)
 
-### Decision 6: Approval TTL configuration
+### Decision 6: Approval timeout configuration
 
 How should approval request expiration be configured?
 
-**Recommendation**: Add `approval_ttl_seconds` field to main configuration with
+**Recommendation**: Add `approval_timeout_seconds` field to main configuration with
 a default of 300 seconds (5 minutes). This is configurable per-deployment.
 
 ```yaml
 # lightspeed-stack.yaml
-approval_ttl_seconds: 300  # Default: 5 minutes
+approval_timeout_seconds: 300  # Default: 5 minutes
 ```
 
 ### Decision 7: Response status for pending approvals
@@ -141,14 +141,14 @@ allow/deny lists per tool.
 
 **Scope**:
 - Add `require_approval` field to `ModelContextProtocolServer` in config.py
-- Add `approval_ttl_seconds` to main configuration
+- Add `approval_timeout_seconds` to main configuration
 - Add validation for the new fields
 - Update configuration documentation
 
 **Acceptance criteria**:
 - [ ] `require_approval` accepts `"always"`, `"never"`, or `ApprovalFilter`
 - [ ] `ApprovalFilter` supports `always` and `never` tool name lists
-- [ ] `approval_ttl_seconds` defaults to 300, accepts positive integers
+- [ ] `approval_timeout_seconds` defaults to 300, accepts positive integers
 - [ ] Invalid configurations raise clear validation errors
 - [ ] JSON schema updated for OpenAPI docs
 

@@ -62,8 +62,8 @@ With HIL:
   I can prevent unwanted changes
 - **U4:** As a user, I want to deny a tool invocation, so that I can stop an
   action I don't want
-- **U5:** As a developer, I want approval requests to expire, so that abandoned
-  sessions don't leave pending approvals indefinitely
+- **U5:** As an operator, I want to limit the amount of storage pending approvals
+  consume, so that LCS does not use unbounded storage
 
 ## Architecture
 
@@ -191,8 +191,8 @@ Key characteristics:
 ```yaml
 # Approval settings
 approvals:
-  ttl_seconds: 300         # How long approvals stay pending (default: 300)
-  retention_days: 30       # How long to retain decided approvals (default: 30)
+  approval_timeout_seconds: 300  # How long approvals stay pending (default: 300)
+  approval_retention_days: 30  # How long to retain decided approvals (default: 30)
 
 mcp_servers:
   # Example 1: Require approval for all tools
@@ -260,16 +260,16 @@ class ApprovalsConfiguration(ConfigurationBase):
     """Configuration for human-in-the-loop approvals.
 
     Attributes:
-        ttl_seconds: How long approval requests remain pending before expiring.
-        retention_days: How long to retain decided approvals for audit purposes.
+        approval_timeout_seconds: How long approval requests remain pending before expiring.
+        approval_retention_days: How long to retain decided approvals for audit purposes.
     """
 
-    ttl_seconds: PositiveInt = Field(
+    approval_timeout_seconds: PositiveInt = Field(
         300,
-        title="Approval TTL",
+        title="Approval timeout",
         description="Seconds before pending approval requests expire",
     )
-    retention_days: PositiveInt = Field(
+    approval_retention_days: PositiveInt = Field(
         30,
         title="Retention period",
         description="Days to retain decided approvals before cleanup",
@@ -455,7 +455,7 @@ configurable retention period to prevent database bloat.
 
 ```yaml
 approvals:
-  retention_days: 30  # How long to keep decided approvals (default: 30)
+  approval_retention_days: 30  # How long to keep decided approvals (default: 30)
 ```
 
 **Cleanup queries:**
@@ -499,7 +499,7 @@ handles scheduled database operations.
 
 | File | What to do |
 |------|------------|
-| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `ApprovalsConfiguration` class with `ttl_seconds`, `retention_days`, and `scheduler` settings |
+| `src/models/config.py` | Add `ApprovalFilter` class, add `require_approval` to `ModelContextProtocolServer`, add `ApprovalsConfiguration` class with `approval_timeout_seconds`, `approval_retention_days`, and `scheduler` settings |
 | `src/utils/responses.py` | Modify `get_mcp_tools()` to pass `require_approval` from config |
 | `src/approvals/sql.py` | New file: SQL statements for `approval_requests` table (following `src/quota/sql.py` pattern) |
 | `src/approvals/connect_sqlite.py` | New file: SQLite connection factory (following `src/quota/connect_sqlite.py` pattern) |
