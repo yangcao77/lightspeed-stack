@@ -343,7 +343,7 @@ def _restore_llama_stack(context: Context) -> None:
 def before_feature(context: Context, feature: Feature) -> None:
     """Run before each feature file is exercised.
 
-    Per-feature setup that is not expressed in Gherkin (e.g. feedback cleanup state).
+    Per-feature setup that is not expressed in Gherkin.
     Lightspeed YAML is applied in feature Backgrounds via ``configure_service``.
 
     Records monotonic start time on ``feature`` for duration logging in
@@ -369,17 +369,18 @@ def before_feature(context: Context, feature: Feature) -> None:
             if _E2E_FLAKY_TAG in scenario.effective_tags:
                 patch_scenario_with_autoretry(scenario, max_attempts=max_flaky)
 
-    if "Feedback" in feature.tags:
-        context.hostname = os.getenv("E2E_LSC_HOSTNAME", "localhost")
-        context.port = os.getenv("E2E_LSC_PORT", "8080")
-        context.feedback_conversations = []
+    # Do not inherit feedback teardown state from a previous feature file.
+    for _attr in ("feedback_e2e_conversation_cleanup", "feedback_conversations"):
+        if hasattr(context, _attr):
+            delattr(context, _attr)
 
 
 def after_feature(context: Context, feature: Feature) -> None:
     """Run after each feature file is exercised.
 
-    Perform feature-level teardown: restore any modified configuration and
-    clean up feedback conversations.
+    Perform feature-level teardown: restore any modified configuration and,
+    when ``context.feedback_e2e_conversation_cleanup`` is set by feedback steps,
+    delete tracked feedback test conversations.
     """
     # Restore Llama Stack FIRST (before any lightspeed-stack restart)
     llama_was_running = getattr(context, "llama_stack_was_running", False)
@@ -387,9 +388,9 @@ def after_feature(context: Context, feature: Feature) -> None:
         _restore_llama_stack(context)
         context.llama_stack_was_running = False
 
-    if "Feedback" in feature.tags:
+    if getattr(context, "feedback_e2e_conversation_cleanup", False):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva"
-        for conversation_id in context.feedback_conversations:
+        for conversation_id in getattr(context, "feedback_conversations", []):
             url = f"http://{context.hostname}:{context.port}/v1/conversations/{conversation_id}"
             headers = {"Authorization": f"Bearer {token}"}
             response = requests.delete(url, headers=headers, timeout=10)
