@@ -228,3 +228,9 @@ DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s:%(lineno)d %(message)
 LIGHTSPEED_STACK_DISABLE_RICH_HANDLER_ENV_VAR = "LIGHTSPEED_STACK_DISABLE_RICH_HANDLER"
 
 DEFAULT_VIOLATION_MESSAGE = "I cannot process this request due to policy restrictions."
+
+# Input size limits for API request validation
+# Maximum character length for the question field in /v1/infer requests (32 KiB)
+RLSAPI_V1_QUESTION_MAX_LENGTH = 32_768
+# Maximum character length for the serialized /v1/responses request body (64 KiB)
+RESPONSES_REQUEST_MAX_SIZE = 65_536
