@@ -582,8 +582,30 @@ Using `git-graph` tool:
 
 # Stories created
 
-| Epic       | Story | Description     | Link            |
-|------------|-------|-----------------|-----------------|
+| Epic       | Story      | Description                                                                      | Link                                           |
+|------------|------------|----------------------------------------------------------------------------------|------------------------------------------------|
+| LCORE-1619 | LCORE-1635 | Specification: Finish documentation containing Long Term Support (LTS) agreement | https://redhat.atlassian.net/browse/LCORE-1635 |
+| LCORE-1619 | LCORE-1649 | Document internal LTS process flow                                               | https://redhat.atlassian.net/browse/LCORE-1649 |
+| LCORE-1620 | LCORE-1636 | Create and fill in section: Status of LCORE versions                             | https://redhat.atlassian.net/browse/LCORE-1636 |
+| LCORE-1620 | LCORE-1637 | Create table with list of all supported versions                                 | https://redhat.atlassian.net/browse/LCORE-1637 |
+| LCORE-1620 | LCORE-1638 | Create table with list of all unsupported versions                               | https://redhat.atlassian.net/browse/LCORE-1638 |
+| LCORE-1620 | LCORE-1650 | Document support tiers and escalation contacts per version                       | https://redhat.atlassian.net/browse/LCORE-1650 |
+| LCORE-1620 | LCORE-1652 | Add release and EOL dates for each LCORE version                                 | https://redhat.atlassian.net/browse/LCORE-1652 |
+| LCORE-1620 | LCORE-1651 | Link to upgrade guidance and migration paths for each version                    | https://redhat.atlassian.net/browse/LCORE-1651 |
+| LCORE-1621 | LCORE-1642 | Define and document branching model                                              | https://redhat.atlassian.net/browse/LCORE-1642 |
+| LCORE-1621 | LCORE-1643 | Add CI/CD workflows for release creation and hotfixes                            | https://redhat.atlassian.net/browse/LCORE-1643 |
+| LCORE-1621 | LCORE-1644 | Create and integrate PR, issue, and release note templates                       | https://redhat.atlassian.net/browse/LCORE-1644 |
+| LCORE-1621 | LCORE-1645 | Write contribution and branching documentation                                   | https://redhat.atlassian.net/browse/LCORE-1645 |
+| LCORE-1621 | LCORE-1646 | Implement branch protections and required PR checks in CI                        | https://redhat.atlassian.net/browse/LCORE-1646 |
+| LCORE-1621 | LCORE-1647 | Automate versioning and changelog generation                                     | https://redhat.atlassian.net/browse/LCORE-1647 |
+| LCORE-1621 | LCORE-1648 | Train teams on new branching strategy and workflows                              | https://redhat.atlassian.net/browse/LCORE-1648 |
+| LCORE-1622 | LCORE-1640 | Create release branch for version 0.5.0                                          | https://redhat.atlassian.net/browse/LCORE-1640 |
+| LCORE-1622 | LCORE-1653 | Add release metadata: tags, manifest, checksums, and signing information         | https://redhat.atlassian.net/browse/LCORE-1653 |
+| LCORE-1622 | LCORE-1654 | Prepare customer-facing release notes for 0.5.0                                  | https://redhat.atlassian.net/browse/LCORE-1654 |
+| LCORE-1623 | LCORE-1631 | Production — Create 0.6.0 Release Branch and note all problematic points         | https://redhat.atlassian.net/browse/LCORE-1641 |
+| LCORE-1623 | LCORE-1655 | Compile and finalize changelog and release notes for 0.6.0                       | https://redhat.atlassian.net/browse/LCORE-1655 |
+| LCORE-1623 | LCORE-1656 | Generate and publish release artifacts for 0.6.0                                 | https://redhat.atlassian.net/browse/LCORE-1656 |
+| LCORE-1623 | LCORE-1657 | Tag release/0.6.0 branch and update release manifest                             | https://redhat.atlassian.net/browse/LCORE-1657 |
 
 
 
@@ -606,4 +628,5 @@ TODO: Record significant changes after initial creation.
 |------------|-----------------|-----------------|
 | 2026-03-30 | Initial version | feature request |
 | 2026-03-31 | Created epics   | refinement      |
+| 2026-04-16 | Link to stories | sync with Jira  |
 
