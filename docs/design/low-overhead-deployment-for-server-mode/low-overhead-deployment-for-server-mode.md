@@ -44,7 +44,7 @@
     * [S3](#s3)
     * [S4](#s4)
     * [S5](#s5)
-* [Chosen approach and configuration](#chosen-approach-and-configuration)
+* [Chosen approach and configuration (target state)](#chosen-approach-and-configuration-target-state)
 * [Implementation details](#implementation-details)
     * [D1](#d1)
     * [D2](#d2)
@@ -483,6 +483,12 @@ deployments.
 # Unknowns
 
 * Which architectures must be supported?
+* Performance/overhead impact of LCORE-managed lifecycle vs. current separate deployments
+* Migration strategy for teams currently running standalone Llama Stack
+* Backward compatibility guarantees for existing configurations
+* Resource requirements and scaling characteristics for each runtime mode
+* Testing strategy for ensuring parity between containerized and local modes
+
 
 
 # References
