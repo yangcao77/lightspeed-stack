@@ -6,13 +6,13 @@ from typing import Final
 MINIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.2.17"
 MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.6.0"
 
-UNABLE_TO_PROCESS_RESPONSE = "Unable to process this request"
+UNABLE_TO_PROCESS_RESPONSE: Final[str] = "Unable to process this request"
 
 # Response stored in the conversation when the user interrupts a streaming request
-INTERRUPTED_RESPONSE_MESSAGE = "You interrupted this request."
+INTERRUPTED_RESPONSE_MESSAGE: Final[str] = "You interrupted this request."
 
 # Max seconds to wait for topic summary in background task after interrupt persist.
-TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS = 30.0
+TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS: Final[float] = 30.0
 
 # Supported attachment types
 ATTACHMENT_TYPES = frozenset(
@@ -34,11 +34,11 @@ ATTACHMENT_CONTENT_TYPES = frozenset(
 
 # Default system prompt used only when no other system prompt is specified in
 # configuration file nor in the query request
-DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant"
+DEFAULT_SYSTEM_PROMPT: Final[str] = "You are a helpful assistant"
 
 # Default topic summary system prompt used only when no other topic summary system
 # prompt is specified in configuration file
-DEFAULT_TOPIC_SUMMARY_SYSTEM_PROMPT = """
+DEFAULT_TOPIC_SUMMARY_SYSTEM_PROMPT: Final[str] = """
 Instructions:
 - You are a topic summarizer
 - Your job is to extract precise topic summary from user input
@@ -104,18 +104,18 @@ Output:
 """
 
 # Authentication constants
-DEFAULT_VIRTUAL_PATH = "/ls-access"
-DEFAULT_USER_NAME = "lightspeed-user"
-DEFAULT_SKIP_USER_ID_CHECK = True
-DEFAULT_USER_UID = "00000000-0000-0000-0000-000"
+DEFAULT_VIRTUAL_PATH: Final[str] = "/ls-access"
+DEFAULT_USER_NAME: Final[str] = "lightspeed-user"
+DEFAULT_SKIP_USER_ID_CHECK: Final[bool] = True
+DEFAULT_USER_UID: Final[str] = "00000000-0000-0000-0000-000"
 # default value for token when no token is provided
-NO_USER_TOKEN = ""
-AUTH_MOD_K8S = "k8s"
-AUTH_MOD_NOOP = "noop"
-AUTH_MOD_NOOP_WITH_TOKEN = "noop-with-token"
-AUTH_MOD_APIKEY_TOKEN = "api-key-token"
-AUTH_MOD_JWK_TOKEN = "jwk-token"
-AUTH_MOD_RH_IDENTITY = "rh-identity"
+NO_USER_TOKEN: Final[str] = ""
+AUTH_MOD_K8S: Final[str] = "k8s"
+AUTH_MOD_NOOP: Final[str] = "noop"
+AUTH_MOD_NOOP_WITH_TOKEN: Final[str] = "noop-with-token"
+AUTH_MOD_APIKEY_TOKEN: Final[str] = "api-key-token"
+AUTH_MOD_JWK_TOKEN: Final[str] = "jwk-token"
+AUTH_MOD_RH_IDENTITY: Final[str] = "rh-identity"
 # Supported authentication modules
 SUPPORTED_AUTHENTICATION_MODULES = frozenset(
     {
@@ -129,110 +129,116 @@ SUPPORTED_AUTHENTICATION_MODULES = frozenset(
 )
 DEFAULT_AUTHENTICATION_MODULE = AUTH_MOD_NOOP
 # Maximum allowed size for base64-encoded x-rh-identity header (bytes)
-DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE = 8192
+DEFAULT_RH_IDENTITY_MAX_HEADER_SIZE: Final[int] = 8192
 
 # Maximum allowed file upload size (bytes) - 100MB default
 # Protects against DoS attacks via large file uploads
-DEFAULT_MAX_FILE_UPLOAD_SIZE = 100 * 1024 * 1024  # 100 MB
-DEFAULT_JWT_UID_CLAIM = "user_id"
-DEFAULT_JWT_USER_NAME_CLAIM = "username"
+DEFAULT_MAX_FILE_UPLOAD_SIZE: Final[int] = 100 * 1024 * 1024  # 100 MB
+DEFAULT_JWT_UID_CLAIM: Final[str] = "user_id"
+DEFAULT_JWT_USER_NAME_CLAIM: Final[str] = "username"
 
 # MCP authorization header special values
-MCP_AUTH_KUBERNETES = "kubernetes"
-MCP_AUTH_CLIENT = "client"
-MCP_AUTH_OAUTH = "oauth"
+MCP_AUTH_KUBERNETES: Final[str] = "kubernetes"
+MCP_AUTH_CLIENT: Final[str] = "client"
+MCP_AUTH_OAUTH: Final[str] = "oauth"
 
 # Media type constants for streaming responses
-MEDIA_TYPE_JSON = "application/json"
-MEDIA_TYPE_TEXT = "text/plain"
-MEDIA_TYPE_EVENT_STREAM = "text/event-stream"
+MEDIA_TYPE_JSON: Final[str] = "application/json"
+MEDIA_TYPE_TEXT: Final[str] = "text/plain"
+MEDIA_TYPE_EVENT_STREAM: Final[str] = "text/event-stream"
 
 # Streaming event type constants
-LLM_TOKEN_EVENT = "token"
-LLM_TOOL_CALL_EVENT = "tool_call"
-LLM_TOOL_RESULT_EVENT = "tool_result"
-LLM_TURN_COMPLETE_EVENT = "turn_complete"
+LLM_TOKEN_EVENT: Final[str] = "token"
+LLM_TOOL_CALL_EVENT: Final[str] = "tool_call"
+LLM_TOOL_RESULT_EVENT: Final[str] = "tool_result"
+LLM_TURN_COMPLETE_EVENT: Final[str] = "turn_complete"
 
 # PostgreSQL connection constants
 # See: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-SSLMODE
-POSTGRES_DEFAULT_SSL_MODE = "prefer"
+POSTGRES_DEFAULT_SSL_MODE: Final[str] = "prefer"
 # See: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNECT-GSSENCMODE
-POSTGRES_DEFAULT_GSS_ENCMODE = "prefer"
+POSTGRES_DEFAULT_GSS_ENCMODE: Final[str] = "prefer"
 
 # cache constants
-CACHE_TYPE_MEMORY = "memory"
-CACHE_TYPE_SQLITE = "sqlite"
-CACHE_TYPE_POSTGRES = "postgres"
-CACHE_TYPE_NOOP = "noop"
+CACHE_TYPE_MEMORY: Final[str] = "memory"
+CACHE_TYPE_SQLITE: Final[str] = "sqlite"
+CACHE_TYPE_POSTGRES: Final[str] = "postgres"
+CACHE_TYPE_NOOP: Final[str] = "noop"
 
 # BYOK RAG
 # Default RAG type for bring-your-own-knowledge RAG configurations, that type
 # needs to be supported by Llama Stack
-DEFAULT_RAG_TYPE = "inline::faiss"
+DEFAULT_RAG_TYPE: Final[str] = "inline::faiss"
 
 # Default sentence transformer model for embedding generation, that type needs
 # to be supported by Llama Stack and configured properly in providers and
 # models sections
-DEFAULT_EMBEDDING_MODEL = "sentence-transformers/all-mpnet-base-v2"
+DEFAULT_EMBEDDING_MODEL: Final[str] = "sentence-transformers/all-mpnet-base-v2"
 
 # Default embedding vector dimension for the sentence transformer model
-DEFAULT_EMBEDDING_DIMENSION = 768
+DEFAULT_EMBEDDING_DIMENSION: Final[int] = 768
 
 # quota limiters constants
-USER_QUOTA_LIMITER = "user_limiter"
-CLUSTER_QUOTA_LIMITER = "cluster_limiter"
+USER_QUOTA_LIMITER: Final[str] = "user_limiter"
+CLUSTER_QUOTA_LIMITER: Final[str] = "cluster_limiter"
 
 # RAG as a tool constants
-DEFAULT_RAG_TOOL = "file_search"
-TOOL_RAG_MAX_CHUNKS = 10  # retrieved from RAG as a tool
+DEFAULT_RAG_TOOL: Final[str] = "file_search"
+TOOL_RAG_MAX_CHUNKS: Final[int] = 10  # retrieved from RAG as a tool
 
 # Inline RAG constants
-BYOK_RAG_MAX_CHUNKS = 10  # retrieved from BYOK RAG
-OKP_RAG_MAX_CHUNKS = 5  # retrieved from OKP RAG
+BYOK_RAG_MAX_CHUNKS: Final[int] = 10  # retrieved from BYOK RAG
+OKP_RAG_MAX_CHUNKS: Final[int] = 5  # retrieved from OKP RAG
 
 # Solr OKP constants
-SOLR_VECTOR_SEARCH_DEFAULT_K = 5
-SOLR_VECTOR_SEARCH_DEFAULT_SCORE_THRESHOLD = 0.3
-SOLR_VECTOR_SEARCH_DEFAULT_MODE = "hybrid"
+SOLR_VECTOR_SEARCH_DEFAULT_K: Final[int] = 5
+SOLR_VECTOR_SEARCH_DEFAULT_SCORE_THRESHOLD: Final[float] = 0.3
+SOLR_VECTOR_SEARCH_DEFAULT_MODE: Final[str] = "hybrid"
 
 # Internal Solr filter always applied to restrict results to chunk documents
-SOLR_CHUNK_FILTER_QUERY = "is_chunk:true"
+SOLR_CHUNK_FILTER_QUERY: Final[str] = "is_chunk:true"
 
 # SOLR OKP RAG - default base URL when okp.rhokp_url is unset in configuration
-RH_SERVER_OKP_DEFAULT_URL = "http://localhost:8081"
+RH_SERVER_OKP_DEFAULT_URL: Final[str] = "http://localhost:8081"
 
-SOLR_PROVIDER_ID = "okp_solr"
+SOLR_PROVIDER_ID: Final[str] = "okp_solr"
 
 # Solr default configuration values (can be overridden via environment variables)
-SOLR_DEFAULT_VECTOR_STORE_ID = "portal-rag"
-SOLR_DEFAULT_VECTOR_FIELD = "chunk_vector"
-SOLR_DEFAULT_CONTENT_FIELD = "chunk"
-SOLR_DEFAULT_EMBEDDING_MODEL = (
+SOLR_DEFAULT_VECTOR_STORE_ID: Final[str] = "portal-rag"
+SOLR_DEFAULT_VECTOR_FIELD: Final[str] = "chunk_vector"
+SOLR_DEFAULT_CONTENT_FIELD: Final[str] = "chunk"
+SOLR_DEFAULT_EMBEDDING_MODEL: Final[str] = (
     "sentence-transformers/ibm-granite/granite-embedding-30m-english"
 )
-SOLR_DEFAULT_EMBEDDING_DIMENSION = 384
+SOLR_DEFAULT_EMBEDDING_DIMENSION: Final[int] = 384
 
 # Default score multiplier for BYOK RAG vector stores
 DEFAULT_SCORE_MULTIPLIER = 1.0
 
 # Special RAG ID that activates the OKP provider when listed in rag.inline or rag.tool
-OKP_RAG_ID = "okp"
+OKP_RAG_ID: Final[str] = "okp"
 
 # Logging configuration constants
 # Environment variable name for configurable log level
-LIGHTSPEED_STACK_LOG_LEVEL_ENV_VAR = "LIGHTSPEED_STACK_LOG_LEVEL"
+LIGHTSPEED_STACK_LOG_LEVEL_ENV_VAR: Final[str] = "LIGHTSPEED_STACK_LOG_LEVEL"
 # Default log level when environment variable is not set
-DEFAULT_LOG_LEVEL = "INFO"
+DEFAULT_LOG_LEVEL: Final[str] = "INFO"
 # Default log format for plain-text logging in non-TTY environments
-DEFAULT_LOG_FORMAT = "%(asctime)s %(levelname)-8s %(name)s:%(lineno)d %(message)s"
+DEFAULT_LOG_FORMAT: Final[str] = (
+    "%(asctime)s %(levelname)-8s %(name)s:%(lineno)d %(message)s"
+)
 # Environment variable to force StreamHandler instead of RichHandler
 # Set to any non-empty value to disable RichHandler
-LIGHTSPEED_STACK_DISABLE_RICH_HANDLER_ENV_VAR = "LIGHTSPEED_STACK_DISABLE_RICH_HANDLER"
+LIGHTSPEED_STACK_DISABLE_RICH_HANDLER_ENV_VAR: Final[str] = (
+    "LIGHTSPEED_STACK_DISABLE_RICH_HANDLER"
+)
 
-DEFAULT_VIOLATION_MESSAGE = "I cannot process this request due to policy restrictions."
+DEFAULT_VIOLATION_MESSAGE: Final[str] = (
+    "I cannot process this request due to policy restrictions."
+)
 
 # Input size limits for API request validation
 # Maximum character length for the question field in /v1/infer requests (32 KiB)
-RLSAPI_V1_QUESTION_MAX_LENGTH = 32_768
+RLSAPI_V1_QUESTION_MAX_LENGTH: Final[int] = 32_768
 # Maximum character length for the serialized /v1/responses request body (64 KiB)
-RESPONSES_REQUEST_MAX_SIZE = 65_536
+RESPONSES_REQUEST_MAX_SIZE: Final[int] = 65_536
