@@ -116,6 +116,10 @@ def mock_llm_response_fixture(mocker: MockerFixture) -> None:
     mock_response.output = [
         _create_mock_response_output(mocker, "This is a test LLM response.")
     ]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
     _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
 
 
@@ -124,6 +128,10 @@ def mock_empty_llm_response_fixture(mocker: MockerFixture) -> None:
     """Mock responses.create to return empty output list."""
     mock_response = mocker.Mock()
     mock_response.output = []
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
     _setup_responses_mock(mocker, mocker.AsyncMock(return_value=mock_response))
 
 

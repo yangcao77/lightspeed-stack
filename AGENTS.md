@@ -57,6 +57,7 @@ src/
 - Package `__init__.py` files contain brief package descriptions
 - Central `constants.py` for shared constants with descriptive comments
 - Type aliases defined at module level for clarity
+- Use Final[type] as type hint for all constants
 
 #### Configuration
 - All config uses Pydantic models extending `ConfigurationBase`

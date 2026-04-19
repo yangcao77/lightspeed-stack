@@ -4465,6 +4465,15 @@ Microsoft Entra ID authentication attributes for Azure.
 | detail |  | The detail model containing error summary and cause |
 
 
+## Body_create_file_v1_files_post
+
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| file | string |  |
+
+
 ## ByokRag
 
 
@@ -4945,6 +4954,42 @@ Example:
 | Field | Type | Description |
 |-------|------|-------------|
 | status | object |  |
+
+
+## FileResponse
+
+
+Response model containing a file object.
+
+Attributes:
+    id: File ID.
+    filename: File name.
+    bytes: File size in bytes.
+    created_at: Unix timestamp when created.
+    purpose: File purpose.
+    object: Object type (always "file").
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | File ID |
+| filename | string | File name |
+| bytes | integer | File size in bytes |
+| created_at | integer | Unix timestamp when created |
+| purpose | string | File purpose |
+| object | string | Object type |
+
+
+## FileTooLargeResponse
+
+
+413 Content Too Large - File upload exceeds size limit.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status_code | integer | HTTP status code for the errors response |
+| detail |  | The detail model containing error summary and cause |
 
 
 ## ForbiddenResponse
@@ -7211,3 +7256,147 @@ User data collection configuration.
 | type | string |  |
 | input |  |  |
 | ctx | object |  |
+
+
+## VectorStoreCreateRequest
+
+
+Model representing a request to create a vector store.
+
+Attributes:
+    name: Name of the vector store.
+    embedding_model: Optional embedding model to use.
+    embedding_dimension: Optional embedding dimension.
+    chunking_strategy: Optional chunking strategy configuration.
+    provider_id: Optional vector store provider identifier.
+    metadata: Optional metadata dictionary for storing session information.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| name | string | Name of the vector store |
+| embedding_model |  | Embedding model to use for the vector store |
+| embedding_dimension |  | Dimension of the embedding vectors |
+| chunking_strategy |  | Chunking strategy configuration |
+| provider_id |  | Vector store provider identifier |
+| metadata |  | Metadata dictionary for storing session information |
+
+
+## VectorStoreFileCreateRequest
+
+
+Model representing a request to add a file to a vector store.
+
+Attributes:
+    file_id: ID of the file to add to the vector store.
+    attributes: Optional metadata key-value pairs (max 16 pairs).
+    chunking_strategy: Optional chunking strategy configuration.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| file_id | string | ID of the file to add to the vector store |
+| attributes |  | Set of up to 16 key-value pairs for storing additional information. Keys: strings (max 64 chars). Values: strings (max 512 chars), booleans, or numbers. |
+| chunking_strategy |  | Chunking strategy configuration for this file |
+
+
+## VectorStoreFileResponse
+
+
+Response model containing a vector store file object.
+
+Attributes:
+    id: Vector store file ID.
+    vector_store_id: ID of the vector store.
+    status: File processing status.
+    attributes: Optional metadata key-value pairs.
+    last_error: Optional error message if processing failed.
+    object: Object type (always "vector_store.file").
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Vector store file ID |
+| vector_store_id | string | ID of the vector store |
+| status | string | File processing status |
+| attributes |  | Set of up to 16 key-value pairs for storing additional information. Keys: strings (max 64 chars). Values: strings (max 512 chars), booleans, or numbers. |
+| last_error |  | Error message if processing failed |
+| object | string | Object type |
+
+
+## VectorStoreFilesListResponse
+
+
+Response model containing a list of vector store files.
+
+Attributes:
+    data: List of vector store file objects.
+    object: Object type (always "list").
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| data | array | List of vector store files |
+| object | string | Object type |
+
+
+## VectorStoreResponse
+
+
+Response model containing a single vector store.
+
+Attributes:
+    id: Vector store ID.
+    name: Vector store name.
+    created_at: Unix timestamp when created.
+    last_active_at: Unix timestamp of last activity.
+    expires_at: Optional Unix timestamp when it expires.
+    status: Vector store status.
+    usage_bytes: Storage usage in bytes.
+    metadata: Optional metadata dictionary for storing session information.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Vector store ID |
+| name | string | Vector store name |
+| created_at | integer | Unix timestamp when created |
+| last_active_at |  | Unix timestamp of last activity |
+| expires_at |  | Unix timestamp when it expires |
+| status | string | Vector store status |
+| usage_bytes | integer | Storage usage in bytes |
+| metadata |  | Metadata dictionary for storing session information |
+
+
+## VectorStoreUpdateRequest
+
+
+Model representing a request to update a vector store.
+
+Attributes:
+    name: New name for the vector store.
+    expires_at: Optional expiration timestamp.
+    metadata: Optional metadata dictionary for storing session information.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| name |  | New name for the vector store |
+| expires_at |  | Unix timestamp when the vector store should expire |
+| metadata |  | Metadata dictionary for storing session information |
+
+
+## VectorStoresListResponse
+
+
+Response model containing a list of vector stores.
+
+Attributes:
+    data: List of vector store objects.
+    object: Object type (always "list").
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| data | array | List of vector stores |
+| object | string | Object type |

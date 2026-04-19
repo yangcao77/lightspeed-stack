@@ -115,6 +115,10 @@ def _setup_responses_mock(
     """Set up responses.create mock with the given response text."""
     mock_response = mocker.Mock()
     mock_response.output = [_create_mock_response_output(mocker, response_text)]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
 
     mock_responses = mocker.Mock()
     mock_responses.create = mocker.AsyncMock(return_value=mock_response)
@@ -303,6 +307,10 @@ async def test_rlsapi_v1_infer_fallback_response_empty_output(
 
     mock_response = mocker.Mock()
     mock_response.output = []
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
 
     mock_responses = mocker.Mock()
     mock_responses.create = mocker.AsyncMock(return_value=mock_response)
@@ -342,6 +350,10 @@ async def test_rlsapi_v1_infer_input_source_combination(
 
     mock_response = mocker.Mock()
     mock_response.output = [_create_mock_response_output(mocker, "response text")]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
 
     mock_responses = mocker.Mock()
     mock_responses.create = mocker.AsyncMock(return_value=mock_response)
@@ -401,6 +413,10 @@ async def test_rlsapi_v1_infer_no_mcp_servers_passes_empty_tools(
 
     mock_response = mocker.Mock()
     mock_response.output = [_create_mock_response_output(mocker, "response text")]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
 
     mock_responses = mocker.Mock()
     mock_responses.create = mocker.AsyncMock(return_value=mock_response)
@@ -442,6 +458,10 @@ async def test_rlsapi_v1_infer_mcp_tools_passed_to_llm(
 
     mock_response = mocker.Mock()
     mock_response.output = [_create_mock_response_output(mocker, "enriched response")]
+    mock_usage = mocker.Mock()
+    mock_usage.input_tokens = 10
+    mock_usage.output_tokens = 5
+    mock_response.usage = mock_usage
 
     mock_responses = mocker.Mock()
     mock_responses.create = mocker.AsyncMock(return_value=mock_response)
@@ -519,7 +539,7 @@ async def test_rlsapi_v1_infer_skip_rag(
 @pytest.mark.parametrize(
     "json",
     (
-        ({"question": "?" * 10_241}),
+        ({"question": "?" * (constants.RLSAPI_V1_QUESTION_MAX_LENGTH + 1)}),
         ({"question": "Q", "context": {"stdin": "a" * 65_537}}),
         ({"question": "Q", "context": {"attachments": {"contents": "A" * 65_537}}}),
         ({"question": "Q", "context": {"terminal": {"output": "T" * 65_537}}}),

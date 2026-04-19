@@ -26,6 +26,8 @@ class InferenceEventData:  # pylint: disable=too-many-instance-attributes
     system_os: str
     system_version: str
     system_arch: str
+    input_tokens: int = 0
+    output_tokens: int = 0
 
 
 def build_inference_event(data: InferenceEventData) -> dict[str, Any]:
@@ -47,8 +49,7 @@ def build_inference_event(data: InferenceEventData) -> dict[str, Any]:
         "deployment": configuration.deployment_environment,
         "org_id": data.org_id,
         "system_id": data.system_id,
-        # Token counting not yet implemented in lightspeed-stack; rlsapi uses 0 as default
-        "total_llm_tokens": 0,
+        "total_llm_tokens": data.input_tokens + data.output_tokens,
         "request_id": data.request_id,
         "cla_version": data.cla_version,
         "system_os": data.system_os,
