@@ -2,6 +2,9 @@
 
 from typing import Final
 
+# Use Final[type] as type hint for all constants to ensure that type checkers (Mypy etc.)
+# will be able to detect assignements to such constants.
+
 # Minimal and maximal supported Llama Stack version
 MINIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.2.17"
 MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.6.0"
