@@ -1,8 +1,10 @@
 """Constants used in business logic."""
 
+from typing import Final
+
 # Minimal and maximal supported Llama Stack version
-MINIMAL_SUPPORTED_LLAMA_STACK_VERSION = "0.2.17"
-MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION = "0.6.0"
+MINIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.2.17"
+MAXIMAL_SUPPORTED_LLAMA_STACK_VERSION: Final[str] = "0.6.0"
 
 UNABLE_TO_PROCESS_RESPONSE = "Unable to process this request"
 
