@@ -140,6 +140,7 @@ setuptools==82.0.1
     #   googleapis-common-protos
     #   greenlet
     #   grpc-google-iam-v1
+    #   joserfc
     #   llama-stack
     #   llama-stack-api
     #   markupsafe
