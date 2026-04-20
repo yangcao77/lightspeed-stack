@@ -111,7 +111,7 @@ infer_responses: dict[int | str, dict[str, Any]] = {
     ),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["model"]),
-    413: PromptTooLongResponse.openapi_response(),
+    413: PromptTooLongResponse.openapi_response(examples=["context window exceeded"]),
     422: UnprocessableEntityResponse.openapi_response(),
     429: QuotaExceededResponse.openapi_response(),
     500: InternalServerErrorResponse.openapi_response(examples=["generic"]),

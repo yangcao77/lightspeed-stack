@@ -2304,6 +2304,16 @@ class PromptTooLongResponse(AbstractErrorResponse):
         "json_schema_extra": {
             "examples": [
                 {
+                    "label": "context window exceeded",
+                    "detail": {
+                        "response": "Context window exceeded",
+                        "cause": (
+                            "The input exceeds the context window size "
+                            "of model 'gpt-4o-mini'."
+                        ),
+                    },
+                },
+                {
                     "label": "prompt too long",
                     "detail": {
                         "response": "Prompt is too long",
@@ -2318,22 +2328,18 @@ class PromptTooLongResponse(AbstractErrorResponse):
         self,
         *,
         response: str = "Prompt is too long",
-        cause: str | None = None,
         model: str | None = None,
     ) -> None:
         """Initialize a PromptTooLongResponse.
 
         Args:
             response: Short summary of the error. Defaults to "Prompt is too long".
-            cause: Detailed explanation of what caused the error. If not provided,
-                   will be generated to include model information if model is provided.
             model: The model identifier for which the prompt is too long.
         """
-        if cause is None:
-            if model:
-                cause = f"The input exceeds the context window size of model '{model}'."
-            else:
-                cause = "The prompt exceeds the maximum allowed length."
+        if model:
+            cause = f"The input exceeds the context window size of model '{model}'."
+        else:
+            cause = "The prompt exceeds the maximum allowed length."
 
         super().__init__(
             response=response,

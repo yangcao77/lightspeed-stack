@@ -723,9 +723,7 @@ class TestPromptTooLongResponse:
 
     def test_constructor_with_default_response(self) -> None:
         """Test PromptTooLongResponse with default response."""
-        response = PromptTooLongResponse(
-            cause="The prompt exceeds the maximum allowed length."
-        )
+        response = PromptTooLongResponse()
         assert isinstance(response, AbstractErrorResponse)
         assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
         assert isinstance(response.detail, DetailModel)
@@ -746,7 +744,7 @@ class TestPromptTooLongResponse:
 
         # Verify example count matches schema examples count
         assert len(examples) == expected_count
-        assert expected_count == 1
+        assert expected_count == 2
 
         # Verify example structure
         assert "prompt too long" in examples

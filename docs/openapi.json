@@ -3456,6 +3456,26 @@
                             }
                         }
                     },
+                    "413": {
+                        "description": "Prompt is too long",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptTooLongResponse"
+                                },
+                                "examples": {
+                                    "context window exceeded": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The input exceeds the context window size of model 'gpt-4o-mini'.",
+                                                "response": "Context window exceeded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Request validation failed",
                         "content": {
@@ -3735,6 +3755,26 @@
                                             "detail": {
                                                 "cause": "Model with ID gpt-4-turbo is not configured",
                                                 "response": "Model not found"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "413": {
+                        "description": "Prompt is too long",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptTooLongResponse"
+                                },
+                                "examples": {
+                                    "context window exceeded": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The input exceeds the context window size of model 'gpt-4o-mini'.",
+                                                "response": "Context window exceeded"
                                             }
                                         }
                                     }
@@ -6070,11 +6110,11 @@
                                     "$ref": "#/components/schemas/PromptTooLongResponse"
                                 },
                                 "examples": {
-                                    "prompt too long": {
+                                    "context window exceeded": {
                                         "value": {
                                             "detail": {
-                                                "cause": "The prompt exceeds the maximum allowed length.",
-                                                "response": "Prompt is too long"
+                                                "cause": "The input exceeds the context window size of model 'gpt-4o-mini'.",
+                                                "response": "Context window exceeded"
                                             }
                                         }
                                     }
@@ -6348,11 +6388,11 @@
                                     "$ref": "#/components/schemas/PromptTooLongResponse"
                                 },
                                 "examples": {
-                                    "prompt too long": {
+                                    "context window exceeded": {
                                         "value": {
                                             "detail": {
-                                                "cause": "The prompt exceeds the maximum allowed length.",
-                                                "response": "Prompt is too long"
+                                                "cause": "The input exceeds the context window size of model 'gpt-4o-mini'.",
+                                                "response": "Context window exceeded"
                                             }
                                         }
                                     }
@@ -12514,6 +12554,13 @@
                 "title": "PromptTooLongResponse",
                 "description": "413 Payload Too Large - Prompt is too long.",
                 "examples": [
+                    {
+                        "detail": {
+                            "cause": "The input exceeds the context window size of model 'gpt-4o-mini'.",
+                            "response": "Context window exceeded"
+                        },
+                        "label": "context window exceeded"
+                    },
                     {
                         "detail": {
                             "cause": "The prompt exceeds the maximum allowed length.",
