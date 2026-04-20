@@ -2363,38 +2363,63 @@ class FileTooLargeResponse(AbstractErrorResponse):
                     "label": "backend rejection",
                     "detail": {
                         "response": "Invalid file upload",
-                        "cause": "File upload rejected by Llama Stack: File size exceeds limit",
+                        "cause": "File upload rejected: File size exceeds limit",
                     },
                 },
             ]
         }
     }
 
-    def __init__(
-        self,
+    @classmethod
+    def exceeds_local_limit(
+        cls,
         *,
+        file_size: int,
+        max_size: int,
         response: str = "File too large",
-        cause: str | None = None,
-        file_size: int | None = None,
-        max_size: int | None = None,
-    ) -> None:
-        """Initialize a FileTooLargeResponse.
+    ) -> "FileTooLargeResponse":
+        """Build a 413 when measured bytes exceed the configured upload maximum.
 
-        Args:
-            response: Short summary of the error. Defaults to "File too large".
-            cause: Detailed explanation. If not provided, will be generated from
-                file_size and max_size.
-            file_size: The size of the uploaded file in bytes.
-            max_size: The maximum allowed file size in bytes.
+        Parameters:
+            file_size: Measured size of the upload in bytes.
+            max_size: Configured maximum allowed size in bytes.
+            response: Short summary shown to the client.
+        Returns:
+            FileTooLargeResponse with a cause that includes both sizes and the size in MB (floored).
         """
-        if cause is None and file_size is not None and max_size is not None:
-            cause = (
-                f"File size {file_size} bytes exceeds maximum allowed "
-                f"size of {max_size} bytes ({max_size // (1024 * 1024)} MB)"
-            )
-        elif cause is None:
-            cause = "The uploaded file exceeds the maximum allowed size."
+        cause = (
+            f"File size {file_size} bytes exceeds maximum allowed "
+            f"size of {max_size} bytes ({max_size // (1024 * 1024)} MB)"
+        )
+        return cls(response=response, cause=cause)
 
+    @classmethod
+    def from_backend_rejection(
+        cls,
+        *,
+        message: str,
+        response: str = "Invalid file upload",
+    ) -> "FileTooLargeResponse":
+        """
+        Build a 413 when Llama Stack rejects the upload after we sent it.
+
+        Parameters:
+            message: Error text from the backend.
+            response: Short summary shown to the client.
+
+        Returns:
+            FileTooLargeResponse whose cause prefixes the message with a fixed label.
+        """
+        cause = f"File upload rejected: {message}"
+        return cls(response=response, cause=cause)
+
+    def __init__(self, *, response: str, cause: str) -> None:
+        """Create a 413 Content Too Large error with explicit summary and cause.
+
+        Parameters:
+            response: Short summary of the error.
+            cause: Detailed explanation for operators and clients.
+        """
         super().__init__(
             response=response,
             cause=cause,

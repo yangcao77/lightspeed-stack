@@ -2598,7 +2598,7 @@
                                     "backend rejection": {
                                         "value": {
                                             "detail": {
-                                                "cause": "File upload rejected by Llama Stack: File size exceeds limit",
+                                                "cause": "File upload rejected: File size exceeds limit",
                                                 "response": "Invalid file upload"
                                             }
                                         }
@@ -9423,7 +9423,7 @@
                     },
                     {
                         "detail": {
-                            "cause": "File upload rejected by Llama Stack: File size exceeds limit",
+                            "cause": "File upload rejected: File size exceeds limit",
                             "response": "Invalid file upload"
                         },
                         "label": "backend rejection"
