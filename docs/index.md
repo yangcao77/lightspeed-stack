@@ -7,7 +7,7 @@ nav_order: 1
 
 About The Project
 
-Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to
+Lightspeed Core Stack (LCS) is an AI-powered assistant that provides answers to
 product questions using backend LLM services, agents, and RAG databases.
 
 ![Logo](https://lightspeed-core.github.io/lightspeed-stack/logo.jpg)
