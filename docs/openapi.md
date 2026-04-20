@@ -99,7 +99,6 @@ Handle GET requests to the root ("/") endpoint and returns the static HTML index
 | 401         | Unauthorized        | [UnauthorizedResponse](#unauthorizedresponse) |
 | 403         | Permission denied   | [ForbiddenResponse](#forbiddenresponse)       |
 
-Examples
 
 ```json
 {
@@ -362,7 +361,7 @@ available tools from all configured MCP servers.
 ### Parameters:
 - request: The incoming HTTP request (used by middleware).
 - auth: Authentication tuple from the auth dependency (used by middleware).
-
+- mcp_headers: Headers that should be passed to MCP servers.
 ### Raises:
 - HTTPException: If unable to connect to the Llama Stack server or if tool
   retrieval fails for any reason.
@@ -709,7 +708,7 @@ its toolgroup from Llama Stack. Only servers registered via the API
 can be deleted; statically configured servers cannot be removed.
 
 ### Parameters:
-- request: Model containing attributes to dynamically registering an MCP server.
+- request: The incoming HTTP request (used by middleware).
 - auth: Authentication tuple from the auth dependency (used by middleware).
 - name: MCP server name
 
@@ -770,7 +769,6 @@ Examples
 
 
 
-
 ```json
 {
   "detail": {
@@ -813,6 +811,18 @@ Examples
   "detail": {
     "cause": "Connection error while trying to reach backend service.",
     "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+    "response": "Unable to connect to Kubernetes API"
   }
 }
 ```
@@ -905,6 +915,16 @@ Examples
 }
 ```
 
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+    "response": "Unable to connect to Kubernetes API"
+  }
+}
+```
 ## GET `/v1/providers`
 
 > **Providers Endpoint Handler**
@@ -994,6 +1014,14 @@ Examples
 }
 ```
 
+```json
+{
+  "detail": {
+    "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+    "response": "Unable to connect to Kubernetes API"
+  }
+}
+```
 ## GET `/v1/providers/{provider_id}`
 
 > **Get Provider Endpoint Handler**
@@ -1076,7 +1104,6 @@ Examples
 ```
 
 
-
 ```json
 {
   "detail": {
@@ -1105,6 +1132,634 @@ Examples
 }
 ```
 
+
+
+```json
+{
+  "detail": {
+    "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+    "response": "Unable to connect to Kubernetes API"
+  }
+}
+```
+## GET `/v1/prompts`
+
+> **List Prompts Handler**
+
+Handle requests to the GET /prompts endpoint.
+
+Process GET requests that list all stored prompt templates from the Llama
+Stack service. For example:
+
+    curl http://localhost:8080/v1/prompts
+
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Raises:
+- HTTPException: If configuration is not loaded, if unable to connect to
+  Llama Stack, or if the prompts API returns an error response.
+
+### Returns:
+- PromptsListResponse: An object containing the list of prompts.
+
+
+
+
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [PromptsListResponse](#promptslistresponse)                 |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to list or read stored prompts (missing permission: read_prompts).",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+## POST `/v1/prompts`
+
+> **Create Prompt Handler**
+
+Handle requests to the POST /prompts endpoint.
+
+Process requests to create a stored prompt template in Llama Stack. The
+body must include the prompt text and may include template variable names.
+For example:
+
+    curl -X POST http://localhost:8080/v1/prompts \\
+      -H 'Content-Type: application/json' \\
+      -d '{"prompt": "Hello {{name}}", "variables": ["name"]}'
+
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- body: Prompt creation parameters.
+
+### Raises:
+- HTTPException: If configuration is not loaded, if unable to connect to
+  Llama Stack, or if the prompts API returns an error response.
+
+### Returns:
+- PromptResourceResponse: The created prompt as returned by Llama Stack.
+
+
+
+
+
+### 📦 Request Body 
+
+[PromptCreateRequest](#promptcreaterequest)
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [PromptResourceResponse](#promptresourceresponse)           |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 404         | Resource not found    | [NotFoundResponse](#notfoundresponse)                       |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+| 422         | Validation Error      | [HTTPValidationError](#httpvalidationerror)                 |
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+## GET `/v1/prompts/{prompt_id}`
+
+> **Get Prompt Handler**
+
+Handle requests to the GET /prompts/{prompt_id} endpoint.
+
+Process GET requests to retrieve a single prompt by identifier. The
+``version`` query parameter is optional; when omitted, the latest version is
+returned. For example:
+
+    curl http://localhost:8080/v1/prompts/pmpt_abc123?version=1
+
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- prompt_id: The Llama Stack prompt identifier.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- version: Optional version number (latest when omitted).
+
+### Raises:
+- HTTPException: If configuration is not loaded, if the prompt is not
+  found, if unable to connect to Llama Stack, or if the prompts API returns
+  an error response.
+
+### Returns:
+- PromptResourceResponse: The requested prompt object.
+
+
+
+### 🔗 Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| prompt_id | string | True |  |
+| version |  | False |  |
+
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [PromptResourceResponse](#promptresourceresponse)           |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 404         | Resource not found    | [NotFoundResponse](#notfoundresponse)                       |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+| 422         | Validation Error      | [HTTPValidationError](#httpvalidationerror)                 |
+
+
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to list or read stored prompts (missing permission: read_prompts).",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Prompt with ID pmpt_0123456789abcdef0123456789abcdef01234567 does not exist",
+    "response": "Prompt not found"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+## PUT `/v1/prompts/{prompt_id}`
+
+> **Update Prompt Handler**
+
+Handle requests to the PUT /prompts/{prompt_id} endpoint.
+
+Process requests to update a stored prompt; Llama Stack increments the
+version. The body includes the new text, the current version being
+replaced, and optional fields such as ``set_as_default`` and ``variables``.
+For example:
+
+    curl -X PUT http://localhost:8080/v1/prompts/pmpt_abc123 \\
+      -H 'Content-Type: application/json' \\
+      -d '{"prompt": "Hi", "version": 1, "set_as_default": true}'
+
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- prompt_id: The Llama Stack prompt identifier.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+- body: Prompt update parameters.
+
+### Raises:
+- HTTPException: If configuration is not loaded, if the prompt is not
+  found, if unable to connect to Llama Stack, or if the prompts API returns
+  an error response.
+
+### Returns:
+- PromptResourceResponse: The updated prompt object returned by Llama Stack.
+
+
+
+### 🔗 Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| prompt_id | string | True |  |
+
+
+### 📦 Request Body 
+
+[PromptUpdateRequest](#promptupdaterequest)
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [PromptResourceResponse](#promptresourceresponse)           |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 404         | Resource not found    | [NotFoundResponse](#notfoundresponse)                       |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+| 422         | Validation Error      | [HTTPValidationError](#httpvalidationerror)                 |
+
+Examples
+
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Prompt with ID pmpt_0123456789abcdef0123456789abcdef01234567 does not exist",
+    "response": "Prompt not found"
+  }
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
+## DELETE `/v1/prompts/{prompt_id}`
+
+> **Delete Prompt Handler**
+
+Handle requests to the DELETE /prompts/{prompt_id} endpoint.
+
+Process requests to delete a stored prompt in Llama Stack. The response
+always uses HTTP 200 with a JSON body indicating whether the deletion
+succeeded (same pattern as deleting a conversation in ``/v2``). For example:
+
+    curl -X DELETE http://localhost:8080/v1/prompts/pmpt_abc123
+
+When the prompt does not exist, the response still returns 200 with
+``deleted`` set to false in the body.
+
+### Parameters:
+- request: The incoming HTTP request (used by middleware).
+- prompt_id: The Llama Stack prompt identifier.
+- auth: Authentication tuple from the auth dependency (used by middleware).
+
+### Raises:
+- HTTPException: If configuration is not loaded, if unable to connect to
+  Llama Stack, or if the prompts API returns an error response.
+
+### Returns:
+- PromptDeleteResponse: An object describing whether the prompt was
+  deleted and a human-readable message.
+
+
+
+### 🔗 Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| prompt_id | string | True |  |
+
+
+### ✅ Responses
+
+| Status Code | Description           | Component                                                   |
+|-------------|-----------------------|-------------------------------------------------------------|
+| 200         | Successful response   | [PromptDeleteResponse](#promptdeleteresponse)               |
+| 401         | Unauthorized          | [UnauthorizedResponse](#unauthorizedresponse)               |
+| 403         | Permission denied     | [ForbiddenResponse](#forbiddenresponse)                     |
+| 500         | Internal server error | [InternalServerErrorResponse](#internalservererrorresponse) |
+| 503         | Service unavailable   | [ServiceUnavailableResponse](#serviceunavailableresponse)   |
+| 422         | Validation Error      | [HTTPValidationError](#httpvalidationerror)                 |
+
+Examples
+
+
+
+
+
+```json
+{
+  "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+  "response": "Prompt deleted successfully",
+  "success": true
+}
+```
+
+
+
+
+```json
+{
+  "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+  "response": "Prompt cannot be deleted",
+  "success": false
+}
+```
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No Authorization header found",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "No token found in Authorization header",
+    "response": "Missing or invalid credentials provided by client"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 is not authorized to access this endpoint.",
+    "response": "User does not have permission to access this endpoint"
+  }
+}
+```
+
+
+
+
+```json
+{
+  "detail": {
+    "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+    "response": "User does not have permission to perform this action"
+  }
+}
+```
+
+```json
+{
+  "detail": {
+    "cause": "Lightspeed Stack configuration has not been initialized.",
+    "response": "Configuration is not loaded"
+  }
+}
+```
+
+
+```json
+{
+  "detail": {
+    "cause": "Connection error while trying to reach backend service.",
+    "response": "Unable to connect to Llama Stack"
+  }
+}
+```
 ## GET `/v1/rags`
 
 > **Rags Endpoint Handler**
