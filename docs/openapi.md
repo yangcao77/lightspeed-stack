@@ -6262,6 +6262,46 @@ Useful resources:
 | ca_cert_path |  | Path to CA certificate |
 
 
+## PromptCreateRequest
+
+
+Request body to create a stored prompt template in Llama Stack.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| prompt | string | Prompt text with variable placeholders |
+| variables |  | Variable names allowed in the template |
+
+
+## PromptDeleteResponse
+
+
+Result of deleting a stored prompt (always HTTP 200, like conversations v2).
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| prompt_id | string | Prompt identifier that was passed to delete. |
+| success | boolean | Whether Llama Stack deleted the prompt. |
+| response | string | Human-readable outcome. |
+
+
+## PromptResourceResponse
+
+
+A stored prompt template as returned by Llama Stack.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| prompt_id | string | Prompt identifier from Llama Stack |
+| version | integer | Version number for this prompt |
+| is_default |  | Whether this version is the default |
+| prompt |  | Prompt text with placeholders |
+| variables |  | Variable names used in the template |
+
+
 ## PromptTooLongResponse
 
 
@@ -6272,6 +6312,31 @@ Useful resources:
 |-------|------|-------------|
 | status_code | integer | HTTP status code for the errors response |
 | detail |  | The detail model containing error summary and cause |
+
+
+## PromptUpdateRequest
+
+
+Request body to update a stored prompt (creates a new version).
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| prompt | string | Updated prompt text |
+| version | integer | Current version being updated |
+| set_as_default |  | Whether the new version becomes the default |
+| variables |  | Updated allowed variable names |
+
+
+## PromptsListResponse
+
+
+List of stored prompt templates returned by Llama Stack.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| data | array | Prompt entries (as returned by Llama Stack list) |
 
 
 ## ProviderHealthStatus
