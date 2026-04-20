@@ -7,7 +7,8 @@ nav_order: 1
 
 About The Project
 
-Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to product questions using backend LLM services, agents, and RAG databases.
+Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to
+product questions using backend LLM services, agents, and RAG databases.
 
 ![Logo](https://lightspeed-core.github.io/lightspeed-stack/logo.jpg)
 
@@ -21,8 +22,6 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 
 [Authentication and Authorization](https://lightspeed-core.github.io/lightspeed-stack/auth.html)
 
-
-
 ## Installation and configuration
 
 [Deployment Guide](https://lightspeed-core.github.io/lightspeed-stack/deployment_guide.html)
@@ -33,12 +32,9 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 
 [Configuration](https://lightspeed-core.github.io/lightspeed-stack/config.html)
 
-
-
 ## Info for developers
 
 [Contributing guide](https://lightspeed-core.github.io/lightspeed-stack/contributing_guide.html)
-
 
 ## API
 
@@ -48,15 +44,11 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 
 [A2A [Agent-to-Agent] Protocol](https://lightspeed-core.github.io/lightspeed-stack/a2a_protocol.html)
 
-
-
-
 ## RAG and BYOK
 
 [RAG Configuration Guide](https://lightspeed-core.github.io/lightspeed-stack/rag_guide.html)
 
 [BYOK guide](https://lightspeed-core.github.io/lightspeed-stack/byok_guide.html)
-
 
 ## Other features
 
@@ -66,15 +58,11 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 
 [Database structure](https://lightspeed-core.github.io/lightspeed-stack/DB/index.html)
 
-
-
 ## Design documents
 
 [Conversation compaction](https://lightspeed-core.github.io/lightspeed-stack/design/conversation-compaction/conversation-compaction.html)
 
 [Supporting backport changes for releases](https://lightspeed-core.github.io/lightspeed-stack/design/supporting-backport-changes-for-releases/supporting-backport-changes-for-releases.html)
-
-
 
 ## Testing
 
@@ -84,7 +72,6 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 
 [List of e2e scenarios](https://lightspeed-core.github.io/lightspeed-stack/e2e_scenarios.html)
 
-
 ## Demos
 
 [LCORE introduction](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/lcore.html#/)
@@ -92,4 +79,3 @@ Lightspeed Core Stack (LCS) is an AI powered assistant that provides answers to 
 [CodeRabbitAI](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/coderabbit.html#/)
 
 [Lunch and Learn 2026](https://lightspeed-core.github.io/lightspeed-stack/demos/lcore/LnL_2026.html#/)
-

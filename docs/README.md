@@ -3,8 +3,6 @@
 Welcome. This directory is published via GitHub Pages.
 See the full documentation at [`../README.md`](../README.md) or browse sub-pages in `docs/`.
 
-
-
 ![Logo](https://lightspeed-core.github.io/lightspeed-stack/logo.jpg)
 
 ## Overview
@@ -17,8 +15,6 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [Authentication and Authorization](https://lightspeed-core.github.io/lightspeed-stack/auth.html)
 
-
-
 ## Installation and configuration
 
 [Deployment Guide](https://lightspeed-core.github.io/lightspeed-stack/deployment_guide.html)
@@ -29,12 +25,9 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [Configuration](https://lightspeed-core.github.io/lightspeed-stack/config.html)
 
-
-
 ## Info for developers
 
 [Contributing guide](https://lightspeed-core.github.io/lightspeed-stack/contributing_guide.html)
-
 
 ## API
 
@@ -44,15 +37,11 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [A2A [Agent-to-Agent] Protocol](https://lightspeed-core.github.io/lightspeed-stack/a2a_protocol.html)
 
-
-
-
 ## RAG and BYOK
 
 [RAG Configuration Guide](https://lightspeed-core.github.io/lightspeed-stack/rag_guide.html)
 
 [BYOK guide](https://lightspeed-core.github.io/lightspeed-stack/byok_guide.html)
-
 
 ## Other features
 
@@ -62,15 +51,11 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [Database structure](https://lightspeed-core.github.io/lightspeed-stack/DB/index.html)
 
-
-
 ## Design documents
 
 [Conversation compaction](https://lightspeed-core.github.io/lightspeed-stack/design/conversation-compaction/conversation-compaction.html)
 
 [Supporting backport changes for releases](https://lightspeed-core.github.io/lightspeed-stack/design/supporting-backport-changes-for-releases/supporting-backport-changes-for-releases.html)
-
-
 
 ## Testing
 
@@ -79,7 +64,6 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 [End-to-End Tests Guide](https://lightspeed-core.github.io/lightspeed-stack/e2e_testing.html)
 
 [List of e2e scenarios](https://lightspeed-core.github.io/lightspeed-stack/e2e_scenarios.html)
-
 
 ## Demos
 
