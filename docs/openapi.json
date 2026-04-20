@@ -1526,6 +1526,795 @@
                 }
             }
         },
+        "/v1/prompts": {
+            "get": {
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "List Prompts Handler",
+                "description": "Handle requests to the GET /prompts endpoint.\n\nProcess GET requests that list all stored prompt templates from the Llama\nStack service. For example:\n\n    curl http://localhost:8080/v1/prompts\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Raises:\n- HTTPException: If configuration is not loaded, if unable to connect to\n  Llama Stack, or if the prompts API returns an error response.\n\n### Returns:\n- PromptsListResponse: An object containing the list of prompts.",
+                "operationId": "list_prompts_handler_v1_prompts_get",
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptsListResponse"
+                                },
+                                "example": {
+                                    "data": [
+                                        {
+                                            "is_default": true,
+                                            "prompt": "Summarize: {{text}}",
+                                            "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                            "variables": [
+                                                "text"
+                                            ],
+                                            "version": 1
+                                        }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    },
+                                    "prompt read": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 does not have permission to list or read stored prompts (missing permission: read_prompts).",
+                                                "response": "User does not have permission to perform this action"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Create Prompt Handler",
+                "description": "Handle requests to the POST /prompts endpoint.\n\nProcess requests to create a stored prompt template in Llama Stack. The\nbody must include the prompt text and may include template variable names.\nFor example:\n\n    curl -X POST http://localhost:8080/v1/prompts \\\\\n      -H 'Content-Type: application/json' \\\\\n      -d '{\"prompt\": \"Hello {{name}}\", \"variables\": [\"name\"]}'\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- body: Prompt creation parameters.\n\n### Raises:\n- HTTPException: If configuration is not loaded, if unable to connect to\n  Llama Stack, or if the prompts API returns an error response.\n\n### Returns:\n- PromptResourceResponse: The created prompt as returned by Llama Stack.",
+                "operationId": "create_prompt_handler_v1_prompts_post",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PromptCreateRequest"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptResourceResponse"
+                                },
+                                "example": {
+                                    "is_default": true,
+                                    "prompt": "Summarize: {{text}}",
+                                    "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                    "variables": [
+                                        "text"
+                                    ],
+                                    "version": 1
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                },
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                },
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    },
+                                    "prompt manage": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+                                                "response": "User does not have permission to perform this action"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                },
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/prompts/{prompt_id}": {
+            "get": {
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Get Prompt Handler",
+                "description": "Handle requests to the GET /prompts/{prompt_id} endpoint.\n\nProcess GET requests to retrieve a single prompt by identifier. The\n``version`` query parameter is optional; when omitted, the latest version is\nreturned. For example:\n\n    curl http://localhost:8080/v1/prompts/pmpt_abc123?version=1\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- prompt_id: The Llama Stack prompt identifier.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- version: Optional version number (latest when omitted).\n\n### Raises:\n- HTTPException: If configuration is not loaded, if the prompt is not\n  found, if unable to connect to Llama Stack, or if the prompts API returns\n  an error response.\n\n### Returns:\n- PromptResourceResponse: The requested prompt object.",
+                "operationId": "get_prompt_handler_v1_prompts__prompt_id__get",
+                "parameters": [
+                    {
+                        "name": "prompt_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Prompt Id"
+                        }
+                    },
+                    {
+                        "name": "version",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "type": "integer"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ],
+                            "title": "Version"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptResourceResponse"
+                                },
+                                "example": {
+                                    "is_default": true,
+                                    "prompt": "Summarize: {{text}}",
+                                    "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                    "variables": [
+                                        "text"
+                                    ],
+                                    "version": 1
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    },
+                                    "prompt read": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 does not have permission to list or read stored prompts (missing permission: read_prompts).",
+                                                "response": "User does not have permission to perform this action"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "prompt": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Prompt with ID pmpt_0123456789abcdef0123456789abcdef01234567 does not exist",
+                                                "response": "Prompt not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Update Prompt Handler",
+                "description": "Handle requests to the PUT /prompts/{prompt_id} endpoint.\n\nProcess requests to update a stored prompt; Llama Stack increments the\nversion. The body includes the new text, the current version being\nreplaced, and optional fields such as ``set_as_default`` and ``variables``.\nFor example:\n\n    curl -X PUT http://localhost:8080/v1/prompts/pmpt_abc123 \\\\\n      -H 'Content-Type: application/json' \\\\\n      -d '{\"prompt\": \"Hi\", \"version\": 1, \"set_as_default\": true}'\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- prompt_id: The Llama Stack prompt identifier.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n- body: Prompt update parameters.\n\n### Raises:\n- HTTPException: If configuration is not loaded, if the prompt is not\n  found, if unable to connect to Llama Stack, or if the prompts API returns\n  an error response.\n\n### Returns:\n- PromptResourceResponse: The updated prompt object returned by Llama Stack.",
+                "operationId": "update_prompt_handler_v1_prompts__prompt_id__put",
+                "parameters": [
+                    {
+                        "name": "prompt_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Prompt Id"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/PromptUpdateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptResourceResponse"
+                                },
+                                "example": {
+                                    "is_default": true,
+                                    "prompt": "Summarize: {{text}}",
+                                    "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                    "variables": [
+                                        "text"
+                                    ],
+                                    "version": 1
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    },
+                                    "prompt manage": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+                                                "response": "User does not have permission to perform this action"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Resource not found",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "prompt": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Prompt with ID pmpt_0123456789abcdef0123456789abcdef01234567 does not exist",
+                                                "response": "Prompt not found"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotFoundResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "prompts"
+                ],
+                "summary": "Delete Prompt Handler",
+                "description": "Handle requests to the DELETE /prompts/{prompt_id} endpoint.\n\nProcess requests to delete a stored prompt in Llama Stack. The response\nalways uses HTTP 200 with a JSON body indicating whether the deletion\nsucceeded (same pattern as deleting a conversation in ``/v2``). For example:\n\n    curl -X DELETE http://localhost:8080/v1/prompts/pmpt_abc123\n\nWhen the prompt does not exist, the response still returns 200 with\n``deleted`` set to false in the body.\n\n### Parameters:\n- request: The incoming HTTP request (used by middleware).\n- prompt_id: The Llama Stack prompt identifier.\n- auth: Authentication tuple from the auth dependency (used by middleware).\n\n### Raises:\n- HTTPException: If configuration is not loaded, if unable to connect to\n  Llama Stack, or if the prompts API returns an error response.\n\n### Returns:\n- PromptDeleteResponse: An object describing whether the prompt was\n  deleted and a human-readable message.",
+                "operationId": "delete_prompt_handler_v1_prompts__prompt_id__delete",
+                "parameters": [
+                    {
+                        "name": "prompt_id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "title": "Prompt Id"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/PromptDeleteResponse"
+                                },
+                                "examples": {
+                                    "deleted": {
+                                        "value": {
+                                            "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                            "response": "Prompt deleted successfully",
+                                            "success": true
+                                        }
+                                    },
+                                    "not_deleted": {
+                                        "value": {
+                                            "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                            "response": "Prompt cannot be deleted",
+                                            "success": false
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    },
+                                    "prompt manage": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+                                                "response": "User does not have permission to perform this action"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/rags": {
             "get": {
                 "tags": [
@@ -7142,7 +7931,9 @@
                     "a2a_jsonrpc",
                     "manage_vector_stores",
                     "read_vector_stores",
-                    "manage_files"
+                    "manage_files",
+                    "manage_prompts",
+                    "read_prompts"
                 ],
                 "title": "Action",
                 "description": "Available actions in the system.\n\nNote: this is not a real model, just an enumeration of all action names."
@@ -9473,6 +10264,20 @@
                     },
                     {
                         "detail": {
+                            "cause": "User 6789 does not have permission to list or read stored prompts (missing permission: read_prompts).",
+                            "response": "User does not have permission to perform this action"
+                        },
+                        "label": "prompt read"
+                    },
+                    {
+                        "detail": {
+                            "cause": "User 6789 does not have permission to create, update, or delete stored prompts (missing permission: manage_prompts).",
+                            "response": "User does not have permission to perform this action"
+                        },
+                        "label": "prompt manage"
+                    },
+                    {
+                        "detail": {
                             "cause": "Storing feedback is disabled.",
                             "response": "Storing feedback is disabled"
                         },
@@ -10576,6 +11381,13 @@
                             "response": "File not found"
                         },
                         "label": "file"
+                    },
+                    {
+                        "detail": {
+                            "cause": "Prompt with ID pmpt_0123456789abcdef0123456789abcdef01234567 does not exist",
+                            "response": "Prompt not found"
+                        },
+                        "label": "prompt"
                     }
                 ]
             },
@@ -12494,6 +13306,182 @@
                 "title": "PostgreSQLDatabaseConfiguration",
                 "description": "PostgreSQL database configuration.\n\nPostgreSQL database is used by Lightspeed Core Stack service for storing\ninformation about conversation IDs. It can also be leveraged to store\nconversation history and information about quota usage.\n\nUseful resources:\n\n- [Psycopg: connection classes](https://www.psycopg.org/psycopg3/docs/api/connections.html)\n- [PostgreSQL connection strings](https://www.connectionstrings.com/postgresql/)\n- [How to Use PostgreSQL in Python](https://www.freecodecamp.org/news/postgresql-in-python/)"
             },
+            "PromptCreateRequest": {
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Prompt",
+                        "description": "Prompt text with variable placeholders",
+                        "examples": [
+                            "Summarize: {{text}}"
+                        ]
+                    },
+                    "variables": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Variables",
+                        "description": "Variable names allowed in the template",
+                        "examples": [
+                            [
+                                "text"
+                            ]
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "prompt"
+                ],
+                "title": "PromptCreateRequest",
+                "description": "Request body to create a stored prompt template in Llama Stack.",
+                "examples": [
+                    {
+                        "prompt": "Summarize: {{text}}",
+                        "variables": [
+                            "text"
+                        ]
+                    }
+                ]
+            },
+            "PromptDeleteResponse": {
+                "properties": {
+                    "prompt_id": {
+                        "type": "string",
+                        "title": "Prompt Id",
+                        "description": "Prompt identifier that was passed to delete.",
+                        "examples": [
+                            "pmpt_0123456789abcdef0123456789abcdef01234567"
+                        ]
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "description": "Whether Llama Stack deleted the prompt.",
+                        "examples": [
+                            true,
+                            false
+                        ]
+                    },
+                    "response": {
+                        "type": "string",
+                        "title": "Response",
+                        "description": "Human-readable outcome.",
+                        "examples": [
+                            "Prompt deleted successfully",
+                            "Prompt cannot be deleted"
+                        ]
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "prompt_id",
+                    "success",
+                    "response"
+                ],
+                "title": "PromptDeleteResponse",
+                "description": "Result of deleting a stored prompt (always HTTP 200, like conversations v2).",
+                "examples": [
+                    {
+                        "label": "deleted",
+                        "value": {
+                            "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                            "response": "Prompt deleted successfully",
+                            "success": true
+                        }
+                    },
+                    {
+                        "label": "not_deleted",
+                        "value": {
+                            "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                            "response": "Prompt cannot be deleted",
+                            "success": false
+                        }
+                    }
+                ]
+            },
+            "PromptResourceResponse": {
+                "properties": {
+                    "prompt_id": {
+                        "type": "string",
+                        "title": "Prompt Id",
+                        "description": "Prompt identifier from Llama Stack"
+                    },
+                    "version": {
+                        "type": "integer",
+                        "title": "Version",
+                        "description": "Version number for this prompt"
+                    },
+                    "is_default": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Is Default",
+                        "description": "Whether this version is the default"
+                    },
+                    "prompt": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Prompt",
+                        "description": "Prompt text with placeholders"
+                    },
+                    "variables": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Variables",
+                        "description": "Variable names used in the template"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "prompt_id",
+                    "version"
+                ],
+                "title": "PromptResourceResponse",
+                "description": "A stored prompt template as returned by Llama Stack.",
+                "examples": [
+                    {
+                        "is_default": true,
+                        "prompt": "Summarize: {{text}}",
+                        "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                        "variables": [
+                            "text"
+                        ],
+                        "version": 1
+                    }
+                ]
+            },
             "PromptTooLongResponse": {
                 "properties": {
                     "status_code": {
@@ -12520,6 +13508,112 @@
                             "response": "Prompt is too long"
                         },
                         "label": "prompt too long"
+                    }
+                ]
+            },
+            "PromptUpdateRequest": {
+                "properties": {
+                    "prompt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Prompt",
+                        "description": "Updated prompt text",
+                        "examples": [
+                            "Summarize in bullet points: {{text}}"
+                        ]
+                    },
+                    "version": {
+                        "type": "integer",
+                        "exclusiveMinimum": 0.0,
+                        "title": "Version",
+                        "description": "Current version being updated",
+                        "examples": [
+                            1
+                        ]
+                    },
+                    "set_as_default": {
+                        "anyOf": [
+                            {
+                                "type": "boolean"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Set As Default",
+                        "description": "Whether the new version becomes the default",
+                        "examples": [
+                            true
+                        ]
+                    },
+                    "variables": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Variables",
+                        "description": "Updated allowed variable names",
+                        "examples": [
+                            [
+                                "text"
+                            ]
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "prompt",
+                    "version"
+                ],
+                "title": "PromptUpdateRequest",
+                "description": "Request body to update a stored prompt (creates a new version).",
+                "examples": [
+                    {
+                        "prompt": "Summarize in bullet points: {{text}}",
+                        "set_as_default": true,
+                        "variables": [
+                            "text"
+                        ],
+                        "version": 1
+                    }
+                ]
+            },
+            "PromptsListResponse": {
+                "properties": {
+                    "data": {
+                        "items": {
+                            "$ref": "#/components/schemas/PromptResourceResponse"
+                        },
+                        "type": "array",
+                        "title": "Data",
+                        "description": "Prompt entries (as returned by Llama Stack list)"
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "PromptsListResponse",
+                "description": "List of stored prompt templates returned by Llama Stack.",
+                "examples": [
+                    {
+                        "data": [
+                            {
+                                "is_default": true,
+                                "prompt": "Summarize: {{text}}",
+                                "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
+                                "variables": [
+                                    "text"
+                                ],
+                                "version": 1
+                            }
+                        ]
                     }
                 ]
             },
