@@ -78,10 +78,6 @@ _INFER_HANDLED_EXCEPTIONS = (
 )
 
 
-# Backward-compatible alias so existing test imports continue to work.
-_get_rh_identity_context = get_rh_identity_context
-
-
 infer_responses: dict[int | str, dict[str, Any]] = {
     200: RlsapiV1InferResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
