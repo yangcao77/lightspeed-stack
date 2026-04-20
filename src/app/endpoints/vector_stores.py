@@ -444,7 +444,7 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
         try:
             size = int(content_length)
             if size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-                response = FileTooLargeResponse(
+                response = FileTooLargeResponse.exceeds_local_limit(
                     file_size=size,
                     max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
                 )
@@ -456,7 +456,7 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
     # file.size attribute if available
     if hasattr(file, "size") and file.size is not None:
         if file.size > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-            response = FileTooLargeResponse(
+            response = FileTooLargeResponse.exceeds_local_limit(
                 file_size=file.size,
                 max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
             )
@@ -470,7 +470,7 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
 
         # Verify actual size after reading
         if len(content) > DEFAULT_MAX_FILE_UPLOAD_SIZE:
-            response = FileTooLargeResponse(
+            response = FileTooLargeResponse.exceeds_local_limit(
                 file_size=len(content),
                 max_size=DEFAULT_MAX_FILE_UPLOAD_SIZE,
             )
@@ -514,10 +514,7 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
         # Check if backend rejected due to file size
         error_msg = str(e).lower()
         if "too large" in error_msg or "size" in error_msg or "exceeds" in error_msg:
-            response = FileTooLargeResponse(
-                response="Invalid file upload",
-                cause=f"File upload rejected by Llama Stack: {str(e)}",
-            )
+            response = FileTooLargeResponse.from_backend_rejection(message=str(e))
         else:
             response = InternalServerErrorResponse.query_failed(
                 cause=f"File upload rejected by Llama Stack: {str(e)}"
