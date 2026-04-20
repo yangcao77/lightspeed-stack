@@ -122,7 +122,7 @@ responses_response: dict[int | str, dict[str, Any]] = {
     409: ConflictResponse.openapi_response(
         examples=["mcp tool conflict", "file search conflict"]
     ),
-    413: PromptTooLongResponse.openapi_response(),
+    413: PromptTooLongResponse.openapi_response(examples=["context window exceeded"]),
     422: UnprocessableEntityResponse.openapi_response(),
     429: QuotaExceededResponse.openapi_response(),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
