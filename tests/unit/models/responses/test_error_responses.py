@@ -175,7 +175,7 @@ class TestUnauthorizedResponse:
 
         # Verify example count matches schema examples count
         assert len(examples) == expected_count
-        assert expected_count == 8
+        assert expected_count == 9
 
         # Verify all labeled examples are present
         assert "missing header" in examples
@@ -186,6 +186,7 @@ class TestUnauthorizedResponse:
         assert "missing claim" in examples
         assert "invalid k8s token" in examples
         assert "invalid jwk token" in examples
+        assert "mcp oauth" in examples
 
         # Verify example structure for one example
         missing_creds_example = examples["missing header"]

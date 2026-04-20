@@ -10,6 +10,7 @@ from authorization.middleware import authorize
 from models.config import Action
 from models.requests import StreamingInterruptRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     NotFoundResponse,
     StreamingInterruptResponse,
@@ -25,9 +26,7 @@ router = APIRouter(tags=["streaming_query_interrupt"])
 
 stream_interrupt_responses: dict[int | str, dict[str, Any]] = {
     200: StreamingInterruptResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["streaming request"]),
 }

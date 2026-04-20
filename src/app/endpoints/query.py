@@ -26,6 +26,7 @@ from log import get_logger
 from models.config import Action
 from models.requests import QueryRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH,
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -76,7 +77,7 @@ router = APIRouter(tags=["query"])
 query_response: dict[int | str, dict[str, Any]] = {
     200: QueryResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
+        examples=UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH
     ),
     403: ForbiddenResponse.openapi_response(
         examples=["endpoint", "conversation read", "model override"]

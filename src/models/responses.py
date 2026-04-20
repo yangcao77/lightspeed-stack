@@ -48,6 +48,21 @@ SERVICE_UNAVAILABLE_DESCRIPTION = "Service unavailable"
 QUOTA_EXCEEDED_DESCRIPTION = "Quota limit exceeded"
 PROMPT_TOO_LONG_DESCRIPTION = "Prompt is too long"
 INTERNAL_SERVER_ERROR_DESCRIPTION = "Internal server error"
+UNAUTHORIZED_OPENAPI_EXAMPLES: list[str] = [
+    "missing header",
+    "missing token",
+    "expired token",
+    "invalid signature",
+    "invalid key",
+    "missing claim",
+    "invalid k8s token",
+    "invalid jwk token",
+]
+
+UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH: list[str] = [
+    *UNAUTHORIZED_OPENAPI_EXAMPLES,
+    "mcp oauth",
+]
 
 
 class AbstractSuccessfulResponse(BaseModel):
@@ -1902,6 +1917,15 @@ class UnauthorizedResponse(AbstractErrorResponse):
                     "detail": {
                         "response": "Missing or invalid credentials provided by client",
                         "cause": "Authentication key server returned invalid data",
+                    },
+                },
+                {
+                    "label": "mcp oauth",
+                    "detail": {
+                        "response": "Missing or invalid credentials provided by client",
+                        "cause": (
+                            "MCP server at https://mcp.example.com/v1 requires OAuth"
+                        ),
                     },
                 },
             ]

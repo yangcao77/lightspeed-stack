@@ -63,6 +63,7 @@ from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH,
     AbstractErrorResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
@@ -126,7 +127,7 @@ _background_topic_summary_tasks: list[asyncio.Task[None]] = []
 streaming_query_responses: dict[int | str, dict[str, Any]] = {
     200: StreamingQueryResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
+        examples=UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH
     ),
     403: ForbiddenResponse.openapi_response(
         examples=["conversation read", "endpoint", "model override"]

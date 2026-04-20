@@ -11,6 +11,7 @@ from configuration import configuration
 from log import get_logger
 from models.config import Action
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ConfigurationResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
@@ -24,9 +25,7 @@ router = APIRouter(tags=["config"])
 
 get_config_responses: dict[int | str, dict[str, Any]] = {
     200: ConfigurationResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
 }

@@ -14,6 +14,7 @@ from log import get_logger
 from models.config import Action, ModelContextProtocolServer
 from models.requests import MCPServerRegistrationRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ConflictResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
@@ -33,9 +34,7 @@ router = APIRouter(tags=["mcp-servers"])
 
 register_responses: dict[int | str, dict[str, Any]] = {
     201: MCPServerRegistrationResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     409: ConflictResponse.openapi_response(examples=["mcp server"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -124,9 +123,7 @@ async def register_mcp_server_handler(
 
 list_responses: dict[int | str, dict[str, Any]] = {
     200: MCPServerListResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
 }
@@ -175,9 +172,7 @@ async def list_mcp_servers_handler(
 
 delete_responses: dict[int | str, dict[str, Any]] = {
     200: MCPServerDeleteResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["mcp server"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
