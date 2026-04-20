@@ -11,7 +11,16 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        environment: [ "rhelai" ]
+        environment: ["rhelai"]
+        # Expected default LLM for Behave (matches tests/e2e/configs/run-rhelai.yaml).
+        # | environment | model_id (repo var) | provider_id |
+        # |-------------|---------------------|-------------|
+        # | rhelai      | RHEL_AI_MODEL       | vllm        |
+        include:
+          - environment: rhelai
+            e2e_default_provider: vllm
+            e2e_default_model: ${{ vars.RHEL_AI_MODEL }}
+
     env:
       RHEL_AI_URL: ${{ secrets.RHEL_AI_URL }}
       RHEL_AI_PORT: ${{ secrets.RHEL_AI_PORT }}
@@ -19,6 +28,8 @@ jobs:
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       RHEL_AI_MODEL: ${{ vars.RHEL_AI_MODEL }}
       FAISS_VECTOR_STORE_ID: ${{ vars.FAISS_VECTOR_STORE_ID }}
+      E2E_DEFAULT_MODEL_OVERRIDE: ${{ matrix.e2e_default_model }}
+      E2E_DEFAULT_PROVIDER_OVERRIDE: ${{ matrix.e2e_default_provider }}
 
     steps:
       - uses: actions/checkout@v4
@@ -151,13 +162,35 @@ jobs:
           sleep 20  # adjust depending on boot time
 
       - name: Quick connectivity test
+        env:
+          EXPECTED_PROVIDER: ${{ matrix.e2e_default_provider }}
+          EXPECTED_MODEL: ${{ matrix.e2e_default_model }}
         run: |
-          echo "Testing basic connectivity before full test suite..."
-          curl -f http://localhost:8080/v1/models || {
-            echo "❌ Basic connectivity failed - showing logs before running full tests"
-            docker compose logs --tail=30
+          set -euo pipefail
+          show_logs() {
+            docker compose logs --tail=80
+          }
+
+          echo "Testing /v1/models and verifying expected LLM is registered..."
+          echo "Expected: provider_id=${EXPECTED_PROVIDER} provider_resource_id=${EXPECTED_MODEL}"
+
+          MODEL_JSON=$(curl -sfS "http://localhost:8080/v1/models?model_type=llm") || {
+            echo "❌ GET /v1/models?model_type=llm failed"
+            show_logs
             exit 1
           }
+
+          if ! echo "$MODEL_JSON" | jq -e --arg p "$EXPECTED_PROVIDER" --arg m "$EXPECTED_MODEL" \
+            '.models | any(.provider_id == $p and .provider_resource_id == $m)' >/dev/null
+          then
+            echo "❌ Expected LLM not listed by /v1/models (provider_id + provider_resource_id must match)"
+            echo "Registered LLM entries (provider_id, provider_resource_id, api_model_type):"
+            echo "$MODEL_JSON" | jq -r '.models[] | "\(.provider_id)\t\(.provider_resource_id)\t\(.api_model_type)"' || true
+            show_logs
+            exit 1
+          fi
+
+          echo "✅ Connectivity OK; expected model is registered (${EXPECTED_PROVIDER} / ${EXPECTED_MODEL})"
 
       - name: Run e2e tests
         run: |

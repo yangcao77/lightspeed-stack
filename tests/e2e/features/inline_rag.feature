@@ -25,7 +25,7 @@ Feature: Inline RAG (BYOK) support tests
   Scenario: Query with inline RAG returns relevant content
     When I use "query" to ask question with authorization header
     """
-    {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Write only lowercase letters"}
+    {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Write only lowercase letters", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
      And The response should contain following fragments
@@ -36,7 +36,7 @@ Feature: Inline RAG (BYOK) support tests
   Scenario: Inline RAG query includes referenced documents
     When I use "query" to ask question with authorization header
     """
-    {"query": "What does Paul Graham say about great work?"}
+    {"query": "What does Paul Graham say about great work?", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
      And The response should contain non-empty referenced_documents
@@ -44,7 +44,7 @@ Feature: Inline RAG (BYOK) support tests
   Scenario: Streaming query with inline RAG returns relevant content
     When I use "streaming_query" to ask question with authorization header
     """
-    {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Write only lowercase letters"}
+    {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Write only lowercase letters", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
      And I wait for the response to be completed

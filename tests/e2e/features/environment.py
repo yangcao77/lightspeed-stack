@@ -103,8 +103,8 @@ def before_all(context: Context) -> None:
     print(f"Running tests in {context.deployment_mode} mode")
 
     # Check for environment variable overrides first
-    model_override = os.getenv("E2E_DEFAULT_MODEL_OVERRIDE")
-    provider_override = os.getenv("E2E_DEFAULT_PROVIDER_OVERRIDE")
+    model_override = os.getenv("E2E_DEFAULT_MODEL_OVERRIDE", "")
+    provider_override = os.getenv("E2E_DEFAULT_PROVIDER_OVERRIDE", "")
 
     context.faiss_vector_store_id = os.getenv("FAISS_VECTOR_STORE_ID")
 

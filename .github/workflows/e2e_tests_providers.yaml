@@ -14,6 +14,26 @@ jobs:
       matrix:
         mode: ["server", "library"]
         environment: ["azure", "vertexai", "watsonx", "bedrock"]
+        # Expected default LLM for Behave (matches tests/e2e/configs/run-<env>.yaml).
+        # | environment | model_id                            | provider_id   |
+        # |-------------|-------------------------------------|---------------|
+        # | azure       | gpt-4o-mini                         | azure         |
+        # | vertexai    | google/gemini-2.5-flash             | google-vertex |
+        # | watsonx     | meta-llama/llama-3-3-70b-instruct   | watsonx       |
+        # | bedrock     | deepseek.v3-v1:0                    | aws-bedrock   |
+        include:
+          - environment: azure
+            e2e_default_model: gpt-4o-mini
+            e2e_default_provider: azure
+          - environment: vertexai
+            e2e_default_model: google/gemini-2.5-flash
+            e2e_default_provider: google-vertex
+          - environment: watsonx
+            e2e_default_model: meta-llama/llama-3-3-70b-instruct
+            e2e_default_provider: watsonx
+          - environment: bedrock
+            e2e_default_model: deepseek.v3-v1:0
+            e2e_default_provider: aws-bedrock
     
     name: "E2E: ${{ matrix.mode }} mode / ${{ matrix.environment }}"
     
@@ -25,6 +45,8 @@ jobs:
       TENANT_ID: ${{ secrets.TENANT_ID }}
       E2E_DEPLOYMENT_MODE: ${{ matrix.mode }}
       FAISS_VECTOR_STORE_ID: ${{ vars.FAISS_VECTOR_STORE_ID }}
+      E2E_DEFAULT_MODEL_OVERRIDE: ${{ matrix.e2e_default_model }}
+      E2E_DEFAULT_PROVIDER_OVERRIDE: ${{ matrix.e2e_default_provider }}
 
     steps:
       - uses: actions/checkout@v4
@@ -161,7 +183,7 @@ jobs:
           echo "=== Configuration Summary ==="
           echo "Deployment mode: ${{ matrix.mode }}"
           echo "Environment: ${{ matrix.environment }}"
-          echo "Source config: tests/e2e/configs/run-ci.yaml"
+          echo "Source config: tests/e2e/configs/run-${{ matrix.environment }}.yaml"
           echo ""
           echo "=== Configuration Preview ==="
           echo "Providers: $(grep -c "provider_id:" run.yaml)"
@@ -249,30 +271,45 @@ jobs:
           sleep 20
 
       - name: Quick connectivity test
+        env:
+          EXPECTED_PROVIDER: ${{ matrix.e2e_default_provider }}
+          EXPECTED_MODEL: ${{ matrix.e2e_default_model }}
         run: |
-          echo "Testing basic connectivity before full test suite..."
-          curl -f http://localhost:8080/v1/models || {
-            echo "❌ Basic connectivity failed - showing logs"
+          set -euo pipefail
+          show_logs() {
             if [ "${{ matrix.mode }}" == "server" ]; then
-              docker compose logs --tail=30
+              docker compose logs --tail=80
             else
-              docker compose -f docker-compose-library.yaml logs --tail=30
+              docker compose -f docker-compose-library.yaml logs --tail=80
             fi
+          }
+
+          echo "Testing /v1/models and verifying expected LLM is registered..."
+          echo "Expected: provider_id=${EXPECTED_PROVIDER} provider_resource_id=${EXPECTED_MODEL}"
+
+          MODEL_JSON=$(curl -sfS "http://localhost:8080/v1/models?model_type=llm") || {
+            echo "❌ GET /v1/models?model_type=llm failed"
+            show_logs
             exit 1
           }
+
+          if ! echo "$MODEL_JSON" | jq -e --arg p "$EXPECTED_PROVIDER" --arg m "$EXPECTED_MODEL" \
+            '.models | any(.provider_id == $p and .provider_resource_id == $m)' >/dev/null
+          then
+            echo "❌ Expected LLM not listed by /v1/models (provider_id + provider_resource_id must match)"
+            echo "Registered LLM entries (provider_id, provider_resource_id, api_model_type):"
+            echo "$MODEL_JSON" | jq -r '.models[] | "\(.provider_id)\t\(.provider_resource_id)\t\(.api_model_type)"' || true
+            show_logs
+            exit 1
+          fi
+
+          echo "✅ Connectivity OK; expected model is registered (${EXPECTED_PROVIDER} / ${EXPECTED_MODEL})"
 
       # Wait for watsonx library mode to finish before running server mode
       # watsonx has a rate limit of 2 calls / second
       - name: Wait for watsonx library mode to finish
         if: matrix.environment == 'watsonx' && matrix.mode == 'server'
         run: sleep 7200  # 120 minutes
-
-      # watsonx has a different convention than "<provider>/<model>"
-      - name: Set watsonx test overrides
-        if: matrix.environment == 'watsonx'
-        run: |
-          echo "E2E_DEFAULT_MODEL_OVERRIDE=meta-llama/llama-3-3-70b-instruct" >> $GITHUB_ENV
-          echo "E2E_DEFAULT_PROVIDER_OVERRIDE=watsonx" >> $GITHUB_ENV
 
       - name: Run e2e tests
         env:
