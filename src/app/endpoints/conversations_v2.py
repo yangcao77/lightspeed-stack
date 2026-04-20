@@ -12,6 +12,7 @@ from models.cache_entry import CacheEntry
 from models.config import Action
 from models.requests import ConversationUpdateRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     BadRequestResponse,
     ConversationDeleteResponse,
     ConversationResponse,
@@ -34,9 +35,7 @@ router = APIRouter(tags=["conversations_v2"])
 conversation_get_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationResponse.openapi_response(),
     400: BadRequestResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["conversation"]),
     500: InternalServerErrorResponse.openapi_response(
@@ -47,9 +46,7 @@ conversation_get_responses: dict[int | str, dict[str, Any]] = {
 conversation_delete_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationDeleteResponse.openapi_response(),
     400: BadRequestResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
@@ -58,9 +55,7 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
 
 conversations_list_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationsListResponseV2.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
@@ -70,9 +65,7 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
 conversation_update_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationUpdateResponse.openapi_response(),
     400: BadRequestResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["conversation"]),
     500: InternalServerErrorResponse.openapi_response(

@@ -61,6 +61,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             },
@@ -323,6 +371,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -474,6 +570,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -609,6 +753,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -715,6 +907,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -816,6 +1056,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -976,6 +1264,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -1141,6 +1477,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1279,6 +1663,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1414,6 +1846,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -1581,6 +2061,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1713,6 +2241,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -1874,6 +2450,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -2053,6 +2677,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -2226,6 +2898,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -2364,6 +3084,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2496,6 +3264,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -2674,6 +3490,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2812,6 +3676,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -2983,6 +3895,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -3165,6 +4125,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -3419,6 +4427,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -3572,6 +4628,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -3752,6 +4856,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -3927,6 +5079,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -4165,6 +5365,62 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "mcp oauth": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "MCP server at https://mcp.example.com/v1 requires OAuth",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -4471,6 +5727,62 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "mcp oauth": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "MCP server at https://mcp.example.com/v1 requires OAuth",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -4783,6 +6095,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -4952,6 +6312,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -5052,6 +6460,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -5235,6 +6691,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -5353,6 +6857,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -5510,6 +7062,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -5730,6 +7330,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -5926,6 +7574,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -6094,6 +7790,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -6248,6 +7992,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -6432,6 +8224,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -6589,6 +8429,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -6783,6 +8671,62 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "mcp oauth": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "MCP server at https://mcp.example.com/v1 requires OAuth",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -7124,6 +9068,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -7381,6 +9373,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -7482,6 +9522,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -7557,6 +9645,54 @@
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -7621,6 +9757,54 @@
                                         "value": {
                                             "detail": {
                                                 "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
                                                 "response": "Missing or invalid credentials provided by client"
                                             }
                                         }
@@ -7762,7 +9946,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_get",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -7780,7 +9964,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_get",
+                "operationId": "handle_a2a_jsonrpc_a2a_post",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -16623,6 +18807,13 @@
                             "response": "Missing or invalid credentials provided by client"
                         },
                         "label": "invalid jwk token"
+                    },
+                    {
+                        "detail": {
+                            "cause": "MCP server at https://mcp.example.com/v1 requires OAuth",
+                            "response": "Missing or invalid credentials provided by client"
+                        },
+                        "label": "mcp oauth"
                     }
                 ]
             },

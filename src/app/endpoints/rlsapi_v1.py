@@ -26,6 +26,7 @@ from configuration import configuration
 from log import get_logger
 from models.config import Action
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -83,9 +84,7 @@ _get_rh_identity_context = get_rh_identity_context
 
 infer_responses: dict[int | str, dict[str, Any]] = {
     200: RlsapiV1InferResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["model"]),
     413: PromptTooLongResponse.openapi_response(examples=["context window exceeded"]),

@@ -13,6 +13,7 @@ from configuration import configuration
 from log import get_logger
 from models.config import Action
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     InternalServerErrorResponse,
     ServiceUnavailableResponse,
@@ -92,9 +93,7 @@ def _normalize_tool_dict(tool_dict: dict[str, Any], toolgroup: Any) -> None:
 
 tools_responses: dict[int | str, dict[str, Any]] = {
     200: ToolsResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),

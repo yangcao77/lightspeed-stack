@@ -12,6 +12,7 @@ from configuration import configuration
 from log import get_logger
 from models.config import Action
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     InternalServerErrorResponse,
     MCPClientAuthOptionsResponse,
@@ -26,9 +27,7 @@ router = APIRouter(prefix="/mcp-auth", tags=["mcp-auth"])
 
 mcp_auth_responses: dict[int | str, dict[str, Any]] = {
     200: MCPClientAuthOptionsResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
 }

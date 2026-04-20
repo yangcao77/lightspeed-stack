@@ -29,6 +29,7 @@ from models.requests import (
     VectorStoreUpdateRequest,
 )
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     BadRequestResponse,
     FileResponse,
     FileTooLargeResponse,
@@ -52,9 +53,7 @@ router = APIRouter(tags=["vector-stores"])
 # Response schemas for OpenAPI documentation
 vector_stores_list_responses: dict[int | str, dict[str, Any]] = {
     200: VectorStoresListResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
@@ -62,9 +61,7 @@ vector_stores_list_responses: dict[int | str, dict[str, Any]] = {
 
 vector_store_responses: dict[int | str, dict[str, Any]] = {
     200: VectorStoreResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -75,9 +72,7 @@ file_responses: dict[int | str, dict[str, Any]] = {
     200: FileResponse.openapi_response(),
     400: BadRequestResponse.openapi_response(examples=["file_upload"]),
     413: FileTooLargeResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(),
@@ -85,9 +80,7 @@ file_responses: dict[int | str, dict[str, Any]] = {
 
 vector_store_file_responses: dict[int | str, dict[str, Any]] = {
     200: VectorStoreFileResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["file"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -96,9 +89,7 @@ vector_store_file_responses: dict[int | str, dict[str, Any]] = {
 
 vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
     200: VectorStoreFilesListResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),

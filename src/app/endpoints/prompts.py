@@ -16,6 +16,7 @@ from log import get_logger
 from models.config import Action
 from models.requests import PromptCreateRequest, PromptUpdateRequest
 from models.responses import (
+    UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -35,9 +36,7 @@ router = APIRouter(tags=["prompts"])
 # Response schemas for OpenAPI documentation
 prompt_create_responses: dict[int | str, dict[str, Any]] = {
     200: PromptResourceResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
@@ -45,9 +44,7 @@ prompt_create_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_list_responses: dict[int | str, dict[str, Any]] = {
     200: PromptsListResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt read"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
@@ -55,9 +52,7 @@ prompt_list_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_get_responses: dict[int | str, dict[str, Any]] = {
     200: PromptResourceResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt read"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -66,9 +61,7 @@ prompt_get_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_update_responses: dict[int | str, dict[str, Any]] = {
     200: PromptResourceResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -77,9 +70,7 @@ prompt_update_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_delete_responses: dict[int | str, dict[str, Any]] = {
     200: PromptDeleteResponse.openapi_response(),
-    401: UnauthorizedResponse.openapi_response(
-        examples=["missing header", "missing token"]
-    ),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
