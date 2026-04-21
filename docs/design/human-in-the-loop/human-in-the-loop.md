@@ -134,10 +134,10 @@ CREATE TABLE IF NOT EXISTS approval_requests (
     tool_name         TEXT NOT NULL,
     arguments         TEXT NOT NULL,  -- JSON
     status            TEXT NOT NULL DEFAULT 'pending',  -- pending, approved, denied, expired
-    created_at        TEXT NOT NULL,
-    expires_at        TEXT NOT NULL,
+    created_at        DATETIME NOT NULL,
+    expires_at        DATETIME NOT NULL,
     decision_reason   TEXT,
-    decided_at        TEXT
+    decided_at        DATETIME
 );
 
 CREATE INDEX IF NOT EXISTS idx_approval_requests_conversation
