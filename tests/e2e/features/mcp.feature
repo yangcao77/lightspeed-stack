@@ -68,7 +68,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -90,7 +90,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -112,7 +112,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -176,7 +176,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -198,7 +198,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -220,7 +220,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -340,7 +340,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -364,7 +364,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -388,7 +388,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -460,7 +460,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -481,7 +481,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -502,7 +502,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -524,7 +524,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -549,7 +549,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """
@@ -574,7 +574,7 @@ Feature: MCP tests
         {
             "detail": {
                 "response": "Missing or invalid credentials provided by client",
-                "cause": "MCP server at http://mock-mcp:3001 requires OAuth"
+                "cause": "MCP server at http://mock-mcp:3000 requires OAuth"
             }
         }
     """

@@ -83,5 +83,4 @@ Feature: Info tests
      When I access REST API endpoint "mcp-auth/client-options" using HTTP GET method
      Then The status code of the response is 200
       And The body of the response has proper client auth options structure
-      And The response contains server "github-api" with client auth header "Authorization"
-      And The response contains server "gitlab-api" with client auth header "X-API-Token"
+      And The response contains server "mcp-client" with client auth header "Authorization"
