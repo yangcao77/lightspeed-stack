@@ -23,6 +23,11 @@ from tests.unit.utils.auth_helpers import mock_authorization_resolvers
 
 MOCK_AUTH: AuthTuple = ("mock_user_id", "mock_username", False, "mock_token")
 
+# Valid ``pmpt_`` + 48 hex digits (matches ``check_suid_prompt`` / Llama Stack).
+VALID_PMPT_ID = "pmpt_5c76d7f7c633ef97477adeb2f642150d8d08e8a6526e9909"
+VALID_PMPT_ID_B = "pmpt_111111111111111111111111111111111111111111111111"
+VALID_PMPT_ID_NOT_FOUND = "pmpt_ffffffffffffffffffffffffffffffffffffffffffffffff"
+
 
 def _sample_prompt(
     prompt_id: str,
@@ -105,7 +110,7 @@ async def test_create_prompt_success(
     """create_prompt delegates to client.prompts.create."""
     _, mock_prompts = prompts_client_mocks
     mock_prompts.create.return_value = _sample_prompt(
-        "pmpt_abc", 1, prompt="Hi {{n}}", variables=["n"]
+        VALID_PMPT_ID, 1, prompt="Hi {{n}}", variables=["n"]
     )
 
     result = await create_prompt_handler(
@@ -114,7 +119,7 @@ async def test_create_prompt_success(
         body=PromptCreateRequest(prompt="Hi {{n}}", variables=["n"]),
     )
 
-    assert result.prompt_id == "pmpt_abc"
+    assert result.prompt_id == VALID_PMPT_ID
     assert result.version == 1
     mock_prompts.create.assert_awaited_once_with(prompt="Hi {{n}}", variables=["n"])
 
@@ -126,17 +131,17 @@ async def test_get_prompt_with_version(
 ) -> None:
     """get_prompt passes version when provided."""
     _, mock_prompts = prompts_client_mocks
-    mock_prompts.retrieve.return_value = _sample_prompt("pmpt_abc", 2)
+    mock_prompts.retrieve.return_value = _sample_prompt(VALID_PMPT_ID, 2)
 
     result = await get_prompt_handler(
         request=prompts_http_request,
-        prompt_id="pmpt_abc",
+        prompt_id=VALID_PMPT_ID,
         auth=MOCK_AUTH,
         version=2,
     )
 
     assert result.version == 2
-    mock_prompts.retrieve.assert_awaited_once_with("pmpt_abc", version=2)
+    mock_prompts.retrieve.assert_awaited_once_with(VALID_PMPT_ID, version=2)
 
 
 @pytest.mark.asyncio
@@ -146,15 +151,15 @@ async def test_get_prompt_without_version_omits_kwarg(
 ) -> None:
     """get_prompt calls retrieve with prompt_id only when version is omitted."""
     _, mock_prompts = prompts_client_mocks
-    mock_prompts.retrieve.return_value = _sample_prompt("pmpt_abc", 1)
+    mock_prompts.retrieve.return_value = _sample_prompt(VALID_PMPT_ID, 1)
 
     await get_prompt_handler(
         request=prompts_http_request,
-        prompt_id="pmpt_abc",
+        prompt_id=VALID_PMPT_ID,
         auth=MOCK_AUTH,
     )
 
-    mock_prompts.retrieve.assert_awaited_once_with("pmpt_abc")
+    mock_prompts.retrieve.assert_awaited_once_with(VALID_PMPT_ID)
 
 
 @pytest.mark.asyncio
@@ -164,21 +169,21 @@ async def test_update_prompt_success(
 ) -> None:
     """update_prompt forwards body fields to the client."""
     _, mock_prompts = prompts_client_mocks
-    mock_prompts.update.return_value = _sample_prompt("pmpt_abc", 2)
+    mock_prompts.update.return_value = _sample_prompt(VALID_PMPT_ID, 2)
 
     body = PromptUpdateRequest(
         prompt="new", version=1, set_as_default=True, variables=None
     )
     result = await update_prompt_handler(
         request=prompts_http_request,
-        prompt_id="pmpt_abc",
+        prompt_id=VALID_PMPT_ID,
         auth=MOCK_AUTH,
         body=body,
     )
 
     assert result.version == 2
     mock_prompts.update.assert_awaited_once_with(
-        "pmpt_abc", prompt="new", version=1, set_as_default=True
+        VALID_PMPT_ID, prompt="new", version=1, set_as_default=True
     )
 
 
@@ -192,14 +197,14 @@ async def test_delete_prompt_success(
 
     result = await delete_prompt_handler(
         request=prompts_http_request,
-        prompt_id="pmpt_abc",
+        prompt_id=VALID_PMPT_ID,
         auth=MOCK_AUTH,
     )
 
     assert isinstance(result, PromptDeleteResponse)
     assert result.success is True
-    assert result.prompt_id == "pmpt_abc"
-    mock_prompts.delete.assert_awaited_once_with("pmpt_abc")
+    assert result.prompt_id == VALID_PMPT_ID
+    mock_prompts.delete.assert_awaited_once_with(VALID_PMPT_ID)
 
 
 @pytest.mark.asyncio
@@ -218,12 +223,12 @@ async def test_delete_prompt_not_found_returns_body(
 
     result = await delete_prompt_handler(
         request=prompts_http_request,
-        prompt_id="pmpt_missing",
+        prompt_id=VALID_PMPT_ID_NOT_FOUND,
         auth=MOCK_AUTH,
     )
 
     assert result.success is False
-    assert result.prompt_id == "pmpt_missing"
+    assert result.prompt_id == VALID_PMPT_ID_NOT_FOUND
 
 
 @pytest.mark.asyncio
@@ -234,14 +239,14 @@ async def test_list_prompts_success(
     """list_prompts maps client.prompts.list to PromptsListResponse."""
     _, mock_prompts = prompts_client_mocks
     mock_prompts.list.return_value = [
-        _sample_prompt("pmpt_a", 1),
-        _sample_prompt("pmpt_b", 2, is_default=False),
+        _sample_prompt(VALID_PMPT_ID, 1),
+        _sample_prompt(VALID_PMPT_ID_B, 2, is_default=False),
     ]
 
     out = await list_prompts_handler(request=prompts_http_request, auth=MOCK_AUTH)
 
     assert len(out.data) == 2
-    assert out.data[0].prompt_id == "pmpt_a"
+    assert out.data[0].prompt_id == VALID_PMPT_ID
     mock_prompts.list.assert_awaited_once()
 
 
@@ -257,7 +262,7 @@ async def test_get_prompt_api_connection_error(
     with pytest.raises(HTTPException) as exc_info:
         await get_prompt_handler(
             request=prompts_http_request,
-            prompt_id="pmpt_abc",
+            prompt_id=VALID_PMPT_ID,
             auth=MOCK_AUTH,
         )
 
@@ -281,7 +286,7 @@ async def test_get_prompt_bad_request_maps_to_404(
     with pytest.raises(HTTPException) as exc_info:
         await get_prompt_handler(
             request=prompts_http_request,
-            prompt_id="pmpt_missing",
+            prompt_id=VALID_PMPT_ID_NOT_FOUND,
             auth=MOCK_AUTH,
         )
 
@@ -290,7 +295,7 @@ async def test_get_prompt_bad_request_maps_to_404(
     assert detail["response"] == "Prompt not found"  # type: ignore[index]
     assert (
         detail["cause"]  # type: ignore[index]
-        == "Prompt with ID pmpt_missing does not exist"
+        == f"Prompt with ID {VALID_PMPT_ID_NOT_FOUND} does not exist"
     )
 
 
@@ -314,7 +319,7 @@ async def test_update_prompt_bad_request_maps_to_404(
     with pytest.raises(HTTPException) as exc_info:
         await update_prompt_handler(
             request=prompts_http_request,
-            prompt_id="pmpt_missing",
+            prompt_id=VALID_PMPT_ID_NOT_FOUND,
             auth=MOCK_AUTH,
             body=body,
         )
@@ -324,6 +329,57 @@ async def test_update_prompt_bad_request_maps_to_404(
     assert detail["response"] == "Prompt not found"  # type: ignore[index]
     assert (
         detail["cause"]  # type: ignore[index]
-        == "Prompt with ID pmpt_missing does not exist"
+        == f"Prompt with ID {VALID_PMPT_ID_NOT_FOUND} does not exist"
     )
     mock_prompts.update.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_get_prompt_invalid_id_returns_400(
+    prompts_http_request: Request,
+) -> None:
+    """get_prompt returns 400 when path prompt_id is not pmpt_ + 48 hex."""
+    with pytest.raises(HTTPException) as exc_info:
+        await get_prompt_handler(
+            request=prompts_http_request,
+            prompt_id="pmpt_tooshort",
+            auth=MOCK_AUTH,
+        )
+
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+    detail = exc_info.value.detail
+    assert detail["response"] == "Invalid prompt ID format"  # type: ignore[index]
+
+
+@pytest.mark.asyncio
+async def test_update_prompt_invalid_id_returns_400(
+    prompts_http_request: Request,
+) -> None:
+    """update_prompt returns 400 for an invalid prompt_id path segment."""
+    body = PromptUpdateRequest(
+        prompt="x", version=1, set_as_default=False, variables=None
+    )
+    with pytest.raises(HTTPException) as exc_info:
+        await update_prompt_handler(
+            request=prompts_http_request,
+            prompt_id="not_a_prompt_id",
+            auth=MOCK_AUTH,
+            body=body,
+        )
+
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.asyncio
+async def test_delete_prompt_invalid_id_returns_400(
+    prompts_http_request: Request,
+) -> None:
+    """delete_prompt returns 400 for an invalid prompt_id path segment."""
+    with pytest.raises(HTTPException) as exc_info:
+        await delete_prompt_handler(
+            request=prompts_http_request,
+            prompt_id="pmpt_zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz",
+            auth=MOCK_AUTH,
+        )
+
+    assert exc_info.value.status_code == status.HTTP_400_BAD_REQUEST

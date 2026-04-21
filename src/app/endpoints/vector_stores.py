@@ -30,7 +30,6 @@ from models.requests import (
 )
 from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
-    BadRequestResponse,
     FileResponse,
     FileTooLargeResponse,
     ForbiddenResponse,
@@ -70,7 +69,6 @@ vector_store_responses: dict[int | str, dict[str, Any]] = {
 
 file_responses: dict[int | str, dict[str, Any]] = {
     200: FileResponse.openapi_response(),
-    400: BadRequestResponse.openapi_response(examples=["file_upload"]),
     413: FileTooLargeResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),

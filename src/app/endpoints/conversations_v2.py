@@ -34,7 +34,7 @@ router = APIRouter(tags=["conversations_v2"])
 
 conversation_get_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationResponse.openapi_response(),
-    400: BadRequestResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["conversation_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["conversation"]),
@@ -45,7 +45,7 @@ conversation_get_responses: dict[int | str, dict[str, Any]] = {
 
 conversation_delete_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationDeleteResponse.openapi_response(),
-    400: BadRequestResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["conversation_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(
@@ -64,7 +64,7 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
 
 conversation_update_responses: dict[int | str, dict[str, Any]] = {
     200: ConversationUpdateResponse.openapi_response(),
-    400: BadRequestResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["conversation_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["conversation"]),
