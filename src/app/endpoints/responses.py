@@ -253,9 +253,9 @@ async def responses_endpoint_handler(
     instructions_substituted = client_instructions is None
     started_at = datetime.now(UTC)
     rh_identity_context = get_rh_identity_context(request)
-    user_id = auth[0]
+    user_id, _, _, token = auth
 
-    await check_mcp_auth(configuration, mcp_headers)
+    await check_mcp_auth(configuration, mcp_headers, token, request.headers)
 
     # Check token availability
     check_tokens_available(configuration.quota_limiters, user_id)

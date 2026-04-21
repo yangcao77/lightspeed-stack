@@ -137,7 +137,8 @@ async def tools_endpoint_handler(  # pylint: disable=too-many-locals,too-many-st
         configuration, mcp_headers, request.headers, token
     )
 
-    await check_mcp_auth(configuration, complete_mcp_headers)
+    # Check MCP Auth
+    await check_mcp_auth(configuration, mcp_headers, token, request.headers)
 
     toolgroups_response = []
     try:
