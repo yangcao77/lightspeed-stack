@@ -923,6 +923,8 @@ async def test_query_byok_score_multiplier_shifts_chunk_priority(  # pylint: dis
     second_chunk = response.rag_chunks[1]
     assert first_chunk.source == "source-b"
     assert second_chunk.source == "source-a"
+    assert first_chunk.score is not None
+    assert second_chunk.score is not None
     assert first_chunk.score > second_chunk.score
 
 
@@ -988,8 +990,14 @@ async def test_query_byok_max_chunks_caps_retrieved_results(  # pylint: disable=
     assert response.rag_chunks is not None
     assert len(response.rag_chunks) == constants.BYOK_RAG_MAX_CHUNKS
 
+    # Check that the score is computed properly
+    for chunk in response.rag_chunks:
+        assert chunk.score is not None
+
     # Verify chunks are sorted by score descending (highest first)
-    scores = [chunk.score for chunk in response.rag_chunks]
+    scores: list[float] = [
+        chunk.score for chunk in response.rag_chunks if chunk.score is not None
+    ]
     assert scores == sorted(scores, reverse=True)
 
     # The lowest-scored chunks from the original set should be excluded
@@ -1073,7 +1081,13 @@ async def test_query_byok_max_chunks_caps_across_multiple_sources(  # pylint: di
     assert response.rag_chunks is not None
     assert len(response.rag_chunks) == constants.BYOK_RAG_MAX_CHUNKS
 
-    scores = [chunk.score for chunk in response.rag_chunks]
+    # Check that the score is computed properly
+    for chunk in response.rag_chunks:
+        assert chunk.score is not None
+
+    scores: list[float] = [
+        chunk.score for chunk in response.rag_chunks if chunk.score is not None
+    ]
     assert scores == sorted(scores, reverse=True)
 
     # Both sources must survive the cap
