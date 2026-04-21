@@ -17,6 +17,7 @@ from models.config import Action
 from models.requests import PromptCreateRequest, PromptUpdateRequest
 from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
+    BadRequestResponse,
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
@@ -28,6 +29,7 @@ from models.responses import (
 )
 from utils.endpoints import check_configuration_loaded
 from utils.query import handle_known_apistatus_errors
+from utils.suid import check_suid_prompt
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["prompts"])
@@ -52,6 +54,7 @@ prompt_list_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_get_responses: dict[int | str, dict[str, Any]] = {
     200: PromptResourceResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["prompt_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt read"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
@@ -61,6 +64,7 @@ prompt_get_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_update_responses: dict[int | str, dict[str, Any]] = {
     200: PromptResourceResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["prompt_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
@@ -70,6 +74,7 @@ prompt_update_responses: dict[int | str, dict[str, Any]] = {
 
 prompt_delete_responses: dict[int | str, dict[str, Any]] = {
     200: PromptDeleteResponse.openapi_response(),
+    400: BadRequestResponse.openapi_response(examples=["prompt_id"]),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
@@ -208,6 +213,11 @@ async def get_prompt_handler(
 
     check_configuration_loaded(configuration)
 
+    if not check_suid_prompt(prompt_id):
+        logger.error("Invalid prompt ID format: %s", prompt_id)
+        response = BadRequestResponse(resource="prompt", resource_id=prompt_id)
+        raise HTTPException(**response.model_dump())
+
     try:
         client = AsyncLlamaStackClientHolder().get_client()
         if version is not None:
@@ -268,6 +278,11 @@ async def update_prompt_handler(
 
     check_configuration_loaded(configuration)
 
+    if not check_suid_prompt(prompt_id):
+        logger.error("Invalid prompt ID format: %s", prompt_id)
+        response = BadRequestResponse(resource="prompt", resource_id=prompt_id)
+        raise HTTPException(**response.model_dump())
+
     try:
         client = AsyncLlamaStackClientHolder().get_client()
         payload = body.model_dump(exclude_none=True, exclude_unset=True)
@@ -323,6 +338,11 @@ async def delete_prompt_handler(
     _ = request
 
     check_configuration_loaded(configuration)
+
+    if not check_suid_prompt(prompt_id):
+        logger.error("Invalid prompt ID format: %s", prompt_id)
+        response = BadRequestResponse(resource="prompt", resource_id=prompt_id)
+        raise HTTPException(**response.model_dump())
 
     try:
         client = AsyncLlamaStackClientHolder().get_client()

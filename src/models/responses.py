@@ -1830,10 +1830,10 @@ class BadRequestResponse(AbstractErrorResponse):
                     },
                 },
                 {
-                    "label": "file_upload",
+                    "label": "prompt_id",
                     "detail": {
-                        "response": "Invalid file upload",
-                        "cause": "File upload rejected: Invalid file format",
+                        "response": "Invalid prompt ID format",
+                        "cause": "The prompt ID pmpt_1234567890abcdef has invalid format.",
                     },
                 },
             ]

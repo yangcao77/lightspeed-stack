@@ -85,12 +85,16 @@ class TestBadRequestResponse:
 
         # Verify example structure
         assert "conversation_id" in examples
-        assert "file_upload" in examples
+        assert "prompt_id" in examples
         conversation_example = examples["conversation_id"]
         assert "value" in conversation_example
         assert "detail" in conversation_example["value"]
         assert conversation_example["value"]["detail"]["response"] == (
             "Invalid conversation ID format"
+        )
+        prompt_example = examples["prompt_id"]
+        assert (
+            prompt_example["value"]["detail"]["response"] == "Invalid prompt ID format"
         )
 
     def test_openapi_response_with_explicit_examples(self) -> None:
