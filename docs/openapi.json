@@ -2433,6 +2433,26 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid request format",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "prompt_id": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The prompt ID pmpt_1234567890abcdef has invalid format.",
+                                                "response": "Invalid prompt ID format"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/BadRequestResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "content": {
@@ -2657,6 +2677,26 @@
                             }
                         }
                     },
+                    "400": {
+                        "description": "Invalid request format",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "prompt_id": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The prompt ID pmpt_1234567890abcdef has invalid format.",
+                                                "response": "Invalid prompt ID format"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/BadRequestResponse"
+                                }
+                            }
+                        }
+                    },
                     "401": {
                         "description": "Unauthorized",
                         "content": {
@@ -2874,6 +2914,26 @@
                                             "success": false
                                         }
                                     }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request format",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "prompt_id": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "The prompt ID pmpt_1234567890abcdef has invalid format.",
+                                                "response": "Invalid prompt ID format"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/BadRequestResponse"
                                 }
                             }
                         }
@@ -4352,26 +4412,6 @@
                                     "id": "file_abc123",
                                     "object": "file",
                                     "purpose": "assistants"
-                                }
-                            }
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid request format",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "$ref": "#/components/schemas/BadRequestResponse"
-                                },
-                                "examples": {
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }
@@ -7029,14 +7069,6 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
-                                            }
-                                        }
                                     }
                                 },
                                 "schema": {
@@ -7294,14 +7326,6 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
-                                            }
-                                        }
                                     }
                                 },
                                 "schema": {
@@ -7536,14 +7560,6 @@
                                             "detail": {
                                                 "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
                                                 "response": "Invalid conversation ID format"
-                                            }
-                                        }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
                                             }
                                         }
                                     }
@@ -7959,14 +7975,6 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
-                                            }
-                                        }
                                     }
                                 },
                                 "schema": {
@@ -8188,14 +8196,6 @@
                                                 "response": "Invalid conversation ID format"
                                             }
                                         }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
-                                            }
-                                        }
                                     }
                                 },
                                 "schema": {
@@ -8394,14 +8394,6 @@
                                             "detail": {
                                                 "cause": "The conversation ID 123e4567-e89b-12d3-a456-426614174000 has invalid format.",
                                                 "response": "Invalid conversation ID format"
-                                            }
-                                        }
-                                    },
-                                    "file_upload": {
-                                        "value": {
-                                            "detail": {
-                                                "cause": "File upload rejected: Invalid file format",
-                                                "response": "Invalid file upload"
                                             }
                                         }
                                     }
@@ -9946,7 +9938,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -9964,7 +9956,7 @@
                 ],
                 "summary": "Handle A2A Jsonrpc",
                 "description": "Handle A2A JSON-RPC requests following the A2A protocol specification.\n\nThis endpoint uses the DefaultRequestHandler from the A2A SDK to handle\nall JSON-RPC requests including message/send, message/stream, etc.\n\nThe A2A SDK application is created per-request to include authentication\ncontext while still leveraging FastAPI's authorization middleware.\n\nAutomatically detects streaming requests (message/stream JSON-RPC method)\nand returns a StreamingResponse to enable real-time chunk delivery.\n\nArgs:\n    request: FastAPI request object\n    auth: Authentication tuple\n    mcp_headers: MCP headers for context propagation\n\nReturns:\n    JSON-RPC response or streaming response",
-                "operationId": "handle_a2a_jsonrpc_a2a_post",
+                "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
                         "description": "Successful Response",
@@ -11028,10 +11020,10 @@
                     },
                     {
                         "detail": {
-                            "cause": "File upload rejected: Invalid file format",
-                            "response": "Invalid file upload"
+                            "cause": "The prompt ID pmpt_1234567890abcdef has invalid format.",
+                            "response": "Invalid prompt ID format"
                         },
-                        "label": "file_upload"
+                        "label": "prompt_id"
                     }
                 ]
             },
