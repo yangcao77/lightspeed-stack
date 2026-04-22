@@ -17,7 +17,7 @@
     },
     "servers": [
         {
-            "url": "http://localhost:8080/",
+            "url": "http://localhost:8080",
             "description": "Locally running service"
         }
     ],
@@ -9205,7 +9205,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Successful response. For `text/event-stream`, the body is a Server-Sent Events stream.",
+                        "description": "Successful response",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -10604,7 +10604,7 @@
                 "operationId": "handle_a2a_jsonrpc_a2a_get",
                 "responses": {
                     "200": {
-                        "description": "Successful response: buffered JSON-RPC or HTTP payload for non-streaming calls, or a Server-Sent Events stream when the JSON-RPC method is message/stream.",
+                        "description": "Successful response",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -10620,7 +10620,8 @@
                             "text/event-stream": {
                                 "schema": {
                                     "type": "string",
-                                    "format": "text/event-stream"
+                                    "format": "text/event-stream",
+                                    "description": "Server-Sent Events stream when the JSON-RPC method is message/stream"
                                 },
                                 "example": "data: {\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{}}\n\n"
                             }
@@ -10637,7 +10638,7 @@
                 "operationId": "handle_a2a_jsonrpc_a2a_post",
                 "responses": {
                     "200": {
-                        "description": "Successful response: buffered JSON-RPC or HTTP payload for non-streaming calls, or a Server-Sent Events stream when the JSON-RPC method is message/stream.",
+                        "description": "Successful response",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -10653,7 +10654,8 @@
                             "text/event-stream": {
                                 "schema": {
                                     "type": "string",
-                                    "format": "text/event-stream"
+                                    "format": "text/event-stream",
+                                    "description": "Server-Sent Events stream when the JSON-RPC method is message/stream"
                                 },
                                 "example": "data: {\"jsonrpc\":\"2.0\",\"id\":\"1\",\"result\":{}}\n\n"
                             }
@@ -20507,5 +20509,103 @@
                 ]
             }
         }
-    }
+    },
+    "tags": [
+        {
+            "name": "a2a",
+            "description": "Agent-to-Agent (A2A) protocol."
+        },
+        {
+            "name": "authorized",
+            "description": "Authorization probe."
+        },
+        {
+            "name": "config",
+            "description": "Service configuration."
+        },
+        {
+            "name": "conversations_v1",
+            "description": "Conversations API v1."
+        },
+        {
+            "name": "conversations_v2",
+            "description": "Conversations API v2."
+        },
+        {
+            "name": "feedback",
+            "description": "User feedback."
+        },
+        {
+            "name": "health",
+            "description": "Health and readiness probes."
+        },
+        {
+            "name": "info",
+            "description": "Service information."
+        },
+        {
+            "name": "mcp-auth",
+            "description": "MCP client authentication options."
+        },
+        {
+            "name": "mcp-servers",
+            "description": "MCP server registration."
+        },
+        {
+            "name": "metrics",
+            "description": "Prometheus metrics."
+        },
+        {
+            "name": "models",
+            "description": "LLM models."
+        },
+        {
+            "name": "prompts",
+            "description": "Prompt management."
+        },
+        {
+            "name": "providers",
+            "description": "Inference providers."
+        },
+        {
+            "name": "query",
+            "description": "Non-streaming query."
+        },
+        {
+            "name": "rags",
+            "description": "RAG configuration."
+        },
+        {
+            "name": "responses",
+            "description": "OpenAI-compatible Responses API."
+        },
+        {
+            "name": "rlsapi-v1",
+            "description": "RLS API v1 (inference)."
+        },
+        {
+            "name": "root",
+            "description": "Service root."
+        },
+        {
+            "name": "shields",
+            "description": "Safety shields."
+        },
+        {
+            "name": "streaming_query",
+            "description": "Streaming query (SSE)."
+        },
+        {
+            "name": "streaming_query_interrupt",
+            "description": "Streaming interrupt."
+        },
+        {
+            "name": "tools",
+            "description": "Tools."
+        },
+        {
+            "name": "vector-stores",
+            "description": "Vector stores and files."
+        }
+    ]
 }
