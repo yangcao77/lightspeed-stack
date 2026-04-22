@@ -1,5 +1,7 @@
 """Unit tests for utils/rh_identity module."""
 
+from typing import Optional
+
 import pytest
 from pytest_mock import MockerFixture
 
@@ -43,7 +45,7 @@ def test_auth_disabled_constant() -> None:
 )
 def test_get_rh_identity_context(
     mocker: MockerFixture,
-    rh_identity_setup: dict[str, str] | None,
+    rh_identity_setup: Optional[dict[str, str]],
     expected_org_id: str,
     expected_system_id: str,
 ) -> None:

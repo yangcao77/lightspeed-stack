@@ -2,7 +2,7 @@
 """Unit tests for the /responses REST API endpoint (LCORE Responses API)."""
 
 from datetime import UTC, datetime
-from typing import Any, cast
+from typing import Any, Optional, cast
 
 import pytest
 from fastapi import HTTPException, Request
@@ -78,7 +78,7 @@ def _patch_resolve_response_context(
     mocker: MockerFixture,
     *,
     conversation: str = "conv_new",
-    user_conversation: UserConversation | None = None,
+    user_conversation: Optional[UserConversation] = None,
     generate_topic_summary: bool = False,
 ) -> None:
     """Patch resolve_response_context to return the given conversation context."""

@@ -1,6 +1,6 @@
 """Unit tests for the /prompts REST API endpoints."""
 
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 from fastapi import HTTPException, Request, status
@@ -33,9 +33,9 @@ def _sample_prompt(
     prompt_id: str,
     version: int,
     *,
-    is_default: bool | None = True,
-    prompt: str | None = "hello",
-    variables: list[str] | None = None,
+    is_default: Optional[bool] = True,
+    prompt: Optional[str] = "hello",
+    variables: Optional[list[str]] = None,
 ) -> Prompt:
     """Build a Llama Stack SDK Prompt for test return values."""
     return Prompt(
