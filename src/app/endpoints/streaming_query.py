@@ -880,7 +880,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
 
 
 def stream_http_error_event(
-    error: AbstractErrorResponse, media_type: str | None = MEDIA_TYPE_JSON
+    error: AbstractErrorResponse, media_type: Optional[str] = MEDIA_TYPE_JSON
 ) -> str:
     """
     Create an SSE-formatted error response for generic LLM or API errors.

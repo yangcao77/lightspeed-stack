@@ -2210,14 +2210,14 @@ class NotFoundResponse(AbstractErrorResponse):
         }
     }
 
-    def __init__(self, *, resource: str, resource_id: str | None = None):
+    def __init__(self, *, resource: str, resource_id: Optional[str] = None):
         """
         Create a NotFoundResponse for a missing resource and set the HTTP status to 404.
 
         Parameters:
         ----------
             resource (str): Resource type that was not found (e.g., "conversation", "model").
-            resource_id (str | None): Identifier of the missing resource. If None, indicates
+            resource_id (Optional[str]): Identifier of the missing resource. If None, indicates
                 the resource type is not configured (e.g., no model selected).
         """
         response = f"{resource.title()} not found"
@@ -2382,7 +2382,7 @@ class PromptTooLongResponse(AbstractErrorResponse):
         self,
         *,
         response: str = "Prompt is too long",
-        model: str | None = None,
+        model: Optional[str] = None,
     ) -> None:
         """Initialize a PromptTooLongResponse.
 

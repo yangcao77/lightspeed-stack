@@ -476,7 +476,7 @@ def _is_verbose_enabled(infer_request: RlsapiV1InferRequest) -> bool:
     )
 
 
-def _resolve_quota_subject(request: Request, auth: AuthTuple) -> str | None:
+def _resolve_quota_subject(request: Request, auth: AuthTuple) -> Optional[str]:
     """Resolve the quota subject identifier based on rlsapi_v1 configuration.
 
     Returns None when quota enforcement is disabled (quota_subject not set),

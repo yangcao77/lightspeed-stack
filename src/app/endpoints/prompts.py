@@ -1,6 +1,6 @@
 """Handler for REST API calls to manage Llama Stack stored prompt templates."""
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from llama_stack_client import APIConnectionError, BadRequestError
@@ -183,7 +183,7 @@ async def get_prompt_handler(
     request: Request,
     prompt_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
-    version: int | None = None,
+    version: Optional[int] = None,
 ) -> PromptResourceResponse:
     """
     Handle requests to the GET /prompts/{prompt_id} endpoint.

@@ -3,7 +3,7 @@
 import asyncio
 import os
 from io import BytesIO
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from llama_stack_client import (
@@ -559,7 +559,7 @@ async def add_file_to_vector_store(  # pylint: disable=too-many-locals,too-many-
         max_retries = 3
         retry_delay = 0.5  # seconds
         vs_file = None
-        last_lock_error: Exception | None = None
+        last_lock_error: Optional[Exception] = None
 
         for attempt in range(max_retries):
             try:
