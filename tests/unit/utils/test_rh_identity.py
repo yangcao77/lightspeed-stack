@@ -52,6 +52,8 @@ def test_get_rh_identity_context(
     """Test get_rh_identity_context extracts or defaults org/system IDs."""
     mock_request = mocker.Mock()
 
+    mock_rh_identity = None
+
     if rh_identity_setup is not None:
         mock_rh_identity = mocker.Mock(spec=RHIdentityData)
         mock_rh_identity.get_org_id.return_value = rh_identity_setup["org_id"]
@@ -67,5 +69,6 @@ def test_get_rh_identity_context(
     assert system_id == expected_system_id
 
     if rh_identity_setup is not None:
+        assert mock_rh_identity is not None
         mock_rh_identity.get_org_id.assert_called_once()
         mock_rh_identity.get_user_id.assert_called_once()
