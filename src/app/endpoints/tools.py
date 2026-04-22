@@ -1,6 +1,6 @@
 """Handler for REST API call to list available tools from MCP servers."""
 
-from typing import Annotated, Any
+from typing import Annotated, Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from llama_stack_client import APIConnectionError, BadRequestError
@@ -35,7 +35,7 @@ router = APIRouter(tags=["tools"])
 
 
 def _input_schema_to_parameters(
-    schema: dict[str, Any] | None,
+    schema: Optional[dict[str, Any]],
 ) -> list[dict[str, Any]]:
     """Convert a JSON Schema input_schema to a flat list of parameter dicts.
 

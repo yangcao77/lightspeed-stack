@@ -8,7 +8,7 @@
 
 import re
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 from fastapi import HTTPException, status
@@ -498,7 +498,7 @@ async def test_retrieve_simple_response_api_connection_error(
 def test_get_rh_identity_context(
     mocker: MockerFixture,
     mock_request_factory: Callable[..., Any],
-    rh_identity_setup: dict[str, str] | None,
+    rh_identity_setup: Optional[dict[str, str]],
     expected_org_id: str,
     expected_system_id: str,
 ) -> None:
@@ -978,9 +978,9 @@ async def test_infer_queues_splunk_event_on_success(
 def test_resolve_quota_subject(
     mocker: MockerFixture,
     mock_request_factory: Callable[..., Any],
-    quota_subject: str | None,
-    rh_identity_setup: dict[str, str] | None,
-    expected: str | None,
+    quota_subject: Optional[str],
+    rh_identity_setup: Optional[dict[str, str]],
+    expected: Optional[str],
 ) -> None:
     """Test _resolve_quota_subject resolves correct ID based on config and identity."""
     rlsapi_v1_mock = mocker.Mock()

@@ -388,7 +388,7 @@ async def handle_streaming_response(
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
     instructions_substituted: bool = False,
-    background_tasks: BackgroundTasks | None = None,
+    background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> StreamingResponse:
     """Handle streaming response from Responses API.
@@ -912,7 +912,7 @@ async def generate_response(
     started_at: datetime,
     api_params: ResponsesApiParams,
     generate_topic_summary: bool,
-    background_tasks: BackgroundTasks | None = None,
+    background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
     shield_blocked: bool = False,
 ) -> AsyncIterator[str]:
@@ -990,7 +990,7 @@ async def handle_non_streaming_response(
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
     instructions_substituted: bool = False,
-    background_tasks: BackgroundTasks | None = None,
+    background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> ResponsesResponse:
     """Handle non-streaming response from Responses API.
