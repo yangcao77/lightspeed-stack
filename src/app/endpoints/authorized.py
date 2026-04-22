@@ -11,6 +11,7 @@ from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
     AuthorizedResponse,
     ForbiddenResponse,
+    ServiceUnavailableResponse,
     UnauthorizedResponse,
 )
 
@@ -21,6 +22,7 @@ authorized_responses: dict[int | str, dict[str, Any]] = {
     200: AuthorizedResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 

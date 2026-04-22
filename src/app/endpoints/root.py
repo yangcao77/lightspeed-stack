@@ -13,6 +13,7 @@ from models.config import Action
 from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
+    ServiceUnavailableResponse,
     UnauthorizedResponse,
 )
 
@@ -783,6 +784,7 @@ Rz1JGaaTn29/SlPX2oA//9k=">
 root_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 

@@ -17,6 +17,7 @@ from models.responses import (
     InternalServerErrorResponse,
     MCPClientAuthOptionsResponse,
     MCPServerAuthInfo,
+    ServiceUnavailableResponse,
     UnauthorizedResponse,
 )
 from utils.endpoints import check_configuration_loaded
@@ -30,6 +31,7 @@ mcp_auth_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 

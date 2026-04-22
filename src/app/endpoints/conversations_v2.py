@@ -23,6 +23,7 @@ from models.responses import (
     InternalServerErrorResponse,
     Message,
     NotFoundResponse,
+    ServiceUnavailableResponse,
     UnauthorizedResponse,
 )
 from utils.endpoints import check_configuration_loaded
@@ -41,6 +42,7 @@ conversation_get_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
     ),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 conversation_delete_responses: dict[int | str, dict[str, Any]] = {
@@ -51,6 +53,7 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
     ),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 conversations_list_responses: dict[int | str, dict[str, Any]] = {
@@ -60,6 +63,7 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
     ),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 conversation_update_responses: dict[int | str, dict[str, Any]] = {
@@ -71,6 +75,7 @@ conversation_update_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["conversation cache", "configuration"]
     ),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 

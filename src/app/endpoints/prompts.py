@@ -41,7 +41,9 @@ prompt_create_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 prompt_list_responses: dict[int | str, dict[str, Any]] = {
@@ -49,7 +51,9 @@ prompt_list_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt read"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 prompt_get_responses: dict[int | str, dict[str, Any]] = {
@@ -59,7 +63,9 @@ prompt_get_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt read"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 prompt_update_responses: dict[int | str, dict[str, Any]] = {
@@ -69,7 +75,9 @@ prompt_update_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     404: NotFoundResponse.openapi_response(examples=["prompt"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 prompt_delete_responses: dict[int | str, dict[str, Any]] = {
@@ -78,7 +86,9 @@ prompt_delete_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint", "prompt manage"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(examples=["llama stack"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 

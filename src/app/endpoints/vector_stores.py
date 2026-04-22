@@ -55,7 +55,9 @@ vector_stores_list_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 vector_store_responses: dict[int | str, dict[str, Any]] = {
@@ -64,7 +66,9 @@ vector_store_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 file_responses: dict[int | str, dict[str, Any]] = {
@@ -73,7 +77,9 @@ file_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 vector_store_file_responses: dict[int | str, dict[str, Any]] = {
@@ -82,7 +88,9 @@ vector_store_file_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["file"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
@@ -91,7 +99,9 @@ vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["vector store"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 
@@ -350,7 +360,12 @@ async def update_vector_store(
 
 @router.delete(
     "/vector-stores/{vector_store_id}",
-    responses={"204": {"description": "Vector store deleted"}},
+    responses={
+        "204": {"description": "Vector store deleted"},
+        503: ServiceUnavailableResponse.openapi_response(
+            examples=["llama stack", "kubernetes api"]
+        ),
+    },
     status_code=status.HTTP_204_NO_CONTENT,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
@@ -775,7 +790,12 @@ async def get_vector_store_file(
 
 @router.delete(
     "/vector-stores/{vector_store_id}/files/{file_id}",
-    responses={"204": {"description": "File deleted from vector store"}},
+    responses={
+        "204": {"description": "File deleted from vector store"},
+        503: ServiceUnavailableResponse.openapi_response(
+            examples=["llama stack", "kubernetes api"]
+        ),
+    },
     status_code=status.HTTP_204_NO_CONTENT,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
