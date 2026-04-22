@@ -73,7 +73,6 @@ Feature: MCP tests
         }
     """
 
-  @skip #TODO: LCORE-1463
   @InvalidMCPFileAuthConfig
   Scenario: Check if query endpoint reports error when MCP file-based invalid auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
@@ -95,7 +94,6 @@ Feature: MCP tests
         }
     """
 
-  @skip #TODO: LCORE-1463
   @InvalidMCPFileAuthConfig
   Scenario: Check if streaming_query endpoint reports error when MCP file-based invalid auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
@@ -181,7 +179,6 @@ Feature: MCP tests
         }
     """
 
-  @skip #TODO: LCORE-1463
   @MCPKubernetesAuthConfig
   Scenario: Check if query endpoint reports error when MCP kubernetes invalid auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration
@@ -203,7 +200,6 @@ Feature: MCP tests
         }
     """
 
-  @skip #TODO: LCORE-1463
   @MCPKubernetesAuthConfig
   Scenario: Check if streaming_query endpoint reports error when MCP kubernetes invalid auth token is passed
     Given MCP toolgroups are reset for a new MCP configuration

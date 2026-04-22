@@ -186,10 +186,11 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     """
     check_configuration_loaded(configuration)
 
-    await check_mcp_auth(configuration, mcp_headers)
-
     user_id, _user_name, _skip_userid_check, token = auth
     started_at = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Check MCP Auth
+    await check_mcp_auth(configuration, mcp_headers, token, request.headers)
 
     # Check token availability
     check_tokens_available(configuration.quota_limiters, user_id)
