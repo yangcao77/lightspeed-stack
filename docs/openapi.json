@@ -140,6 +140,28 @@
                                 }
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "text/html": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -845,6 +867,26 @@
                                 }
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -993,6 +1035,26 @@
                                             "detail": {
                                                 "cause": "Lightspeed Stack configuration has not been initialized.",
                                                 "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
@@ -2177,6 +2239,14 @@
                                                 "response": "Unable to connect to Llama Stack"
                                             }
                                         }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2358,6 +2428,14 @@
                                             "detail": {
                                                 "cause": "Connection error while trying to reach backend service.",
                                                 "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
@@ -2609,6 +2687,14 @@
                                                 "response": "Unable to connect to Llama Stack"
                                             }
                                         }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -2853,6 +2939,14 @@
                                                 "response": "Unable to connect to Llama Stack"
                                             }
                                         }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
                                     }
                                 },
                                 "schema": {
@@ -3072,6 +3166,14 @@
                                             "detail": {
                                                 "cause": "Connection error while trying to reach backend service.",
                                                 "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
@@ -4366,6 +4468,34 @@
                     "204": {
                         "description": "Vector store deleted"
                     },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -5309,6 +5439,34 @@
                     "204": {
                         "description": "File deleted from vector store"
                     },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -6228,6 +6386,26 @@
                             }
                         }
                     },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -6444,6 +6622,26 @@
                                 }
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -6625,6 +6823,26 @@
                                             "detail": {
                                                 "cause": "Failed to store feedback at directory: /path/example",
                                                 "response": "Failed to store feedback"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
@@ -6824,6 +7042,26 @@
                             }
                         }
                     },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -6994,6 +7232,34 @@
                                             "detail": {
                                                 "cause": "Failed to query the database",
                                                 "response": "Database query failed"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "llama stack": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Connection error while trying to reach backend service.",
+                                                "response": "Unable to connect to Llama Stack"
+                                            }
+                                        }
+                                    },
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
@@ -7906,6 +8172,26 @@
                                 }
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -8127,6 +8413,26 @@
                             }
                         }
                     },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                }
+                            }
+                        }
+                    },
                     "422": {
                         "description": "Validation Error",
                         "content": {
@@ -8324,6 +8630,26 @@
                                 },
                                 "schema": {
                                     "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
                                 }
                             }
                         }
@@ -8544,6 +8870,26 @@
                                 },
                                 "schema": {
                                     "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
                                 }
                             }
                         }
@@ -9586,6 +9932,26 @@
                                 }
                             }
                         }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -9703,6 +10069,26 @@
                                             "detail": {
                                                 "cause": "User 6789 is not authorized to access this endpoint.",
                                                 "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "503": {
+                        "description": "Service unavailable",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ServiceUnavailableResponse"
+                                },
+                                "examples": {
+                                    "kubernetes api": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Failed to connect to Kubernetes API: Service Unavailable (status 503)",
+                                                "response": "Unable to connect to Kubernetes API"
                                             }
                                         }
                                     }
