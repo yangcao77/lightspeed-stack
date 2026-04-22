@@ -65,7 +65,9 @@ conversation_get_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["database", "configuration"]
     ),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 conversation_delete_responses: dict[int | str, dict[str, Any]] = {
@@ -78,7 +80,9 @@ conversation_delete_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["database", "configuration"]
     ),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 conversations_list_responses: dict[int | str, dict[str, Any]] = {
@@ -87,6 +91,9 @@ conversations_list_responses: dict[int | str, dict[str, Any]] = {
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(
         examples=["database", "configuration"]
+    ),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
     ),
 }
 
@@ -99,7 +106,9 @@ conversation_update_responses: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["database", "configuration"]
     ),
-    503: ServiceUnavailableResponse.openapi_response(),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
 }
 
 

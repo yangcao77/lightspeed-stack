@@ -13,6 +13,7 @@ from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     NotFoundResponse,
+    ServiceUnavailableResponse,
     StreamingInterruptResponse,
     UnauthorizedResponse,
 )
@@ -29,6 +30,7 @@ stream_interrupt_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["streaming request"]),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 

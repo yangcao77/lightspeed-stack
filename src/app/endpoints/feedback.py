@@ -22,6 +22,7 @@ from models.responses import (
     ForbiddenResponse,
     InternalServerErrorResponse,
     NotFoundResponse,
+    ServiceUnavailableResponse,
     StatusResponse,
     UnauthorizedResponse,
 )
@@ -41,6 +42,7 @@ feedback_post_response: dict[int | str, dict[str, Any]] = {
     500: InternalServerErrorResponse.openapi_response(
         examples=["feedback storage", "configuration"]
     ),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 feedback_put_response: dict[int | str, dict[str, Any]] = {
@@ -48,6 +50,7 @@ feedback_put_response: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(examples=["kubernetes api"]),
 }
 
 feedback_get_response: dict[int | str, dict[str, Any]] = {
