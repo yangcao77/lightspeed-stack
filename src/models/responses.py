@@ -1681,7 +1681,6 @@ class ResponsesResponse(AbstractSuccessfulResponse):
             "application/json": {"example": json_example} if json_example else {},
             "text/event-stream": {
                 "schema": {"type": "string"},
-                "description": "SSE stream of events",
                 "example": sse_example,
             },
         }
