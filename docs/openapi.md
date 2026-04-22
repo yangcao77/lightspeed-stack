@@ -449,7 +449,7 @@ authenticate with using their own tokens.
 ### Parameters:
 - request: The incoming HTTP request (used by middleware).
 - auth: Authentication tuple from the auth dependency (used by middleware).
-- mcp_headers: Headers that should be pass to MCP servers.
+- mcp_headers: Headers that should be passed to MCP servers.
 
 ### Returns:
 - MCPClientAuthOptionsResponse: List of MCP servers and their
@@ -598,7 +598,7 @@ as a toolgroup with Llama Stack so it becomes available for queries.
 ### Parameters:
 - request: Model containing attributes to dynamically registering an MCP server.
 - auth: Authentication tuple from the auth dependency (used by middleware).
-- body: Headers that should be pass to MCP servers.
+- body: Headers that should be passed to MCP servers.
 
 ### Raises:
 - HTTPException: On duplicate name, Llama Stack connection error, or
@@ -1973,7 +1973,7 @@ user's query to a selected Llama Stack LLM and returning the generated response.
 - request: The incoming HTTP request (used by middleware).
 - query_request: Request to the LLM.
 - auth: Auth context tuple resolved from the authentication dependency.
-- mcp_headers: Headers that should be pass to MCP servers.
+- mcp_headers: Headers that should be passed to MCP servers.
 
 ### Returns:
 - QueryResponse: Contains the conversation ID and the LLM-generated response.
@@ -2256,7 +2256,7 @@ content type text/event-stream.
 - request: The incoming HTTP request (used by middleware).
 - query_request: Request to the LLM.
 - auth: Auth context tuple resolved from the authentication dependency.
-- mcp_headers: Headers that should be pass to MCP servers.
+- mcp_headers: Headers that should be passed to MCP servers.
 
 ### Returns:
 - SSE-formatted events for the query lifecycle.

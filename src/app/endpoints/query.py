@@ -113,7 +113,7 @@ async def query_endpoint_handler(
     - request: The incoming HTTP request (used by middleware).
     - query_request: Request to the LLM.
     - auth: Auth context tuple resolved from the authentication dependency.
-    - mcp_headers: Headers that should be pass to MCP servers.
+    - mcp_headers: Headers that should be passed to MCP servers.
 
     ### Returns:
     - QueryResponse: Contains the conversation ID and the LLM-generated response.

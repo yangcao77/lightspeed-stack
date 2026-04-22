@@ -63,7 +63,7 @@ async def register_mcp_server_handler(
     ### Parameters:
     - request: Model containing attributes to dynamically registering an MCP server.
     - auth: Authentication tuple from the auth dependency (used by middleware).
-    - body: Headers that should be pass to MCP servers.
+    - body: Headers that should be passed to MCP servers.
 
     ### Raises:
     - HTTPException: On duplicate name, Llama Stack connection error, or

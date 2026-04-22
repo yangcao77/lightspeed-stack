@@ -56,7 +56,7 @@ async def get_mcp_client_auth_options(
     ### Parameters:
     - request: The incoming HTTP request (used by middleware).
     - auth: Authentication tuple from the auth dependency (used by middleware).
-    - mcp_headers: Headers that should be pass to MCP servers.
+    - mcp_headers: Headers that should be passed to MCP servers.
 
     ### Returns:
     - MCPClientAuthOptionsResponse: List of MCP servers and their
