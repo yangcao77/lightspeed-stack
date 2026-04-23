@@ -377,7 +377,7 @@ async def delete_conversation_endpoint_handler(
             conversation_id=llama_stack_conv_id
         )
         logger.info(
-            "Remote deletion of %s successful (remote_deleted=%s)",
+            "Remote deletion of %s: success=%s",
             normalized_conv_id,
             delete_response.deleted,
         )

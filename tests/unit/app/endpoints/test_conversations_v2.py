@@ -760,7 +760,7 @@ class TestDeleteConversationEndpoint:
 
         assert response is not None
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
+        assert response.deleted is True
         assert response.response == "Conversation deleted successfully"
 
     @pytest.mark.asyncio
@@ -781,8 +781,8 @@ class TestDeleteConversationEndpoint:
 
         assert response is not None
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
-        assert response.response == "Conversation cannot be deleted"
+        assert response.deleted is False
+        assert response.response == "Conversation not found"
 
     @pytest.mark.asyncio
     async def test_with_skip_userid_check(
@@ -802,6 +802,7 @@ class TestDeleteConversationEndpoint:
         mock_authorization_resolvers(mocker)
         mocker.patch("app.endpoints.conversations_v2.configuration", mock_configuration)
         mocker.patch("app.endpoints.conversations_v2.check_suid", return_value=True)
+        mock_configuration.conversation_cache.delete.return_value = True
         mock_auth_with_skip = ("mock_user_id", "mock_username", True, "mock_token")
 
         await delete_conversation_endpoint_handler(

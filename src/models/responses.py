@@ -29,10 +29,11 @@ from llama_stack_api.openai_responses import (
 from llama_stack_api.openai_responses import (
     OpenAIResponseUsage as Usage,
 )
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from pydantic_core import SchemaError
 
 from constants import MEDIA_TYPE_EVENT_STREAM
+from log import get_logger
 from models.config import Action, Configuration
 from quota.quota_exceed_error import QuotaExceedError
 from utils.types import RAGChunk, ReferencedDocument, ToolCallSummary, ToolResultSummary
@@ -64,6 +65,8 @@ UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH: list[str] = [
     "mcp oauth",
 ]
 
+logger = get_logger(__name__)
+
 
 class AbstractSuccessfulResponse(BaseModel):
     """Base class for all successful response models."""
@@ -82,6 +85,65 @@ class AbstractSuccessfulResponse(BaseModel):
             "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
             "model": cls,
             "content": content,
+        }
+
+
+class AbstractDeleteResponse(BaseModel):
+    """Base model for successful delete responses."""
+
+    deleted: bool = Field(
+        ...,
+        description="Whether the deletion was successful.",
+        examples=[True, False],
+    )
+    resource_name: ClassVar[str]
+
+    @computed_field
+    def response(self) -> str:
+        """Human-readable outcome of the delete operation."""
+        return (
+            f"{self.resource_name} deleted successfully"
+            if self.deleted
+            else f"{self.resource_name} not found"
+        )
+
+    @computed_field(json_schema_extra={"deprecated": True})
+    def success(self) -> bool:
+        """Successful response flag."""
+        logger.warning("DEPRECATED: Will be removed in a future release.")
+        return True
+
+    @classmethod
+    def openapi_response(cls) -> dict[str, Any]:
+        """Build FastAPI/OpenAPI metadata with named application/json examples.
+
+        Returns:
+            A response dict with description, model, and content keys.
+
+        Raises:
+            SchemaError: If the model JSON schema has no examples list.
+        """
+        schema = cls.model_json_schema()
+        model_examples = schema.get("examples")
+        if not model_examples:
+            raise SchemaError(f"Examples not found in {cls.__name__}")
+
+        examples: dict[str, dict[str, Any]] = {}
+        for index, example in enumerate(model_examples):
+            if "label" not in example:
+                raise SchemaError(
+                    f"Example at index {index} in {cls.__name__} has no label"
+                )
+            if "value" not in example:
+                raise SchemaError(
+                    f"Example at index {index} in {cls.__name__} has no value"
+                )
+            examples[example["label"]] = {"value": example["value"]}
+
+        return {
+            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
+            "model": cls,
+            "content": {"application/json": {"examples": examples}},
         }
 
 
@@ -1113,54 +1175,15 @@ class ConversationResponse(AbstractSuccessfulResponse):
     }
 
 
-class ConversationDeleteResponse(AbstractSuccessfulResponse):
-    """Model representing a response for deleting a conversation.
+class ConversationDeleteResponse(AbstractDeleteResponse):
+    """Response for deleting a conversation."""
 
-    Attributes:
-        conversation_id: The conversation ID (UUID) that was deleted.
-        success: Whether the deletion was successful.
-        response: A message about the deletion result.
-    """
-
+    resource_name: ClassVar[str] = "Conversation"
     conversation_id: str = Field(
         ...,
-        description="The conversation ID (UUID) that was deleted.",
+        description="Conversation identifier that was passed to delete.",
         examples=["123e4567-e89b-12d3-a456-426614174000"],
     )
-    success: bool = Field(
-        ..., description="Whether the deletion was successful.", examples=[True, False]
-    )
-    response: str = Field(
-        ...,
-        description="A message about the deletion result.",
-        examples=[
-            "Conversation deleted successfully",
-            "Conversation cannot be deleted",
-        ],
-    )
-
-    def __init__(self, *, deleted: bool, conversation_id: str) -> None:
-        """
-        Initialize a ConversationDeleteResponse and populate its public fields.
-
-        If `deleted` is True the response message is "Conversation deleted
-        successfully"; otherwise it is "Conversation cannot be deleted".
-
-        Parameters:
-        ----------
-            deleted (bool): Whether the conversation was successfully deleted.
-            conversation_id (str): The ID of the conversation.
-        """
-        response_msg = (
-            "Conversation deleted successfully"
-            if deleted
-            else "Conversation cannot be deleted"
-        )
-        super().__init__(
-            conversation_id=conversation_id,  # type: ignore[call-arg]
-            success=True,  # type: ignore[call-arg]
-            response=response_msg,  # type: ignore[call-arg]
-        )
 
     model_config = {
         "json_schema_extra": {
@@ -1169,7 +1192,7 @@ class ConversationDeleteResponse(AbstractSuccessfulResponse):
                     "label": "deleted",
                     "value": {
                         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-                        "success": True,
+                        "deleted": True,
                         "response": "Conversation deleted successfully",
                     },
                 },
@@ -1177,55 +1200,13 @@ class ConversationDeleteResponse(AbstractSuccessfulResponse):
                     "label": "not found",
                     "value": {
                         "conversation_id": "123e4567-e89b-12d3-a456-426614174000",
-                        "success": True,
-                        "response": "Conversation can not be deleted",
+                        "deleted": False,
+                        "response": "Conversation not found",
                     },
                 },
             ]
         }
     }
-
-    @classmethod
-    def openapi_response(cls) -> dict[str, Any]:
-        """
-        Build an OpenAPI-compatible FastAPI response dict using the model's examples.
-
-        Extracts labeled examples from the model's JSON schema `examples` and
-        places them under `application/json` -> `examples`. The returned
-        mapping includes a `description` ("Successful response"), the `model`
-        (the class itself), and `content` containing the assembled examples.
-
-        Returns:
-            response (dict[str, Any]): A dict with keys `description`, `model`,
-            and `content` suitable for FastAPI/OpenAPI response registration.
-
-        Raises:
-            SchemaError: If any example in the model's JSON schema is missing a
-                         required `label` or `value`.
-        """
-        schema = cls.model_json_schema()
-        model_examples = schema.get("examples", [])
-
-        named_examples: dict[str, Any] = {}
-
-        for ex in model_examples:
-            label = ex.get("label")
-            if label is None:
-                raise SchemaError(f"Example {ex} in {cls.__name__} has no label")
-
-            value = ex.get("value")
-            if value is None:
-                raise SchemaError(f"Example '{label}' in {cls.__name__} has no value")
-
-            named_examples[label] = {"value": value}
-
-        content = {"application/json": {"examples": named_examples or None}}
-
-        return {
-            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
-            "model": cls,
-            "content": content,
-        }
 
 
 class ConversationDetails(BaseModel):
@@ -3044,43 +3025,15 @@ class PromptsListResponse(AbstractSuccessfulResponse):
     }
 
 
-class PromptDeleteResponse(AbstractSuccessfulResponse):
+class PromptDeleteResponse(AbstractDeleteResponse):
     """Result of deleting a stored prompt (always HTTP 200, like conversations v2)."""
 
+    resource_name: ClassVar[str] = "Prompt"
     prompt_id: str = Field(
         ...,
         description="Prompt identifier that was passed to delete.",
         examples=["pmpt_0123456789abcdef0123456789abcdef01234567"],
     )
-    success: bool = Field(
-        ...,
-        description="Whether Llama Stack deleted the prompt.",
-        examples=[True, False],
-    )
-    response: str = Field(
-        ...,
-        description="Human-readable outcome.",
-        examples=[
-            "Prompt deleted successfully",
-            "Prompt cannot be deleted",
-        ],
-    )
-
-    def __init__(self, *, deleted: bool, prompt_id: str) -> None:
-        """Build delete outcome from Llama Stack result.
-
-        Parameters:
-            deleted: True if the backend removed the prompt.
-            prompt_id: Prompt id from the request path.
-        """
-        response_msg = (
-            "Prompt deleted successfully" if deleted else "Prompt cannot be deleted"
-        )
-        super().__init__(
-            prompt_id=prompt_id,  # type: ignore[call-arg]
-            success=deleted,  # type: ignore[call-arg]
-            response=response_msg,  # type: ignore[call-arg]
-        )
 
     model_config = {
         "json_schema_extra": {
@@ -3089,48 +3042,21 @@ class PromptDeleteResponse(AbstractSuccessfulResponse):
                     "label": "deleted",
                     "value": {
                         "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
-                        "success": True,
+                        "deleted": True,
                         "response": "Prompt deleted successfully",
                     },
                 },
                 {
-                    "label": "not_deleted",
+                    "label": "not found",
                     "value": {
                         "prompt_id": "pmpt_0123456789abcdef0123456789abcdef01234567",
-                        "success": False,
-                        "response": "Prompt cannot be deleted",
+                        "deleted": False,
+                        "response": "Prompt not found",
                     },
                 },
             ]
         }
     }
-
-    @classmethod
-    def openapi_response(cls) -> dict[str, Any]:
-        """Build the response spec for HTTP 200 with labeled JSON examples."""
-        schema = cls.model_json_schema()
-        model_examples = schema.get("examples", [])
-
-        named_examples: dict[str, Any] = {}
-
-        for ex in model_examples:
-            label = ex.get("label")
-            if label is None:
-                raise SchemaError(f"Example {ex} in {cls.__name__} has no label")
-
-            value = ex.get("value")
-            if value is None:
-                raise SchemaError(f"Example '{label}' in {cls.__name__} has no value")
-
-            named_examples[label] = {"value": value}
-
-        content = {"application/json": {"examples": named_examples or None}}
-
-        return {
-            "description": SUCCESSFUL_RESPONSE_DESCRIPTION,
-            "model": cls,
-            "content": content,
-        }
 
 
 class FileResponse(AbstractSuccessfulResponse):
