@@ -240,13 +240,9 @@ async def responses_endpoint_handler(
     if responses_request.reasoning is not None:
         logger.warning("reasoning is not yet supported in LCORE and will be ignored")
         responses_request.reasoning = None
-    if responses_request.max_output_tokens is not None:
-        logger.warning(
-            "max_output_tokens is not yet supported in LCORE and will be ignored"
-        )
-        responses_request.max_output_tokens = None
 
     responses_request = responses_request.model_copy(deep=True)
+
     check_configuration_loaded(configuration)
     client_instructions = responses_request.instructions
     responses_request.instructions = get_system_prompt(
