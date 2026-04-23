@@ -440,11 +440,11 @@ class ProviderResponse(AbstractSuccessfulResponse):
         ...,
         description="The API this provider implements",
     )
-    config: dict[str, bool | float | str | list[Any] | object | None] = Field(
+    config: dict[str, Any] = Field(
         ...,
         description="Provider configuration parameters",
     )
-    health: dict[str, bool | float | str | list[Any] | object | None] = Field(
+    health: dict[str, Any] = Field(
         ...,
         description="Current health status of the provider",
     )

@@ -16276,53 +16276,13 @@
                         "description": "The API this provider implements"
                     },
                     "config": {
-                        "additionalProperties": {
-                            "anyOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "items": {},
-                                    "type": "array"
-                                },
-                                {},
-                                {
-                                    "type": "null"
-                                }
-                            ]
-                        },
+                        "additionalProperties": true,
                         "type": "object",
                         "title": "Config",
                         "description": "Provider configuration parameters"
                     },
                     "health": {
-                        "additionalProperties": {
-                            "anyOf": [
-                                {
-                                    "type": "boolean"
-                                },
-                                {
-                                    "type": "number"
-                                },
-                                {
-                                    "type": "string"
-                                },
-                                {
-                                    "items": {},
-                                    "type": "array"
-                                },
-                                {},
-                                {
-                                    "type": "null"
-                                }
-                            ]
-                        },
+                        "additionalProperties": true,
                         "type": "object",
                         "title": "Health",
                         "description": "Current health status of the provider"
