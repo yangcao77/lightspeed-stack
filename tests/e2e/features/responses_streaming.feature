@@ -200,6 +200,20 @@ Feature: Responses endpoint streaming API tests
     """
     Then The status code of the response is 200
       And The body of the response contains hello
+      And the body of the response has the following structure
+        """
+        {
+          "object": "response",
+          "status": "completed",
+          "model": "{MODEL}",
+          "output": [
+            {
+              "type": "message",
+              "role": "assistant"
+            }
+          ]
+        }
+        """
 
   Scenario: Streaming responses returns 404 for unknown model segment in provider slash model id  
     When I use "responses" to ask question with authorization header

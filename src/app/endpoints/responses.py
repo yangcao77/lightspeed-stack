@@ -280,10 +280,12 @@ async def responses_endpoint_handler(
 
     # LCORE-specific: Automatically select model if not provided in request
     # This extends the base LLS API which requires model to be specified.
+    client_model = responses_request.model
     if not responses_request.model:
         responses_request.model = await select_model_for_responses(
             client, response_context.user_conversation
         )
+    model_substituted = not client_model
     if not await check_model_configured(client, responses_request.model):
         _, model_id = extract_provider_and_model_from_model_id(responses_request.model)
         error_response = NotFoundResponse(resource="model", resource_id=model_id)
@@ -371,6 +373,7 @@ async def responses_endpoint_handler(
         inline_rag_context=inline_rag_context,
         filter_server_tools=filter_server_tools,
         instructions_substituted=instructions_substituted,
+        model_substituted=model_substituted,
         background_tasks=background_tasks,
         rh_identity_context=rh_identity_context,
     )
@@ -386,6 +389,7 @@ async def handle_streaming_response(
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
     instructions_substituted: bool = False,
+    model_substituted: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> StreamingResponse:
@@ -401,6 +405,7 @@ async def handle_streaming_response(
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
         instructions_substituted: Whether the server substituted the instructions
+        model_substituted: Whether the server substituted the model
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
     Returns:
@@ -453,6 +458,7 @@ async def handle_streaming_response(
                 inline_rag_context=inline_rag_context,
                 filter_server_tools=filter_server_tools,
                 instructions_substituted=instructions_substituted,
+                model_substituted=model_substituted,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
             if is_context_length_error(str(e)):
@@ -624,6 +630,7 @@ def _sanitize_response_dict(
     response_dict: dict[str, Any],
     configured_mcp_labels: set[str],
     instructions_substituted: bool = False,
+    model_substituted: bool = False,
 ) -> None:
     """Sanitize a serialized response object in-place to remove internal details.
 
@@ -637,7 +644,14 @@ def _sanitize_response_dict(
       they were used as-is, the value is left unchanged.
     - ``tools``: server-deployed MCP tool definitions are removed; client-
       provided tools (those whose ``server_label`` is not in
-      ``configured_mcp_labels``) are preserved
+      ``configured_mcp_labels``) are preserved.
+    - ``output``: server-deployed MCP output items (``mcp_list_tools``,
+      ``mcp_call``, ``mcp_approval_request``) are stripped so clients only
+      see item types they understand (``message``, ``function_call``, etc.).
+    - ``model``: the provider routing prefix (everything before the last
+      ``/``) is stripped only when the server selected the model
+      (``model_substituted=True``).  When the client specified the model,
+      it is echoed back unchanged.
 
     Args:
         response_dict: Mutable dict produced by ``model_dump`` on a response
@@ -646,6 +660,8 @@ def _sanitize_response_dict(
             server-deployed MCP servers.
         instructions_substituted: Whether the server substituted the
             instructions (True) or the client provided them (False).
+        model_substituted: Whether the server substituted the model
+            (True) or the client provided it (False).
     """
     if instructions_substituted:
         response_dict["instructions"] = SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
@@ -657,6 +673,18 @@ def _sanitize_response_dict(
             for tool in tools
             if tool.get("server_label") not in configured_mcp_labels
         ]
+
+    if output := response_dict.get("output"):
+        response_dict["output"] = [
+            item
+            for item in output
+            if not _is_server_mcp_output_item(item, configured_mcp_labels)
+        ]
+
+    if model_substituted:
+        model = response_dict.get("model")
+        if model and "/" in model:
+            response_dict["model"] = model.rsplit("/", 1)[-1]
 
 
 def _is_server_mcp_output_item(
@@ -775,6 +803,7 @@ async def response_generator(
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
     instructions_substituted: bool = False,
+    model_substituted: bool = False,
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted streaming response with LCORE-enriched events.
 
@@ -787,6 +816,7 @@ async def response_generator(
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
         instructions_substituted: Whether the server substituted the instructions
+        model_substituted: Whether the server substituted the model
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
     """
@@ -824,6 +854,7 @@ async def response_generator(
                 chunk_dict["response"],
                 configured_mcp_labels,
                 instructions_substituted,
+                model_substituted,
             )
             tools = chunk_dict["response"].get("tools")
             if tools is not None:
@@ -833,16 +864,6 @@ async def response_generator(
                         configuration.rag_id_mapping,
                     )
                 )
-            # Remove server-deployed MCP items from the output array so
-            # clients only see item types they understand (message, function_call, etc.)
-            output = chunk_dict["response"].get("output")
-            if output is not None:
-                chunk_dict["response"]["output"] = [
-                    item
-                    for item in output
-                    if not _is_server_mcp_output_item(item, configured_mcp_labels)
-                ]
-
         # Intermediate response - no quota consumption and text yet
         if event_type == "response.in_progress":
             chunk_dict["response"]["available_quotas"] = {}
@@ -988,6 +1009,7 @@ async def handle_non_streaming_response(
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
     instructions_substituted: bool = False,
+    model_substituted: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> ResponsesResponse:
@@ -1003,6 +1025,7 @@ async def handle_non_streaming_response(
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool output
         instructions_substituted: Whether the server substituted the instructions
+        model_substituted: Whether the server substituted the model
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
     Returns:
@@ -1168,7 +1191,10 @@ async def handle_non_streaming_response(
     configured_mcp_labels = {s.name for s in configuration.mcp_servers}
     response_dict = api_response.model_dump(exclude_none=True)
     _sanitize_response_dict(
-        response_dict, configured_mcp_labels, instructions_substituted
+        response_dict,
+        configured_mcp_labels,
+        instructions_substituted,
+        model_substituted,
     )
     tools = response_dict.get("tools")
     if tools is not None:
