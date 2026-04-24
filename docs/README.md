@@ -47,6 +47,8 @@ See the full documentation at [`../README.md`](../README.md) or browse sub-pages
 
 [Providers](https://lightspeed-core.github.io/lightspeed-stack/providers.html)
 
+[Sentry error tracking](https://lightspeed-core.github.io/lightspeed-stack/sentry.html)
+
 [User data collection](https://lightspeed-core.github.io/lightspeed-stack/user_data_collection.html)
 
 [Database structure](https://lightspeed-core.github.io/lightspeed-stack/DB/index.html)
