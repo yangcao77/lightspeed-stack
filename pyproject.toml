@@ -73,6 +73,8 @@ dependencies = [
     # To be able to fix multiple CVEs, also LCORE-1117
     "requests>=2.33.0",
     "datasets>=4.7.0",
+    # Used for error tracking and monitoring
+    "sentry-sdk[fastapi]>=2.58.0",
 ]
 
 

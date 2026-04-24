@@ -1572,6 +1572,7 @@ dependencies = [
     { name = "requests" },
     { name = "rich" },
     { name = "semver" },
+    { name = "sentry-sdk", extra = ["fastapi"] },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "starlette" },
     { name = "urllib3" },
@@ -1675,6 +1676,7 @@ requires-dist = [
     { name = "requests", specifier = ">=2.33.0" },
     { name = "rich", specifier = ">=14.0.0" },
     { name = "semver", specifier = "<4.0.0" },
+    { name = "sentry-sdk", extras = ["fastapi"], specifier = ">=2.58.0" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.42" },
     { name = "starlette", specifier = ">=0.47.1" },
     { name = "urllib3", specifier = ">=2.6.3" },
@@ -2777,6 +2779,7 @@ wheels = [
 name = "psycopg2-binary"
 version = "2.9.12"
 source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/60/a3624f79acea344c16fbef3a94d28b89a8042ddfb8f3e4ca83f538671409/psycopg2_binary-2.9.12.tar.gz", hash = "sha256:5ac9444edc768c02a6b6a591f070b8aae28ff3a99be57560ac996001580f294c", size = 379686, upload-time = "2026-04-21T09:40:34.304Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e2/9f/ef4ef3c8e15083df90ca35265cfd1a081a2f0cc07bb229c6314c6af817f4/psycopg2_binary-2.9.12-cp312-cp312-macosx_10_13_x86_64.whl", hash = "sha256:5cdc05117180c5fa9c40eea8ea559ce64d73824c39d928b7da9fb5f6a9392433", size = 3712459, upload-time = "2026-04-20T23:34:30.549Z" },
     { url = "https://files.pythonhosted.org/packages/b5/01/3dd14e46ba48c1e1a6ec58ee599fa1b5efa00c246d5046cd903d0eeb1af1/psycopg2_binary-2.9.12-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:d3227a3bc228c10d21011a99245edca923e4e8bf461857e869a507d9a41fe9f6", size = 3822936, upload-time = "2026-04-20T23:34:32.77Z" },
@@ -3660,6 +3663,24 @@ wheels = [
 ]
 
 [[package]]
+name = "sentry-sdk"
+version = "2.58.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "certifi" },
+    { name = "urllib3" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/26/b3/fb8291170d0e844173164709fc0fa0c221ed75a5da740c8746f2a83b4eb1/sentry_sdk-2.58.0.tar.gz", hash = "sha256:c1144d947352d54e5b7daa63596d9f848adf684989c06c4f5a659f0c85a18f6f", size = 438764, upload-time = "2026-04-13T17:23:26.265Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fa/eb/d875669993b762556ae8b2efd86219943b4c0864d22204d622a9aee3052b/sentry_sdk-2.58.0-py2.py3-none-any.whl", hash = "sha256:688d1c704ddecf382ea3326f21a67453d4caa95592d722b7c780a36a9d23109e", size = 460919, upload-time = "2026-04-13T17:23:24.675Z" },
+]
+
+[package.optional-dependencies]
+fastapi = [
+    { name = "fastapi" },
+]
+
+[[package]]
 name = "setuptools"
 version = "82.0.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3902,9 +3923,9 @@ dependencies = [
     { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
 ]
 wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:4de0ed8cbc457a506dbca40376e206a29efee10756a00f1f3404bf67ad737d04" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:259548471194ab63d7ea273873053a6e3cc23530c1510f01e9d7ad259187bbd0" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp313-none-macosx_11_0_arm64.whl", hash = "sha256:e24836d968b54ef4dfb05594001a61958711ac9224026291e4e3f92f83a6fd7f" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp312-none-macosx_11_0_arm64.whl", hash = "sha256:4de0ed8cbc457a506dbca40376e206a29efee10756a00f1f3404bf67ad737d04", upload-time = "2025-10-14T17:26:17Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp313-cp313t-macosx_11_0_arm64.whl", hash = "sha256:259548471194ab63d7ea273873053a6e3cc23530c1510f01e9d7ad259187bbd0", upload-time = "2025-10-14T17:26:17Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0-cp313-none-macosx_11_0_arm64.whl", hash = "sha256:e24836d968b54ef4dfb05594001a61958711ac9224026291e4e3f92f83a6fd7f", upload-time = "2025-10-14T17:26:17Z" },
 ]
 
 [[package]]
@@ -3929,17 +3950,17 @@ dependencies = [
     { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
 ]
 wheels = [
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:3a651434ae1248b0568c12b5f9e3acc8942eb28378d9d04a79302938b68c6f24" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:28f6eb31b08180a5c5e98d5bc14eef6909c9f5a1dbff9632c3e02a8773449349" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-win_amd64.whl", hash = "sha256:e438061b87ec7dd6018fca9f975219889aa0a3f6cdc3ea10dd0ae2bc7f1c47ce" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-win_arm64.whl", hash = "sha256:eb13ff1c34e338d722e76a4fd83b8d282782505bd1b99af4b3c32da66eba6eb4" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:be4438d8dad7f0d5a5e54f0feef8a893446894ec87f102bb1d82dcc4518542e4" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:6c9b217584400963d5b4daddb3711ec7a3778eab211e18654fba076cce3b8682" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-win_amd64.whl", hash = "sha256:728372e3f58c5826445f677746e5311c1935c1a7c59599f73a49ded850e038e8" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-win_arm64.whl", hash = "sha256:95e56c26f919fbb98f16e7a0b87af494b893f9da9a65a020f17a01c13e520a81" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:6c777160288b08555820781ae0f3a2c67a59bd24b065e88ca1ec20e2f9dc8ac7" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:528fd338311f31c9fb18038cafd00e6eae0bf5ad5577521701acb62510753d18" },
-    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-win_amd64.whl", hash = "sha256:d572863990e7d2762b547735ef589f6350d9eb4e441d38753a1c33636698cf4c" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-manylinux_2_28_aarch64.whl", hash = "sha256:3a651434ae1248b0568c12b5f9e3acc8942eb28378d9d04a79302938b68c6f24", upload-time = "2025-10-14T17:26:02Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-manylinux_2_28_x86_64.whl", hash = "sha256:28f6eb31b08180a5c5e98d5bc14eef6909c9f5a1dbff9632c3e02a8773449349", upload-time = "2025-10-14T17:26:03Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-win_amd64.whl", hash = "sha256:e438061b87ec7dd6018fca9f975219889aa0a3f6cdc3ea10dd0ae2bc7f1c47ce", upload-time = "2025-10-14T17:26:05Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp312-cp312-win_arm64.whl", hash = "sha256:eb13ff1c34e338d722e76a4fd83b8d282782505bd1b99af4b3c32da66eba6eb4", upload-time = "2025-10-14T17:26:06Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-manylinux_2_28_aarch64.whl", hash = "sha256:be4438d8dad7f0d5a5e54f0feef8a893446894ec87f102bb1d82dcc4518542e4", upload-time = "2025-10-14T17:26:07Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-manylinux_2_28_x86_64.whl", hash = "sha256:6c9b217584400963d5b4daddb3711ec7a3778eab211e18654fba076cce3b8682", upload-time = "2025-10-14T17:26:07Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-win_amd64.whl", hash = "sha256:728372e3f58c5826445f677746e5311c1935c1a7c59599f73a49ded850e038e8", upload-time = "2025-10-14T17:26:10Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313-win_arm64.whl", hash = "sha256:95e56c26f919fbb98f16e7a0b87af494b893f9da9a65a020f17a01c13e520a81", upload-time = "2025-10-14T17:26:08Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-manylinux_2_28_aarch64.whl", hash = "sha256:6c777160288b08555820781ae0f3a2c67a59bd24b065e88ca1ec20e2f9dc8ac7", upload-time = "2025-10-14T17:26:09Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-manylinux_2_28_x86_64.whl", hash = "sha256:528fd338311f31c9fb18038cafd00e6eae0bf5ad5577521701acb62510753d18", upload-time = "2025-10-14T17:26:09Z" },
+    { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.9.0%2Bcpu-cp313-cp313t-win_amd64.whl", hash = "sha256:d572863990e7d2762b547735ef589f6350d9eb4e441d38753a1c33636698cf4c", upload-time = "2025-10-14T17:26:11Z" },
 ]
 
 [[package]]

@@ -249,3 +249,27 @@ SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER: Final[str] = "<server prompt applied>"
 RLSAPI_V1_QUESTION_MAX_LENGTH: Final[int] = 32_768
 # Maximum character length for the serialized /v1/responses request body (64 KiB)
 RESPONSES_REQUEST_MAX_SIZE: Final[int] = 65_536
+
+# Sentry configuration constants
+# Environment variable name for the Sentry DSN (Data Source Name)
+SENTRY_DSN_ENV_VAR: Final[str] = "SENTRY_DSN"
+# Environment variable name for the Sentry environment tag
+SENTRY_ENVIRONMENT_ENV_VAR: Final[str] = "SENTRY_ENVIRONMENT"
+# Default Sentry environment when SENTRY_ENVIRONMENT is not set
+SENTRY_DEFAULT_ENVIRONMENT: Final[str] = "development"
+# Default trace sample rate (fraction of transactions to capture)
+SENTRY_DEFAULT_TRACES_SAMPLE_RATE: Final[float] = 0.25
+# Routes excluded from Sentry trace sampling (health checks, metrics, root).
+# Note: health and metrics routers are mounted WITHOUT a /v1 prefix
+# (see the setup_routers function in src/app/routers.py), so ASGI paths are
+# /readiness, /liveness, /metrics.
+SENTRY_EXCLUDED_ROUTES: Final[tuple[str, ...]] = (
+    "/readiness",
+    "/liveness",
+    "/metrics",
+    "/",
+)
+# Environment variable name for the Sentry CA certificate bundle path.
+# Set this to a file path (e.g. /etc/pki/tls/certs/ca-bundle.crt) when
+# connecting to a Sentry instance that uses a private or internal CA.
+SENTRY_CA_CERTS_ENV_VAR: Final[str] = "SENTRY_CA_CERTS"
