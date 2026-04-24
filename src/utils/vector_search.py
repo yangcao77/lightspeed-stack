@@ -7,6 +7,7 @@ and processing RAG chunks that is shared between query_v2.py and streaming_query
 import asyncio
 import traceback
 from typing import Any, Optional, cast
+from urllib.parse import urljoin
 
 from llama_stack_api.openai_responses import (
     OpenAIResponseMessage as ResponseMessage,
@@ -580,27 +581,18 @@ async def build_rag_context(
 
 
 def _join_okp_doc_url(base_url: AnyUrl, reference: Optional[str]) -> str:
-    """Build a well-formed document URL from base and reference.
-
-    If reference is None or empty, returns ''.
-    If reference already starts with 'http', returns reference unchanged.
-    Otherwise normalizes ``base_url`` to end with a single '/', strips any leading
-    '/' from reference, and concatenates.
+    """Build a well-formed document URL from base and reference path.
 
     Args:
         base_url: OKP base URL.
-        reference: Document path or full URL.
+        reference: Origin-relative document path (e.g. ``/docs/foo``).
 
     Returns:
-        Well-formed doc_url string.
+        Well-formed doc_url string, or empty string if reference is empty.
     """
     if not reference:
         return ""
-    if reference.startswith("http"):
-        return reference
-    base = str(base_url).rstrip("/") + "/"
-    ref = reference.lstrip("/")
-    return base + ref
+    return urljoin(str(base_url), reference)
 
 
 def _build_document_url(
