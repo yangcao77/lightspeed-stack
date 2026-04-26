@@ -14,11 +14,11 @@ ptisnovs@redhat.com
 ## AI-driven agentic flow
 
 * An official RH plan to develop and maintain SW products
-* It allow developers to be faster
+* It allows developers to be faster
     - more stress on reviewers
 * But the whole source structure needs to be in a good state
 * Context-awareness problem
-    - both for humans and LLMS
+    - both for humans and LLMs
 
 ---
 
