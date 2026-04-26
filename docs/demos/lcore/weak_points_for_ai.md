@@ -56,6 +56,11 @@ ptisnovs@redhat.com
 ## Static vs dynamic structure
 
 * Might be critical for LLMs to understand the project
+
+![Philosophy](images/APhilosophyOfSoftwareDesign.jpg)
+
+---
+
 * (live demo)
 
 ---
@@ -68,6 +73,26 @@ ptisnovs@redhat.com
 * Often arises from mixing orthogonal concerns (e.g., state, identity, lifecycle, side effects) inside the same abstraction
 * Complected systems resist decomposition, testing, and evolution
 * Changes in one place ripple unpredictably.
+* -> hard for AI to reason about
+
+---
+
+## Software enthropy
+
+* "The Pragmatic Programmer" [Thomas & Hunt]
+    - every time you make a change w/o thinking about the whole system
+      the code will get worse
+
+---
+
+## Do you use AI to add new features?
+
+---
+
+## AI in good code base behave very well!
+
+* More pressure on this field
+* Especially in times where "code is cheap" is repeatedly said
 
 ---
 
@@ -368,6 +393,113 @@ async def run_shield(
 
 ---
 
+```python
+# True constants are possible in Python
+
+# Max seconds to wait for topic summary in background task after interrupt persist.
+TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS: Final[float] = 30.0
+
+# Supported attachment types
+ATTACHMENT_TYPES: Final[frozenset] = frozenset(
+    {
+        "alert",
+        "api object",
+        "configuration",
+        "error message",
+        "event",
+        "log",
+        "stack trace",
+    }
+)
+```
+
+---
+
+```python
+# Pydantic model utilization
+
+class ShieldModerationBlocked(BaseModel):
+    """Shield moderation blocked the content; refusal details are present."""
+
+    decision: Literal["blocked"] = "blocked"
+    message: str
+    moderation_id: str
+    refusal_response: ResponseMessage
+```
+
+---
+
+```python
+# Pydantic model utilization
+
+class TranscriptMetadata(BaseModel):
+    """Metadata for a transcript entry."""
+
+    provider: Optional[str] = None
+    model: str
+    query_provider: Optional[str] = None
+    query_model: Optional[str] = None
+    user_id: str
+    conversation_id: str
+    timestamp: str
+
+
+def create_transcript_metadata(
+    user_id: str,
+    conversation_id: str,
+    model_id: str,
+    provider_id: Optional[str],
+    query_provider: Optional[str],
+    query_model: Optional[str],
+) -> TranscriptMetadata:
+    hashed_user_id = _hash_user_id(user_id)
+
+    return TranscriptMetadata(
+        provider=provider_id,
+        model=model_id,
+        query_provider=query_provider,
+        query_model=query_model,
+        user_id=hashed_user_id,
+        conversation_id=conversation_id,
+        timestamp=datetime.now(UTC).isoformat(),
+    )
+```
+
+---
+
+```python
+# Dynamic dispatch: functional style
+
+@singledispatch
+def function(arg: Any) -> None:
+    print("Original function with argument", arg, "that has type", type(arg))
+
+
+@function.register
+def _(arg: int | str) -> None:
+    print("Integer variant with int or str argument:", arg)
+
+
+@function.register(list | tuple)
+def _(arg: list[Any] | tuple[Any, ...]) -> None:
+    print("List or tuple variant with argument:", arg)
+
+
+@function.register
+def _(arg: None) -> None:
+    print("None variant with argument:", arg)
+
+
+function(42)
+function("foo")
+function(["foo", "bar", "baz"])
+function(("foo", "bar", "baz"))
+function(1.4142)
+function(None)
+```
+
+---
+
 ## Concurrency
 
 * Coroutines (async, await)
@@ -403,8 +535,10 @@ async def run_shield(
 
 * Can it help LLMs to understand the code?
 * I don't think so, because LLMs seems to be focused on static structure
-* Not a dynamic (runtime) behaviour
-* An interesting are to research
+    - just IMHO
+    - can be hacked by agents running BDD???
+* A dynamic (runtime) behaviour
+* An interesting area to research
     - IMHO more important than having tens of agents eating tokens
 
 ---
@@ -414,6 +548,12 @@ async def run_shield(
 * Definitely an area that will need improvement
 * Skills common for multiple teams/projects
 * Skills designed directly for LCORE
+* Common ground between humans and AI
+    - basically shared language with the AI
+    - `UBIQUITUOUS_LANGUAGE.md` idea
+    - terms used in project with definition
+    - should be used in code (functions, vars, comments)
+    - https://github.com/mattpocock/skills/blob/main/ubiquitous-language/SKILL.md
 
 ---
 
