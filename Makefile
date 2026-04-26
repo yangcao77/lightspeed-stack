@@ -99,7 +99,7 @@ shellcheck: ## Run shellcheck
 	shellcheck -- */*.sh
 
 black:	## Check source code using Black code formatter
-	uv run black --check .
+	uv run black --check src tests
 
 pylint:	## Check source code using Pylint static code analyser
 	uv run pylint src tests
