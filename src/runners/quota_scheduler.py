@@ -90,7 +90,7 @@ def quota_scheduler(config: QuotaHandlersConfiguration) -> bool:
         period,
     )
 
-    while True:
+    while True:  # pylint: disable=too-many-nested-blocks
         logger.info("Quota scheduler sync started")
         for limiter in config.limiters:
             try:
