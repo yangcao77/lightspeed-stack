@@ -15,7 +15,7 @@ Agent Skills support allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightsp
 
 **Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
-The LLM sees a skill catalog (name + description) in the system prompt and can load full instructions on demand using the `activate_skill` tool.
+The LLM discovers available skills via a `list_skills` tool and loads full instructions on demand via an `activate_skill` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
 
 ## Why
 
@@ -34,8 +34,8 @@ Skills solve this by giving the LLM access to procedural knowledge and domain-sp
 
 - **R1:** Skill paths are specified in `lightspeed-stack.yaml`; name and description are read from `SKILL.md` frontmatter
 - **R2:** Each skill path must point to a directory containing a valid `SKILL.md` file
-- **R3:** The skill catalog (name + description) is injected into the system prompt with behavioral instructions
-- **R4:** The LLM can load full skill instructions via the `activate_skill` tool
+- **R3:** The system prompt contains behavioral instructions for skill discovery and activation
+- **R4:** The LLM can discover skills via `list_skills` tool and load full instructions via `activate_skill` tool
 - **R5:** Skill content is returned with structured wrapping (`<skill_content>` tags) per agentskills.io spec
 - **R6:** The LLM can read files from a skill's `references/` subdirectory (allowlisted paths)
 - **R7:** Script execution (`scripts/` subdirectory) is not supported
@@ -77,22 +77,22 @@ Request flow:
            │
            ▼
   ┌─────────────────┐
-  │ Build system    │──► Append skill catalog + behavioral instructions
+  │ Build system    │──► Append behavioral instructions (how to use skill tools)
   │ prompt          │
   └────────┬────────┘
            │
            ▼
   ┌─────────────────┐
-  │ Register tools  │──► Add activate_skill tool alongside MCP/RAG tools
+  │ Register tools  │──► Add list_skills + activate_skill tools
   └────────┬────────┘
            │
            ▼
   ┌─────────────────┐
-  │ LLM processes   │──► Sees catalog, decides if skill is relevant
+  │ LLM processes   │──► May call list_skills to discover available skills
   │ request         │
   └────────┬────────┘
            │
-           ▼ (if skill needed)
+           ▼ (if skill relevant)
   ┌─────────────────┐
   │ activate_skill  │──► Returns <skill_content> with body + resources
   │ tool invocation │
@@ -222,67 +222,49 @@ def load_skills(config: SkillsConfiguration) -> list[LoadedSkill]:
 
 ### System prompt injection
 
-The skill catalog is appended to the system prompt following the [agentskills.io implementation guide](https://agentskills.io/client-implementation/adding-skills-support).
-
-#### Catalog format
-
-The catalog uses XML format with `<available_skills>` containing `<skill>` elements:
-
-```xml
-<available_skills>
-  <skill>
-    <name>openshift-troubleshooting</name>
-    <description>Diagnose and fix common OpenShift deployment issues including pod failures, networking problems, and resource constraints.</description>
-  </skill>
-  <skill>
-    <name>code-review</name>
-    <description>Review code for best practices, security vulnerabilities, and performance issues.</description>
-  </skill>
-</available_skills>
-```
+Behavioral instructions are appended to the system prompt following the [agentskills.io implementation guide](https://agentskills.io/client-implementation/adding-skills-support). The system prompt contains instructions for how to use the skill tools, not the skill catalog itself.
 
 #### Behavioral instructions
 
-The catalog is preceded by behavioral instructions telling the model how to use skills:
+The system prompt includes instructions telling the model how to discover and use skills:
 
 ```
-The following skills provide specialized instructions for specific tasks.
-When a task matches a skill's description, call the activate_skill tool
-with the skill's name to load its full instructions.
+# Agent Skills
+
+You have access to specialized skills that provide domain-specific instructions.
+
+To discover available skills, call the list_skills tool. This returns the skill
+catalog with name and description for each skill.
+
+When a task matches a skill's description, call the activate_skill tool with
+the skill's name to load its full instructions. You MUST load and follow the
+skill instructions before proceeding with the task.
 ```
 
 #### Implementation
 
 ```python
-def build_skill_catalog(skills: list[LoadedSkill]) -> str:
-    """Build skill catalog XML for system prompt injection.
+SKILL_BEHAVIORAL_INSTRUCTIONS = """
+# Agent Skills
 
-    Follows the agentskills.io implementation guide format.
+You have access to specialized skills that provide domain-specific instructions.
+
+To discover available skills, call the list_skills tool. This returns the skill
+catalog with name and description for each skill.
+
+When a task matches a skill's description, call the activate_skill tool with
+the skill's name to load its full instructions. You MUST load and follow the
+skill instructions before proceeding with the task.
+"""
+
+def get_skill_instructions(skills: list[LoadedSkill]) -> str:
+    """Get behavioral instructions for skill tools.
+
+    Returns empty string if no skills are configured.
     """
     if not skills:
         return ""
-
-    lines = [
-        "",
-        "# Available Skills",
-        "",
-        "The following skills provide specialized instructions for specific tasks.",
-        "When a task matches a skill's description, call the activate_skill tool",
-        "with the skill's name to load its full instructions.",
-        "",
-        "<available_skills>",
-    ]
-
-    for skill in skills:
-        lines.extend([
-            "  <skill>",
-            f"    <name>{skill.name}</name>",
-            f"    <description>{skill.description}</description>",
-            "  </skill>",
-        ])
-
-    lines.append("</available_skills>")
-    return "\n".join(lines)
+    return SKILL_BEHAVIORAL_INSTRUCTIONS
 ```
 
 Modify `get_system_prompt()` in `src/utils/prompts.py`:
@@ -291,29 +273,78 @@ Modify `get_system_prompt()` in `src/utils/prompts.py`:
 def get_system_prompt(system_prompt: Optional[str], loaded_skills: list[LoadedSkill], ...) -> str:
     # ... existing logic to resolve base system prompt ...
 
-    # Append skill catalog if skills are loaded
-    skill_catalog = build_skill_catalog(loaded_skills)
-    if skill_catalog:
-        resolved_prompt = resolved_prompt + "\n" + skill_catalog
+    # Append skill behavioral instructions if skills are loaded
+    skill_instructions = get_skill_instructions(loaded_skills)
+    if skill_instructions:
+        resolved_prompt = resolved_prompt + "\n" + skill_instructions
 
     return resolved_prompt
 ```
 
-**Note**: If no skills are configured, omit the catalog entirely. Don't show an empty `<available_skills/>` block.
+**Note**: If no skills are configured, omit the instructions entirely. The `list_skills` and `activate_skill` tools are also not registered when no skills are configured.
 
-### Skill activation tool
+### Skill tools
 
-Register an `activate_skill` tool that the LLM can call to load full instructions. This follows the [dedicated tool activation pattern](https://agentskills.io/client-implementation/adding-skills-support#dedicated-tool-activation) from agentskills.io.
+Two tools are registered for skill discovery and activation. This follows the [tool-based activation pattern](https://agentskills.io/client-implementation/adding-skills-support#dedicated-tool-activation) from agentskills.io and aligns with Google ADK's approach.
 
-#### Tool registration
+#### list_skills tool
+
+The `list_skills` tool returns the skill catalog (name + description for each skill):
 
 ```python
-def get_skill_tool(skills: list[LoadedSkill]) -> Optional[InputTool]:
+def get_list_skills_tool(skills: list[LoadedSkill]) -> Optional[InputTool]:
+    """Create the list_skills tool if skills are configured.
+
+    Returns the skill catalog so the LLM can discover available skills.
+    """
+    if not skills:
+        return None
+
+    return InputTool(
+        type="function",
+        function={
+            "name": "list_skills",
+            "description": "List available skills with their names and descriptions. Call this to discover what skills are available.",
+            "parameters": {
+                "type": "object",
+                "properties": {},
+            },
+        },
+    )
+
+
+def handle_list_skills(skills: list[LoadedSkill]) -> str:
+    """Handle list_skills tool invocation.
+
+    Returns skill catalog in XML format.
+    """
+    if not skills:
+        return "<available_skills/>"
+
+    lines = ["<available_skills>"]
+    for skill in skills:
+        lines.extend([
+            "  <skill>",
+            f"    <name>{skill.name}</name>",
+            f"    <description>{skill.description}</description>",
+            "  </skill>",
+        ])
+    lines.append("</available_skills>")
+    return "\n".join(lines)
+```
+
+**Phase 2 evolution**: In a future phase, `list_skills` can accept an optional `query` parameter for keyword/semantic search when the skill catalog grows large (100+ skills).
+
+#### activate_skill tool
+
+The `activate_skill` tool loads full instructions for a specific skill:
+
+```python
+def get_activate_skill_tool(skills: list[LoadedSkill]) -> Optional[InputTool]:
     """Create the activate_skill tool if skills are configured.
 
     The name parameter is constrained to valid skill names (as an enum)
     to prevent the model from hallucinating nonexistent skill names.
-    If no skills are available, don't register the tool at all.
     """
     if not skills:
         return None
@@ -486,9 +517,9 @@ if skill_tracker.is_activated(conversation_id, name):
 | File | What to do |
 |------|------------|
 | `src/models/config.py` | Add `SkillsConfiguration` class and `skills` field to `Configuration` |
-| `src/utils/skills.py` | New module: `LoadedSkill`, `load_skills()`, `parse_skill_md()`, `build_skill_catalog()`, `handle_activate_skill()` |
-| `src/utils/prompts.py` | Modify `get_system_prompt()` to append skill catalog |
-| `src/utils/responses.py` | Modify `prepare_tools()` to include skill tool |
+| `src/utils/skills.py` | New module: `LoadedSkill`, `load_skills()`, `parse_skill_md()`, `get_skill_instructions()`, `handle_list_skills()`, `handle_activate_skill()` |
+| `src/utils/prompts.py` | Modify `get_system_prompt()` to append behavioral instructions |
+| `src/utils/responses.py` | Modify `prepare_tools()` to include `list_skills` and `activate_skill` tools |
 | `src/constants.py` | Add skill-related constants |
 
 ### Insertion point detail
@@ -500,13 +531,13 @@ if skill_tracker.is_activated(conversation_id, name):
 
 **System prompt injection** (`src/utils/prompts.py`):
 - `get_system_prompt()` currently returns the resolved prompt at line 80
-- Insert skill catalog append before the return statement
-- Import `build_skill_catalog` from new `utils/skills.py` module
+- Insert behavioral instructions append before the return statement
+- Import `get_skill_instructions` from new `utils/skills.py` module
 
 **Tool registration** (`src/utils/responses.py`):
 - `prepare_tools()` at line 204 builds the tool list
-- Add skill tool after MCP tools (around line 260)
-- Tool handler needs to be registered for the `read_skill` function type
+- Add `list_skills` and `activate_skill` tools after MCP tools (around line 260)
+- Tool handlers need to be registered for both `list_skills` and `activate_skill` function types
 
 ### SKILL.md parsing
 
@@ -605,6 +636,7 @@ These are test instructions.
 
 | Date | Change | Reason |
 |------|--------|--------|
+| 2026-04-27 | Tool-based discovery: `list_skills` returns catalog, system prompt has behavioral instructions only | Scales better, clean evolution path to search-based discovery |
 | 2026-04-27 | Config specifies paths only; name/description read from SKILL.md | Keep config lightweight, avoid bloating CR |
 | 2026-04-09 | Initial version | Spike completion |
 

@@ -4,7 +4,7 @@
 
 **The problem**: Lightspeed Core has no mechanism for extending agent capabilities with specialized instructions or domain knowledge. Users cannot package reusable workflows, troubleshooting guides, or domain expertise into portable, discoverable units that the LLM can use on demand.
 
-**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with filesystem-based discovery. Config specifies paths to skill directories; skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. The LLM sees a skill catalog (name + description) in the system prompt and can request full instructions on demand via a dedicated tool.
+**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with filesystem-based discovery. Config specifies paths to skill directories; skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. The LLM discovers available skills via a `list_skills` tool and loads full instructions on demand via an `activate_skill` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
 
 **PoC validation**: Not applicable for this spike. The feature is well-defined by the agentskills.io specification and has been implemented by 30+ agent products including Claude Code, GitHub Copilot, Cursor, and OpenAI Codex.
 
@@ -63,22 +63,48 @@ Architecture-level and implementation-level decisions.
 
 | Option | Description |
 |--------|-------------|
-| A | System prompt injection (skill catalog in system prompt, LLM decides) |
-| B | Dedicated tool (register `activate_skill` tool, LLM calls to load) |
+| A | System prompt catalog (skill catalog embedded in system prompt, LLM decides) |
+| B | Tool-based discovery (`list_skills` tool returns catalog, `activate_skill` loads instructions) |
 | C | Per-request parameter (client specifies which skills to activate) |
+| D | Hybrid (catalog in system prompt if < N skills, tool-based discovery otherwise) |
 
-**Recommendation**: **A** (System prompt injection) for the catalog, combined with **B** (dedicated tool) for loading full instructions. The system prompt contains the skill catalog (name + description, ~50-100 tokens per skill). When the LLM decides a skill is relevant, it calls the `activate_skill` tool to load the full instructions.
+**Recommendation**: **B** (Tool-based discovery). This approach separates behavioral instructions from skill inventory:
+
+1. **System prompt** contains behavioral instructions only:
+   - How to discover skills (`list_skills`)
+   - How to activate skills (`activate_skill`)
+   - Requirement to load full instructions before proceeding
+
+2. **`list_skills` tool** returns the skill catalog (name + description for each skill)
+
+3. **`activate_skill` tool** loads full `SKILL.md` instructions when the LLM decides a skill is relevant
+
+**Rationale**: This pattern follows Google ADK's proven approach and provides a clean evolution path:
+
+| Phase | `list_skills` behavior | Scales to |
+|-------|------------------------|-----------|
+| Phase 1 (initial) | Returns full catalog | ~20 skills |
+| Phase 2 (future) | Accepts optional `query` param for keyword/semantic search | 100+ skills |
+
+The phase 2 extension requires only a tool implementation change, not an architectural change. The system prompt instructions and `activate_skill` tool remain unchanged.
+
+**Alternative considered**: Option A (system prompt catalog) was considered but rejected because:
+- Token cost grows linearly with skill count (~50-100 tokens/skill)
+- Risk of overwhelming the model context with large skill catalogs
+- No clean evolution path to search-based discovery
+
+Option D (hybrid) remains viable for deployments with predictable skill counts, but adds complexity. Teams can revisit if phase 2 search proves unreliable for small catalogs.
 
 ### Decision 6: Skill context management
 
 | Option | Description |
 |--------|-------------|
 | A | Always loaded (all skills' full instructions in every request) |
-| B | Catalog + on-demand (only name/description upfront, full content loaded when LLM requests) |
+| B | Progressive disclosure (catalog via tool, full content loaded when LLM requests) |
 
-**Recommendation**: **B** (Catalog + on-demand). This follows the agentskills.io progressive disclosure pattern:
-1. **Catalog** (~50-100 tokens/skill) - name + description always in system prompt
-2. **Instructions** (<5000 tokens) - full `SKILL.md` body loaded via tool when needed
+**Recommendation**: **B** (Progressive disclosure). This follows the agentskills.io pattern:
+1. **Catalog** (~50-100 tokens/skill) - name + description returned by `list_skills` tool
+2. **Instructions** (<5000 tokens) - full `SKILL.md` body loaded via `activate_skill` tool when needed
 3. **Resources** (on-demand) - `references/` files loaded via file-read tool when referenced
 
 This keeps the base context small while giving the LLM access to specialized knowledge on demand.
@@ -146,29 +172,31 @@ Follow the MCP server config pattern (ModelContextProtocolServer class, line 468
 
 <!-- type: Task -->
 <!-- key: LCORE-???? -->
-### LCORE-???? Implement skill catalog injection
+### LCORE-???? Implement list_skills tool
 
-**Description**: Inject the skill catalog (name + description for each skill) into the system prompt so the LLM knows what skills are available.
+**Description**: Register a `list_skills` tool that the LLM can call to discover available skills. Returns the skill catalog (name + description for each configured skill).
 
 **Scope**:
 
-- Create `src/utils/skills.py` module
-- Implement `build_skill_catalog()` function that formats skills as XML/structured text
-- Modify `get_system_prompt()` in `src/utils/prompts.py` to append skill catalog
-- Add behavioral instructions telling the LLM how to use skills
+- Create `src/utils/skills.py` module with skill catalog management
+- Add `list_skills` tool registration in `prepare_tools()` in `src/utils/responses.py`
+- Implement tool handler that returns formatted skill catalog (name + description)
+- Modify `get_system_prompt()` in `src/utils/prompts.py` to add behavioral instructions for skill discovery and activation
 
 **Acceptance criteria**:
 
-- System prompt includes skill catalog when skills are configured
-- Catalog format includes name, description, and path for each skill
-- Catalog is omitted when no skills are configured
-- Unit tests verify catalog formatting and system prompt injection
+- LLM can call `list_skills()` to get the catalog of available skills
+- Tool returns name and description for each configured skill
+- Tool returns empty list when no skills are configured
+- System prompt includes behavioral instructions (how to use `list_skills` and `activate_skill`)
+- Unit tests verify tool registration, catalog formatting, and system prompt instructions
 
 **Agentic tool instruction**:
 
 ```text
-Read the "System prompt injection" section in docs/design/agent-skills/agent-skills.md.
-Key files: src/utils/prompts.py (get_system_prompt function),
+Read the "Tool-based discovery" section in docs/design/agent-skills/agent-skills.md.
+Key files: src/utils/responses.py (prepare_tools function, line 204),
+src/utils/prompts.py (get_system_prompt function),
 src/utils/skills.py (new module).
 ```
 
@@ -176,7 +204,7 @@ src/utils/skills.py (new module).
 <!-- key: LCORE-???? -->
 ### LCORE-???? Implement activate_skill tool
 
-**Description**: Register a `activate_skill` tool that the LLM can call to load full skill instructions when it decides a skill is relevant.
+**Description**: Register an `activate_skill` tool that the LLM can call to load full skill instructions when it decides a skill is relevant. This complements `list_skills` by providing the detailed instructions for a specific skill.
 
 **Scope**:
 
@@ -190,7 +218,8 @@ src/utils/skills.py (new module).
 - LLM can call `activate_skill(name="skill-name")` to load skill instructions
 - Tool returns full `SKILL.md` body content (after frontmatter)
 - Tool returns skill directory path so LLM can resolve relative references
-- Tool returns error if skill name is invalid
+- Tool returns list of available reference files if `references/` directory exists
+- Tool returns error if skill name is invalid or not found in catalog
 - Unit tests cover tool registration and invocation
 
 **Agentic tool instruction**:
@@ -319,11 +348,11 @@ The agentskills.io spec recommends a three-tier loading strategy:
 
 | Tier | What's loaded | When | Token cost |
 |------|---------------|------|------------|
-| 1. Catalog | Name + description | Session start | ~50-100 tokens/skill |
-| 2. Instructions | Full SKILL.md body | When skill is activated | <5000 tokens (recommended) |
-| 3. Resources | References, assets | When instructions reference them | Varies |
+| 1. Catalog | Name + description | LLM calls `list_skills` | ~50-100 tokens/skill |
+| 2. Instructions | Full SKILL.md body | LLM calls `activate_skill` | <5000 tokens (recommended) |
+| 3. Resources | References, assets | LLM reads reference files | Varies |
 
-This keeps base context small while giving the LLM access to specialized knowledge on demand.
+This keeps base context small while giving the LLM access to specialized knowledge on demand. The system prompt contains only behavioral instructions (~200 tokens) regardless of skill count.
 
 ### Adoption
 
@@ -354,6 +383,9 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 | GitHub Copilot | Filesystem scan | System prompt + tool | Yes |
 | Cursor | Filesystem scan | System prompt + tool | Yes |
 | OpenAI Codex | API-based | API-based | Yes |
+| Google ADK | `list_skills` tool | `load_skill` + `load_skill_resource` tools | Yes (`run_skill_script`) |
+
+**Note**: Google ADK's approach aligns with our recommendation. Their system prompt contains behavioral instructions (how to use the tools), not the skill catalog itself. The `list_skills` tool returns the catalog on demand.
 
 ### Alternative designs considered
 
@@ -361,7 +393,13 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 
 **Inline content**: Rejected in favor of path-based. Inline content would clutter the YAML config for multi-skill deployments and doesn't support reference files.
 
-**Always-loaded instructions**: Rejected in favor of catalog + on-demand. Loading all skill instructions upfront wastes context tokens and doesn't scale to many skills.
+**Always-loaded instructions**: Rejected in favor of progressive disclosure. Loading all skill instructions upfront wastes context tokens and doesn't scale to many skills.
+
+**System prompt catalog injection**: Rejected in favor of tool-based discovery (`list_skills`). Embedding the skill catalog directly in the system prompt:
+- Increases token cost linearly with skill count (~50-100 tokens/skill)
+- Risks overwhelming the model context with large skill catalogs
+- Provides no clean evolution path to search-based discovery
+The tool-based approach keeps the system prompt constant (behavioral instructions only) and allows phase 2 extension to semantic search without architectural changes.
 
 ## Appendix B: Reference sources
 
