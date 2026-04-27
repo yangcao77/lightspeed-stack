@@ -41,7 +41,7 @@ These are the high-level decisions that determine scope, approach, and cost. Eac
 | B | Scripts allowed (full spec compliance) |
 | C | Deferred (start with no scripts, add later) |
 
-**Recommendation**: **A** (No scripts). As noted in LCORE-1339, there are security concerns with executing arbitrary scripts. The core value of skills is in the instructions — scripts can be added in a future phase after security review if needed.
+**Recommendation**: **C** (Deferred). As noted in LCORE-1339, there are security concerns with executing arbitrary scripts. Script support will not be implemented until sandbox support (running scripts in an isolated environment) is added. The core value of skills is in the instructions — scripts can be added in a future phase once sandboxing is available.
 
 ## Technical decisions for @ptisnovs
 
@@ -328,7 +328,7 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 
 ### Security considerations
 
-**Scripts excluded**: The `scripts/` subdirectory is not supported in this implementation. As noted in LCORE-1339, executing arbitrary scripts poses security risks. Skills provide value through instructions; script support can be evaluated in a future phase.
+**Scripts deferred**: The `scripts/` subdirectory is not supported in this implementation. As noted in LCORE-1339, executing arbitrary scripts poses security risks. Script support will be added in a future phase once sandbox support (running scripts in an isolated environment) is available.
 
 **Path restrictions**: The `activate_skill` tool and reference file access are restricted to configured skill directories. The LLM cannot access arbitrary filesystem paths through skills.
 
