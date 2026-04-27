@@ -25,9 +25,9 @@ ptisnovs@redhat.com
 ## LCORE position in this environment
 
 * Luckily the architecture is (still) pretty simple
-* It can change rapidly with introducing new features
+    - But it can change rapidly with introducing new features
 * Strict linting (compared to other Python-based apps)
-* A bit complection was already "achieved"
+* A bit level of complection was already "achieved"
 
 ---
 
@@ -65,7 +65,7 @@ ptisnovs@redhat.com
 
 ---
 
-## Complection
+## Complection (Rich Hickey)
 
 * Stronger than simple coupling
 * Complected parts are entangled in purpose and behavior
@@ -85,7 +85,15 @@ ptisnovs@redhat.com
 
 ---
 
-## Do you use AI to add new features?
+## Do you use AI to **add** new features?
+
+---
+
+## Do you use AI to **add** new features?
+
+* Actually **no**
+* You are introducing new change that needs to be integrated
+* With the potential to worse the architecture
 
 ---
 
@@ -523,6 +531,11 @@ function(None)
 * Avoiding runtime ad-hoc "polymorphism"
     - structural pattern matching
     - dynamic dispatch if really needed
+
+---
+
+## Hints to help with context-awareness problem
+
 * Strongly typed code
     - it reduces problem space a lot
     - we talk about 10x, 100x, 1000x factor!
