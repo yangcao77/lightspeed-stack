@@ -307,6 +307,10 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
             if request.url.path.endswith(("/readiness", "/liveness")):
                 if configuration.authentication_configuration.skip_for_health_probes:
                     return NO_AUTH_TUPLE
+            # Skip auth for metrics endpoint when configured
+            if request.url.path.endswith("/metrics"):
+                if configuration.authentication_configuration.skip_for_metrics:
+                    return NO_AUTH_TUPLE
             logger.warning("Missing x-rh-identity header")
             raise HTTPException(status_code=401, detail="Missing x-rh-identity header")
 

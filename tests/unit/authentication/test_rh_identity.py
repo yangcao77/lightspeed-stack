@@ -565,6 +565,80 @@ class TestRHIdentityHealthProbeSkip:
         assert exc_info.value.status_code == 401
 
 
+class TestRHIdentityMetricsSkip:
+    """Test suite for metrics endpoint skip functionality in RH Identity auth."""
+
+    @staticmethod
+    def _mock_configuration(mocker: MockerFixture, skip_for_metrics: bool) -> None:
+        """Patch the configuration singleton with a mock for metrics skip tests.
+
+        Parameters:
+            skip_for_metrics (bool): Value to assign to the mocked
+            configuration's authentication_configuration.skip_for_metrics flag.
+        """
+        mock_config = mocker.MagicMock()
+        mock_config.authentication_configuration.skip_for_metrics = skip_for_metrics
+        # Ensure health probe skip is disabled so it doesn't interfere
+        mock_config.authentication_configuration.skip_for_health_probes = False
+        mocker.patch("authentication.rh_identity.configuration", mock_config)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/metrics",
+            "/api/lightspeed/metrics",
+        ],
+    )
+    async def test_metrics_path_skips_auth_when_enabled(
+        self, mocker: MockerFixture, path: str
+    ) -> None:
+        """Test metrics paths bypass auth when skip_for_metrics is True."""
+        self._mock_configuration(mocker, skip_for_metrics=True)
+
+        auth_dep = RHIdentityAuthDependency()
+        request = Request(scope={"type": "http", "headers": [], "path": path})
+
+        result = await auth_dep(request)
+        assert result == NO_AUTH_TUPLE
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "path",
+        [
+            "/metrics",
+            "/api/lightspeed/metrics",
+        ],
+    )
+    async def test_metrics_path_requires_auth_when_disabled(
+        self, mocker: MockerFixture, path: str
+    ) -> None:
+        """Test metrics paths still require auth when skip_for_metrics is False."""
+        self._mock_configuration(mocker, skip_for_metrics=False)
+
+        auth_dep = RHIdentityAuthDependency()
+        request = Request(scope={"type": "http", "headers": [], "path": path})
+
+        with pytest.raises(HTTPException) as exc_info:
+            await auth_dep(request)
+        assert exc_info.value.status_code == 401
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("path", ["/", "/v1/query"])
+    async def test_non_metrics_paths_require_auth_when_skip_enabled(
+        self, mocker: MockerFixture, path: str
+    ) -> None:
+        """Test non-metrics paths still require auth even when skip_for_metrics is True."""
+        self._mock_configuration(mocker, skip_for_metrics=True)
+
+        auth_dep = RHIdentityAuthDependency()
+        request = Request(scope={"type": "http", "headers": [], "path": path})
+
+        with pytest.raises(HTTPException) as exc_info:
+            await auth_dep(request)
+        assert exc_info.value.status_code == 401
+
+
 class TestRHIdentityHeaderSizeLimit:
     """Test suite for x-rh-identity header size limit enforcement."""
 

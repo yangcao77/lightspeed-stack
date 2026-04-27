@@ -1181,6 +1181,11 @@ class AuthenticationConfiguration(ConfigurationBase):
         title="Skip authorization for probes",
         description="Skip authorization for readiness and liveness probes",
     )
+    skip_for_metrics: bool = Field(
+        False,
+        title="Skip authorization for metrics",
+        description="Skip authorization for the /metrics endpoint",
+    )
     k8s_cluster_api: Optional[AnyHttpUrl] = None
     k8s_ca_cert_path: Optional[FilePath] = None
     jwk_config: Optional[JwkConfiguration] = None
@@ -1873,7 +1878,8 @@ class Configuration(ConfigurationBase):
 
     authentication: AuthenticationConfiguration = Field(
         default_factory=lambda: AuthenticationConfiguration(
-            skip_for_health_probes=False
+            skip_for_health_probes=False,
+            skip_for_metrics=False,
         ),
         title="Authentication configuration",
         description="Authentication configuration",
