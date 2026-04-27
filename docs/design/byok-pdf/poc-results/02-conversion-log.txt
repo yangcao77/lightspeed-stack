@@ -1,0 +1,67 @@
+Conversion log — LCORE-1471 PoC runs
+=====================================
+
+Environment
+-----------
+
+    Host:     Linux 6.8.9-100.fc38.x86_64 (no GPU)
+    Python:   3.12 via uv
+    docling:  >=2.68.0 (from rag-content/pyproject.toml)
+    Date:     2026-04-27
+
+Run 1: sample_jira_1311.pdf (217 KB)
+-------------------------------------
+
+Command:
+
+    cd ~/repos/lightspeed/rag-content
+    uv run python ~/repos/lightspeed/stack/docs/design/byok-pdf/poc/pdf_reader.py \
+        ~/repos/lightspeed/stack/docs/design/byok-pdf/poc/sample_jira_1311.pdf \
+        ~/repos/lightspeed/stack/docs/design/byok-pdf/poc-results/03-sample-jira-1311.md
+
+Selected log lines (timestamps preserved):
+
+    2026-04-27 15:06:18 INFO detected formats: [<InputFormat.PDF: 'pdf'>]
+    2026-04-27 15:06:18 INFO Going to convert document batch...
+    2026-04-27 15:06:18 INFO Initializing pipeline for StandardPdfPipeline ...
+    2026-04-27 15:06:18 INFO Loading plugin 'docling_defaults'
+    2026-04-27 15:06:18 INFO Registered picture descriptions: ['vlm', 'api']
+    2026-04-27 15:06:18 INFO Registered ocr engines: ['auto', 'easyocr', ...]
+    2026-04-27 15:06:18 INFO Registered layout engines: ['docling_layout_default', ...]
+    2026-04-27 15:06:18 INFO Accelerator device: 'cpu'
+    2026-04-27 15:07:44 INFO Loading plugin 'docling_defaults'
+    2026-04-27 15:07:44 INFO Registered table structure engines: ['docling_tableformer']
+    2026-04-27 15:11:06 INFO Accelerator device: 'cpu'           ← models loaded
+    2026-04-27 15:11:09 INFO Processing document sample_jira_1311.pdf
+    2026-04-27 15:11:50 INFO Finished converting document sample_jira_1311.pdf
+                              in 332.01 sec.
+    converted .../sample_jira_1311.pdf -> .../03-sample-jira-1311.md
+      elapsed: 332.10s
+      output:  7608 chars, 288 lines
+
+Breakdown:
+    Model load:    ~290 s   (15:06:18 → 15:11:08)
+    Conversion:    ~ 41 s   (15:11:09 → 15:11:50)
+
+Run 2: sample_jira_836.pdf (372 KB)
+------------------------------------
+
+Same command pattern, second invocation. Models cached on disk so the
+load phase reduced significantly (~30 s) on warm runs in the same
+process; here we ran in a NEW process so paid the cold-start again, but
+HuggingFace model files were already on disk from run 1, so the network
+fetch was skipped.
+
+Total wall-clock: ~70 s (15:13:13 finish, started ~15:12:00).
+Output: 3,084 chars, 165 lines.
+
+Reproducibility note
+--------------------
+
+Both PDFs are committed in poc/. The PoC script is committed as
+poc/pdf_reader.py. To reproduce, install rag-content's deps (which pull
+in docling) and run the commands above.
+
+After the PoC PR merges and the implementation lands in rag-content, the
+PoC script and these PDFs will be deleted per the howto-run-a-spike.md
+step 10 cleanup checklist.

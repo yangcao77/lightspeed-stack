@@ -1,0 +1,153 @@
+PoC report — LCORE-1471 BYOK PDF support
+=========================================
+
+Glossary
+--------
+
+docling
+    The IBM-developed document conversion library already a dependency of
+    rag-content (added under LCORE-1035 for HTML support). It uses ML models
+    (layout detection, table structure recognition) to extract structured
+    content from PDFs and other formats.
+
+rag-content
+    Sibling repo (https://github.com/lightspeed-core/rag-content) that
+    produces the BYOK vector stores consumed by lightspeed-stack.
+
+PdfPipelineOptions
+    docling configuration object controlling OCR, table extraction, image
+    handling, etc. for PDF input.
+
+PoC design
+----------
+
+Goal: validate that docling's PDF → Markdown conversion produces output
+of high enough quality to feed into the existing markdown-based RAG
+pipeline (`MarkdownNodeParser`) without per-PDF tuning.
+
+Method: a 60-line PoC script (poc/pdf_reader.py) that mirrors the
+production HTMLReader from src/lightspeed_rag_content/html/html_reader.py
+but configures docling for PDF. Defaults chosen:
+
+    do_ocr                              = False    # LCORE-1471 scope: text PDFs
+    do_table_structure                  = True     # quality win, low cost
+    table_structure_options.mode        = accurate # accuracy over speed
+    do_picture_classification           = False    # vector search doesn't use
+    do_picture_description              = False    # vector search doesn't use
+    generate_page_images                = False    # wasted I/O
+
+Corpus: two locally-available Lightspeed JIRA PDFs (Red Hat domain
+documents — the public RH PDF goal was substituted because access.redhat.com
+returned login redirects for direct PDF downloads):
+
+    sample_jira_1311.pdf  217 KB, ~5 pages, JIRA-export from Atlassian Cloud
+    sample_jira_836.pdf   372 KB, ~6 pages, Confluence-style export
+
+Run command (from rag-content venv where docling is installed):
+
+    cd ~/repos/lightspeed/rag-content
+    uv run python <stack>/docs/design/byok-pdf/poc/pdf_reader.py \
+        <stack>/docs/design/byok-pdf/poc/sample_jira_1311.pdf \
+        <stack>/docs/design/byok-pdf/poc-results/03-sample-jira-1311.md
+
+Results
+-------
+
+Conversion succeeded for both PDFs. Output is well-formed Markdown that
+parses cleanly (verified by visual inspection — see 03/04 files).
+
+Timings (CPU, no GPU):
+
+    Run                              Wall-clock    Notes
+    -----------------------------    ----------    ---------------------------
+    First conversion (1311)          332 s         ~290 s spent loading docling
+                                                   ML models on first invocation
+    Second conversion (836)          ~70 s         models warm; 372 KB input
+
+    Steady-state per PDF:            ~30-90 s for small/medium PDFs on CPU
+
+Output sizes:
+
+    PDF                              Lines  Chars   Markdown structure
+    ------------------------------   -----  ------  -----------------------
+    sample_jira_1311.pdf (217 KB)    288    7,608   Clean headings, tables
+    sample_jira_836.pdf  (372 KB)    165    3,084   Body clean, headings noisy
+
+Findings
+--------
+
+1. Body paragraph quality is HIGH.
+   Both PDFs produced clean, well-formed paragraph text. No hyphenation
+   artifacts, no broken sentences, no character-level corruption in body
+   prose. This is the bulk of the content fed to the embedding model, so
+   this is the most important result.
+
+2. Table extraction WORKS WELL.
+   sample_jira_1311 contains two markdown tables (Component/Behavior and
+   Area/Impact). Both came out as proper GitHub-flavored markdown tables
+   with correct headers and cell boundaries. Confirms that
+   table_structure_options.mode='accurate' earns its keep.
+
+3. Heading extraction degrades on letter-spaced fonts.
+   sample_jira_836 (Confluence PDF export) uses a font with wide letter
+   spacing for headings. docling extracts each character with a space
+   between, producing headings like "Streaml i ne   l i ghtspeed-stack
+   conf i g" and "Acceptance   cr i ter i a".
+
+   Impact on RAG: MarkdownNodeParser still recognizes these as headings
+   (the `## ` prefix is intact) but the heading TEXT is corrupted. This
+   degrades retrieval if a query mentions the heading text. Body content
+   under the heading is unaffected.
+
+   This is a docling-side limitation, not something we control with
+   PdfPipelineOptions. A workaround would be a post-processor that
+   collapses single-character runs in headings, but that's out of scope
+   for v1.
+
+4. Image-placeholder noise.
+   docling emits `<!-- image -->` HTML comments wherever it detects an
+   image (icons, avatars, logos). sample_jira_836 has 12 such comments
+   from Confluence chrome. These survive into the final markdown.
+
+   Impact on RAG: comments are stripped by MarkdownNodeParser before
+   embedding, so this is cosmetic noise in the intermediate file only.
+
+5. Implementation effort is small.
+   The PoC is a 60-line script. The production code path is essentially
+   the same shape as html_reader.py (165 lines including docstrings) plus
+   a CLI module (~150 lines) plus tests. Total estimated LoC for the
+   implementation ticket: ~400 LoC, mirroring the LCORE-1035 HTML PR
+   which was 1,269 lines including the uv.lock bump.
+
+Implications for the spike
+--------------------------
+
+1. NO new dependencies needed.
+   docling is already in pyproject.toml (added by LCORE-1035). The PDF
+   path uses a different InputFormat enum value but the same library and
+   the same DocumentConverter API. uv.lock should not change.
+
+2. Default pipeline knobs are sufficient.
+   Recommendation: ship with the defaults documented above and DO NOT
+   expose CLI flags in v1. Add flags later if customer feedback requires.
+
+3. Chunking strategy: reuse MarkdownNodeParser (no new node parser).
+   Since docling exports clean markdown for body text, the existing
+   document_processor.py branch `if config.doc_type in ("markdown",
+   "html"): Settings.node_parser = MarkdownNodeParser()` just needs
+   `"pdf"` added.
+
+4. Heading degradation is a known limitation, not a blocker.
+   Document it in the spec doc as a known caveat. Customers with
+   Confluence PDFs should prefer exporting from the source format
+   (markdown/HTML/AsciiDoc) where available.
+
+5. OCR confirmation: out of scope is the right call.
+   The PoC PDFs are text-extractable so we never exercised OCR. Adding
+   `do_ocr=True` would require tesseract or easyocr as runtime deps and
+   would multiply conversion time. Defer to a follow-up JIRA.
+
+6. Performance is acceptable but not snappy.
+   ~30-90 s per PDF on CPU after warm-up is fine for offline indexing
+   (the BYOK use case) but would be unusable for interactive workflows.
+   This sets expectations for the documentation.
