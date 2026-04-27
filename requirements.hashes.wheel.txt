@@ -25,6 +25,8 @@ cffi==2.0.0 \
     --hash=sha256:ffe747cf5e265169ad5bd64b4359368f74e445cf8ea3cfe99045450554fb4e13
 chevron==0.14.0 \
     --hash=sha256:215f5e3e7ac75d150eadfc0f8c651b3815dc36813e122484b1ed68e142e5adfb
+click==8.1.8 \
+    --hash=sha256:11fa3d5230fee43910d853098461cbb0d9d3f59b70c63629bf237101ada5ee0f
 cryptography==46.0.5 \
     --hash=sha256:2b44c9fd892f763465b2d7782bf310d65c04dab741b1241f5be203ccf022368d \
     --hash=sha256:661cf199efa488e0c5fb4987d36214e11c1fe2dfb842a1a330b1854ff069f8d3 \
@@ -84,8 +86,6 @@ httpx-sse==0.4.3 \
     --hash=sha256:74d0e4713b33a61ca0083d00841f00f12d6b3dd311edb62ccc85809b607b9fb5
 idna==3.11 \
     --hash=sha256:e1049ef074501ba8c5d802d712b257889257f6d2f460f959f26c4b2d4375923c
-importlib-metadata==8.7.1 \
-    --hash=sha256:a3f29411f5f628be21c445082ff4f844a26ff1a0893d6fabaa55509c63ddbfaf
 jinja2==3.1.6 \
     --hash=sha256:961c7281585491fb02ca0027b29e9ffc7a1bd7b52a5e03095f3a4e3afc42336e
 jiter==0.12.0 \
@@ -94,8 +94,6 @@ jiter==0.12.0 \
     --hash=sha256:9c42d9b61ab5d2c9203637a243b4187cc28b0101b28461d35006353d621da292
 joblib==1.5.3 \
     --hash=sha256:40d87a5e80b69104a3b8f1d761fdbc077fc7b97a23b08b9fdaddb7a3821b06d1
-jsonschema==4.26.0 \
-    --hash=sha256:2601ba467f84ff6ee9c057cbe6a9d7aebefa76cfa747327b37f81d4581f6748f
 jsonschema-specifications==2025.9.1 \
     --hash=sha256:065ec57323001f79634013c12250a476952e6ce834a17cfd5227343cec3c4aee
 kubernetes==35.0.0 \
