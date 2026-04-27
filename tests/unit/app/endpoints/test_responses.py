@@ -635,6 +635,40 @@ class TestResponsesEndpointHandler:
         assert call_kwargs["request"].tools is None
         assert call_kwargs["request"].tool_choice is None
 
+    @pytest.mark.asyncio
+    async def test_responses_endpoint_rejects_without_responses_action(
+        self,
+        mocker: MockerFixture,
+    ) -> None:
+        """Verify that requests lacking Action.RESPONSES are rejected with 403.
+
+        Constructs a request whose authorized_actions includes Action.QUERY and
+        Action.READ_OTHERS_CONVERSATIONS but NOT Action.RESPONSES, then asserts
+        the @authorize(Action.RESPONSES) decorator raises HTTPException 403.
+        """
+        req = Request(scope={"type": "http", "headers": []})
+        req.state.authorized_actions = {Action.QUERY, Action.READ_OTHERS_CONVERSATIONS}
+
+        mock_role_resolver = mocker.AsyncMock()
+        mock_role_resolver.resolve_roles = mocker.AsyncMock(return_value=set())
+
+        mock_access_resolver = mocker.Mock()
+        mock_access_resolver.check_access.return_value = False
+
+        mocker.patch(
+            "authorization.middleware.get_authorization_resolvers",
+            return_value=(mock_role_resolver, mock_access_resolver),
+        )
+
+        with pytest.raises(HTTPException) as exc_info:
+            await responses_endpoint_handler(
+                request=req,
+                responses_request=ResponsesRequest(input="Hello"),
+                auth=MOCK_AUTH,
+                mcp_headers={},
+            )
+        assert exc_info.value.status_code == 403
+
 
 class TestHandleNonStreamingResponse:
     """Unit tests for handle_non_streaming_response."""
