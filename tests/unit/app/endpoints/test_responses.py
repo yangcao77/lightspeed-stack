@@ -163,7 +163,7 @@ def _patch_handle_non_streaming_common(
 def dummy_request_fixture() -> Request:
     """Minimal FastAPI Request with authorized_actions for responses endpoint."""
     req = Request(scope={"type": "http", "headers": []})
-    req.state.authorized_actions = {Action.QUERY, Action.READ_OTHERS_CONVERSATIONS}
+    req.state.authorized_actions = {Action.RESPONSES, Action.READ_OTHERS_CONVERSATIONS}
     return req
 
 

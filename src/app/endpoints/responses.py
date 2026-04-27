@@ -204,7 +204,7 @@ def _queue_responses_splunk_event(  # pylint: disable=too-many-arguments,too-man
     response_model=None,
     summary="Responses Endpoint Handler",
 )
-@authorize(Action.QUERY)
+@authorize(Action.RESPONSES)
 async def responses_endpoint_handler(
     request: Request,
     responses_request: ResponsesRequest,

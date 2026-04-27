@@ -991,6 +991,9 @@ class Action(str, Enum):
     # Access the query endpoint
     QUERY = "query"
 
+    # Access the responses endpoint
+    RESPONSES = "responses"
+
     # Access the streaming query endpoint
     STREAMING_QUERY = "streaming_query"
 
