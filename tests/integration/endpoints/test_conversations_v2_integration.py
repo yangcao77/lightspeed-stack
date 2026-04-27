@@ -638,7 +638,7 @@ async def test_delete_conversation_removes_from_cache(
 
     # Verify response
     assert response.conversation_id == TEST_CONVERSATION_ID
-    assert response.success is True
+    assert response.deleted is True
 
     # Verify conversation was deleted by attempting to get it (should return 404)
     with pytest.raises(HTTPException) as exc_info:
@@ -681,9 +681,8 @@ async def test_delete_conversation_non_existent_returns_success(
 
     # Verify response (note: success is always True per implementation)
     assert response.conversation_id == TEST_NON_EXISTENT_ID
-    assert response.success is True
-    # Response message indicates deletion status
-    assert "cannot be deleted" in response.response.lower()
+    assert response.deleted is False
+    assert "not found" in response.model_dump()["response"]
 
 
 # ==========================================

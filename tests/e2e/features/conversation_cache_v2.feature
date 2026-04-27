@@ -183,7 +183,7 @@ Feature: Conversation Cache V2 API tests
      And The returned conversation details have expected conversation_id
      And The body of the response, ignoring the "conversation_id" field, is the following
       """
-      {"success": true, "response": "Conversation deleted successfully"}
+      {"success": true, "response": "Conversation deleted successfully", "deleted": true}
       """
      When I use REST API conversation endpoint with conversation_id from above using HTTP GET method
      Then The status code of the response is 404
@@ -203,7 +203,7 @@ Feature: Conversation Cache V2 API tests
      Then The status code of the response is 200
      And The body of the response, ignoring the "conversation_id" field, is the following
       """
-      {"success": true, "response": "Conversation cannot be deleted"}
+      {"success": true, "response": "Conversation not found", "deleted": false}
       """
 
   # ====================================================================

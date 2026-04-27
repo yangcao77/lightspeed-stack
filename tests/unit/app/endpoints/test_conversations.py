@@ -1156,7 +1156,7 @@ class TestDeleteConversationEndpoint:
 
         assert isinstance(response, ConversationDeleteResponse)
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
+        assert response.deleted is True
         assert "deleted successfully" in response.response
 
     @pytest.mark.asyncio
@@ -1256,7 +1256,7 @@ class TestDeleteConversationEndpoint:
 
         assert isinstance(response, ConversationDeleteResponse)
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
+        assert response.deleted is True
         assert "deleted successfully" in response.response
 
     @pytest.mark.asyncio
@@ -1294,7 +1294,7 @@ class TestDeleteConversationEndpoint:
 
         assert isinstance(response, ConversationDeleteResponse)
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
+        assert response.deleted is True
         assert "deleted successfully" in response.response
         mock_delete.assert_called_once()
         mock_client.conversations.delete.assert_called_once()
@@ -1336,8 +1336,8 @@ class TestDeleteConversationEndpoint:
 
         assert isinstance(response, ConversationDeleteResponse)
         assert response.conversation_id == VALID_CONVERSATION_ID
-        assert response.success is True
-        assert "cannot be deleted" in response.response  # Not found locally
+        assert response.deleted is False
+        assert "not found" in response.response  # Not found locally
 
     @pytest.mark.asyncio
     async def test_sqlalchemy_error_in_delete(

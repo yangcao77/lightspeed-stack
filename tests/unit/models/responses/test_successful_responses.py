@@ -716,26 +716,26 @@ class TestConversationDeleteResponse:
         response = ConversationDeleteResponse(
             deleted=True, conversation_id="123e4567-e89b-12d3-a456-426614174000"
         )
-        assert isinstance(response, AbstractSuccessfulResponse)
+        assert isinstance(response, ConversationDeleteResponse)
         assert response.conversation_id == "123e4567-e89b-12d3-a456-426614174000"
-        assert response.success is True
-        assert response.response == "Conversation deleted successfully"
+        assert response.deleted is True
+        assert response.model_dump()["response"] == "Conversation deleted successfully"
 
     def test_constructor_not_deleted(self) -> None:
         """Test ConversationDeleteResponse when conversation cannot be deleted."""
         response = ConversationDeleteResponse(deleted=False, conversation_id="conv-123")
-        assert response.success is True
-        assert response.response == "Conversation cannot be deleted"
+        assert response.deleted is False
+        assert response.model_dump()["response"] == "Conversation not found"
 
     def test_missing_required_parameters(self) -> None:
-        """Test ConversationDeleteResponse raises TypeError when required fields missing."""
-        with pytest.raises(TypeError):
+        """Test ConversationDeleteResponse raises ValidationError when required fields missing."""
+        with pytest.raises(ValidationError):
             ConversationDeleteResponse()  # pylint: disable=missing-kwoa # pyright: ignore
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             ConversationDeleteResponse(  # pylint: disable=missing-kwoa # pyright: ignore[reportCallIssue]
                 deleted=True
             )
-        with pytest.raises(TypeError):
+        with pytest.raises(ValidationError):
             ConversationDeleteResponse(  # pylint: disable=missing-kwoa # pyright: ignore[reportCallIssue]
                 conversation_id="conv-123"
             )
@@ -767,7 +767,7 @@ class TestConversationDeleteResponse:
             deleted_example["value"]["conversation_id"]
             == "123e4567-e89b-12d3-a456-426614174000"
         )
-        assert deleted_example["value"]["success"] is True
+        assert deleted_example["value"]["deleted"] is True
         assert (
             deleted_example["value"]["response"] == "Conversation deleted successfully"
         )
@@ -778,10 +778,8 @@ class TestConversationDeleteResponse:
         assert not_found_example["value"]["conversation_id"] == (
             "123e4567-e89b-12d3-a456-426614174000"
         )
-        assert not_found_example["value"]["success"] is True
-        assert (
-            not_found_example["value"]["response"] == "Conversation can not be deleted"
-        )
+        assert not_found_example["value"]["deleted"] is False
+        assert not_found_example["value"]["response"] == "Conversation not found"
 
     def test_openapi_response_missing_label(self) -> None:
         """Test openapi_response() raises SchemaError when example has no label.

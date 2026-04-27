@@ -202,7 +202,7 @@ async def test_delete_prompt_success(
     )
 
     assert isinstance(result, PromptDeleteResponse)
-    assert result.success is True
+    assert result.deleted is True
     assert result.prompt_id == VALID_PMPT_ID
     mock_prompts.delete.assert_awaited_once_with(VALID_PMPT_ID)
 
@@ -213,7 +213,7 @@ async def test_delete_prompt_not_found_returns_body(
     prompts_http_request: Request,
     mocker: MockerFixture,
 ) -> None:
-    """delete_prompt returns success=False on Llama Stack BadRequestError (v2 style)."""
+    """delete_prompt returns deleted=False on Llama Stack BadRequestError (v2 style)."""
     _, mock_prompts = prompts_client_mocks
     mock_response = mocker.Mock()
     mock_response.request = mocker.Mock()
@@ -227,7 +227,7 @@ async def test_delete_prompt_not_found_returns_body(
         auth=MOCK_AUTH,
     )
 
-    assert result.success is False
+    assert result.deleted is False
     assert result.prompt_id == VALID_PMPT_ID_NOT_FOUND
 
 
