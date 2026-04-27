@@ -32,5 +32,5 @@ Feature: rlsapi v1 /infer endpoint error response tests
       {"question": "How do I list files?"}
       """
      Then The status code of the response is 200
-      And The rlsapi response should have valid structure
+      And The rlsapi response has valid structure
 

@@ -28,10 +28,10 @@ Feature: Inline RAG (BYOK) support tests
     {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Write only lowercase letters", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-     And The response should contain following fragments
+     And The response contains following fragments
          | Fragments in LLM response |
          | great work                |
-     And The response should contain non-empty rag_chunks
+     And The response contains non-empty rag_chunks
 
   Scenario: Inline RAG query includes referenced documents
     When I use "query" to ask question with authorization header
@@ -39,7 +39,7 @@ Feature: Inline RAG (BYOK) support tests
     {"query": "What does Paul Graham say about great work?", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-     And The response should contain non-empty referenced_documents
+     And The response contains non-empty referenced_documents
 
   Scenario: Streaming query with inline RAG returns relevant content
     When I use "streaming_query" to ask question with authorization header
@@ -48,7 +48,7 @@ Feature: Inline RAG (BYOK) support tests
     """
     Then The status code of the response is 200
      And I wait for the response to be completed
-     And The streamed response should contain following fragments
+     And The streamed response contains following fragments
          | Fragments in LLM response |
          | great work                |
 
@@ -58,7 +58,7 @@ Feature: Inline RAG (BYOK) support tests
     {"input": "What is the title of the article from Paul?", "model": "{PROVIDER}/{MODEL}", "stream": false, "instructions": "You are an assistant. Write only lowercase letters"}
     """
     Then The status code of the response is 200
-     And The response should contain following fragments
+     And The response contains following fragments
          | Fragments in LLM response |
          | great work                |
 

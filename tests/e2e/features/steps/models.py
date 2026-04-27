@@ -32,21 +32,21 @@ def request_models_with_type_endpoint(context: Context, model_type: str) -> None
     model_rest_api_call(context, {"model_type": model_type})
 
 
-@then("The models list should not be empty")
+@then("The models list is not empty")
 def check_model_list_is_not_empty(context: Context) -> None:
     """Check that list of models is not empty."""
     models = get_model_list_from_response(context)
     assert len(models) > 0, "Response has empty list of models"
 
 
-@then("The models list should be empty")
+@then("The models list is empty")
 def check_model_list_is_empty(context: Context) -> None:
     """Check that list of models is empty."""
     models = get_model_list_from_response(context)
     assert len(models) == 0, "Expected empty list of models"
 
 
-@then('The models list should contain only models of type "{model_type}"')
+@then('The models list contains only models of type "{model_type}"')
 def check_all_models_are_of_expected_type(context: Context, model_type: str) -> None:
     """Check if all models returned from REST API have the expected model type."""
     models = get_model_list_from_response(context)

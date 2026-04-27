@@ -16,7 +16,7 @@ Feature: rlsapi v1 /infer endpoint API tests
     {"question": "How do I list files in Linux?"}
     """
     Then The status code of the response is 200
-    And The rlsapi response should have valid structure
+    And The rlsapi response has valid structure
 
   Scenario: Inference with full context (systeminfo populated)
     When I use "infer" to ask question with authorization header
@@ -24,7 +24,7 @@ Feature: rlsapi v1 /infer endpoint API tests
     {"question": "How do I configure SELinux?", "context": {"systeminfo": {"os": "RHEL", "version": "9.3", "arch": "x86_64"}}}
     """
     Then The status code of the response is 200
-    And The rlsapi response should have valid structure
+    And The rlsapi response has valid structure
 
   Scenario: Empty/whitespace question returns 422
     When I use "infer" to ask question with authorization header
@@ -40,7 +40,7 @@ Feature: rlsapi v1 /infer endpoint API tests
     {"question": "What is RHEL?"}
     """
     Then The status code of the response is 200
-    And The rlsapi response should have valid structure
+    And The rlsapi response has valid structure
 
   Scenario: Multiple requests generate unique request_ids
     When I use "infer" to ask question with authorization header
@@ -54,4 +54,4 @@ Feature: rlsapi v1 /infer endpoint API tests
     {"question": "Second question"}
     """
     Then The status code of the response is 200
-    And The rlsapi request_id should be different from the stored one
+    And The rlsapi request_id is different from the stored one

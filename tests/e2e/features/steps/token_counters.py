@@ -10,7 +10,7 @@ from behave.runner import Context
 DEFAULT_TIMEOUT = 10
 
 
-@then("The response should contain token counter fields")
+@then("The response contains token counter fields")
 def check_token_counter_fields(context: Context) -> None:
     """Check that response contains input_tokens and output_tokens fields."""
     assert context.response is not None, "Request needs to be performed first"
@@ -43,7 +43,7 @@ def capture_token_metrics(context: Context) -> None:
     print(f"Initial token metrics: {context.initial_token_metrics}")
 
 
-@then("The token metrics should have increased")
+@then("The token metrics have increased")
 def check_token_metrics_increased(context: Context) -> None:
     """Check that token metrics have increased after a query.
 
@@ -70,7 +70,7 @@ def check_token_metrics_increased(context: Context) -> None:
     )
 
 
-@then("The token metrics should not have changed")
+@then("The token metrics are not changed")
 def check_token_metrics_unchanged(context: Context) -> None:
     """Check that token metrics have not changed after an error.
 
@@ -96,7 +96,7 @@ def check_token_metrics_unchanged(context: Context) -> None:
     )
 
 
-@then("The streamed response should contain token counter fields")
+@then("The streamed response contains token counter fields")
 def check_streamed_token_counter_fields(context: Context) -> None:
     """Check that streamed response end event contains token fields."""
     assert context.response_data is not None, "Response data needs to be parsed first"

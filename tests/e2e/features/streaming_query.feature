@@ -28,10 +28,10 @@ Feature: streaming_query endpoint API tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-      And The streamed response should contain following fragments
+      And The streamed response contains following fragments
           | Fragments in LLM response |
           | questions                 |
-      And The token metrics should have increased
+      And The token metrics have increased
 
   @flaky
   Scenario: Check if LLM responds properly to non-restrictive system prompt to sent question with different system prompt
@@ -42,11 +42,11 @@ Feature: streaming_query endpoint API tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-      And The streamed response should contain following fragments
+      And The streamed response contains following fragments
           | Fragments in LLM response |
           | checkout                  |
-      And The streamed response should contain token counter fields
-      And The token metrics should have increased
+      And The streamed response contains token counter fields
+      And The token metrics have increased
 
   #enable on demand
   @skip 
@@ -62,7 +62,7 @@ Feature: streaming_query endpoint API tests
     """
     Then The status code of the response is 200
     When I wait for the response to be completed
-      Then The streamed response should contain following fragments
+      Then The streamed response contains following fragments
           | Fragments in LLM response |
           | questions                 |
 
@@ -77,7 +77,7 @@ Feature: streaming_query endpoint API tests
           """
           { "detail": [{"type": "missing", "loc": [ "body", "query" ], "msg": "Field required", "input": {"provider": "{PROVIDER}"}}] }
           """
-      And The token metrics should not have changed
+      And The token metrics are not changed
 
   Scenario: Check if LLM responds for streaming_query request for missing model and provider
      When I use "streaming_query" to ask question with authorization header
@@ -94,7 +94,7 @@ Feature: streaming_query endpoint API tests
     """
     Then The status code of the response is 422
       And The body of the response contains Value error, Model must be specified if provider is specified
-      And The token metrics should not have changed
+      And The token metrics are not changed
 
   Scenario: Check if LLM responds for streaming_query request with error for missing provider
     When I use "streaming_query" to ask question with authorization header
@@ -120,7 +120,7 @@ Feature: streaming_query endpoint API tests
     """
     Then The status code of the response is 404
       And The body of the response contains Model with ID {MODEL} does not exist
-      And The token metrics should not have changed
+      And The token metrics are not changed
 
   Scenario: Check if LLM responds properly when XML and JSON attachments are sent
     When I use "streaming_query" to ask question with authorization header

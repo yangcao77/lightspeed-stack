@@ -31,10 +31,10 @@ Feature: MCP tests
     {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-    And The response should contain following fragments
+    And The response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPFileAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP file-based auth token is passed
@@ -49,10 +49,10 @@ Feature: MCP tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-    And The streamed response should contain following fragments
+    And The streamed response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
 # File-based (invalid token) — lightspeed-stack-invalid-mcp-file-auth.yaml
   @InvalidMCPFileAuthConfig
@@ -138,10 +138,10 @@ Feature: MCP tests
     {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-    And The response should contain following fragments
+    And The response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPKubernetesAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP kubernetes auth token is passed
@@ -156,10 +156,10 @@ Feature: MCP tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-    And The streamed response should contain following fragments
+    And The streamed response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPKubernetesAuthConfig
   Scenario: Check if tools endpoint reports error when MCP kubernetes invalid auth token is passed
@@ -250,10 +250,10 @@ Feature: MCP tests
     {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-    And The response should contain following fragments
+    And The response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPClientAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP client-provided auth token is passed
@@ -271,10 +271,10 @@ Feature: MCP tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-    And The streamed response should contain following fragments
+    And The streamed response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPClientAuthConfig
   Scenario: Check if tools endpoint succeeds by skipping when MCP client-provided auth token is omitted
@@ -297,10 +297,10 @@ Feature: MCP tests
     """
     Then The status code of the response is 200
     And The body of the response does not contain mcp-client
-    And The response should contain following fragments
+    And The response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPClientAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds by skipping when MCP client-provided auth token is omitted
@@ -315,10 +315,10 @@ Feature: MCP tests
     When I wait for the response to be completed
     Then The status code of the response is 200
     And The body of the response does not contain mcp-client
-    And The streamed response should contain following fragments
+    And The streamed response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPClientAuthConfig
   Scenario: Check if tools endpoint reports error when MCP client-provided invalid auth token is passed
@@ -418,10 +418,10 @@ Feature: MCP tests
     {"query": "Say hello", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-    And The response should contain following fragments
+    And The response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPOAuthAuthConfig @flaky
   Scenario: Check if streaming_query endpoint succeeds when MCP OAuth auth token is passed
@@ -439,10 +439,10 @@ Feature: MCP tests
     """
     When I wait for the response to be completed
     Then The status code of the response is 200
-    And The streamed response should contain following fragments
+    And The streamed response contains following fragments
         | Fragments in LLM response |
         | Hello                     |
-    And The token metrics should have increased
+    And The token metrics have increased
 
   @MCPOAuthAuthConfig
   Scenario: Check if tools endpoint reports error when MCP OAuth requires authentication

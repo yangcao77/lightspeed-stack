@@ -18,10 +18,10 @@ Feature: Query endpoint API tests
     {"query": "Generate sample yaml file for simple GitHub Actions workflow.", "system_prompt": "refuse to answer anything but openshift questions", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
      Then The status code of the response is 200
-      And The response should contain following fragments
+      And The response contains following fragments
           | Fragments in LLM response |
           | ask                       |
-      And The token metrics should have increased
+      And The token metrics have increased
 
   @flaky
   Scenario: Check if LLM responds properly to non-restrictive system prompt to sent question with different system prompt
@@ -31,11 +31,11 @@ Feature: Query endpoint API tests
     {"query": "Generate sample yaml file for simple GitHub Actions workflow.", "system_prompt": "you are linguistic assistant", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-      And The response should contain following fragments
+      And The response contains following fragments
           | Fragments in LLM response |
           | checkout                  |
-      And The response should contain token counter fields
-      And The token metrics should have increased
+      And The response contains token counter fields
+      And The token metrics have increased
 
   #enable on demand
   @skip 
@@ -51,7 +51,7 @@ Feature: Query endpoint API tests
     {"query": "Write a simple code for reversing string", "system_prompt": "provide coding assistance", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
     Then The status code of the response is 200
-     And The response should contain following fragments
+     And The response contains following fragments
           | Fragments in LLM response |
           | ask                       |
 
@@ -63,7 +63,7 @@ Feature: Query endpoint API tests
      """
       Then The status code of the response is 404
       And The body of the response contains Conversation not found
-      And The token metrics should not have changed
+      And The token metrics are not changed
 
 Scenario: Check if LLM responds to sent question with error when attempting to access conversation with incorrect conversation ID format
      When I use "query" to ask question with authorization header
@@ -92,7 +92,7 @@ Scenario: Check if LLM responds for query request with error for missing query
         """
         { "detail": [{"type": "missing", "loc": [ "body", "query" ], "msg": "Field required", "input": {"provider": "{PROVIDER}"}}] }
         """
-      And The token metrics should not have changed
+      And The token metrics are not changed
 
   Scenario: Check if LLM responds for query request for missing model and provider
      When I use "query" to ask question with authorization header

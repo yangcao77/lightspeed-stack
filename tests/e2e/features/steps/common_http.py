@@ -39,7 +39,7 @@ def check_status_code(context: Context, status: int) -> None:
         )
 
 
-@then('Content type of response should be set to "{content_type}"')
+@then('Content type of response is set to "{content_type}"')
 def check_content_type(context: Context, content_type: str) -> None:
     """Check the HTTP content type for latest response from tested service."""
     assert context.response is not None, "Request needs to be performed first"

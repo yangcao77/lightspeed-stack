@@ -403,8 +403,8 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should not include any tool invocation item types
-      And The token metrics should have increased
+      And The responses output does not include any tool invocation item types
+      And The token metrics have increased
 
   Scenario: Check if responses endpoint with tool_choice auto answers a knowledge question using file search
     Given The system is in default state
@@ -420,11 +420,11 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should include an item with type "file_search_call"
-      And The responses output_text should contain following fragments
+      And The responses output includes an item with type "file_search_call"
+      And The responses output_text contains following fragments
         | Fragments in LLM response |
         | great work                |
-      And The token metrics should have increased
+      And The token metrics have increased
 
   Scenario: Check if responses endpoint with tool_choice required still invokes document search for a basic question
     Given The system is in default state
@@ -439,8 +439,8 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should include an item with type "file_search_call"
-      And The token metrics should have increased
+      And The responses output includes an item with type "file_search_call"
+      And The token metrics have increased
 
   Scenario: Check if responses endpoint with file search as the chosen tool answers using file search
     Given The system is in default state
@@ -456,11 +456,11 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should include an item with type "file_search_call"
-      And The responses output_text should contain following fragments
+      And The responses output includes an item with type "file_search_call"
+      And The responses output_text contains following fragments
         | Fragments in LLM response |
         | great work                |
-      And The token metrics should have increased
+      And The token metrics have increased
 
   Scenario: Check if responses endpoint with allowed tools in automatic mode answers knowledge question using file search
     Given The system is in default state
@@ -480,11 +480,11 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should include an item with type "file_search_call"
-      And The responses output_text should contain following fragments
+      And The responses output includes an item with type "file_search_call"
+      And The responses output_text contains following fragments
         | Fragments in LLM response |
         | great work                |
-      And The token metrics should have increased
+      And The token metrics have increased
 
   Scenario: Check if responses endpoint with allowed tools in required mode invokes file search for a basic question
     Given The system is in default state
@@ -503,8 +503,8 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should include an item with type "file_search_call"
-      And The token metrics should have increased
+      And The responses output includes an item with type "file_search_call"
+      And The token metrics have increased
 
   Scenario: Allowed tools auto mode with only MCP in allowlist does not use file search for knowledge question
     Given The system is in default state
@@ -524,8 +524,8 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should not include an item with type "file_search_call"
-      And The token metrics should have increased
+      And The responses output does not include an item with type "file_search_call"
+      And The token metrics have increased
 
   Scenario: Required allowed_tools with invalid filter returns no tool invocations on knowledge question
     Given The system is in default state
@@ -546,5 +546,5 @@ Feature: Responses endpoint API tests
     }
     """
     Then The status code of the response is 200
-      And The responses output should not include any tool invocation item types
-      And The token metrics should have increased
+      And The responses output does not include any tool invocation item types
+      And The token metrics have increased

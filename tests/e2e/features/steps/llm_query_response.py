@@ -36,7 +36,7 @@ def _collect_output_item_types(response_body: dict[str, Any]) -> list[str]:
     return [item["type"] for item in output]
 
 
-@then("The responses output should not include any tool invocation item types")
+@then("The responses output does not include any tool invocation item types")
 def responses_output_should_not_include_tool_items(context: Context) -> None:
     """Assert no tool-related items appear in the Responses JSON ``output`` array."""
     assert context.response is not None, "Request needs to be performed first"
@@ -49,7 +49,7 @@ def responses_output_should_not_include_tool_items(context: Context) -> None:
     )
 
 
-@then('The responses output should include an item with type "{item_type}"')
+@then('The responses output includes an item with type "{item_type}"')
 def responses_output_should_include_item_type(context: Context, item_type: str) -> None:
     """Assert at least one ``output`` item has the given ``type``."""
     assert context.response is not None, "Request needs to be performed first"
@@ -61,7 +61,7 @@ def responses_output_should_include_item_type(context: Context, item_type: str) 
     )
 
 
-@then('The responses output should not include an item with type "{item_type}"')
+@then('The responses output does not include an item with type "{item_type}"')
 def responses_output_should_not_include_item_type(
     context: Context, item_type: str
 ) -> None:
@@ -197,7 +197,7 @@ def ask_question_in_same_conversation(context: Context, endpoint: str) -> None:
     )
 
 
-@then("The response should contain non-empty rag_chunks")
+@then("The response contains non-empty rag_chunks")
 def check_rag_chunks_present(context: Context) -> None:
     """Check that the response contains non-empty rag_chunks from inline RAG."""
     assert context.response is not None
@@ -208,7 +208,7 @@ def check_rag_chunks_present(context: Context) -> None:
     ), "rag_chunks is empty — inline RAG did not inject any chunks"
 
 
-@then("The response should contain non-empty referenced_documents")
+@then("The response contains non-empty referenced_documents")
 def check_referenced_documents_present(context: Context) -> None:
     """Check that the response contains non-empty referenced_documents."""
     assert context.response is not None
@@ -221,7 +221,7 @@ def check_referenced_documents_present(context: Context) -> None:
     ), "referenced_documents is empty — no documents were referenced"
 
 
-@then("The responses output_text should contain following fragments")
+@then("The responses output_text contains following fragments")
 def check_fragments_in_responses_output_text(context: Context) -> None:
     """Check that fragments from the scenario table appear in JSON ``output_text``.
 
@@ -245,7 +245,7 @@ def check_fragments_in_responses_output_text(context: Context) -> None:
         )
 
 
-@then("The response should contain following fragments")
+@then("The response contains following fragments")
 def check_fragments_in_response(context: Context) -> None:
     """Check that all specified fragments are present in the LLM response.
 
@@ -284,7 +284,7 @@ def check_fragments_in_response(context: Context) -> None:
         )
 
 
-@then("The streamed response should contain following fragments")
+@then("The streamed response contains following fragments")
 def check_streamed_fragments_in_response(context: Context) -> None:
     """Check that all specified fragments are present in the LLM response.
 

@@ -28,6 +28,6 @@ Feature: FAISS support tests
     {"query": "What is the title of the article from Paul?", "system_prompt": "You are an assistant. Always use the file_search tool to answer. Write only lowercase letters", "model": "{MODEL}", "provider": "{PROVIDER}"}
     """
      Then The status code of the response is 200
-      And The response should contain following fragments
+      And The response contains following fragments
           | Fragments in LLM response |
           | great work                |
