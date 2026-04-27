@@ -43,6 +43,8 @@ VALID_CONV_ID_NORMALIZED = "e6afd7aaa97b49ce8f4f96a801b07893d9cb784d72e53e3c"
 MODULE = "app.endpoints.responses"
 ENDPOINTS_MODULE = "utils.endpoints"
 UTILS_RESPONSES_MODULE = "utils.responses"
+MODEL = "google-vertex/publishers/google/models/gemini-2.5-flash"
+SERVER_INSTRUCTIONS = "Server instructions"
 
 
 def _patch_base(mocker: MockerFixture, config: AppConfig) -> None:
@@ -633,8 +635,8 @@ class TestResponsesEndpointHandler:
         # The handler passes tools=None and tool_choice=None to the response handler
         # (the endpoint deep-copies the request, so we inspect the handler call args)
         call_kwargs = mock_handle.call_args[1]
-        assert call_kwargs["request"].tools is None
-        assert call_kwargs["request"].tool_choice is None
+        assert call_kwargs["updated_request"].tools is None
+        assert call_kwargs["updated_request"].tool_choice is None
 
 
 class TestHandleNonStreamingResponse:
@@ -686,7 +688,8 @@ class TestHandleNonStreamingResponse:
 
         response = await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Bad input",
             started_at=datetime.now(UTC),
@@ -756,7 +759,8 @@ class TestHandleNonStreamingResponse:
 
         response = await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hello",
             started_at=datetime.now(UTC),
@@ -832,7 +836,8 @@ class TestHandleNonStreamingResponse:
 
         await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -869,7 +874,8 @@ class TestHandleNonStreamingResponse:
         with pytest.raises(HTTPException) as exc_info:
             await handle_non_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Long input",
                 started_at=datetime.now(UTC),
@@ -906,7 +912,8 @@ class TestHandleNonStreamingResponse:
         with pytest.raises(HTTPException) as exc_info:
             await handle_non_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
@@ -953,7 +960,8 @@ class TestHandleNonStreamingResponse:
         with pytest.raises(HTTPException) as exc_info:
             await handle_non_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
@@ -987,7 +995,8 @@ class TestHandleNonStreamingResponse:
         with pytest.raises(RuntimeError, match="Some other error"):
             await handle_non_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
@@ -1032,7 +1041,8 @@ class TestHandleStreamingResponse:
         mock_client.conversations.items.create = mocker.AsyncMock()
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Bad",
             started_at=datetime.now(UTC),
@@ -1111,7 +1121,8 @@ class TestHandleStreamingResponse:
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -1194,7 +1205,8 @@ class TestHandleStreamingResponse:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -1277,7 +1289,8 @@ class TestHandleStreamingResponse:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -1354,7 +1367,8 @@ class TestHandleStreamingResponse:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -1397,7 +1411,8 @@ class TestHandleStreamingResponse:
         with pytest.raises(HTTPException) as exc_info:
             await handle_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Long",
                 started_at=datetime.now(UTC),
@@ -1432,7 +1447,8 @@ class TestHandleStreamingResponse:
         with pytest.raises(HTTPException) as exc_info:
             await handle_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
@@ -1486,10 +1502,10 @@ class TestResponsesInstructionResolution:
             mcp_headers={},
         )
 
-        # The request passed to handle_non_streaming_response should have
+        # The updated request passed to handle_non_streaming_response should have
         # instructions resolved to the default system prompt.
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == DEFAULT_SYSTEM_PROMPT
+        assert call_kwargs["updated_request"].instructions == DEFAULT_SYSTEM_PROMPT
 
     @pytest.mark.asyncio
     async def test_client_provided_instructions_pass_through(
@@ -1534,7 +1550,7 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == custom_instructions
+        assert call_kwargs["updated_request"].instructions == custom_instructions
 
     @pytest.mark.asyncio
     async def test_configured_system_prompt_used_when_no_client_instructions(
@@ -1595,7 +1611,10 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == "You are a deployment assistant."
+        assert (
+            call_kwargs["updated_request"].instructions
+            == "You are a deployment assistant."
+        )
 
     @pytest.mark.asyncio
     async def test_client_instructions_rejected_when_disabled(
@@ -1681,7 +1700,7 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["request"].instructions == DEFAULT_SYSTEM_PROMPT
+        assert call_kwargs["updated_request"].instructions == DEFAULT_SYSTEM_PROMPT
 
 
 class TestIsServerMcpOutputItem:
@@ -1874,32 +1893,42 @@ class TestShouldFilterMcpChunk:
         )
 
 
+def mock_original_request(
+    *, instructions: Optional[str] = None, model: Optional[str] = None
+) -> ResponsesRequest:
+    """Build a minimal ResponsesRequest for _sanitize_response_dict tests."""
+    kwargs: dict[str, Any] = {"input": "x"}
+    if instructions is not None:
+        kwargs["instructions"] = instructions
+    if model is not None:
+        kwargs["model"] = model
+    return ResponsesRequest(**kwargs)
+
+
 class TestSanitizeResponseDict:
     """Unit tests for _sanitize_response_dict."""
 
     def test_substituted_instructions_replaced_with_placeholder(self) -> None:
         """Test that substituted instructions are replaced with the slug constant."""
         d: dict[str, Any] = {"instructions": "secret server prompt", "model": "m"}
-        _sanitize_response_dict(d, set(), instructions_substituted=True)
+        _sanitize_response_dict(d, set(), mock_original_request(instructions=None))
         assert d["instructions"] == SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
 
     def test_client_instructions_preserved_when_not_substituted(self) -> None:
         """Test that client-provided instructions are echoed back unchanged."""
-        d: dict[str, Any] = {"instructions": "my custom prompt", "model": "m"}
-        _sanitize_response_dict(d, set(), instructions_substituted=False)
+        d: dict[str, Any] = {"instructions": "my custom prompt"}
+        _sanitize_response_dict(
+            d,
+            set(),
+            mock_original_request(**d),
+        )
         assert d["instructions"] == "my custom prompt"
 
     def test_substituted_instructions_set_even_when_absent(self) -> None:
         """Test that placeholder is set even when instructions field is missing."""
         d: dict[str, Any] = {"model": "m"}
-        _sanitize_response_dict(d, set(), instructions_substituted=True)
+        _sanitize_response_dict(d, set(), mock_original_request(instructions=None))
         assert d["instructions"] == SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
-
-    def test_no_error_when_instructions_absent_and_not_substituted(self) -> None:
-        """Test that missing instructions field with no substitution does not raise."""
-        d: dict[str, Any] = {"model": "m"}
-        _sanitize_response_dict(d, set(), instructions_substituted=False)
-        assert "instructions" not in d
 
     def test_strips_server_mcp_tools(self) -> None:
         """Test that server-deployed MCP tools are removed from tools array."""
@@ -1910,9 +1939,7 @@ class TestSanitizeResponseDict:
                 {"name": "client-tool"},
             ]
         }
-        _sanitize_response_dict(
-            d, {"server-a", "server-b"}, instructions_substituted=False
-        )
+        _sanitize_response_dict(d, {"server-a", "server-b"}, mock_original_request())
         assert d["tools"] == [{"name": "client-tool"}]
 
     def test_preserves_client_tools(self) -> None:
@@ -1923,13 +1950,13 @@ class TestSanitizeResponseDict:
                 {"name": "client-tool"},
             ]
         }
-        _sanitize_response_dict(d, {"server-a"}, instructions_substituted=False)
+        _sanitize_response_dict(d, {"server-a"}, mock_original_request())
         assert d["tools"] == [{"name": "client-tool"}]
 
     def test_no_error_when_tools_absent(self) -> None:
         """Test that missing tools field does not raise."""
         d: dict[str, Any] = {"model": "m"}
-        _sanitize_response_dict(d, {"server-a"}, instructions_substituted=False)
+        _sanitize_response_dict(d, {"server-a"}, mock_original_request())
         assert "tools" not in d
 
     def test_empty_configured_mcp_labels_preserves_all_tools(self) -> None:
@@ -1940,7 +1967,7 @@ class TestSanitizeResponseDict:
                 {"name": "client-tool"},
             ]
         }
-        _sanitize_response_dict(d, set(), instructions_substituted=False)
+        _sanitize_response_dict(d, set(), mock_original_request())
         assert len(d["tools"]) == 2
 
     def test_strips_server_mcp_items_from_output(self) -> None:
@@ -1961,7 +1988,9 @@ class TestSanitizeResponseDict:
                 {"type": "mcp_call", "server_label": "okp", "id": "call-1"},
             ],
         }
-        _sanitize_response_dict(d, {"okp"}, instructions_substituted=False)
+        _sanitize_response_dict(
+            d, {"okp"}, mock_original_request(instructions="client-provided")
+        )
         assert len(d["output"]) == 1
         assert d["output"][0]["type"] == "message"
 
@@ -1974,13 +2003,13 @@ class TestSanitizeResponseDict:
                 {"type": "function_call", "name": "my_func"},
             ],
         }
-        _sanitize_response_dict(d, {"okp"}, instructions_substituted=False)
+        _sanitize_response_dict(d, {"okp"}, mock_original_request())
         assert len(d["output"]) == 3
 
     def test_no_error_when_output_absent(self) -> None:
         """Test that missing output field does not raise."""
         d: dict[str, Any] = {"model": "m"}
-        _sanitize_response_dict(d, {"okp"}, instructions_substituted=False)
+        _sanitize_response_dict(d, {"okp"}, mock_original_request())
         assert "output" not in d
 
     def test_strips_provider_prefix_from_model_when_substituted(self) -> None:
@@ -1988,9 +2017,7 @@ class TestSanitizeResponseDict:
         d: dict[str, Any] = {
             "model": "google-vertex/publishers/google/models/gemini-2.5-flash"
         }
-        _sanitize_response_dict(
-            d, set(), instructions_substituted=False, model_substituted=True
-        )
+        _sanitize_response_dict(d, set(), mock_original_request(model=None))
         assert d["model"] == "gemini-2.5-flash"
 
     def test_preserves_client_model_when_not_substituted(self) -> None:
@@ -1998,17 +2025,13 @@ class TestSanitizeResponseDict:
         d: dict[str, Any] = {
             "model": "google-vertex/publishers/google/models/gemini-2.5-flash"
         }
-        _sanitize_response_dict(
-            d, set(), instructions_substituted=False, model_substituted=False
-        )
+        _sanitize_response_dict(d, set(), mock_original_request(**d))
         assert d["model"] == "google-vertex/publishers/google/models/gemini-2.5-flash"
 
     def test_model_without_slash_preserved(self) -> None:
         """Test that model names without provider prefix are left unchanged."""
         d: dict[str, Any] = {"model": "gemini-2.5-flash"}
-        _sanitize_response_dict(
-            d, set(), instructions_substituted=False, model_substituted=True
-        )
+        _sanitize_response_dict(d, set(), mock_original_request())
         assert d["model"] == "gemini-2.5-flash"
 
     def test_all_fields_sanitized_together_with_substitution(self) -> None:
@@ -2026,10 +2049,7 @@ class TestSanitizeResponseDict:
             ],
         }
         _sanitize_response_dict(
-            d,
-            {"mcp-server"},
-            instructions_substituted=True,
-            model_substituted=True,
+            d, {"mcp-server"}, mock_original_request(instructions=None, model=None)
         )
         assert d["instructions"] == SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
         assert d["model"] == "gemini"
@@ -2054,8 +2074,10 @@ class TestSanitizeResponseDict:
         _sanitize_response_dict(
             d,
             {"mcp-server"},
-            instructions_substituted=False,
-            model_substituted=False,
+            mock_original_request(
+                instructions="client prompt",
+                model="provider/model1",
+            ),
         )
         assert d["instructions"] == "client prompt"
         assert d["model"] == "google-vertex/publishers/google/models/gemini"
@@ -2087,7 +2109,14 @@ class TestSanitizesOutputAndModel:
         mock_config.quota_limiters = minimal_config.quota_limiters
         mock_config.rag_id_mapping = {}
 
-        request = _request_with_model_and_conv("Hi", model="provider/model1")
+        original_request = ResponsesRequest(input="Hi")
+        updated_request = ResponsesRequest(
+            input="Hi",
+            model=MODEL,
+            instructions=SERVER_INSTRUCTIONS,
+            conversation=VALID_CONV_ID_NORMALIZED,
+        )
+
         mock_client = mocker.AsyncMock(spec=AsyncLlamaStackClient)
         mock_moderation = mocker.Mock()
         mock_moderation.decision = "passed"
@@ -2161,20 +2190,19 @@ class TestSanitizesOutputAndModel:
 
         response = await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=original_request,
+            updated_request=updated_request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
-            instructions_substituted=True,
-            model_substituted=True,
         )
 
         assert isinstance(response, ResponsesResponse)
         # Model provider prefix should be stripped when server-substituted
         assert response.model == "gemini-2.5-flash"
-        # Instructions should be replaced with placeholder
+        # Client omitted instructions: hide resolved server prompt
         assert response.instructions == SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
         # MCP output items should be filtered out
         output_types = [item.type for item in response.output]
@@ -2196,8 +2224,8 @@ class TestSanitizesOutputAndModel:
             "type": "response.completed",
             "response": {
                 "id": "r1",
-                "instructions": "secret server prompt",
-                "model": "google-vertex/publishers/google/models/gemini-2.5-flash",
+                "instructions": SERVER_INSTRUCTIONS,
+                "model": MODEL,
                 "output": [
                     {
                         "type": "mcp_list_tools",
@@ -2234,7 +2262,13 @@ class TestSanitizesOutputAndModel:
         mock_config.quota_limiters = minimal_config.quota_limiters
         mock_config.rag_id_mapping = {}
 
-        request = _request_with_model_and_conv("Hi", model="provider/model1")
+        original_request = ResponsesRequest(input="Hi")
+        updated_request = ResponsesRequest(
+            input="Hi",
+            model=MODEL,
+            instructions=SERVER_INSTRUCTIONS,
+            conversation=VALID_CONV_ID_NORMALIZED,
+        )
         mock_client = mocker.AsyncMock(spec=AsyncLlamaStackClient)
         mock_moderation = mocker.Mock()
         mock_moderation.decision = "passed"
@@ -2274,15 +2308,14 @@ class TestSanitizesOutputAndModel:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=original_request,
+            updated_request=updated_request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
             filter_server_tools=False,
-            instructions_substituted=True,
-            model_substituted=True,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -2393,7 +2426,8 @@ class TestMcpEventsFilteredUnconditionally:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -2484,7 +2518,8 @@ class TestMcpEventsFilteredUnconditionally:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),

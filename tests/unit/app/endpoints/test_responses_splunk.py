@@ -258,7 +258,8 @@ class TestSplunkTelemetryHooks:
 
         await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Bad input",
             started_at=datetime.now(UTC),
@@ -334,7 +335,8 @@ class TestSplunkTelemetryHooks:
         with pytest.raises(HTTPException):
             await handle_non_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hello",
                 started_at=datetime.now(UTC),
@@ -412,7 +414,8 @@ class TestSplunkTelemetryHooks:
 
         await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hello",
             started_at=datetime.now(UTC),
@@ -468,7 +471,8 @@ class TestSplunkTelemetryHooks:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Bad",
             started_at=datetime.now(UTC),
@@ -545,7 +549,8 @@ class TestSplunkTelemetryHooks:
         with pytest.raises(HTTPException):
             await handle_streaming_response(
                 client=mock_client,
-                request=request,
+                original_request=request,
+                updated_request=request,
                 auth=MOCK_AUTH,
                 input_text="Hello",
                 started_at=datetime.now(UTC),
@@ -625,7 +630,8 @@ class TestSplunkTelemetryHooks:
 
         response = await handle_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
@@ -696,7 +702,8 @@ class TestSplunkTelemetryHooks:
         # background_tasks=None (the default) means Splunk is disabled
         await handle_non_streaming_response(
             client=mock_client,
-            request=request,
+            original_request=request,
+            updated_request=request,
             auth=MOCK_AUTH,
             input_text="Bad input",
             started_at=datetime.now(UTC),

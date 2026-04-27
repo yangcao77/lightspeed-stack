@@ -331,10 +331,12 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
     Returns:
         ResponsesApiParams containing all prepared parameters for the API request
     """
-    if query_request.model and query_request.provider:
-        model = f"{query_request.provider}/{query_request.model}"
-    else:
-        model = await select_model_for_responses(client, user_conversation)
+    request_model = (
+        f"{query_request.provider}/{query_request.model}"
+        if query_request.model and query_request.provider
+        else None
+    )
+    model = await select_model_for_responses(request_model, client, user_conversation)
 
     if not await check_model_configured(client, model):
         _, model_id = extract_provider_and_model_from_model_id(model)
@@ -1330,6 +1332,7 @@ async def check_model_configured(
 
 
 async def select_model_for_responses(
+    request_model: Optional[str],
     client: AsyncLlamaStackClient,
     user_conversation: Optional[UserConversation],
 ) -> str:
@@ -1342,6 +1345,7 @@ async def select_model_for_responses(
     4. Raise HTTPException if no LLM model is found
 
     Args:
+        request_model: The model explicitly specified in the request, or None if not specified
         client: The AsyncLlamaStackClient instance
         user_conversation: The user conversation if conversation_id was provided, None otherwise
 
@@ -1351,6 +1355,9 @@ async def select_model_for_responses(
     Raises:
         HTTPException: If models cannot be fetched or an error occurs, or if no LLM model is found
     """
+    if request_model:
+        return request_model
+
     # 1. Conversation has existing last_used_model
     if (
         user_conversation is not None
