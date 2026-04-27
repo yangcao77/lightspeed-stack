@@ -11,7 +11,7 @@
 
 ## What
 
-Agent Skills support allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed Core with specialized instructions and domain knowledge packaged as portable skill directories. Skills follow the [Agent Skills open standard](https://agentskills.io) and are configured in `lightspeed-stack.yaml`. Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via configmaps or container volumes.
+Agent Skills support allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed Core with specialized instructions and domain knowledge packaged as portable skill directories. Skills follow the [Agent Skills open standard](https://agentskills.io). Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via ConfigMaps or container volumes, then specifying the paths in `lightspeed-stack.yaml`. Skill metadata (name, description) is read from `SKILL.md` frontmatter at startup.
 
 **Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
@@ -32,7 +32,7 @@ Skills solve this by giving the LLM access to procedural knowledge and domain-sp
 
 ## Requirements
 
-- **R1:** Skills are defined in `lightspeed-stack.yaml` as a list of entries with name, description, and path
+- **R1:** Skill paths are specified in `lightspeed-stack.yaml`; name and description are read from `SKILL.md` frontmatter
 - **R2:** Each skill path must point to a directory containing a valid `SKILL.md` file
 - **R3:** The skill catalog (name + description) is injected into the system prompt with behavioral instructions
 - **R4:** The LLM can load full skill instructions via the `activate_skill` tool
@@ -107,17 +107,28 @@ Request flow:
 
 ### Configuration
 
-Skills are configured in `lightspeed-stack.yaml`:
+Skills are configured by specifying paths in `lightspeed-stack.yaml`. Two forms are supported:
 
+**Option A: Directory of skills** (recommended for most deployments)
 ```yaml
 skills:
-  - name: "openshift-troubleshooting"
-    description: "Diagnose and fix common OpenShift deployment issues including pod failures, networking problems, and resource constraints."
-    path: "/var/skills/openshift-troubleshooting"
-  - name: "code-review"
-    description: "Review code for best practices, security vulnerabilities, and performance issues."
-    path: "/var/skills/code-review"
+  paths:
+    - "/var/skills/"  # Directory containing skill subdirectories
 ```
+
+**Option B: Individual skill paths** (for fine-grained control)
+```yaml
+skills:
+  paths:
+    - "/var/skills/openshift-troubleshooting/"
+    - "/var/skills/code-review/"
+```
+
+Each path points to either:
+- A directory containing a `SKILL.md` file (single skill)
+- A directory containing subdirectories, each with a `SKILL.md` file (multiple skills)
+
+Skill metadata (`name`, `description`) is read from the `SKILL.md` frontmatter at startup.
 
 Each skill directory must contain a `SKILL.md` file:
 
@@ -132,70 +143,81 @@ Each skill directory must contain a `SKILL.md` file:
 Configuration class:
 
 ```python
-class SkillConfiguration(ConfigurationBase):
-    """Agent skill configuration.
+class SkillsConfiguration(ConfigurationBase):
+    """Agent skills configuration.
 
-    Skills provide specialized instructions that the LLM can load on demand.
-    Each skill is a directory containing a SKILL.md file with frontmatter
-    metadata and markdown instructions.
+    Specifies paths to skill directories. Skill metadata (name, description)
+    is read from SKILL.md frontmatter at startup.
     """
 
-    name: str = Field(
-        ...,
-        min_length=1,
-        max_length=64,
-        title="Skill name",
-        description="Unique skill identifier. Must match the 'name' field in SKILL.md frontmatter.",
+    paths: list[str] = Field(
+        default_factory=list,
+        title="Skill paths",
+        description="Paths to skill directories or directories containing skill subdirectories.",
     )
-
-    description: str = Field(
-        ...,
-        min_length=1,
-        max_length=1024,
-        title="Skill description",
-        description="What the skill does and when to use it. Shown to the LLM in the skill catalog.",
-    )
-
-    path: str = Field(
-        ...,
-        title="Skill path",
-        description="Absolute path to the skill directory containing SKILL.md.",
-    )
-
-    # Populated at startup after parsing SKILL.md
-    _content: str = PrivateAttr(default="")
-    _references: list[str] = PrivateAttr(default_factory=list)
-
-    @model_validator(mode="after")
-    def validate_skill_path(self) -> Self:
-        """Validate skill path and parse SKILL.md."""
-        skill_md_path = Path(self.path) / "SKILL.md"
-        if not skill_md_path.is_file():
-            raise ValueError(f"SKILL.md not found at {skill_md_path}")
-
-        # Parse and validate SKILL.md
-        content = skill_md_path.read_text(encoding="utf-8")
-        frontmatter, body = parse_skill_md(content)
-
-        if frontmatter.get("name") != self.name:
-            raise ValueError(
-                f"Skill name mismatch: config has '{self.name}' but "
-                f"SKILL.md has '{frontmatter.get('name')}'"
-            )
-
-        self._content = body
-        self._references = list_references(Path(self.path))
-        return self
 ```
 
 Add to `Configuration` class:
 
 ```python
-skills: list[SkillConfiguration] = Field(
-    default_factory=list,
+skills: Optional[SkillsConfiguration] = Field(
+    default=None,
     title="Agent skills",
-    description="Agent skills provide specialized instructions the LLM can load on demand.",
+    description="Agent skills configuration. Specifies paths to skill directories.",
 )
+```
+
+Runtime skill data (populated at startup after scanning paths):
+
+```python
+@dataclass
+class LoadedSkill:
+    """Skill loaded from filesystem at startup."""
+
+    name: str
+    description: str
+    path: Path
+    content: str  # SKILL.md body after frontmatter
+    references: list[str]  # Files in references/ subdirectory
+```
+
+Startup scanning logic:
+
+```python
+def load_skills(config: SkillsConfiguration) -> list[LoadedSkill]:
+    """Scan configured paths and load all valid skills.
+
+    Each path can be:
+    - A directory containing SKILL.md (single skill)
+    - A directory containing subdirectories with SKILL.md (multiple skills)
+    """
+    skills = []
+    seen_names: set[str] = set()
+
+    for path_str in config.paths:
+        path = Path(path_str)
+        if not path.is_dir():
+            raise ValueError(f"Skill path does not exist: {path}")
+
+        skill_md = path / "SKILL.md"
+        if skill_md.is_file():
+            # Single skill directory
+            skill = _load_skill_from_dir(path)
+            if skill.name in seen_names:
+                raise ValueError(f"Duplicate skill name: {skill.name}")
+            seen_names.add(skill.name)
+            skills.append(skill)
+        else:
+            # Directory of skill subdirectories
+            for subdir in path.iterdir():
+                if subdir.is_dir() and (subdir / "SKILL.md").is_file():
+                    skill = _load_skill_from_dir(subdir)
+                    if skill.name in seen_names:
+                        raise ValueError(f"Duplicate skill name: {skill.name}")
+                    seen_names.add(skill.name)
+                    skills.append(skill)
+
+    return skills
 ```
 
 ### System prompt injection
@@ -232,7 +254,7 @@ with the skill's name to load its full instructions.
 #### Implementation
 
 ```python
-def build_skill_catalog(skills: list[SkillConfiguration]) -> str:
+def build_skill_catalog(skills: list[LoadedSkill]) -> str:
     """Build skill catalog XML for system prompt injection.
 
     Follows the agentskills.io implementation guide format.
@@ -266,11 +288,11 @@ def build_skill_catalog(skills: list[SkillConfiguration]) -> str:
 Modify `get_system_prompt()` in `src/utils/prompts.py`:
 
 ```python
-def get_system_prompt(system_prompt: Optional[str], ...) -> str:
+def get_system_prompt(system_prompt: Optional[str], loaded_skills: list[LoadedSkill], ...) -> str:
     # ... existing logic to resolve base system prompt ...
 
-    # Append skill catalog if skills are configured
-    skill_catalog = build_skill_catalog(configuration.skills)
+    # Append skill catalog if skills are loaded
+    skill_catalog = build_skill_catalog(loaded_skills)
     if skill_catalog:
         resolved_prompt = resolved_prompt + "\n" + skill_catalog
 
@@ -286,7 +308,7 @@ Register an `activate_skill` tool that the LLM can call to load full instruction
 #### Tool registration
 
 ```python
-def get_skill_tool(skills: list[SkillConfiguration]) -> Optional[InputTool]:
+def get_skill_tool(skills: list[LoadedSkill]) -> Optional[InputTool]:
     """Create the activate_skill tool if skills are configured.
 
     The name parameter is constrained to valid skill names (as an enum)
@@ -326,7 +348,7 @@ The tool response wraps skill content in identifying tags following the [agentsk
 - Bundled resources to be surfaced without being eagerly loaded
 
 ```python
-def handle_activate_skill(name: str, skills: list[SkillConfiguration]) -> str:
+def handle_activate_skill(name: str, skills: list[LoadedSkill]) -> str:
     """Handle activate_skill tool invocation.
 
     Returns skill content wrapped in structured tags.
@@ -337,17 +359,17 @@ def handle_activate_skill(name: str, skills: list[SkillConfiguration]) -> str:
 
     lines = [
         f'<skill_content name="{skill.name}">',
-        skill._content,
+        skill.content,
         "",
         f"Skill directory: {skill.path}",
         "Relative paths in this skill are relative to the skill directory.",
     ]
 
     # List bundled resources without eagerly loading them
-    if skill._references:
+    if skill.references:
         lines.append("")
         lines.append("<skill_resources>")
-        for ref in skill._references:
+        for ref in skill.references:
             lines.append(f"  <file>{ref}</file>")
         lines.append("</skill_resources>")
 
@@ -388,11 +410,11 @@ Skills can include a `references/` subdirectory with additional documentation. T
 Following the [agentskills.io guidance](https://agentskills.io/client-implementation/adding-skills-support#permission-allowlisting), skill directories should be allowlisted for file access so the model can read bundled resources without triggering permission prompts. Without this, every reference to a bundled file results in a permission dialog, breaking the flow.
 
 ```python
-def is_path_in_skill_directory(path: str, skills: list[SkillConfiguration]) -> bool:
+def is_path_in_skill_directory(path: str, skills: list[LoadedSkill]) -> bool:
     """Check if a path is within a configured skill directory."""
     resolved_path = Path(path).resolve()
     for skill in skills:
-        skill_dir = Path(skill.path).resolve()
+        skill_dir = skill.path.resolve()
         try:
             resolved_path.relative_to(skill_dir)
             return True
@@ -463,8 +485,8 @@ if skill_tracker.is_activated(conversation_id, name):
 
 | File | What to do |
 |------|------------|
-| `src/models/config.py` | Add `SkillConfiguration` class and `skills` field to `Configuration` |
-| `src/utils/skills.py` | New module: `parse_skill_md()`, `build_skill_catalog()`, `handle_read_skill()` |
+| `src/models/config.py` | Add `SkillsConfiguration` class and `skills` field to `Configuration` |
+| `src/utils/skills.py` | New module: `LoadedSkill`, `load_skills()`, `parse_skill_md()`, `build_skill_catalog()`, `handle_activate_skill()` |
 | `src/utils/prompts.py` | Modify `get_system_prompt()` to append skill catalog |
 | `src/utils/responses.py` | Modify `prepare_tools()` to include skill tool |
 | `src/constants.py` | Add skill-related constants |
@@ -472,9 +494,9 @@ if skill_tracker.is_activated(conversation_id, name):
 ### Insertion point detail
 
 **Configuration loading** (`src/models/config.py`):
-- Add `SkillConfiguration` class following the `ModelContextProtocolServer` pattern (line 468)
-- Add `skills: list[SkillConfiguration]` to `Configuration` class (around line 1852)
-- Validation happens in `@model_validator` during config parsing
+- Add `SkillsConfiguration` class with `paths: list[str]` field
+- Add `skills: Optional[SkillsConfiguration]` to `Configuration` class (around line 1852)
+- Path validation happens at startup in `load_skills()` function
 
 **System prompt injection** (`src/utils/prompts.py`):
 - `get_system_prompt()` currently returns the resolved prompt at line 80
@@ -541,8 +563,8 @@ Example config file: `examples/lightspeed-stack-skills.yaml`
 ### Test patterns
 
 - Framework: pytest + pytest-asyncio + pytest-mock
-- Config validation tests: `tests/unit/models/config/test_skill_configuration.py`
-- Skill parsing tests: `tests/unit/utils/test_skills.py`
+- Config validation tests: `tests/unit/models/config/test_skills_configuration.py`
+- Skill loading/parsing tests: `tests/unit/utils/test_skills.py`
 - Integration tests: `tests/integration/endpoints/test_query_with_skills.py`
 
 **Test fixtures**:
@@ -583,6 +605,7 @@ These are test instructions.
 
 | Date | Change | Reason |
 |------|--------|--------|
+| 2026-04-27 | Config specifies paths only; name/description read from SKILL.md | Keep config lightweight, avoid bloating CR |
 | 2026-04-09 | Initial version | Spike completion |
 
 ## Appendix A: Agent Skills Specification

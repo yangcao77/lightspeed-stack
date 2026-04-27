@@ -4,7 +4,7 @@
 
 **The problem**: Lightspeed Core has no mechanism for extending agent capabilities with specialized instructions or domain knowledge. Users cannot package reusable workflows, troubleshooting guides, or domain expertise into portable, discoverable units that the LLM can use on demand.
 
-**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with a config-based discovery model. Skills are defined in `lightspeed-stack.yaml` pointing to directories containing `SKILL.md` files. The LLM sees a skill catalog (name + description) in the system prompt and can request full instructions on demand via a dedicated tool.
+**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with filesystem-based discovery. Config specifies paths to skill directories; skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. The LLM sees a skill catalog (name + description) in the system prompt and can request full instructions on demand via a dedicated tool.
 
 **PoC validation**: Not applicable for this spike. The feature is well-defined by the agentskills.io specification and has been implemented by 30+ agent products including Claude Code, GitHub Copilot, Cursor, and OpenAI Codex.
 
@@ -20,7 +20,7 @@ These are the high-level decisions that determine scope, approach, and cost. Eac
 | B | Product team-defined only (LS app teams like RHEL Lightspeed define their own skills) |
 | C | Both built-in and product team-defined |
 
-**Recommendation**: **B** (Product team-defined only). This allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed with domain-specific skills without requiring changes to Lightspeed Core. Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via configmaps or container volumes, then pointing to them in `lightspeed-stack.yaml`. Built-in skills can be added to Lightspeed Core later if common patterns emerge.
+**Recommendation**: **B** (Product team-defined only). This allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed with domain-specific skills without requiring changes to Lightspeed Core. Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via ConfigMaps or container volumes, then specifying the paths in `lightspeed-stack.yaml`. Skill content is read from `SKILL.md` files at startup. Built-in skills can be added to Lightspeed Core later if common patterns emerge.
 
 **Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
@@ -28,12 +28,12 @@ These are the high-level decisions that determine scope, approach, and cost. Eac
 
 | Option | Description |
 |--------|-------------|
-| A | Filesystem-based (scan configured directories for `SKILL.md` files) |
-| B | Config-based (define skills in `lightspeed-stack.yaml`) |
+| A | Filesystem-based (config specifies paths, skill metadata read from `SKILL.md` files) |
+| B | Config-based (full skill definitions inlined in `lightspeed-stack.yaml`) |
 | C | API-based (skills registered/managed via REST API) |
 | D | Hybrid (built-in via config, product team-defined via filesystem or API) |
 
-**Recommendation**: **B** (Config-based). Skills are defined in `lightspeed-stack.yaml` similar to `mcp_servers`. This provides explicit control over which skills are available, integrates with existing configuration patterns, and avoids filesystem scanning complexity.
+**Recommendation**: **A** (Filesystem-based). Config specifies paths to skill directories (or a single directory containing multiple skills). Skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. This keeps config lightweight, avoids bloating the config CR in k8s deployments, and allows skill content to be updated independently of config changes. Skills can be mounted via ConfigMaps, volumes, or any standard filesystem mechanism.
 
 ### Decision 3: Script execution support?
 
@@ -85,24 +85,30 @@ This keeps the base context small while giving the LLM access to specialized kno
 
 ### Decision 7: Configuration structure
 
-Skills are configured as a list in `lightspeed-stack.yaml`, following the `mcp_servers` pattern:
+Skills are configured by specifying paths to skill directories in `lightspeed-stack.yaml`. Two forms are supported:
 
+**Option A: Directory of skills** (recommended for most deployments)
 ```yaml
 skills:
-  - name: "code-review"
-    description: "Review code for best practices and security issues."
-    path: "/var/skills/code-review"
-  - name: "troubleshooting"
-    description: "Diagnose and fix OpenShift deployment issues."
-    path: "/var/skills/troubleshooting"
+  paths:
+    - "/var/skills/"  # Directory containing skill subdirectories
 ```
 
-Each skill entry specifies:
-- `name`: Unique identifier (validated against `SKILL.md` frontmatter)
-- `description`: What the skill does and when to use it
-- `path`: Absolute path to directory containing `SKILL.md`
+**Option B: Individual skill paths** (for fine-grained control)
+```yaml
+skills:
+  paths:
+    - "/var/skills/code-review/"
+    - "/var/skills/troubleshooting/"
+```
 
-**Recommendation**: Approved. This structure is consistent with existing config patterns and provides explicit control.
+Each path points to either:
+- A directory containing a `SKILL.md` file (single skill)
+- A directory containing subdirectories, each with a `SKILL.md` file (multiple skills)
+
+Skill metadata (`name`, `description`) is read from the `SKILL.md` frontmatter at startup. This keeps config minimal and allows skill content to be managed independently.
+
+**Recommendation**: Approved. This structure keeps the config CR lightweight and decouples skill content from configuration.
 
 ## Proposed JIRAs
 
@@ -112,21 +118,23 @@ Each JIRA includes an agentic tool instruction pointing to the spec doc.
 <!-- key: LCORE-???? -->
 ### LCORE-???? Add skill configuration model
 
-**Description**: Add the `SkillConfiguration` Pydantic model and `skills` list to the main configuration. This enables defining skills in `lightspeed-stack.yaml`.
+**Description**: Add the `SkillsConfiguration` Pydantic model to the main configuration. This enables specifying skill directory paths in `lightspeed-stack.yaml`.
 
 **Scope**:
 
-- Create `SkillConfiguration` class in `src/models/config.py`
-- Add `skills: list[SkillConfiguration]` field to `Configuration` class
-- Add validation: path exists, contains `SKILL.md`, name matches frontmatter
-- Parse `SKILL.md` frontmatter on startup (extract name, description)
+- Create `SkillsConfiguration` class in `src/models/config.py` with `paths: list[str]` field
+- Add `skills: Optional[SkillsConfiguration]` field to `Configuration` class
+- Implement startup scanning: resolve paths, find `SKILL.md` files, parse frontmatter
+- Add validation: paths exist, contain valid `SKILL.md` files with required frontmatter
+- Store parsed skill metadata (name, description, path) for runtime use
 
 **Acceptance criteria**:
 
-- Skills can be defined in `lightspeed-stack.yaml` using the documented format
-- Startup fails with clear error if skill path doesn't exist or lacks `SKILL.md`
-- Startup fails if configured `name` doesn't match `SKILL.md` frontmatter `name`
-- Unit tests cover validation scenarios
+- Skill paths can be configured in `lightspeed-stack.yaml` using the documented format
+- Startup scans configured paths and discovers all valid skills
+- Startup fails with clear error if path doesn't exist or lacks valid `SKILL.md`
+- Duplicate skill names across paths are detected and rejected
+- Unit tests cover path scanning and validation scenarios
 
 **Agentic tool instruction**:
 
@@ -334,7 +342,7 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 
 **Path restrictions**: The `activate_skill` tool and reference file access are restricted to configured skill directories. The LLM cannot access arbitrary filesystem paths through skills.
 
-**Trust model**: Skills are configured by LS app teams (e.g., RHEL Lightspeed) at deployment time, not by end users. Product teams mount skill directories into the container via configmaps or volumes and reference them in `lightspeed-stack.yaml`. This mirrors the MCP server trust model — end users cannot add arbitrary skills, only use the skills their product team has deployed.
+**Trust model**: Skills are configured by LS app teams (e.g., RHEL Lightspeed) at deployment time, not by end users. Product teams mount skill directories into the container via ConfigMaps or volumes and specify the paths in `lightspeed-stack.yaml`. This mirrors the MCP server trust model — end users cannot add arbitrary skills, only use the skills their product team has deployed.
 
 ## Appendix A: Existing approaches research
 
@@ -349,7 +357,7 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 
 ### Alternative designs considered
 
-**Filesystem scanning**: Rejected in favor of config-based discovery. Filesystem scanning adds complexity, requires directory configuration anyway, and could inadvertently load untrusted skills from cloned repositories.
+**Full config-based definitions**: Rejected in favor of filesystem-based with config paths. Inlining full skill definitions (name, description, instructions) in `lightspeed-stack.yaml` would bloat the config CR in k8s deployments and couple skill content updates to config changes. Instead, config specifies paths and skill metadata is read from `SKILL.md` files.
 
 **Inline content**: Rejected in favor of path-based. Inline content would clutter the YAML config for multi-skill deployments and doesn't support reference files.
 
