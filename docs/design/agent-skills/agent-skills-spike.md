@@ -16,11 +16,13 @@ These are the high-level decisions that determine scope, approach, and cost. Eac
 
 | Option | Description |
 |--------|-------------|
-| A | Built-in skills only (Lightspeed developers ship pre-defined skills) |
-| B | Customer-defined only (end users import their own skill definitions) |
-| C | Both built-in and customer-defined |
+| A | Built-in skills only (Lightspeed Core developers ship pre-defined skills) |
+| B | Product team-defined only (LS app teams like RHEL Lightspeed define their own skills) |
+| C | Both built-in and product team-defined |
 
-**Recommendation**: **B** (Customer-defined only). This allows end users to extend Lightspeed with their own domain expertise without requiring changes to the core product. Built-in skills can be added later if needed.
+**Recommendation**: **B** (Product team-defined only). This allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed with domain-specific skills without requiring changes to Lightspeed Core. Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via configmaps or container volumes, then pointing to them in `lightspeed-stack.yaml`. Built-in skills can be added to Lightspeed Core later if common patterns emerge.
+
+**Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
 ### Decision 2: Discovery mechanism?
 
@@ -29,7 +31,7 @@ These are the high-level decisions that determine scope, approach, and cost. Eac
 | A | Filesystem-based (scan configured directories for `SKILL.md` files) |
 | B | Config-based (define skills in `lightspeed-stack.yaml`) |
 | C | API-based (skills registered/managed via REST API) |
-| D | Hybrid (built-in via config, customer-defined via filesystem or API) |
+| D | Hybrid (built-in via config, product team-defined via filesystem or API) |
 
 **Recommendation**: **B** (Config-based). Skills are defined in `lightspeed-stack.yaml` similar to `mcp_servers`. This provides explicit control over which skills are available, integrates with existing configuration patterns, and avoids filesystem scanning complexity.
 
@@ -332,7 +334,7 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 
 **Path restrictions**: The `activate_skill` tool and reference file access are restricted to configured skill directories. The LLM cannot access arbitrary filesystem paths through skills.
 
-**Trust model**: Since skills are configured by administrators in `lightspeed-stack.yaml`, there's an implicit trust that configured skill paths contain appropriate content.
+**Trust model**: Skills are configured by LS app teams (e.g., RHEL Lightspeed) at deployment time, not by end users. Product teams mount skill directories into the container via configmaps or volumes and reference them in `lightspeed-stack.yaml`. This mirrors the MCP server trust model — end users cannot add arbitrary skills, only use the skills their product team has deployed.
 
 ## Appendix A: Existing approaches research
 

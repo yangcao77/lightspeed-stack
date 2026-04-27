@@ -11,7 +11,9 @@
 
 ## What
 
-Agent Skills support allows customers to extend Lightspeed Core with specialized instructions and domain knowledge packaged as portable skill directories. Skills follow the [Agent Skills open standard](https://agentskills.io) and are configured in `lightspeed-stack.yaml`.
+Agent Skills support allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightspeed) to extend Lightspeed Core with specialized instructions and domain knowledge packaged as portable skill directories. Skills follow the [Agent Skills open standard](https://agentskills.io) and are configured in `lightspeed-stack.yaml`. Product teams ship skills alongside the lightspeed-stack container by mounting skill directories via configmaps or container volumes.
+
+**Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
 The LLM sees a skill catalog (name + description) in the system prompt and can load full instructions on demand using the `activate_skill` tool.
 
@@ -43,10 +45,10 @@ Skills solve this by giving the LLM access to procedural knowledge and domain-sp
 
 ## Use Cases
 
-- **U1:** As a platform administrator, I want to configure troubleshooting skills so that the LLM can help users diagnose common issues
+- **U1:** As an LS app team administrator, I want to configure troubleshooting skills so that the LLM can help users diagnose common issues
 - **U2:** As a skill author, I want to create a SKILL.md file with instructions so that I can package domain expertise portably
 - **U3:** As a user, I want the LLM to automatically use relevant skills so that I get better answers without manually specifying which skill to use
-- **U4:** As an enterprise customer, I want to deploy custom skills so that the LLM understands our internal processes and terminology
+- **U4:** As an LS app team, I want to deploy domain-specific skills so that the LLM understands product-specific processes and terminology
 
 ## Architecture
 
