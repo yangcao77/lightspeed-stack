@@ -20,6 +20,21 @@ def sample_event_data_fixture() -> ResponsesEventData:
     )
 
 
+@pytest.fixture(name="sample_event_data_with_user_agent")
+def sample_event_data_with_user_agent_fixture() -> ResponsesEventData:
+    """Create sample responses event data with user_agent set."""
+    return ResponsesEventData(
+        input_text="How do I configure SSH?",
+        response_text="To configure SSH, edit /etc/ssh/sshd_config...",
+        conversation_id="conv-abc-123",
+        model="granite-3-8b-instruct",
+        org_id="12345678",
+        system_id="abc-def-123",
+        inference_time=2.34,
+        user_agent="goose/1.0.0",
+    )
+
+
 def test_builds_event_with_all_fields(
     mocker: MockerFixture, sample_event_data: ResponsesEventData
 ) -> None:
@@ -97,3 +112,51 @@ def test_default_token_values() -> None:
 
     assert data.input_tokens == 0
     assert data.output_tokens == 0
+
+
+def test_user_agent_defaults_to_none() -> None:
+    """Test user_agent field defaults to None when not provided."""
+    data = ResponsesEventData(
+        input_text="test",
+        response_text="test",
+        conversation_id="conv-789",
+        inference_time=1.0,
+        model="test-model",
+        org_id="org1",
+        system_id="sys1",
+    )
+
+    assert data.user_agent is None
+
+
+def test_user_agent_included_in_splunk_event(
+    mocker: MockerFixture,
+    sample_event_data_with_user_agent: ResponsesEventData,
+) -> None:
+    """Test user_agent field is included in the Splunk event payload."""
+    mock_config = mocker.patch("observability.formats.responses.configuration")
+    mock_config.deployment_environment = "production"
+
+    event = build_responses_event(sample_event_data_with_user_agent)
+
+    assert event["user_agent"] == "goose/1.0.0"
+
+
+def test_user_agent_none_included_in_splunk_event(mocker: MockerFixture) -> None:
+    """Test user_agent=None is included in the Splunk event payload."""
+    mock_config = mocker.patch("observability.formats.responses.configuration")
+    mock_config.deployment_environment = "production"
+
+    data = ResponsesEventData(
+        input_text="test",
+        response_text="test",
+        conversation_id="conv-123",
+        inference_time=1.0,
+        model="test-model",
+        org_id="org1",
+        system_id="sys1",
+    )
+
+    event = build_responses_event(data)
+
+    assert event["user_agent"] is None
