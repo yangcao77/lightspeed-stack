@@ -65,17 +65,19 @@ def content_to_str(content: Any) -> str:
     -------
         str: The normalized string representation of the content.
     """
-    if content is None:
-        return ""
-    if isinstance(content, str):
-        return content
-    if isinstance(content, TextContentItem):
-        return content.text
-    if isinstance(content, ImageContentItem):
-        return "<image>"
-    if isinstance(content, list):
-        return " ".join(content_to_str(item) for item in content)
-    return str(content)
+    match content:
+        case None:
+            return ""
+        case str():
+            return content
+        case TextContentItem():
+            return content.text
+        case ImageContentItem():
+            return "<image>"
+        case list():
+            return " ".join(content_to_str(item) for item in content)
+        case _:
+            return str(content)
 
 
 class Singleton(type):
