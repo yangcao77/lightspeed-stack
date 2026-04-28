@@ -154,7 +154,14 @@ class RestApiMetricsMiddleware:  # pylint: disable=too-few-public-methods
             await self.app(scope, receive, send)
             return
 
-        path = scope["path"]
+        # When root_path is set (e.g., /api/lightspeed), the proxy forwards
+        # requests with the full prefixed path (/api/lightspeed/v1/infer) but
+        # app_routes_paths contains only application-level paths (/v1/infer).
+        # Strip the prefix so the path check and metric labels match the routes.
+        root_path = scope.get("root_path", "")
+        path: str = scope["path"]
+        if root_path and path.startswith(root_path + "/"):
+            path = path[len(root_path) :]
         logger.debug("Received request for path: %s", path)
 
         # Ignore paths that are not part of the app routes.

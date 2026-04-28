@@ -12,15 +12,18 @@ from app.main import GlobalExceptionMiddleware, RestApiMetricsMiddleware
 from models.responses import InternalServerErrorResponse
 
 
-def _make_scope(path: str = "/test") -> dict:
+def _make_scope(path: str = "/test", root_path: str = "") -> Scope:
     """Build a minimal HTTP ASGI scope."""
-    return {
+    scope: Scope = {
         "type": "http",
         "method": "GET",
         "path": path,
         "query_string": b"",
         "headers": [],
     }
+    if root_path:
+        scope["root_path"] = root_path
+    return scope
 
 
 async def _noop_receive() -> dict:
@@ -174,4 +177,60 @@ async def test_rest_api_metrics_increments_counter_on_exception(
 
     mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
     mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 500)
+    mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_rest_api_metrics_strips_root_path(
+    mocker: MockerFixture,
+) -> None:
+    """Middleware must strip root_path so prefixed requests still match routes."""
+    mocker.patch("app.main.app_routes_paths", ["/v1/infer"])
+    mock_metrics = mocker.patch("app.main.metrics")
+
+    async def ok_app(_scope: Scope, _receive: Receive, send: Send) -> None:
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    middleware = RestApiMetricsMiddleware(ok_app)
+    collector = _ResponseCollector()
+
+    # Simulate 3scale forwarding /api/lightspeed/v1/infer with root_path set.
+    await middleware(
+        _make_scope("/api/lightspeed/v1/infer", root_path="/api/lightspeed"),
+        _noop_receive,
+        collector,
+    )
+
+    assert collector.status_code == 200
+    # Metrics labels should use the stripped path, not the full prefixed path.
+    mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
+    mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 200)
+    mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
+
+
+@pytest.mark.asyncio
+async def test_rest_api_metrics_no_root_path_unchanged(
+    mocker: MockerFixture,
+) -> None:
+    """Without root_path, middleware behaves as before."""
+    mocker.patch("app.main.app_routes_paths", ["/v1/infer"])
+    mock_metrics = mocker.patch("app.main.metrics")
+
+    async def ok_app(_scope: Scope, _receive: Receive, send: Send) -> None:
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b"ok"})
+
+    middleware = RestApiMetricsMiddleware(ok_app)
+    collector = _ResponseCollector()
+
+    await middleware(
+        _make_scope("/v1/infer"),
+        _noop_receive,
+        collector,
+    )
+
+    assert collector.status_code == 200
+    mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
+    mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 200)
     mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
