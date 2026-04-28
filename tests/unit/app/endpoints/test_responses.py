@@ -68,9 +68,16 @@ def build_api_params_and_context(  # pylint: disable=too-many-arguments
     rh_identity_context: tuple[str, str] = ("", ""),
     filter_server_tools: bool = False,
     generate_topic_summary: bool = False,
+    endpoint_path: str = "/responses",
+    user_agent: Optional[str] = None,
 ) -> tuple[ResponsesApiParams, ResponsesContext]:
     """Build api_params/context for direct helper invocation tests."""
-    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
+    api_params = ResponsesApiParams.model_validate(
+        {
+            **updated_request.model_dump(exclude={"tools"}),
+            "tools": updated_request.tools,
+        }
+    )
     context = ResponsesContext.model_construct(
         client=client,
         auth=auth,
@@ -82,6 +89,8 @@ def build_api_params_and_context(  # pylint: disable=too-many-arguments
         background_tasks=background_tasks,
         rh_identity_context=rh_identity_context,
         generate_topic_summary=generate_topic_summary,
+        endpoint_path=endpoint_path,
+        user_agent=user_agent,
     )
     return api_params, context
 

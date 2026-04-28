@@ -370,7 +370,12 @@ async def responses_endpoint_handler(
             original_request.input, inline_rag_context.context_text
         )
 
-    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
+    api_params = ResponsesApiParams.model_validate(
+        {
+            **updated_request.model_dump(exclude={"tools"}),
+            "tools": updated_request.tools,
+        }
+    )
     context = ResponsesContext(
         client=client,
         auth=auth,
@@ -856,7 +861,7 @@ async def response_generator(
         await append_turn_items_to_conversation(
             context.client,
             api_params.conversation,
-            context.input_text,
+            api_params.input,
             latest_response_object.output,
         )
 

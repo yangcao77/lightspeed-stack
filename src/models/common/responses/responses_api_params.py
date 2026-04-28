@@ -1,7 +1,7 @@
 """Request parameter model for Llama Stack responses API calls."""
 
 from collections.abc import Mapping
-from typing import Any, Optional
+from typing import Any, Final, Optional
 
 from llama_stack_api.openai_responses import (
     OpenAIResponseInputTool as InputTool,
@@ -27,7 +27,7 @@ from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.types import IncludeParameter, ResponseInput
 
 # Attribute names that are echoed back in the response.
-_ECHOED_FIELDS = set(
+_ECHOED_FIELDS: Final[set[str]] = set(
     {
         "instructions",
         "max_tool_calls",
