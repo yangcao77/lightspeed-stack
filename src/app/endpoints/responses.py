@@ -6,7 +6,7 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from typing import Annotated, Any, Optional, cast
+from typing import Annotated, Any, Final, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -112,7 +112,7 @@ from utils.vector_search import (
 logger = get_logger(__name__)
 router = APIRouter(tags=["responses"])
 
-_USER_AGENT_MAX_LENGTH = 128
+_USER_AGENT_MAX_LENGTH: Final[int] = 128
 
 
 def _get_user_agent(request: Request) -> Optional[str]:
@@ -418,6 +418,7 @@ async def handle_streaming_response(
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Returns:
         StreamingResponse with SSE-formatted events
     """
@@ -946,6 +947,7 @@ async def generate_response(
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
         shield_blocked: Whether the request was blocked by a shield
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Yields:
         SSE-formatted strings from the generator
     """
@@ -1023,6 +1025,7 @@ async def handle_non_streaming_response(
         filter_server_tools: Whether to filter server-deployed MCP tool output
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Returns:
         ResponsesResponse with the completed response
     """
