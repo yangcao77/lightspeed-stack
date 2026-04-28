@@ -56,7 +56,7 @@ security-check: ## Check the project for security issues
 
 format: ## Format the code into unified format
 	uv run black .
-	uv run ruff check . --fix
+	uv run ruff check src tests --fix
 
 schema:	## Generate OpenAPI schema file
 	uv run scripts/generate_openapi_schema.py docs/openapi.json
@@ -111,7 +111,7 @@ docstyle:	## Check the docstring style using Docstyle checker
 	uv run pydocstyle -v src
 
 ruff:	## Check source code using Ruff linter
-	uv run ruff check . --per-file-ignores=tests/*:S101 --per-file-ignores=scripts/*:S101
+	uv run ruff check src tests --per-file-ignores=tests/*:S101 --per-file-ignores=scripts/*:S101
 
 verify:	## Run all linters
 	$(MAKE) black
