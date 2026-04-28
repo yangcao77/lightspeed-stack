@@ -32,6 +32,7 @@ def test_authentication_configuration() -> None:
         module=AUTH_MOD_NOOP,
         skip_tls_verification=False,
         skip_for_health_probes=False,
+        skip_for_metrics=False,
         k8s_ca_cert_path=None,
         k8s_cluster_api=None,
     )
@@ -39,6 +40,7 @@ def test_authentication_configuration() -> None:
     assert auth_config.module == AUTH_MOD_NOOP
     assert auth_config.skip_tls_verification is False
     assert auth_config.skip_for_health_probes is False
+    assert auth_config.skip_for_metrics is False
     assert auth_config.k8s_ca_cert_path is None
     assert auth_config.k8s_cluster_api is None
     assert auth_config.rh_identity_config is None
