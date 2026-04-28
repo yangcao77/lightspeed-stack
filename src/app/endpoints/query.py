@@ -170,9 +170,10 @@ async def query_endpoint_handler(
 
     # Moderation input is the raw user content (query + attachments) without injected RAG
     # context, to avoid false positives from retrieved document content.
+    endpoint_path = "/v1/query"
     moderation_input = prepare_input(query_request)
     moderation_result = await run_shield_moderation(
-        client, moderation_input, query_request.shield_ids
+        client, moderation_input, endpoint_path, query_request.shield_ids
     )
 
     # Build RAG context from Inline RAG sources
@@ -207,7 +208,9 @@ async def query_endpoint_handler(
         client = await update_azure_token(client)
 
     # Retrieve response using Responses API
-    turn_summary = await retrieve_response(client, responses_params, moderation_result)
+    turn_summary = await retrieve_response(
+        client, responses_params, moderation_result, endpoint_path
+    )
 
     if moderation_result.decision == "passed":
         # Combine inline RAG results (BYOK + Solr) with tool-based RAG results for the transcript
@@ -280,6 +283,7 @@ async def retrieve_response(
     client: AsyncLlamaStackClient,
     responses_params: ResponsesApiParams,
     moderation_result: ShieldModerationResult,
+    endpoint_path: str = "",
 ) -> TurnSummary:
     """
     Retrieve response from LLMs and agents.
@@ -332,5 +336,9 @@ async def retrieve_response(
     vector_store_ids = extract_vector_store_ids_from_tools(responses_params.tools)
     rag_id_mapping = configuration.rag_id_mapping
     return build_turn_summary(
-        response, responses_params.model, vector_store_ids, rag_id_mapping
+        response,
+        responses_params.model,
+        endpoint_path,
+        vector_store_ids,
+        rag_id_mapping,
     )

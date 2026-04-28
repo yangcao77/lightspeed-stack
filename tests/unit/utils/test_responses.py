@@ -2247,14 +2247,14 @@ class TestExtractTokenUsage:
         )
         mock_llm_call = mocker.patch("utils.responses.recording.record_llm_call")
 
-        result = extract_token_usage(mock_usage, "provider1/model1")
+        result = extract_token_usage(mock_usage, "provider1/model1", "/test-endpoint")
         assert result.input_tokens == input_tokens
         assert result.output_tokens == output_tokens
         assert result.llm_calls == 1
         mock_token_usage.assert_called_once_with(
-            "provider1", "model1", input_tokens, output_tokens
+            "provider1", "model1", input_tokens, output_tokens, "/test-endpoint"
         )
-        mock_llm_call.assert_called_once_with("provider1", "model1")
+        mock_llm_call.assert_called_once_with("provider1", "model1", "/test-endpoint")
 
     def test_extract_token_usage_no_usage(self, mocker: MockerFixture) -> None:
         """Test extracting token usage when usage is None."""
@@ -2264,11 +2264,11 @@ class TestExtractTokenUsage:
         )
         mock_llm_call = mocker.patch("utils.responses.recording.record_llm_call")
 
-        result = extract_token_usage(None, "provider1/model1")
+        result = extract_token_usage(None, "provider1/model1", "/test-endpoint")
         assert result.input_tokens == 0
         assert result.output_tokens == 0
         assert result.llm_calls == 1
-        mock_llm_call.assert_called_once_with("provider1", "model1")
+        mock_llm_call.assert_called_once_with("provider1", "model1", "/test-endpoint")
 
     def test_extract_token_usage_zero_tokens(self, mocker: MockerFixture) -> None:
         """Test extracting token usage when tokens are 0."""
@@ -2285,11 +2285,13 @@ class TestExtractTokenUsage:
         )
         mock_llm_call = mocker.patch("utils.responses.recording.record_llm_call")
 
-        result = extract_token_usage(mock_usage, "provider1/model1")
+        result = extract_token_usage(mock_usage, "provider1/model1", "/test-endpoint")
         assert result.input_tokens == 0
         assert result.output_tokens == 0
-        mock_token_usage.assert_called_once_with("provider1", "model1", 0, 0)
-        mock_llm_call.assert_called_once_with("provider1", "model1")
+        mock_token_usage.assert_called_once_with(
+            "provider1", "model1", 0, 0, "/test-endpoint"
+        )
+        mock_llm_call.assert_called_once_with("provider1", "model1", "/test-endpoint")
 
     def test_extract_token_usage_none_response(self, mocker: MockerFixture) -> None:
         """Test extracting token usage with None response."""
@@ -2299,10 +2301,10 @@ class TestExtractTokenUsage:
         )
         mock_llm_call = mocker.patch("utils.responses.recording.record_llm_call")
 
-        result = extract_token_usage(None, "provider1/model1")
+        result = extract_token_usage(None, "provider1/model1", "/test-endpoint")
         assert result.input_tokens == 0
         assert result.output_tokens == 0
-        mock_llm_call.assert_called_once_with("provider1", "model1")
+        mock_llm_call.assert_called_once_with("provider1", "model1", "/test-endpoint")
 
 
 class TestBuildToolCallSummary:

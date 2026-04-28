@@ -331,9 +331,11 @@ async def responses_endpoint_handler(
     )
     attachments_text = extract_attachments_text(original_request.input)
 
+    endpoint_path = "/v1/responses"
     moderation_result = await run_shield_moderation(
         client,
         input_text + "\n\n" + attachments_text,
+        endpoint_path,
         original_request.shield_ids,
     )
 
@@ -388,6 +390,7 @@ async def responses_endpoint_handler(
         background_tasks=background_tasks,
         rh_identity_context=rh_identity_context,
         user_agent=_get_user_agent(request),
+        endpoint_path=endpoint_path,
     )
 
 
@@ -404,6 +407,7 @@ async def handle_streaming_response(
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
     user_agent: Optional[str] = None,
+    endpoint_path: str = "",
 ) -> StreamingResponse:
     """Handle streaming response from Responses API.
 
@@ -470,6 +474,7 @@ async def handle_streaming_response(
                 turn_summary=turn_summary,
                 inline_rag_context=inline_rag_context,
                 filter_server_tools=filter_server_tools,
+                endpoint_path=endpoint_path,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
             if is_context_length_error(str(e)):
@@ -798,6 +803,7 @@ async def response_generator(
     turn_summary: TurnSummary,
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
+    endpoint_path: str = "",
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted streaming response with LCORE-enriched events.
 
@@ -873,7 +879,7 @@ async def response_generator(
 
             # Extract and consume tokens if any were used
             turn_summary.token_usage = extract_token_usage(
-                latest_response_object.usage, api_params.model
+                latest_response_object.usage, api_params.model, endpoint_path
             )
             consume_query_tokens(
                 user_id=user_id,
@@ -1010,6 +1016,7 @@ async def handle_non_streaming_response(
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
     user_agent: Optional[str] = None,
+    endpoint_path: str = "",
 ) -> ResponsesResponse:
     """Handle non-streaming response from Responses API.
 
@@ -1069,7 +1076,9 @@ async def handle_non_streaming_response(
                     **api_params.model_dump(exclude_none=True)
                 ),
             )
-            token_usage = extract_token_usage(api_response.usage, api_params.model)
+            token_usage = extract_token_usage(
+                api_response.usage, api_params.model, endpoint_path
+            )
             logger.info("Consuming tokens")
             consume_query_tokens(
                 user_id=user_id,
@@ -1152,6 +1161,7 @@ async def handle_non_streaming_response(
     turn_summary = build_turn_summary(
         api_response,
         api_params.model,
+        endpoint_path,
         vector_store_ids,
         configuration.rag_id_mapping,
         filter_server_tools=filter_server_tools,

@@ -118,7 +118,9 @@ class TestRunShieldModeration:
         mock_client.shields.list = mocker.AsyncMock(return_value=[])
         mock_client.models.list = mocker.AsyncMock(return_value=[])
 
-        result = await run_shield_moderation(mock_client, "test input")
+        result = await run_shield_moderation(
+            mock_client, "test input", "/test-endpoint"
+        )
 
         assert result.decision == "passed"
 
@@ -147,7 +149,9 @@ class TestRunShieldModeration:
             return_value=moderation_result
         )
 
-        result = await run_shield_moderation(mock_client, "safe input")
+        result = await run_shield_moderation(
+            mock_client, "safe input", "/test-endpoint"
+        )
 
         assert result.decision == "passed"
         mock_client.moderations.create.assert_called_once_with(
@@ -187,11 +191,13 @@ class TestRunShieldModeration:
             return_value=moderation_result
         )
 
-        result = await run_shield_moderation(mock_client, "violent content")
+        result = await run_shield_moderation(
+            mock_client, "violent content", "/test-endpoint"
+        )
 
         assert result.decision == "blocked"
         assert result.message == "Content blocked for violence"
-        mock_record_error.assert_called_once()
+        mock_record_error.assert_called_once_with("/test-endpoint")
 
     @pytest.mark.asyncio
     async def test_returns_blocked_with_default_message_when_no_user_message(
@@ -226,7 +232,9 @@ class TestRunShieldModeration:
             return_value=moderation_result
         )
 
-        result = await run_shield_moderation(mock_client, "spam content")
+        result = await run_shield_moderation(
+            mock_client, "spam content", "/test-endpoint"
+        )
 
         assert result.decision == "blocked"
         assert result.message == DEFAULT_VIOLATION_MESSAGE
@@ -256,7 +264,9 @@ class TestRunShieldModeration:
             return_value=moderation_result
         )
 
-        result = await run_shield_moderation(mock_client, "test input")
+        result = await run_shield_moderation(
+            mock_client, "test input", "/test-endpoint"
+        )
 
         assert result.decision == "passed"
         mock_client.moderations.create.assert_called_once_with(
@@ -283,7 +293,7 @@ class TestRunShieldModeration:
         mock_client.models.list = mocker.AsyncMock(return_value=[model])
 
         with pytest.raises(HTTPException) as exc_info:
-            await run_shield_moderation(mock_client, "test input")
+            await run_shield_moderation(mock_client, "test input", "/test-endpoint")
 
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
         assert "missing-model" in exc_info.value.detail["cause"]  # type: ignore
@@ -305,7 +315,7 @@ class TestRunShieldModeration:
         mock_client.models.list = mocker.AsyncMock(return_value=[])
 
         with pytest.raises(HTTPException) as exc_info:
-            await run_shield_moderation(mock_client, "test input")
+            await run_shield_moderation(mock_client, "test input", "/test-endpoint")
 
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
 
@@ -320,7 +330,9 @@ class TestRunShieldModeration:
         mock_client.shields.list = mocker.AsyncMock(return_value=[shield])
         mock_client.models.list = mocker.AsyncMock(return_value=[])
 
-        result = await run_shield_moderation(mock_client, "test input", shield_ids=[])
+        result = await run_shield_moderation(
+            mock_client, "test input", "/test-endpoint", shield_ids=[]
+        )
 
         assert result.decision == "passed"
 
@@ -336,7 +348,7 @@ class TestRunShieldModeration:
 
         with pytest.raises(HTTPException) as exc_info:
             await run_shield_moderation(
-                mock_client, "test input", shield_ids=["typo-shield"]
+                mock_client, "test input", "/test-endpoint", shield_ids=["typo-shield"]
             )
 
         assert exc_info.value.status_code == status.HTTP_404_NOT_FOUND
@@ -369,7 +381,7 @@ class TestRunShieldModeration:
         )
 
         result = await run_shield_moderation(
-            mock_client, "test input", shield_ids=["shield-1"]
+            mock_client, "test input", "/test-endpoint", shield_ids=["shield-1"]
         )
 
         assert result.decision == "passed"

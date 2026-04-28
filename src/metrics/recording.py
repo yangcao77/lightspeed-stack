@@ -44,36 +44,42 @@ def record_rest_api_call(path: str, status_code: int) -> None:
         logger.warning("Failed to update REST API call metric", exc_info=True)
 
 
-def record_llm_call(provider: str, model: str) -> None:
+def record_llm_call(provider: str, model: str, endpoint_path: str = "") -> None:
     """Record one LLM call for a provider and model.
 
     Args:
         provider: LLM provider identifier.
         model: LLM model identifier without the provider prefix.
+        endpoint_path: The API endpoint path for metric labeling.
     """
     try:
-        metrics.llm_calls_total.labels(provider, model).inc()
+        metrics.llm_calls_total.labels(provider, model, endpoint_path).inc()
     except (AttributeError, TypeError, ValueError):
         logger.warning("Failed to update LLM call metric", exc_info=True)
 
 
-def record_llm_failure(provider: str, model: str) -> None:
+def record_llm_failure(provider: str, model: str, endpoint_path: str = "") -> None:
     """Record one failed LLM call for a provider and model.
 
     Args:
         provider: LLM provider identifier.
         model: LLM model identifier without the provider prefix.
+        endpoint_path: The API endpoint path for metric labeling.
     """
     try:
-        metrics.llm_calls_failures_total.labels(provider, model).inc()
+        metrics.llm_calls_failures_total.labels(provider, model, endpoint_path).inc()
     except (AttributeError, TypeError, ValueError):
         logger.warning("Failed to update LLM failure metric", exc_info=True)
 
 
-def record_llm_validation_error() -> None:
-    """Record one LLM validation error, such as a shield violation."""
+def record_llm_validation_error(endpoint_path: str = "") -> None:
+    """Record one LLM validation error, such as a shield violation.
+
+    Args:
+        endpoint_path: The API endpoint path for metric labeling.
+    """
     try:
-        metrics.llm_calls_validation_errors_total.inc()
+        metrics.llm_calls_validation_errors_total.labels(endpoint_path).inc()
     except (AttributeError, TypeError, ValueError):
         logger.warning("Failed to update LLM validation error metric", exc_info=True)
 
@@ -83,6 +89,7 @@ def record_llm_token_usage(
     model: str,
     input_tokens: int,
     output_tokens: int,
+    endpoint_path: str = "",
 ) -> None:
     """Record LLM token usage for a provider and model.
 
@@ -91,9 +98,14 @@ def record_llm_token_usage(
         model: LLM model identifier without the provider prefix.
         input_tokens: Number of tokens sent to the LLM.
         output_tokens: Number of tokens received from the LLM.
+        endpoint_path: The API endpoint path for metric labeling.
     """
     try:
-        metrics.llm_token_sent_total.labels(provider, model).inc(input_tokens)
-        metrics.llm_token_received_total.labels(provider, model).inc(output_tokens)
+        metrics.llm_token_sent_total.labels(provider, model, endpoint_path).inc(
+            input_tokens
+        )
+        metrics.llm_token_received_total.labels(provider, model, endpoint_path).inc(
+            output_tokens
+        )
     except (AttributeError, TypeError, ValueError):
         logger.warning("Failed to update token metrics", exc_info=True)

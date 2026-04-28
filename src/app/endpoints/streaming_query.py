@@ -226,8 +226,9 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     # Moderation input is the raw user content (query + attachments) without injected RAG
     # context, to avoid false positives from retrieved document content.
     moderation_input = prepare_input(query_request)
+    endpoint_path = "/v1/streaming_query"
     moderation_result = await run_shield_moderation(
-        client, moderation_input, query_request.shield_ids
+        client, moderation_input, endpoint_path, query_request.shield_ids
     )
 
     # Build RAG context from Inline RAG sources
@@ -283,11 +284,12 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     provider_id, model_id = extract_provider_and_model_from_model_id(
         responses_params.model
     )
-    recording.record_llm_call(provider_id, model_id)
+    recording.record_llm_call(provider_id, model_id, endpoint_path)
 
     generator, turn_summary = await retrieve_response_generator(
         responses_params=responses_params,
         context=context,
+        endpoint_path=endpoint_path,
     )
 
     # Combine inline RAG results (BYOK + Solr) with tool-based results
@@ -316,6 +318,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 async def retrieve_response_generator(
     responses_params: ResponsesApiParams,
     context: ResponseGeneratorContext,
+    endpoint_path: str = "",
 ) -> tuple[AsyncIterator[str], TurnSummary]:
     """
     Retrieve the appropriate response generator.
@@ -360,6 +363,7 @@ async def retrieve_response_generator(
                 response,
                 context,
                 turn_summary,
+                endpoint_path,
             ),
             turn_summary,
         )
@@ -685,6 +689,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_response: AsyncIterator[OpenAIResponseObjectStream],
     context: ResponseGeneratorContext,
     turn_summary: TurnSummary,
+    endpoint_path: str = "",
 ) -> AsyncIterator[str]:
     """Generate SSE formatted streaming response.
 
@@ -862,7 +867,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         return
 
     turn_summary.token_usage = extract_token_usage(
-        latest_response_object.usage, context.model_id
+        latest_response_object.usage, context.model_id, endpoint_path
     )
     # Parse tool-based referenced documents from the final response object
     tool_rag_docs = parse_referenced_documents(
