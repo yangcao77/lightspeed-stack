@@ -28,7 +28,9 @@ def test_defaults() -> None:
 )
 def test_valid_quota_subject_values(quota_subject: str) -> None:
     """Test all valid quota_subject literal values are accepted."""
-    config = RlsapiV1Configuration(quota_subject=quota_subject)
+    config = RlsapiV1Configuration(
+        quota_subject=quota_subject  # pyright: ignore[reportArgumentType]
+    )
     assert config.quota_subject == quota_subject
 
 

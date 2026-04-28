@@ -144,7 +144,7 @@ def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
             ValidationError, match="Only memory cache config must be provided"
         ):
             _ = ConversationHistoryConfiguration(
-                type=constants.CACHE_TYPE_MEMORY,
+                type=constants.CACHE_TYPE_MEMORY,  # pyright: ignore[reportArgumentType]
                 memory=InMemoryCacheConfig(max_entries=100),
                 sqlite=SQLiteDatabaseConfiguration(db_path="path"),
                 postgres=d,
@@ -155,7 +155,7 @@ def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
             ValidationError, match="Only SQLite cache config must be provided"
         ):
             _ = ConversationHistoryConfiguration(
-                type=constants.CACHE_TYPE_SQLITE,
+                type=constants.CACHE_TYPE_SQLITE,  # pyright: ignore[reportArgumentType]
                 memory=InMemoryCacheConfig(max_entries=100),
                 sqlite=SQLiteDatabaseConfiguration(db_path="path"),
                 postgres=d,
@@ -166,7 +166,7 @@ def test_conversation_cache_multiple_configurations(subtests: SubTests) -> None:
             ValidationError, match="Only PostgreSQL cache config must be provided"
         ):
             _ = ConversationHistoryConfiguration(
-                type=constants.CACHE_TYPE_POSTGRES,
+                type=constants.CACHE_TYPE_POSTGRES,  # pyright: ignore[reportArgumentType]
                 memory=InMemoryCacheConfig(max_entries=100),
                 sqlite=SQLiteDatabaseConfiguration(db_path="path"),
                 postgres=d,
