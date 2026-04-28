@@ -23,6 +23,7 @@ from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from log import get_logger
+from models.common.responses.responses_api_params import ResponsesApiParams
 from models.config import Action
 from models.requests import QueryRequest
 from models.responses import (
@@ -65,7 +66,6 @@ from utils.responses import (
 from utils.shields import run_shield_moderation, validate_shield_ids_override
 from utils.suid import normalize_conversation_id
 from utils.types import (
-    ResponsesApiParams,
     ShieldModerationResult,
     TurnSummary,
 )

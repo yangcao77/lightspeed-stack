@@ -59,6 +59,7 @@ from constants import (
 )
 from log import get_logger
 from metrics import recording
+from models.common.responses.responses_api_params import ResponsesApiParams
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
@@ -115,7 +116,7 @@ from utils.shields import (
 from utils.stream_interrupts import get_stream_interrupt_registry
 from utils.suid import get_suid, normalize_conversation_id
 from utils.token_counter import TokenCounter
-from utils.types import ReferencedDocument, ResponsesApiParams, TurnSummary
+from utils.types import ReferencedDocument, TurnSummary
 from utils.vector_search import build_rag_context
 
 logger = get_logger(__name__)
