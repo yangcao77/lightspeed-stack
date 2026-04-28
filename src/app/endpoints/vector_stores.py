@@ -37,6 +37,8 @@ from models.responses import (
     NotFoundResponse,
     ServiceUnavailableResponse,
     UnauthorizedResponse,
+    VectorStoreDeleteResponse,
+    VectorStoreFileDeleteResponse,
     VectorStoreFileResponse,
     VectorStoreFilesListResponse,
     VectorStoreResponse,
@@ -98,6 +100,26 @@ vector_store_files_list_responses: dict[int | str, dict[str, Any]] = {
     401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
     403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     404: NotFoundResponse.openapi_response(examples=["vector store"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
+}
+
+vector_store_delete_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoreDeleteResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
+    503: ServiceUnavailableResponse.openapi_response(
+        examples=["llama stack", "kubernetes api"]
+    ),
+}
+
+vector_store_file_delete_responses: dict[int | str, dict[str, Any]] = {
+    200: VectorStoreFileDeleteResponse.openapi_response(),
+    401: UnauthorizedResponse.openapi_response(examples=UNAUTHORIZED_OPENAPI_EXAMPLES),
+    403: ForbiddenResponse.openapi_response(examples=["endpoint"]),
     500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(
         examples=["llama stack", "kubernetes api"]
@@ -285,7 +307,7 @@ async def get_vector_store(
     except BadRequestError as e:
         logger.error("Vector store not found: %s", e)
         response = NotFoundResponse(
-            resource="vector_store", resource_id=vector_store_id
+            resource="vector store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
@@ -349,7 +371,7 @@ async def update_vector_store(
     except BadRequestError as e:
         logger.error("Vector store not found: %s", e)
         response = NotFoundResponse(
-            resource="vector_store", resource_id=vector_store_id
+            resource="vector store", resource_id=vector_store_id
         )
         raise HTTPException(**response.model_dump()) from e
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
@@ -360,20 +382,14 @@ async def update_vector_store(
 
 @router.delete(
     "/vector-stores/{vector_store_id}",
-    responses={
-        "204": {"description": "Vector store deleted"},
-        503: ServiceUnavailableResponse.openapi_response(
-            examples=["llama stack", "kubernetes api"]
-        ),
-    },
-    status_code=status.HTTP_204_NO_CONTENT,
+    responses=vector_store_delete_responses,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
 async def delete_vector_store(
     request: Request,
     vector_store_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
-) -> None:
+) -> VectorStoreDeleteResponse:
     """Delete a vector store.
 
     Parameters:
@@ -385,9 +401,11 @@ async def delete_vector_store(
         HTTPException:
             - 401: Authentication failed
             - 403: Authorization failed
-            - 404: Vector store not found
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to Llama Stack
+
+    Returns:
+        VectorStoreDeleteResponse: Delete outcome for the requested vector store.
     """
     _ = auth
     _ = request
@@ -397,16 +415,14 @@ async def delete_vector_store(
     try:
         client = AsyncLlamaStackClientHolder().get_client()
         await client.vector_stores.delete(vector_store_id)
+        return VectorStoreDeleteResponse(deleted=True, vector_store_id=vector_store_id)
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)
         response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
         raise HTTPException(**response.model_dump()) from e
-    except BadRequestError as e:
-        logger.error("Vector store not found: %s", e)
-        response = NotFoundResponse(
-            resource="vector_store", resource_id=vector_store_id
-        )
-        raise HTTPException(**response.model_dump()) from e
+    except (BadRequestError, ValueError) as e:
+        logger.error("Vector store delete failed: %s", e)
+        return VectorStoreDeleteResponse(deleted=False, vector_store_id=vector_store_id)
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
         logger.error("API status error while deleting vector store: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")
@@ -790,13 +806,7 @@ async def get_vector_store_file(
 
 @router.delete(
     "/vector-stores/{vector_store_id}/files/{file_id}",
-    responses={
-        "204": {"description": "File deleted from vector store"},
-        503: ServiceUnavailableResponse.openapi_response(
-            examples=["llama stack", "kubernetes api"]
-        ),
-    },
-    status_code=status.HTTP_204_NO_CONTENT,
+    responses=vector_store_file_delete_responses,
 )
 @authorize(Action.MANAGE_VECTOR_STORES)
 async def delete_vector_store_file(
@@ -804,7 +814,7 @@ async def delete_vector_store_file(
     vector_store_id: str,
     file_id: str,
     auth: Annotated[AuthTuple, Depends(get_auth_dependency())],
-) -> None:
+) -> VectorStoreFileDeleteResponse:
     """Delete a file from a vector store.
 
     Parameters:
@@ -817,9 +827,11 @@ async def delete_vector_store_file(
         HTTPException:
             - 401: Authentication failed
             - 403: Authorization failed
-            - 404: File not found in vector store
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to Llama Stack
+
+    Returns:
+        VectorStoreFileDeleteResponse: Delete outcome for the requested file.
     """
     _ = auth
     _ = request
@@ -832,14 +844,14 @@ async def delete_vector_store_file(
             vector_store_id=vector_store_id,
             file_id=file_id,
         )
+        return VectorStoreFileDeleteResponse(deleted=True, file_id=file_id)
     except APIConnectionError as e:
         logger.error("Unable to connect to Llama Stack: %s", e)
         response = ServiceUnavailableResponse(backend_name="Llama Stack", cause=str(e))
         raise HTTPException(**response.model_dump()) from e
-    except BadRequestError as e:
-        logger.error("Vector store file not found: %s", e)
-        response = NotFoundResponse(resource="file", resource_id=file_id)
-        raise HTTPException(**response.model_dump()) from e
+    except (BadRequestError, ValueError) as e:
+        logger.error("Vector store file delete failed: %s", e)
+        return VectorStoreFileDeleteResponse(deleted=False, file_id=file_id)
     except (LLSApiStatusError, OpenAIAPIStatusError) as e:
         logger.error("API status error while deleting vector store file: %s", e)
         error_response = handle_known_apistatus_errors(e, "llama-stack")

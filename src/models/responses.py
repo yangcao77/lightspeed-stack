@@ -2968,6 +2968,74 @@ class VectorStoresListResponse(AbstractSuccessfulResponse):
     }
 
 
+class VectorStoreDeleteResponse(AbstractDeleteResponse):
+    """Result of deleting a vector store (always HTTP 200)."""
+
+    resource_name: ClassVar[str] = "Vector store"
+    vector_store_id: str = Field(
+        ...,
+        description="Vector store identifier that was passed to delete.",
+        examples=["vs_abc123"],
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "label": "deleted",
+                    "value": {
+                        "vector_store_id": "vs_abc123",
+                        "deleted": True,
+                        "response": "Vector store deleted successfully",
+                    },
+                },
+                {
+                    "label": "not found",
+                    "value": {
+                        "vector_store_id": "vs_abc123",
+                        "deleted": False,
+                        "response": "Vector store not found",
+                    },
+                },
+            ]
+        }
+    }
+
+
+class VectorStoreFileDeleteResponse(AbstractDeleteResponse):
+    """Result of deleting a file from a vector store (always HTTP 200)."""
+
+    resource_name: ClassVar[str] = "Vector store file"
+    file_id: str = Field(
+        ...,
+        description="File identifier that was passed to delete.",
+        examples=["file_abc123"],
+    )
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "label": "deleted",
+                    "value": {
+                        "file_id": "file_abc123",
+                        "deleted": True,
+                        "response": "Vector store file deleted successfully",
+                    },
+                },
+                {
+                    "label": "not found",
+                    "value": {
+                        "file_id": "file_abc123",
+                        "deleted": False,
+                        "response": "Vector store file not found",
+                    },
+                },
+            ]
+        }
+    }
+
+
 class PromptResourceResponse(AbstractSuccessfulResponse):
     """A stored prompt template as returned by Llama Stack."""
 
