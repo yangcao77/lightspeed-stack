@@ -376,7 +376,8 @@ async def test_delete_vector_store_success(mocker: MockerFixture) -> None:
     response = await delete_vector_store(
         request=request, vector_store_id="vs_123", auth=auth
     )
-    assert response is None
+    assert response.deleted is True
+    assert response.vector_store_id == "vs_123"
 
 
 @pytest.mark.asyncio
@@ -658,7 +659,8 @@ async def test_delete_vector_store_file_success(mocker: MockerFixture) -> None:
     response = await delete_vector_store_file(
         request=request, vector_store_id="vs_123", file_id="file_123", auth=auth
     )
-    assert response is None
+    assert response.deleted is True
+    assert response.file_id == "file_123"
 
 
 # Additional error path tests
@@ -798,9 +800,11 @@ async def test_delete_vector_store_not_found(mocker: MockerFixture) -> None:
     request = get_test_request()
     auth = get_test_auth()
 
-    with pytest.raises(HTTPException) as e:
-        await delete_vector_store(request=request, vector_store_id="vs_999", auth=auth)
-    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+    response = await delete_vector_store(
+        request=request, vector_store_id="vs_999", auth=auth
+    )
+    assert response.deleted is False
+    assert response.vector_store_id == "vs_999"
 
 
 @pytest.mark.asyncio
@@ -1172,8 +1176,8 @@ async def test_delete_vector_store_file_not_found(mocker: MockerFixture) -> None
     request = get_test_request()
     auth = get_test_auth()
 
-    with pytest.raises(HTTPException) as e:
-        await delete_vector_store_file(
-            request=request, vector_store_id="vs_123", file_id="file_999", auth=auth
-        )
-    assert e.value.status_code == status.HTTP_404_NOT_FOUND
+    response = await delete_vector_store_file(
+        request=request, vector_store_id="vs_123", file_id="file_999", auth=auth
+    )
+    assert response.deleted is False
+    assert response.file_id == "file_999"

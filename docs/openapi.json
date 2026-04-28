@@ -4451,7 +4451,7 @@
                     "vector-stores"
                 ],
                 "summary": "Delete Vector Store",
-                "description": "Delete a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: Vector store not found\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "Delete a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack\n\nReturns:\n    VectorStoreDeleteResponse: Delete outcome for the requested vector store.",
                 "operationId": "delete_vector_store_v1_vector_stores__vector_store_id__delete",
                 "parameters": [
                     {
@@ -4465,8 +4465,147 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "Vector store deleted"
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreDeleteResponse"
+                                },
+                                "examples": {
+                                    "deleted": {
+                                        "value": {
+                                            "deleted": true,
+                                            "response": "Vector store deleted successfully",
+                                            "vector_store_id": "vs_abc123"
+                                        }
+                                    },
+                                    "not found": {
+                                        "value": {
+                                            "deleted": false,
+                                            "response": "Vector store not found",
+                                            "vector_store_id": "vs_abc123"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
                     },
                     "503": {
                         "description": "Service unavailable",
@@ -5413,7 +5552,7 @@
                     "vector-stores"
                 ],
                 "summary": "Delete Vector Store File",
-                "description": "Delete a file from a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    file_id: ID of the file to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 404: File not found in vector store\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack",
+                "description": "Delete a file from a vector store.\n\nParameters:\n    request: The incoming HTTP request.\n    vector_store_id: ID of the vector store.\n    file_id: ID of the file to delete.\n    auth: Authentication tuple from the auth dependency.\n\nRaises:\n    HTTPException:\n        - 401: Authentication failed\n        - 403: Authorization failed\n        - 500: Lightspeed Stack configuration not loaded\n        - 503: Unable to connect to Llama Stack\n\nReturns:\n    VectorStoreFileDeleteResponse: Delete outcome for the requested file.",
                 "operationId": "delete_vector_store_file_v1_vector_stores__vector_store_id__files__file_id__delete",
                 "parameters": [
                     {
@@ -5436,8 +5575,147 @@
                     }
                 ],
                 "responses": {
-                    "204": {
-                        "description": "File deleted from vector store"
+                    "200": {
+                        "description": "Successful response",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/VectorStoreFileDeleteResponse"
+                                },
+                                "examples": {
+                                    "deleted": {
+                                        "value": {
+                                            "deleted": true,
+                                            "file_id": "file_abc123",
+                                            "response": "Vector store file deleted successfully"
+                                        }
+                                    },
+                                    "not found": {
+                                        "value": {
+                                            "deleted": false,
+                                            "file_id": "file_abc123",
+                                            "response": "Vector store file not found"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "missing header": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No Authorization header found",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "No token found in Authorization header",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "expired token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token has expired",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid signature": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid token signature",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid key": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token signed by unknown key",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "missing claim": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Token missing claim: user_id",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid k8s token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Invalid or expired Kubernetes token",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    },
+                                    "invalid jwk token": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Authentication key server returned invalid data",
+                                                "response": "Missing or invalid credentials provided by client"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/UnauthorizedResponse"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Permission denied",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "endpoint": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "User 6789 is not authorized to access this endpoint.",
+                                                "response": "User does not have permission to access this endpoint"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/ForbiddenResponse"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "content": {
+                            "application/json": {
+                                "examples": {
+                                    "configuration": {
+                                        "value": {
+                                            "detail": {
+                                                "cause": "Lightspeed Stack configuration has not been initialized.",
+                                                "response": "Configuration is not loaded"
+                                            }
+                                        }
+                                    }
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/InternalServerErrorResponse"
+                                }
+                            }
+                        }
                     },
                     "503": {
                         "description": "Service unavailable",
@@ -10506,6 +10784,7 @@
                     "query_other_conversations",
                     "delete_other_conversations",
                     "query",
+                    "responses",
                     "streaming_query",
                     "get_conversation",
                     "list_conversations",
@@ -11178,6 +11457,12 @@
                         "type": "boolean",
                         "title": "Skip authorization for probes",
                         "description": "Skip authorization for readiness and liveness probes",
+                        "default": false
+                    },
+                    "skip_for_metrics": {
+                        "type": "boolean",
+                        "title": "Skip authorization for metrics",
+                        "description": "Skip authorization for the /metrics endpoint",
                         "default": false
                     },
                     "k8s_cluster_api": {
@@ -11897,7 +12182,7 @@
                     "success": {
                         "type": "boolean",
                         "title": "Success",
-                        "description": "DEPRECATED: Successful response flag. Will be removed in a future release.",
+                        "description": "Successful response flag.",
                         "deprecated": true,
                         "readOnly": true
                     }
@@ -14992,7 +15277,7 @@
                 "title": "OpenAIResponseMCPApprovalResponse",
                 "description": "A response to an MCP approval request."
             },
-            "OpenAIResponseMessage": {
+            "OpenAIResponseMessage-Input": {
                 "properties": {
                     "content": {
                         "anyOf": [
@@ -15027,7 +15312,7 @@
                                 "items": {
                                     "oneOf": [
                                         {
-                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText"
+                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input"
                                         },
                                         {
                                             "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
@@ -15036,7 +15321,7 @@
                                     "discriminator": {
                                         "propertyName": "type",
                                         "mapping": {
-                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText",
+                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Input",
                                             "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
                                         }
                                     }
@@ -15104,7 +15389,181 @@
                 "title": "OpenAIResponseMessage",
                 "description": "Corresponds to the various Message types in the Responses API.\nThey are all under one type because the Responses API gives them all\nthe same \"type\" value, and there is no way to tell them apart in certain\nscenarios."
             },
-            "OpenAIResponseOutputMessageContentOutputText": {
+            "OpenAIResponseMessage-Output": {
+                "properties": {
+                    "content": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "items": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentImage"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseInputMessageContentFile"
+                                        }
+                                    ],
+                                    "discriminator": {
+                                        "propertyName": "type",
+                                        "mapping": {
+                                            "input_file": "#/components/schemas/OpenAIResponseInputMessageContentFile",
+                                            "input_image": "#/components/schemas/OpenAIResponseInputMessageContentImage",
+                                            "input_text": "#/components/schemas/OpenAIResponseInputMessageContentText"
+                                        }
+                                    }
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "items": {
+                                    "oneOf": [
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output"
+                                        },
+                                        {
+                                            "$ref": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                                        }
+                                    ],
+                                    "discriminator": {
+                                        "propertyName": "type",
+                                        "mapping": {
+                                            "output_text": "#/components/schemas/OpenAIResponseOutputMessageContentOutputText-Output",
+                                            "refusal": "#/components/schemas/OpenAIResponseContentPartRefusal"
+                                        }
+                                    }
+                                },
+                                "type": "array"
+                            }
+                        ],
+                        "title": "Content"
+                    },
+                    "role": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "const": "system"
+                            },
+                            {
+                                "type": "string",
+                                "const": "developer"
+                            },
+                            {
+                                "type": "string",
+                                "const": "user"
+                            },
+                            {
+                                "type": "string",
+                                "const": "assistant"
+                            }
+                        ],
+                        "title": "Role"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "message",
+                        "title": "Type",
+                        "default": "message"
+                    },
+                    "id": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Id"
+                    },
+                    "status": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Status"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "content",
+                    "role"
+                ],
+                "title": "OpenAIResponseMessage",
+                "description": "Corresponds to the various Message types in the Responses API.\nThey are all under one type because the Responses API gives them all\nthe same \"type\" value, and there is no way to tell them apart in certain\nscenarios."
+            },
+            "OpenAIResponseOutputMessageContentOutputText-Input": {
+                "properties": {
+                    "text": {
+                        "type": "string",
+                        "title": "Text"
+                    },
+                    "type": {
+                        "type": "string",
+                        "const": "output_text",
+                        "title": "Type",
+                        "default": "output_text"
+                    },
+                    "annotations": {
+                        "items": {
+                            "oneOf": [
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationFileCitation"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationCitation"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationContainerFileCitation"
+                                },
+                                {
+                                    "$ref": "#/components/schemas/OpenAIResponseAnnotationFilePath"
+                                }
+                            ],
+                            "discriminator": {
+                                "propertyName": "type",
+                                "mapping": {
+                                    "container_file_citation": "#/components/schemas/OpenAIResponseAnnotationContainerFileCitation",
+                                    "file_citation": "#/components/schemas/OpenAIResponseAnnotationFileCitation",
+                                    "file_path": "#/components/schemas/OpenAIResponseAnnotationFilePath",
+                                    "url_citation": "#/components/schemas/OpenAIResponseAnnotationCitation"
+                                }
+                            }
+                        },
+                        "type": "array",
+                        "title": "Annotations"
+                    },
+                    "logprobs": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "$ref": "#/components/schemas/OpenAITokenLogProb"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Logprobs"
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "text"
+                ],
+                "title": "OpenAIResponseOutputMessageContentOutputText"
+            },
+            "OpenAIResponseOutputMessageContentOutputText-Output": {
                 "properties": {
                     "text": {
                         "type": "string",
@@ -15989,7 +16448,7 @@
                     "success": {
                         "type": "boolean",
                         "title": "Success",
-                        "description": "DEPRECATED: Successful response flag. Will be removed in a future release.",
+                        "description": "Successful response flag.",
                         "deprecated": true,
                         "readOnly": true
                     }
@@ -16573,21 +17032,29 @@
                     "solr": {
                         "anyOf": [
                             {
-                                "additionalProperties": true,
-                                "type": "object"
+                                "$ref": "#/components/schemas/SolrVectorSearchRequest"
                             },
                             {
                                 "type": "null"
                             }
                         ],
-                        "title": "Solr",
-                        "description": "Solr-specific query parameters including filter queries",
+                        "description": "Solr inline RAG config: mode (semantic, hybrid, lexical) and filters; a legacy filter-only object (e.g. fq) is still accepted.",
                         "examples": [
                             {
-                                "fq": [
-                                    "product:*openshift*",
-                                    "product_version:*4.16*"
-                                ]
+                                "filters": {
+                                    "fq": [
+                                        "product:*openshift*"
+                                    ]
+                                },
+                                "mode": "hybrid"
+                            },
+                            {
+                                "filters": {
+                                    "fq": [
+                                        "product:*openshift*",
+                                        "product_version:*4.16*"
+                                    ]
+                                }
                             }
                         ]
                     }
@@ -16598,7 +17065,7 @@
                     "query"
                 ],
                 "title": "QueryRequest",
-                "description": "Model representing a request for the LLM (Language Model).\n\nAttributes:\n    query: The query string.\n    conversation_id: The optional conversation ID (UUID).\n    provider: The optional provider.\n    model: The optional model.\n    system_prompt: The optional system prompt.\n    attachments: The optional attachments.\n    no_tools: Whether to bypass all tools and MCP servers (default: False).\n    generate_topic_summary: Whether to generate topic summary for new conversations.\n    media_type: The optional media type for response format (application/json or text/plain).\n    vector_store_ids: The optional list of specific vector store IDs to query for RAG.\n    shield_ids: The optional list of safety shield IDs to apply.\n\nExample:\n    ```python\n    query_request = QueryRequest(query=\"Tell me about Kubernetes\")\n    ```",
+                "description": "Model representing a request for the LLM (Language Model).\n\nAttributes:\n    query: The query string.\n    conversation_id: The optional conversation ID (UUID).\n    provider: The optional provider.\n    model: The optional model.\n    system_prompt: The optional system prompt.\n    attachments: The optional attachments.\n    no_tools: Whether to bypass all tools and MCP servers (default: False).\n    generate_topic_summary: Whether to generate topic summary for new conversations.\n    media_type: The optional media type for response format (application/json or text/plain).\n    vector_store_ids: The optional list of specific vector store IDs to query for RAG.\n    shield_ids: The optional list of safety shield IDs to apply.\n    solr: Optional Solr inline RAG options (mode, filters) or legacy filter-only dict.\n\nExample:\n    ```python\n    query_request = QueryRequest(query=\"Tell me about Kubernetes\")\n    ```",
                 "examples": [
                     {
                         "attachments": [
@@ -17337,7 +17804,7 @@
             "ResponseItem": {
                 "anyOf": [
                     {
-                        "$ref": "#/components/schemas/OpenAIResponseMessage"
+                        "$ref": "#/components/schemas/OpenAIResponseMessage-Input"
                     },
                     {
                         "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
@@ -17663,14 +18130,12 @@
                     "solr": {
                         "anyOf": [
                             {
-                                "additionalProperties": true,
-                                "type": "object"
+                                "$ref": "#/components/schemas/SolrVectorSearchRequest"
                             },
                             {
                                 "type": "null"
                             }
-                        ],
-                        "title": "Solr"
+                        ]
                     }
                 },
                 "additionalProperties": false,
@@ -17679,7 +18144,7 @@
                     "input"
                 ],
                 "title": "ResponsesRequest",
-                "description": "Model representing a request for the Responses API following LCORE specification.\n\nAttributes:\n    input: Input text or structured input items containing the query.\n    model: Model identifier in format \"provider/model\". Auto-selected if not provided.\n    conversation: Conversation ID linking to an existing conversation. Accepts both\n        OpenAI and LCORE formats. Mutually exclusive with previous_response_id.\n    include: Explicitly specify output item types that are excluded by default but\n        should be included in the response.\n    instructions: System instructions or guidelines provided to the model (acts as\n        the system prompt).\n    max_infer_iters: Maximum number of inference iterations the model can perform.\n    max_output_tokens: Maximum number of tokens allowed in the response.\n    max_tool_calls: Maximum number of tool calls allowed in a single response.\n    metadata: Custom metadata dictionary with key-value pairs for tracking or logging.\n    parallel_tool_calls: Whether the model can make multiple tool calls in parallel.\n    previous_response_id: Identifier of the previous response in a multi-turn\n        conversation. Mutually exclusive with conversation.\n    prompt: Prompt object containing a template with variables for dynamic\n        substitution.\n    reasoning: Reasoning configuration for the response.\n    safety_identifier: Safety identifier for the response.\n    store: Whether to store the response in conversation history. Defaults to True.\n    stream: Whether to stream the response as it is generated. Defaults to False.\n    temperature: Sampling temperature controlling randomness (typically 0.0\u20132.0).\n    text: Text response configuration specifying output format constraints (JSON\n        schema, JSON object, or plain text).\n    tool_choice: Tool selection strategy (\"auto\", \"required\", \"none\", or specific\n        tool configuration).\n    tools: List of tools available to the model (file search, web search, function\n        calls, MCP tools). Defaults to all tools available to the model.\n    generate_topic_summary: LCORE-specific flag indicating whether to generate a\n        topic summary for new conversations. Defaults to True.\n    shield_ids: LCORE-specific list of safety shield IDs to apply. If None, all\n        configured shields are used.\n    solr: LCORE-specific Solr vector_io provider query parameters (e.g. filter\n        queries). Optional.",
+                "description": "Model representing a request for the Responses API following LCORE specification.\n\nAttributes:\n    input: Input text or structured input items containing the query.\n    model: Model identifier in format \"provider/model\". Auto-selected if not provided.\n    conversation: Conversation ID linking to an existing conversation. Accepts both\n        OpenAI and LCORE formats. Mutually exclusive with previous_response_id.\n    include: Explicitly specify output item types that are excluded by default but\n        should be included in the response.\n    instructions: System instructions or guidelines provided to the model (acts as\n        the system prompt).\n    max_infer_iters: Maximum number of inference iterations the model can perform.\n    max_output_tokens: Maximum number of tokens allowed in the response.\n    max_tool_calls: Maximum number of tool calls allowed in a single response.\n    metadata: Custom metadata dictionary with key-value pairs for tracking or logging.\n    parallel_tool_calls: Whether the model can make multiple tool calls in parallel.\n    previous_response_id: Identifier of the previous response in a multi-turn\n        conversation. Mutually exclusive with conversation.\n    prompt: Prompt object containing a template with variables for dynamic\n        substitution.\n    reasoning: Reasoning configuration for the response.\n    safety_identifier: Safety identifier for the response.\n    store: Whether to store the response in conversation history. Defaults to True.\n    stream: Whether to stream the response as it is generated. Defaults to False.\n    temperature: Sampling temperature controlling randomness (typically 0.0\u20132.0).\n    text: Text response configuration specifying output format constraints (JSON\n        schema, JSON object, or plain text).\n    tool_choice: Tool selection strategy (\"auto\", \"required\", \"none\", or specific\n        tool configuration).\n    tools: List of tools available to the model (file search, web search, function\n        calls, MCP tools). Defaults to all tools available to the model.\n    generate_topic_summary: LCORE-specific flag indicating whether to generate a\n        topic summary for new conversations. Defaults to True.\n    shield_ids: LCORE-specific list of safety shield IDs to apply. If None, all\n        configured shields are used.\n    solr: Optional Solr inline RAG options (mode, filters) or legacy filter-only dict.",
                 "examples": [
                     {
                         "generate_topic_summary": true,
@@ -17736,7 +18201,7 @@
                         "items": {
                             "oneOf": [
                                 {
-                                    "$ref": "#/components/schemas/OpenAIResponseMessage"
+                                    "$ref": "#/components/schemas/OpenAIResponseMessage-Output"
                                 },
                                 {
                                     "$ref": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
@@ -17765,7 +18230,7 @@
                                     "mcp_approval_request": "#/components/schemas/OpenAIResponseMCPApprovalRequest",
                                     "mcp_call": "#/components/schemas/OpenAIResponseOutputMessageMCPCall",
                                     "mcp_list_tools": "#/components/schemas/OpenAIResponseOutputMessageMCPListTools",
-                                    "message": "#/components/schemas/OpenAIResponseMessage",
+                                    "message": "#/components/schemas/OpenAIResponseMessage-Output",
                                     "web_search_call": "#/components/schemas/OpenAIResponseOutputMessageWebSearchToolCall"
                                 }
                             }
@@ -18745,6 +19210,57 @@
                     }
                 ]
             },
+            "SolrVectorSearchRequest": {
+                "properties": {
+                    "mode": {
+                        "anyOf": [
+                            {
+                                "type": "string",
+                                "enum": [
+                                    "semantic",
+                                    "hybrid",
+                                    "lexical"
+                                ]
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Mode",
+                        "description": "Solr vector_io search mode. When omitted, the server default ('hybrid') is used.",
+                        "examples": [
+                            "hybrid",
+                            "semantic",
+                            "lexical"
+                        ]
+                    },
+                    "filters": {
+                        "anyOf": [
+                            {
+                                "additionalProperties": true,
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Filters",
+                        "description": "Solr provider filter payload passed through as params['solr'].",
+                        "examples": [
+                            {
+                                "fq": [
+                                    "product:*openshift*",
+                                    "product_version:*4.16*"
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "SolrVectorSearchRequest",
+                "description": "LCORE Solr inline RAG options for ``vector_io.query`` (mode and provider filters).\n\nAttributes:\n    mode: Solr vector_io search mode. When omitted, the server default (hybrid) is used.\n    filters: Solr provider filter payload passed through as params['solr'].\n\nLegacy clients may send a plain JSON object with filter keys only;\nthat object is accepted as filters with mode unset (server default applies)."
+            },
             "SplunkConfiguration": {
                 "properties": {
                     "enabled": {
@@ -19409,6 +19925,67 @@
                     }
                 ]
             },
+            "VectorStoreDeleteResponse": {
+                "properties": {
+                    "deleted": {
+                        "type": "boolean",
+                        "title": "Deleted",
+                        "description": "Whether the deletion was successful.",
+                        "examples": [
+                            true,
+                            false
+                        ]
+                    },
+                    "vector_store_id": {
+                        "type": "string",
+                        "title": "Vector Store Id",
+                        "description": "Vector store identifier that was passed to delete.",
+                        "examples": [
+                            "vs_abc123"
+                        ]
+                    },
+                    "response": {
+                        "type": "string",
+                        "title": "Response",
+                        "description": "Human-readable outcome of the delete operation.",
+                        "readOnly": true
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "description": "Successful response flag.",
+                        "deprecated": true,
+                        "readOnly": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "deleted",
+                    "vector_store_id",
+                    "response",
+                    "success"
+                ],
+                "title": "VectorStoreDeleteResponse",
+                "description": "Result of deleting a vector store (always HTTP 200).",
+                "examples": [
+                    {
+                        "label": "deleted",
+                        "value": {
+                            "deleted": true,
+                            "response": "Vector store deleted successfully",
+                            "vector_store_id": "vs_abc123"
+                        }
+                    },
+                    {
+                        "label": "not found",
+                        "value": {
+                            "deleted": false,
+                            "response": "Vector store not found",
+                            "vector_store_id": "vs_abc123"
+                        }
+                    }
+                ]
+            },
             "VectorStoreFileCreateRequest": {
                 "properties": {
                     "file_id": {
@@ -19489,6 +20066,67 @@
                             "type": "fixed"
                         },
                         "file_id": "file-abc123"
+                    }
+                ]
+            },
+            "VectorStoreFileDeleteResponse": {
+                "properties": {
+                    "deleted": {
+                        "type": "boolean",
+                        "title": "Deleted",
+                        "description": "Whether the deletion was successful.",
+                        "examples": [
+                            true,
+                            false
+                        ]
+                    },
+                    "file_id": {
+                        "type": "string",
+                        "title": "File Id",
+                        "description": "File identifier that was passed to delete.",
+                        "examples": [
+                            "file_abc123"
+                        ]
+                    },
+                    "response": {
+                        "type": "string",
+                        "title": "Response",
+                        "description": "Human-readable outcome of the delete operation.",
+                        "readOnly": true
+                    },
+                    "success": {
+                        "type": "boolean",
+                        "title": "Success",
+                        "description": "Successful response flag.",
+                        "deprecated": true,
+                        "readOnly": true
+                    }
+                },
+                "type": "object",
+                "required": [
+                    "deleted",
+                    "file_id",
+                    "response",
+                    "success"
+                ],
+                "title": "VectorStoreFileDeleteResponse",
+                "description": "Result of deleting a file from a vector store (always HTTP 200).",
+                "examples": [
+                    {
+                        "label": "deleted",
+                        "value": {
+                            "deleted": true,
+                            "file_id": "file_abc123",
+                            "response": "Vector store file deleted successfully"
+                        }
+                    },
+                    {
+                        "label": "not found",
+                        "value": {
+                            "deleted": false,
+                            "file_id": "file_abc123",
+                            "response": "Vector store file not found"
+                        }
                     }
                 ]
             },
