@@ -99,7 +99,6 @@ from utils.suid import (
 from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.types import (
     RAGContext,
-    ResponseInput,
     ResponsesApiParams,
     ShieldModerationBlocked,
     ShieldModerationResult,
@@ -236,19 +235,16 @@ async def responses_endpoint_handler(
             - 500: Internal Server Error - Configuration not loaded or other server errors
             - 503: Service Unavailable - Unable to connect to Llama Stack backend
     """
-    # Known LLS bug: https://redhat.atlassian.net/browse/LCORE-1583
-    if responses_request.reasoning is not None:
-        logger.warning("reasoning is not yet supported in LCORE and will be ignored")
-        responses_request.reasoning = None
+    original_request = responses_request  # read-only request
+    updated_request = responses_request.model_copy(deep=True)
+    _ = responses_request
 
-    responses_request = responses_request.model_copy(deep=True)
+    # Known LLS bug: https://redhat.atlassian.net/browse/LCORE-1583
+    if original_request.reasoning is not None:
+        logger.warning("reasoning is not yet supported in LCORE and will be ignored")
+        updated_request.reasoning = None
 
     check_configuration_loaded(configuration)
-    client_instructions = responses_request.instructions
-    responses_request.instructions = get_system_prompt(
-        responses_request.instructions, field_name="instructions"
-    )
-    instructions_substituted = client_instructions is None
     started_at = datetime.now(UTC)
     rh_identity_context = get_rh_identity_context(request)
     user_id, _, _, token = auth
@@ -260,9 +256,13 @@ async def responses_endpoint_handler(
 
     # Enforce RBAC: optionally disallow overriding model in requests
     validate_model_provider_override(
-        responses_request.model,
+        original_request.model,
         None,  # provider specified as model prefix
         request.state.authorized_actions,
+    )
+
+    updated_request.instructions = get_system_prompt(
+        original_request.instructions, field_name="instructions"
     )
 
     response_context = await resolve_response_context(
@@ -270,30 +270,27 @@ async def responses_endpoint_handler(
         others_allowed=(
             Action.READ_OTHERS_CONVERSATIONS in request.state.authorized_actions
         ),
-        conversation_id=responses_request.conversation,
-        previous_response_id=responses_request.previous_response_id,
-        generate_topic_summary=responses_request.generate_topic_summary,
+        conversation_id=original_request.conversation,
+        previous_response_id=original_request.previous_response_id,
+        generate_topic_summary=original_request.generate_topic_summary,
     )
-    responses_request.conversation = response_context.conversation
-    responses_request.generate_topic_summary = response_context.generate_topic_summary
+    updated_request.conversation = response_context.conversation
+    updated_request.generate_topic_summary = response_context.generate_topic_summary
     client = AsyncLlamaStackClientHolder().get_client()
 
     # LCORE-specific: Automatically select model if not provided in request
     # This extends the base LLS API which requires model to be specified.
-    client_model = responses_request.model
-    if not responses_request.model:
-        responses_request.model = await select_model_for_responses(
-            client, response_context.user_conversation
-        )
-    model_substituted = not client_model
-    if not await check_model_configured(client, responses_request.model):
-        _, model_id = extract_provider_and_model_from_model_id(responses_request.model)
+    updated_request.model = await select_model_for_responses(
+        original_request.model, client, response_context.user_conversation
+    )
+    if not await check_model_configured(client, updated_request.model):
+        _, model_id = extract_provider_and_model_from_model_id(updated_request.model)
         error_response = NotFoundResponse(resource="model", resource_id=model_id)
         raise HTTPException(**error_response.model_dump())
 
     # Handle Azure token refresh if needed
     if (
-        responses_request.model.startswith("azure")
+        updated_request.model.startswith("azure")
         and AzureEntraIDManager().is_entra_id_configured
         and AzureEntraIDManager().is_token_expired
         and AzureEntraIDManager().refresh_token()
@@ -301,79 +298,66 @@ async def responses_endpoint_handler(
         client = await update_azure_token(client)
 
     input_text = (
-        responses_request.input
-        if isinstance(responses_request.input, str)
-        else extract_text_from_response_items(responses_request.input)
+        original_request.input
+        if isinstance(original_request.input, str)
+        else extract_text_from_response_items(original_request.input)
     )
-    attachments_text = extract_attachments_text(responses_request.input)
+    attachments_text = extract_attachments_text(original_request.input)
 
     moderation_result = await run_shield_moderation(
         client,
         input_text + "\n\n" + attachments_text,
-        responses_request.shield_ids,
-    )
-
-    # Extract vector store IDs for Inline RAG context before resolving tool choice.
-    vector_store_ids: Optional[list[str]] = (
-        extract_vector_store_ids_from_tools(responses_request.tools)
-        if responses_request.tools is not None
-        else None
+        original_request.shield_ids,
     )
 
     filter_server_tools = (
         request.headers.get("X-LCS-Merge-Server-Tools", "").lower() == "true"
     )
+    resolver = (
+        resolve_client_tool_choice if filter_server_tools else resolve_tool_choice
+    )
+    updated_request.tools, updated_request.tool_choice = await resolver(
+        original_request.tools,
+        original_request.tool_choice,
+        token,
+        mcp_headers,
+        request.headers,
+    )
 
-    if filter_server_tools:
-        responses_request.tools, responses_request.tool_choice = (
-            await resolve_client_tool_choice(
-                responses_request.tools,
-                responses_request.tool_choice,
-                auth[1],
-                mcp_headers,
-                request.headers,
-            )
-        )
-    else:
-        responses_request.tools, responses_request.tool_choice = (
-            await resolve_tool_choice(
-                responses_request.tools,
-                responses_request.tool_choice,
-                auth[1],
-                mcp_headers,
-                request.headers,
-            )
-        )
-
+    # Extract vector store IDs for Inline RAG context from the original request
+    vector_store_ids: Optional[list[str]] = (
+        extract_vector_store_ids_from_tools(original_request.tools)
+        if original_request.tools is not None
+        else None
+    )
     # Build RAG context from Inline RAG sources
     inline_rag_context = await build_rag_context(
         client,
         moderation_result.decision,
         input_text,
         vector_store_ids,
-        responses_request.solr,
+        original_request.solr,
     )
     if moderation_result.decision == "passed":
-        responses_request.input = append_inline_rag_context_to_responses_input(
-            responses_request.input, inline_rag_context.context_text
+        updated_request.input = append_inline_rag_context_to_responses_input(
+            original_request.input, inline_rag_context.context_text
         )
 
     response_handler = (
         handle_streaming_response
-        if responses_request.stream
+        if original_request.stream
         else handle_non_streaming_response
     )
     return await response_handler(
         client=client,
-        request=responses_request,
+        original_request=original_request,
+        updated_request=updated_request,
         auth=auth,
         input_text=input_text,
         started_at=started_at,
         moderation_result=moderation_result,
         inline_rag_context=inline_rag_context,
         filter_server_tools=filter_server_tools,
-        instructions_substituted=instructions_substituted,
-        model_substituted=model_substituted,
         background_tasks=background_tasks,
         rh_identity_context=rh_identity_context,
     )
@@ -381,15 +365,14 @@ async def responses_endpoint_handler(
 
 async def handle_streaming_response(
     client: AsyncLlamaStackClient,
-    request: ResponsesRequest,
+    original_request: ResponsesRequest,
+    updated_request: ResponsesRequest,
     auth: AuthTuple,
     input_text: str,
     started_at: datetime,
     moderation_result: ShieldModerationResult,
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
-    instructions_substituted: bool = False,
-    model_substituted: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> StreamingResponse:
@@ -404,14 +387,12 @@ async def handle_streaming_response(
         moderation_result: Result of shield moderation check
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
-        instructions_substituted: Whether the server substituted the instructions
-        model_substituted: Whether the server substituted the model
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
     Returns:
         StreamingResponse with SSE-formatted events
     """
-    api_params = ResponsesApiParams.model_validate(request.model_dump())
+    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
     turn_summary = TurnSummary()
     # Handle blocked response
     if moderation_result.decision == "blocked":
@@ -423,7 +404,7 @@ async def handle_streaming_response(
         generator = shield_violation_generator(
             moderation_result,
             api_params.conversation,
-            request.echoed_params(),
+            updated_request.echoed_params(),
             started_at,
             available_quotas,
         )
@@ -431,7 +412,7 @@ async def handle_streaming_response(
             await append_turn_items_to_conversation(
                 client=client,
                 conversation_id=api_params.conversation,
-                user_input=request.input,
+                user_input=updated_request.input,
                 llm_output=[moderation_result.refusal_response],
             )
         _queue_responses_splunk_event(
@@ -451,14 +432,13 @@ async def handle_streaming_response(
             )
             generator = response_generator(
                 stream=cast(AsyncIterator[OpenAIResponseObjectStream], response),
-                user_input=request.input,
+                original_request=original_request,
+                updated_request=updated_request,
                 api_params=api_params,
                 user_id=auth[0],
                 turn_summary=turn_summary,
                 inline_rag_context=inline_rag_context,
                 filter_server_tools=filter_server_tools,
-                instructions_substituted=instructions_substituted,
-                model_substituted=model_substituted,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
             if is_context_length_error(str(e)):
@@ -517,7 +497,7 @@ async def handle_streaming_response(
             input_text=input_text,
             started_at=started_at,
             api_params=api_params,
-            generate_topic_summary=request.generate_topic_summary or False,
+            generate_topic_summary=updated_request.generate_topic_summary or False,
             background_tasks=background_tasks,
             rh_identity_context=rh_identity_context,
             shield_blocked=(moderation_result.decision == "blocked"),
@@ -629,41 +609,21 @@ async def shield_violation_generator(
 def _sanitize_response_dict(
     response_dict: dict[str, Any],
     configured_mcp_labels: set[str],
-    instructions_substituted: bool = False,
-    model_substituted: bool = False,
+    original_request: ResponsesRequest,
 ) -> None:
     """Sanitize a serialized response object in-place to remove internal details.
 
     Strips fields that expose server-side implementation details from the
-    response object before it is forwarded to the client:
-
-    - ``instructions``: when the server substituted its own system prompt
-      (because the client sent ``None`` or a different value was resolved),
-      the value is replaced with a placeholder slug to avoid leaking the
-      actual prompt.  When the client provided their own instructions and
-      they were used as-is, the value is left unchanged.
-    - ``tools``: server-deployed MCP tool definitions are removed; client-
-      provided tools (those whose ``server_label`` is not in
-      ``configured_mcp_labels``) are preserved.
-    - ``output``: server-deployed MCP output items (``mcp_list_tools``,
-      ``mcp_call``, ``mcp_approval_request``) are stripped so clients only
-      see item types they understand (``message``, ``function_call``, etc.).
-    - ``model``: the provider routing prefix (everything before the last
-      ``/``) is stripped only when the server selected the model
-      (``model_substituted=True``).  When the client specified the model,
-      it is echoed back unchanged.
+    response object before it is forwarded to the client.
 
     Args:
         response_dict: Mutable dict produced by ``model_dump`` on a response
             object.  Modified in-place.
         configured_mcp_labels: Set of ``server_label`` values that identify
             server-deployed MCP servers.
-        instructions_substituted: Whether the server substituted the
-            instructions (True) or the client provided them (False).
-        model_substituted: Whether the server substituted the model
-            (True) or the client provided it (False).
+        original_request: Original request object
     """
-    if instructions_substituted:
+    if original_request.instructions is None:
         response_dict["instructions"] = SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
     # else: leave instructions as-is (echo back client's value)
 
@@ -681,7 +641,7 @@ def _sanitize_response_dict(
             if not _is_server_mcp_output_item(item, configured_mcp_labels)
         ]
 
-    if model_substituted:
+    if original_request.model is None:
         model = response_dict.get("model")
         if model and "/" in model:
             response_dict["model"] = model.rsplit("/", 1)[-1]
@@ -796,27 +756,25 @@ def _populate_turn_summary(
 
 async def response_generator(
     stream: AsyncIterator[OpenAIResponseObjectStream],
-    user_input: ResponseInput,
+    original_request: ResponsesRequest,
+    updated_request: ResponsesRequest,
     api_params: ResponsesApiParams,
     user_id: str,
     turn_summary: TurnSummary,
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
-    instructions_substituted: bool = False,
-    model_substituted: bool = False,
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted streaming response with LCORE-enriched events.
 
     Args:
         stream: The streaming response from Llama Stack
-        user_input: User input to the response
+        original_request: Original request object
+        updated_request: Updated request object
         api_params: ResponsesApiParams
         user_id: User ID for quota retrieval
         turn_summary: TurnSummary to populate during streaming
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
-        instructions_substituted: Whether the server substituted the instructions
-        model_substituted: Whether the server substituted the model
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
     """
@@ -853,8 +811,7 @@ async def response_generator(
             _sanitize_response_dict(
                 chunk_dict["response"],
                 configured_mcp_labels,
-                instructions_substituted,
-                model_substituted,
+                original_request,
             )
             tools = chunk_dict["response"].get("tools")
             if tools is not None:
@@ -916,7 +873,10 @@ async def response_generator(
     # Explicitly append the turn to conversation if context passed by previous response
     if api_params.store and api_params.previous_response_id and latest_response_object:
         await append_turn_items_to_conversation(
-            client, api_params.conversation, user_input, latest_response_object.output
+            client,
+            api_params.conversation,
+            updated_request.input,
+            latest_response_object.output,
         )
 
     yield "data: [DONE]\n\n"
@@ -1001,15 +961,14 @@ async def generate_response(
 
 async def handle_non_streaming_response(
     client: AsyncLlamaStackClient,
-    request: ResponsesRequest,
+    original_request: ResponsesRequest,
+    updated_request: ResponsesRequest,
     auth: AuthTuple,
     input_text: str,
     started_at: datetime,
     moderation_result: ShieldModerationResult,
     inline_rag_context: RAGContext,
     filter_server_tools: bool = False,
-    instructions_substituted: bool = False,
-    model_substituted: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
 ) -> ResponsesResponse:
@@ -1017,22 +976,21 @@ async def handle_non_streaming_response(
 
     Args:
         client: The AsyncLlamaStackClient instance
-        request: Request object
+        original_request: Original request object
+        updated_request: Updated request object
         auth: Authentication tuple
         input_text: The extracted input text
         started_at: Timestamp when the conversation started
         moderation_result: Result of shield moderation check
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool output
-        instructions_substituted: Whether the server substituted the instructions
-        model_substituted: Whether the server substituted the model
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
     Returns:
         ResponsesResponse with the completed response
     """
     user_id, _, skip_userid_check, _ = auth
-    api_params = ResponsesApiParams.model_validate(request.model_dump())
+    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
 
     # Fork: Get response object (blocked vs normal)
     if moderation_result.decision == "blocked":
@@ -1043,13 +1001,13 @@ async def handle_non_streaming_response(
             status="completed",
             output=[moderation_result.refusal_response],
             usage=get_zero_usage(),
-            **request.echoed_params(),
+            **updated_request.echoed_params(),
         )
         if api_params.store:
             await append_turn_items_to_conversation(
                 client=client,
                 conversation_id=api_params.conversation,
-                user_input=request.input,
+                user_input=updated_request.input,
                 llm_output=[moderation_result.refusal_response],
             )
         _queue_responses_splunk_event(
@@ -1081,7 +1039,10 @@ async def handle_non_streaming_response(
             # Explicitly append the turn to conversation if context passed by previous response
             if api_params.store and api_params.previous_response_id:
                 await append_turn_items_to_conversation(
-                    client, api_params.conversation, request.input, api_response.output
+                    client,
+                    api_params.conversation,
+                    updated_request.input,
+                    api_response.output,
                 )
 
         except RuntimeError as e:
@@ -1139,7 +1100,7 @@ async def handle_non_streaming_response(
     )
     # Get topic summary for new conversation
     topic_summary = None
-    if request.generate_topic_summary:
+    if updated_request.generate_topic_summary:
         logger.debug("Generating topic summary for new conversation")
         topic_summary = await get_topic_summary(input_text, client, api_params.model)
 
@@ -1193,8 +1154,7 @@ async def handle_non_streaming_response(
     _sanitize_response_dict(
         response_dict,
         configured_mcp_labels,
-        instructions_substituted,
-        model_substituted,
+        original_request,
     )
     tools = response_dict.get("tools")
     if tools is not None:
