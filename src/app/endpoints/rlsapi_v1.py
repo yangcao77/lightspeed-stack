@@ -17,13 +17,13 @@ from llama_stack_client import APIConnectionError, APIStatusError, RateLimitErro
 from openai._exceptions import APIStatusError as OpenAIAPIStatusError
 
 import constants
-import metrics
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from log import get_logger
+from metrics import recording
 from models.config import Action
 from models.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
@@ -447,7 +447,7 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
         The total inference time in seconds.
     """
     inference_time = time.monotonic() - start_time
-    metrics.llm_calls_failures_total.labels(provider, model).inc()
+    recording.record_llm_failure(provider, model)
     _queue_splunk_event(
         background_tasks,
         infer_request,

@@ -86,11 +86,11 @@ from llama_stack_api.openai_responses import (
 from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaStackClient
 
 import constants
-import metrics
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import DEFAULT_RAG_TOOL
 from log import get_logger
+from metrics import recording
 from models.config import ByokRag
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest
@@ -922,7 +922,7 @@ def extract_token_usage(usage: Optional[ResponseUsage], model: str) -> TokenCoun
         logger.debug(
             "No usage information in Responses API response, token counts will be 0"
         )
-        _increment_llm_call_metric(provider_id, model_id)
+        recording.record_llm_call(provider_id, model_id)
         return TokenCounter(llm_calls=1)
 
     token_counter = TokenCounter(
@@ -934,18 +934,14 @@ def extract_token_usage(usage: Optional[ResponseUsage], model: str) -> TokenCoun
         token_counter.output_tokens,
     )
 
-    # Update Prometheus metrics only when we have actual usage data
-    try:
-        metrics.llm_token_sent_total.labels(provider_id, model_id).inc(
-            token_counter.input_tokens
-        )
-        metrics.llm_token_received_total.labels(provider_id, model_id).inc(
-            token_counter.output_tokens
-        )
-    except (AttributeError, TypeError, ValueError) as e:
-        logger.warning("Failed to update token metrics: %s", e)
-
-    _increment_llm_call_metric(provider_id, model_id)
+    # Update Prometheus metrics only when we have actual usage data.
+    recording.record_llm_token_usage(
+        provider_id,
+        model_id,
+        token_counter.input_tokens,
+        token_counter.output_tokens,
+    )
+    recording.record_llm_call(provider_id, model_id)
     return token_counter
 
 
@@ -1249,14 +1245,6 @@ def extract_rag_chunks_from_file_search_item(
         )
         rag_chunks.append(rag_chunk)
     return rag_chunks
-
-
-def _increment_llm_call_metric(provider: str, model: str) -> None:
-    """Safely increment LLM call metric."""
-    try:
-        metrics.llm_calls_total.labels(provider, model).inc()
-    except (AttributeError, TypeError, ValueError) as e:
-        logger.warning("Failed to update LLM call metric: %s", e)
 
 
 def parse_arguments_string(arguments_str: str) -> dict[str, Any]:
