@@ -47,7 +47,7 @@ OKP (Offline Knowledge Portal) provides a Solr-backed RAG source that Lightspeed
 Start the OKP RAG service with Podman:
 
 ```bash
-podman run --rm -d -p 8983:8080 images.paas.redhat.com/offline-kbase/rhokp-rag:mar-9-2026
+podman run --rm -d -p 8983:8080 registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
 ```
 
 > **Note:** Remove `-d` to run in the foreground.
