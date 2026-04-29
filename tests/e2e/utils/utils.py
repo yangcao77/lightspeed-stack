@@ -80,7 +80,7 @@ def request_with_transient_retry(
     Raises:
         The last :exc:`requests.exceptions.ConnectionError` if all attempts fail.
     """
-    last_err: BaseException | None = None
+    last_err: Optional[BaseException] = None
     for attempt in range(E2E_HTTP_TRANSIENT_MAX_ATTEMPTS):
         try:
             return requests.request(**kwargs)
