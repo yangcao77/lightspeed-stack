@@ -40,7 +40,6 @@ from llama_stack_client import (
 )
 from openai._exceptions import APIStatusError as OpenAIAPIStatusError
 
-import metrics
 from authentication import get_auth_dependency
 from authentication.interface import AuthTuple
 from authorization.azure_token_manager import AzureEntraIDManager
@@ -59,6 +58,7 @@ from constants import (
     TOPIC_SUMMARY_INTERRUPT_TIMEOUT_SECONDS,
 )
 from log import get_logger
+from metrics import recording
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import QueryRequest
@@ -283,7 +283,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
     provider_id, model_id = extract_provider_and_model_from_model_id(
         responses_params.model
     )
-    metrics.llm_calls_total.labels(provider_id, model_id).inc()
+    recording.record_llm_call(provider_id, model_id)
 
     generator, turn_summary = await retrieve_response_generator(
         responses_params=responses_params,

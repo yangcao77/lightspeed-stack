@@ -389,7 +389,7 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.extract_provider_and_model_from_model_id",
             return_value=("provider1", "model1"),
         )
-        mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
+        mocker.patch("app.endpoints.streaming_query.recording.record_llm_call")
 
         async def mock_generator() -> AsyncIterator[str]:
             yield "data: test\n\n"
@@ -476,7 +476,7 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.extract_provider_and_model_from_model_id",
             return_value=("provider1", "model1"),
         )
-        mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
+        mocker.patch("app.endpoints.streaming_query.recording.record_llm_call")
 
         async def mock_generator() -> AsyncIterator[str]:
             yield "data: test\n\n"
@@ -574,7 +574,7 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.extract_provider_and_model_from_model_id",
             return_value=("provider1", "model1"),
         )
-        mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
+        mocker.patch("app.endpoints.streaming_query.recording.record_llm_call")
 
         async def mock_generator() -> AsyncIterator[str]:
             yield "data: test\n\n"
@@ -670,7 +670,7 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.extract_provider_and_model_from_model_id",
             return_value=("provider1", "model1"),
         )
-        mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
+        mocker.patch("app.endpoints.streaming_query.recording.record_llm_call")
 
         async def mock_generator() -> AsyncIterator[str]:
             yield "data: test\n\n"
@@ -770,7 +770,7 @@ class TestStreamingQueryEndpointHandler:
             "app.endpoints.streaming_query.run_shield_moderation",
             new=mocker.AsyncMock(return_value=ShieldModerationPassed()),
         )
-        mocker.patch("app.endpoints.streaming_query.metrics.llm_calls_total")
+        mocker.patch("app.endpoints.streaming_query.recording.record_llm_call")
 
         async def mock_generator() -> AsyncIterator[str]:
             yield "data: test\n\n"

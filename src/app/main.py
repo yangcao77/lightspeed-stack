@@ -12,7 +12,6 @@ from llama_stack_client import APIConnectionError
 from starlette.routing import Mount, Route, WebSocketRoute
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-import metrics
 import version
 from a2a_storage import A2AStorageFactory
 from app import routers
@@ -22,6 +21,7 @@ from authorization.azure_token_manager import AzureEntraIDManager
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from log import get_logger
+from metrics import recording
 from models.responses import InternalServerErrorResponse
 from sentry import initialize_sentry
 from utils.common import register_mcp_servers_async
@@ -182,12 +182,12 @@ class RestApiMetricsMiddleware:  # pylint: disable=too-few-public-methods
         # Measure duration and forward the request.  Use try/finally so the
         # call counter is always incremented, even when the inner app raises.
         try:
-            with metrics.response_duration_seconds.labels(path).time():
+            with recording.measure_response_duration(path):
                 await self.app(scope, receive, send_wrapper)
         finally:
             # Ignore /metrics endpoint that will be called periodically.
             if not path.endswith("/metrics"):
-                metrics.rest_api_calls_total.labels(path, status_code).inc()
+                recording.record_rest_api_call(path, status_code)
 
 
 class GlobalExceptionMiddleware:  # pylint: disable=too-few-public-methods

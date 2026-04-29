@@ -1,6 +1,7 @@
 """Unit tests for the pure ASGI middlewares in main.py."""
 
 import json
+from contextlib import nullcontext
 from typing import cast
 
 import pytest
@@ -165,7 +166,10 @@ async def test_rest_api_metrics_increments_counter_on_exception(
 ) -> None:
     """Counter must be incremented even when the inner app raises."""
     mocker.patch("app.main.app_routes_paths", ["/v1/infer"])
-    mock_metrics = mocker.patch("app.main.metrics")
+    mock_measure_duration = mocker.patch(
+        "app.main.recording.measure_response_duration", return_value=nullcontext()
+    )
+    mock_record_call = mocker.patch("app.main.recording.record_rest_api_call")
 
     async def failing_app(_scope: Scope, _receive: Receive, _send: Send) -> None:
         raise RuntimeError("boom")
@@ -175,9 +179,8 @@ async def test_rest_api_metrics_increments_counter_on_exception(
     with pytest.raises(RuntimeError, match="boom"):
         await middleware(_make_scope("/v1/infer"), _noop_receive, _ResponseCollector())
 
-    mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
-    mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 500)
-    mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
+    mock_measure_duration.assert_called_once_with("/v1/infer")
+    mock_record_call.assert_called_once_with("/v1/infer", 500)
 
 
 @pytest.mark.asyncio
@@ -186,7 +189,10 @@ async def test_rest_api_metrics_strips_root_path(
 ) -> None:
     """Middleware must strip root_path so prefixed requests still match routes."""
     mocker.patch("app.main.app_routes_paths", ["/v1/infer"])
-    mock_metrics = mocker.patch("app.main.metrics")
+    mock_measure_duration = mocker.patch(
+        "app.main.recording.measure_response_duration", return_value=nullcontext()
+    )
+    mock_record_call = mocker.patch("app.main.recording.record_rest_api_call")
 
     async def ok_app(_scope: Scope, _receive: Receive, send: Send) -> None:
         await send({"type": "http.response.start", "status": 200, "headers": []})
@@ -204,9 +210,8 @@ async def test_rest_api_metrics_strips_root_path(
 
     assert collector.status_code == 200
     # Metrics labels should use the stripped path, not the full prefixed path.
-    mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
-    mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 200)
-    mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
+    mock_measure_duration.assert_called_once_with("/v1/infer")
+    mock_record_call.assert_called_once_with("/v1/infer", 200)
 
 
 @pytest.mark.asyncio
@@ -215,7 +220,10 @@ async def test_rest_api_metrics_no_root_path_unchanged(
 ) -> None:
     """Without root_path, middleware behaves as before."""
     mocker.patch("app.main.app_routes_paths", ["/v1/infer"])
-    mock_metrics = mocker.patch("app.main.metrics")
+    mock_measure_duration = mocker.patch(
+        "app.main.recording.measure_response_duration", return_value=nullcontext()
+    )
+    mock_record_call = mocker.patch("app.main.recording.record_rest_api_call")
 
     async def ok_app(_scope: Scope, _receive: Receive, send: Send) -> None:
         await send({"type": "http.response.start", "status": 200, "headers": []})
@@ -231,6 +239,5 @@ async def test_rest_api_metrics_no_root_path_unchanged(
     )
 
     assert collector.status_code == 200
-    mock_metrics.response_duration_seconds.labels.assert_called_once_with("/v1/infer")
-    mock_metrics.rest_api_calls_total.labels.assert_called_once_with("/v1/infer", 200)
-    mock_metrics.rest_api_calls_total.labels.return_value.inc.assert_called_once()
+    mock_measure_duration.assert_called_once_with("/v1/infer")
+    mock_record_call.assert_called_once_with("/v1/infer", 200)

@@ -14,10 +14,10 @@ from llama_stack_client import (
 from llama_stack_client.types import ShieldListResponse
 from openai._exceptions import APIStatusError as OpenAIAPIStatusError
 
-import metrics
 from configuration import AppConfig
 from constants import DEFAULT_VIOLATION_MESSAGE
 from log import get_logger
+from metrics import recording
 from models.requests import QueryRequest
 from models.responses import (
     InternalServerErrorResponse,
@@ -77,7 +77,7 @@ def detect_shield_violations(output_items: list[Any]) -> bool:
             refusal = getattr(output_item, "refusal", None)
             if refusal:
                 # Metric for LLM validation errors (shield violations)
-                metrics.llm_calls_validation_errors_total.inc()
+                recording.record_llm_validation_error()
                 logger.warning("Shield violation detected: %s", refusal)
                 return True
     return False
@@ -178,7 +178,7 @@ async def run_shield_moderation(
 
         if moderation_result.results and moderation_result.results[0].flagged:
             result = moderation_result.results[0]
-            metrics.llm_calls_validation_errors_total.inc()
+            recording.record_llm_validation_error()
             logger.warning(
                 "Shield '%s' flagged content: categories=%s",
                 shield.identifier,
