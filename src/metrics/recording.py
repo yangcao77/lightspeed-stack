@@ -44,7 +44,7 @@ def record_rest_api_call(path: str, status_code: int) -> None:
         logger.warning("Failed to update REST API call metric", exc_info=True)
 
 
-def record_llm_call(provider: str, model: str, endpoint_path: str = "") -> None:
+def record_llm_call(provider: str, model: str, endpoint_path: str) -> None:
     """Record one LLM call for a provider and model.
 
     Args:
@@ -58,7 +58,7 @@ def record_llm_call(provider: str, model: str, endpoint_path: str = "") -> None:
         logger.warning("Failed to update LLM call metric", exc_info=True)
 
 
-def record_llm_failure(provider: str, model: str, endpoint_path: str = "") -> None:
+def record_llm_failure(provider: str, model: str, endpoint_path: str) -> None:
     """Record one failed LLM call for a provider and model.
 
     Args:
@@ -89,7 +89,7 @@ def record_llm_token_usage(
     model: str,
     input_tokens: int,
     output_tokens: int,
-    endpoint_path: str = "",
+    endpoint_path: str,
 ) -> None:
     """Record LLM token usage for a provider and model.
 

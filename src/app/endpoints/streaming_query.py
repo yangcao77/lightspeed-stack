@@ -318,7 +318,7 @@ async def streaming_query_endpoint_handler(  # pylint: disable=too-many-locals
 async def retrieve_response_generator(
     responses_params: ResponsesApiParams,
     context: ResponseGeneratorContext,
-    endpoint_path: str = "",
+    endpoint_path: str,
 ) -> tuple[AsyncIterator[str], TurnSummary]:
     """
     Retrieve the appropriate response generator.
@@ -330,6 +330,7 @@ async def retrieve_response_generator(
     Args:
         responses_params: The Responses API parameters
         context: The response generator context
+        endpoint_path: API endpoint path used for metric labeling.
     Returns:
         tuple[AsyncIterator[str], TurnSummary]: The response generator and turn summary
 
@@ -689,7 +690,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
     turn_response: AsyncIterator[OpenAIResponseObjectStream],
     context: ResponseGeneratorContext,
     turn_summary: TurnSummary,
-    endpoint_path: str = "",
+    endpoint_path: str,
 ) -> AsyncIterator[str]:
     """Generate SSE formatted streaming response.
 
@@ -701,6 +702,7 @@ async def response_generator(  # pylint: disable=too-many-branches,too-many-stat
         turn_response: The streaming response from Llama Stack
         context: The response generator context
         turn_summary: TurnSummary to populate during streaming
+        endpoint_path: API endpoint path used for metric labeling.
 
     Yields:
         SSE-formatted strings for tokens, tool calls, tool results,

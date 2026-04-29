@@ -816,6 +816,7 @@ async def response_generator(
         turn_summary: TurnSummary to populate during streaming
         inline_rag_context: Inline RAG context to be used for the response
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
+        endpoint_path: API endpoint path used for metric labeling.
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
     """
