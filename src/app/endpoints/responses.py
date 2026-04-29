@@ -6,7 +6,7 @@ import asyncio
 import json
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
-from typing import Annotated, Any, Optional, cast
+from typing import Annotated, Any, Final, Optional, cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
@@ -112,6 +112,30 @@ from utils.vector_search import (
 logger = get_logger(__name__)
 router = APIRouter(tags=["responses"])
 
+_USER_AGENT_MAX_LENGTH: Final[int] = 128
+
+
+def _get_user_agent(request: Request) -> Optional[str]:
+    """Extract and sanitize the User-Agent header from the request.
+
+    Parses the raw User-Agent header, strips control characters and newlines,
+    and truncates to a safe maximum length. Returns None when the header is
+    absent or empty.
+
+    Args:
+        request: The FastAPI request object.
+
+    Returns:
+        Sanitized User-Agent string, or None if the header is absent or empty.
+    """
+    raw = request.headers.get("User-Agent", "")
+    if not raw:
+        return None
+    sanitized = "".join(c for c in raw if ord(c) >= 32 and c not in ("\r", "\n"))
+    sanitized = sanitized[:_USER_AGENT_MAX_LENGTH]
+    return sanitized or None
+
+
 responses_response: dict[int | str, dict[str, Any]] = {
     200: ResponsesResponse.openapi_response(),
     401: UnauthorizedResponse.openapi_response(
@@ -153,6 +177,7 @@ def _queue_responses_splunk_event(  # pylint: disable=too-many-arguments,too-man
     input_tokens: int = 0,
     output_tokens: int = 0,
     fire_and_forget: bool = False,
+    user_agent: Optional[str] = None,
 ) -> None:
     """Build and queue a Splunk telemetry event for the responses endpoint.
 
@@ -173,6 +198,7 @@ def _queue_responses_splunk_event(  # pylint: disable=too-many-arguments,too-man
         fire_and_forget: When True, dispatch via asyncio.create_task() instead
             of background_tasks.  Use for error paths where an HTTPException
             follows, since FastAPI discards BackgroundTasks on non-2xx responses.
+        user_agent: Sanitized User-Agent string from the request header, or None.
     """
     if not fire_and_forget and background_tasks is None:
         return
@@ -187,6 +213,7 @@ def _queue_responses_splunk_event(  # pylint: disable=too-many-arguments,too-man
         inference_time=inference_time,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
+        user_agent=user_agent,
     )
     event = build_responses_event(event_data)
     if fire_and_forget:
@@ -360,6 +387,7 @@ async def responses_endpoint_handler(
         filter_server_tools=filter_server_tools,
         background_tasks=background_tasks,
         rh_identity_context=rh_identity_context,
+        user_agent=_get_user_agent(request),
     )
 
 
@@ -375,6 +403,7 @@ async def handle_streaming_response(
     filter_server_tools: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
+    user_agent: Optional[str] = None,
 ) -> StreamingResponse:
     """Handle streaming response from Responses API.
 
@@ -389,6 +418,7 @@ async def handle_streaming_response(
         filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Returns:
         StreamingResponse with SSE-formatted events
     """
@@ -424,6 +454,7 @@ async def handle_streaming_response(
             rh_identity_context=rh_identity_context,
             inference_time=(datetime.now(UTC) - started_at).total_seconds(),
             sourcetype="responses_shield_blocked",
+            user_agent=user_agent,
         )
     else:
         try:
@@ -452,6 +483,7 @@ async def handle_streaming_response(
                     inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                     sourcetype="responses_error",
                     fire_and_forget=True,
+                    user_agent=user_agent,
                 )
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
@@ -467,6 +499,7 @@ async def handle_streaming_response(
                 inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
+                user_agent=user_agent,
             )
             error_response = ServiceUnavailableResponse(
                 backend_name="Llama Stack",
@@ -484,6 +517,7 @@ async def handle_streaming_response(
                 inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
+                user_agent=user_agent,
             )
             error_response = handle_known_apistatus_errors(e, api_params.model)
             raise HTTPException(**error_response.model_dump()) from e
@@ -501,6 +535,7 @@ async def handle_streaming_response(
             background_tasks=background_tasks,
             rh_identity_context=rh_identity_context,
             shield_blocked=(moderation_result.decision == "blocked"),
+            user_agent=user_agent,
         ),
         media_type="text/event-stream",
     )
@@ -894,6 +929,7 @@ async def generate_response(
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
     shield_blocked: bool = False,
+    user_agent: Optional[str] = None,
 ) -> AsyncIterator[str]:
     """Stream the response from the generator and persist conversation details.
 
@@ -911,6 +947,7 @@ async def generate_response(
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
         shield_blocked: Whether the request was blocked by a shield
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Yields:
         SSE-formatted strings from the generator
     """
@@ -956,6 +993,7 @@ async def generate_response(
                 if turn_summary.token_usage
                 else 0
             ),
+            user_agent=user_agent,
         )
 
 
@@ -971,6 +1009,7 @@ async def handle_non_streaming_response(
     filter_server_tools: bool = False,
     background_tasks: Optional[BackgroundTasks] = None,
     rh_identity_context: tuple[str, str] = ("", ""),
+    user_agent: Optional[str] = None,
 ) -> ResponsesResponse:
     """Handle non-streaming response from Responses API.
 
@@ -986,6 +1025,7 @@ async def handle_non_streaming_response(
         filter_server_tools: Whether to filter server-deployed MCP tool output
         background_tasks: FastAPI background task manager for telemetry events
         rh_identity_context: Tuple of (org_id, system_id) from RH identity
+        user_agent: Sanitized User-Agent string from request headers, or None.
     Returns:
         ResponsesResponse with the completed response
     """
@@ -1019,6 +1059,7 @@ async def handle_non_streaming_response(
             rh_identity_context=rh_identity_context,
             inference_time=(datetime.now(UTC) - started_at).total_seconds(),
             sourcetype="responses_shield_blocked",
+            user_agent=user_agent,
         )
     else:
         try:
@@ -1057,6 +1098,7 @@ async def handle_non_streaming_response(
                     inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                     sourcetype="responses_error",
                     fire_and_forget=True,
+                    user_agent=user_agent,
                 )
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
@@ -1072,6 +1114,7 @@ async def handle_non_streaming_response(
                 inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
+                user_agent=user_agent,
             )
             error_response = ServiceUnavailableResponse(
                 backend_name="Llama Stack",
@@ -1089,6 +1132,7 @@ async def handle_non_streaming_response(
                 inference_time=(datetime.now(UTC) - started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
+                user_agent=user_agent,
             )
             error_response = handle_known_apistatus_errors(e, api_params.model)
             raise HTTPException(**error_response.model_dump()) from e
@@ -1135,6 +1179,7 @@ async def handle_non_streaming_response(
                 if turn_summary.token_usage
                 else 0
             ),
+            user_agent=user_agent,
         )
     if api_params.store:
         store_query_results(

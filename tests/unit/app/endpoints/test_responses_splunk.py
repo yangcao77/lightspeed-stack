@@ -16,6 +16,7 @@ from pytest_mock import MockerFixture
 
 from app.endpoints.responses import (
     _background_splunk_tasks,
+    _get_user_agent,
     _queue_responses_splunk_event,
     handle_non_streaming_response,
     handle_streaming_response,
@@ -715,3 +716,58 @@ class TestSplunkTelemetryHooks:
 
         mock_queue.assert_called_once()
         assert mock_queue.call_args[1]["background_tasks"] is None
+
+
+class TestGetUserAgent:
+    """Tests for _get_user_agent header extraction and sanitization."""
+
+    def test_returns_user_agent_from_header(self, mocker: MockerFixture) -> None:
+        """Test that a valid User-Agent header is returned as-is."""
+        request = mocker.MagicMock()
+        request.headers.get.return_value = "goose/1.0.0"
+
+        result = _get_user_agent(request)
+
+        assert result == "goose/1.0.0"
+
+    def test_returns_none_when_header_absent(self, mocker: MockerFixture) -> None:
+        """Test that None is returned when User-Agent header is empty."""
+        request = mocker.MagicMock()
+        request.headers.get.return_value = ""
+
+        result = _get_user_agent(request)
+
+        assert result is None
+
+    def test_strips_control_characters(self, mocker: MockerFixture) -> None:
+        """Test that control characters and newlines are stripped from User-Agent."""
+        request = mocker.MagicMock()
+        request.headers.get.return_value = "goose/1.0.0\r\nX-Injected: evil"
+
+        result: str = _get_user_agent(request) or ""
+
+        assert result != ""
+        assert "\r" not in result
+        assert "\n" not in result
+        assert "goose/1.0.0" in result
+
+    def test_truncates_to_128_characters(self, mocker: MockerFixture) -> None:
+        """Test that User-Agent is truncated to 128 characters."""
+        request = mocker.MagicMock()
+        request.headers.get.return_value = "a" * 200
+
+        result = _get_user_agent(request)
+
+        assert isinstance(result, str)
+        assert len(result) == 128
+
+    def test_returns_none_for_only_control_characters(
+        self, mocker: MockerFixture
+    ) -> None:
+        """Test that None is returned when User-Agent contains only control characters."""
+        request = mocker.MagicMock()
+        request.headers.get.return_value = "\r\n\x01\x02"
+
+        result = _get_user_agent(request)
+
+        assert result is None

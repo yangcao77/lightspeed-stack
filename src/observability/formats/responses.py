@@ -6,7 +6,7 @@ event builder function that returns a dict, then pass the result to send_splunk_
 """
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
 from configuration import configuration
 
@@ -24,6 +24,7 @@ class ResponsesEventData:  # pylint: disable=too-many-instance-attributes
     inference_time: float
     input_tokens: int = 0
     output_tokens: int = 0
+    user_agent: Optional[str] = None
 
 
 def build_responses_event(data: ResponsesEventData) -> dict[str, Any]:
@@ -45,4 +46,5 @@ def build_responses_event(data: ResponsesEventData) -> dict[str, Any]:
         "org_id": data.org_id,
         "system_id": data.system_id,
         "total_llm_tokens": data.input_tokens + data.output_tokens,
+        "user_agent": data.user_agent,
     }
