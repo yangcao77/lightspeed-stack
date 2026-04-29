@@ -47,21 +47,21 @@ OKP (Offline Knowledge Portal) provides a Solr-backed RAG source that Lightspeed
 Start the OKP RAG service with Podman:
 
 ```bash
-podman run --rm -d -p 8983:8080 registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
+podman run --rm -d -p 8081:8080 registry.redhat.io/offline-knowledge-portal/rhokp-rhel9:latest
 ```
 
 > **Note:** Remove `-d` to run in the foreground.
 
-* The service listens on **port 8983** on the host (mapped from 8080 in the container).
+* The service listens on **port 8081** on the host (mapped from 8080 in the container).  Lightspeed Stack itself listens on `8080`, so this avoids port conflicts.
 * Confirm it is running by opening in a browser or with `curl`:
 
   ```bash
-  curl -s http://localhost:8983
+  curl -s http://localhost:8081
   ```
 
-  Or visit: **http://localhost:8983**
+  Or visit: **http://localhost:8081**
 
-> **Note:** Lightspeed stack will automatically enrich the llamastack configuration to add the necessary providers/resources for referencing OKP.  This assumes your OKP instance is running on localhost:8983.  If you need a different OKP url, you can set the SOLR_URL environment variable with the correct url prior to launching Lightspeed stack and that value will be used instead.
+> **Note:** Lightspeed stack will automatically enrich the llamastack configuration to add the necessary providers/resources for referencing OKP.  This assumes your OKP instance is running on localhost:8081.  If you need a different OKP url, you can set the SOLR_URL environment variable with the correct url prior to launching Lightspeed stack and that value will be used instead.
 ---
 
 ## Step 2: Setup llamastack config environment variables
@@ -71,6 +71,7 @@ Set the required environment variables. The external providers path must point t
 ```bash
 export EXTERNAL_PROVIDERS_DIR=../lightspeed-providers/resources/external_providers
 export OPENAI_API_KEY=<your-openai-api-key>
+export RH_SERVER_OKP=http://localhost:8081
 ```
 
 Adjust `EXTERNAL_PROVIDERS_DIR` if your lightspeed-providers repo is in a different location relative to your lightspeed-stack directory.
@@ -105,6 +106,7 @@ rag:
   inline:
   - okp
 okp:
+  rhokp_url: ${env.RH_SERVER_OKP}
   offline: true
 ```
 
@@ -115,6 +117,7 @@ rag:
   tool:
   - okp
 okp:
+  rhokp_url: ${env.RH_SERVER_OKP}
   offline: true
 ```
 
@@ -197,7 +200,7 @@ Example response excerpt:
 
 If you see no RAG context, verify:
 
-1. OKP is up at http://localhost:8983
+1. OKP is up at http://localhost:8081
 2. `lightspeed-stack.yaml` has `okp` under `rag.inline` and/or `rag.tool` as in Step 4
 
 ---
