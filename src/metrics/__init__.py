@@ -29,25 +29,29 @@ provider_model_configuration = Gauge(
 
 # Metric that counts how many LLM calls were made for each provider + model
 llm_calls_total = Counter(
-    "ls_llm_calls_total", "LLM calls counter", ["provider", "model"]
+    "ls_llm_calls_total", "LLM calls counter", ["provider", "model", "endpoint"]
 )
 
 # Metric that counts how many LLM calls failed
 llm_calls_failures_total = Counter(
-    "ls_llm_calls_failures_total", "LLM calls failures", ["provider", "model"]
+    "ls_llm_calls_failures_total",
+    "LLM calls failures",
+    ["provider", "model", "endpoint"],
 )
 
 # Metric that counts how many LLM calls had validation errors
 llm_calls_validation_errors_total = Counter(
-    "ls_llm_validation_errors_total", "LLM validation errors"
+    "ls_llm_validation_errors_total", "LLM validation errors", ["endpoint"]
 )
 
 # Metric that counts how many tokens were sent to LLMs
 llm_token_sent_total = Counter(
-    "ls_llm_token_sent_total", "LLM tokens sent", ["provider", "model"]
+    "ls_llm_token_sent_total", "LLM tokens sent", ["provider", "model", "endpoint"]
 )
 
 # Metric that counts how many tokens were received from LLMs
 llm_token_received_total = Counter(
-    "ls_llm_token_received_total", "LLM tokens received", ["provider", "model"]
+    "ls_llm_token_received_total",
+    "LLM tokens received",
+    ["provider", "model", "endpoint"],
 )

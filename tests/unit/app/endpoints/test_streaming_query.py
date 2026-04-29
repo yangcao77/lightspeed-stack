@@ -855,7 +855,7 @@ class TestCreateResponseGenerator:
         )
 
         generator, turn_summary = await retrieve_response_generator(
-            mock_responses_params, mock_context
+            mock_responses_params, mock_context, endpoint_path=""
         )
 
         assert isinstance(turn_summary, TurnSummary)
@@ -894,7 +894,7 @@ class TestCreateResponseGenerator:
         )
 
         _generator, turn_summary = await retrieve_response_generator(
-            mock_responses_params, mock_context
+            mock_responses_params, mock_context, endpoint_path=""
         )
 
         assert isinstance(turn_summary, TurnSummary)
@@ -949,7 +949,9 @@ class TestCreateResponseGenerator:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await retrieve_response_generator(mock_responses_params, mock_context)
+            await retrieve_response_generator(
+                mock_responses_params, mock_context, endpoint_path=""
+            )
 
         assert exc_info.value.status_code == 503
 
@@ -999,7 +1001,9 @@ class TestCreateResponseGenerator:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await retrieve_response_generator(mock_responses_params, mock_context)
+            await retrieve_response_generator(
+                mock_responses_params, mock_context, endpoint_path=""
+            )
 
         assert exc_info.value.status_code == 500
 
@@ -1046,7 +1050,9 @@ class TestCreateResponseGenerator:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await retrieve_response_generator(mock_responses_params, mock_context)
+            await retrieve_response_generator(
+                mock_responses_params, mock_context, endpoint_path=""
+            )
 
         assert exc_info.value.status_code == 413
 
@@ -1083,7 +1089,9 @@ class TestCreateResponseGenerator:
         )
 
         with pytest.raises(RuntimeError):
-            await retrieve_response_generator(mock_responses_params, mock_context)
+            await retrieve_response_generator(
+                mock_responses_params, mock_context, endpoint_path=""
+            )
 
 
 class TestGenerateResponse:
@@ -1870,7 +1878,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -1900,7 +1908,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -1938,7 +1946,7 @@ class TestResponseGenerator:
         )
 
         async for _ in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             pass
 
@@ -1980,7 +1988,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2029,7 +2037,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2080,7 +2088,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2123,7 +2131,7 @@ class TestResponseGenerator:
         )
 
         async for _ in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             pass
 
@@ -2172,7 +2180,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2218,7 +2226,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2263,7 +2271,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2306,7 +2314,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2350,7 +2358,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2392,7 +2400,7 @@ class TestResponseGenerator:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2445,7 +2453,7 @@ class TestResponseGenerator:
         )
 
         async for _ in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             pass
 
@@ -2572,7 +2580,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2635,7 +2643,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2728,7 +2736,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 
@@ -2798,7 +2806,7 @@ class TestResponseGeneratorMCPCalls:
 
         result = []
         async for item in response_generator(
-            mock_turn_response(), mock_context, mock_turn_summary
+            mock_turn_response(), mock_context, mock_turn_summary, endpoint_path=""
         ):
             result.append(item)
 

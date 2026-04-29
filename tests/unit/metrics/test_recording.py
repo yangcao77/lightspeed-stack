@@ -61,9 +61,9 @@ def test_record_llm_call_records_counter(mocker: MockerFixture) -> None:
     """Test that LLM call recording increments the provider/model counter."""
     mock_metric = mocker.patch("metrics.recording.metrics.llm_calls_total")
 
-    recording.record_llm_call("provider1", "model1")
+    recording.record_llm_call("provider1", "model1", "/test-endpoint")
 
-    mock_metric.labels.assert_called_once_with("provider1", "model1")
+    mock_metric.labels.assert_called_once_with("provider1", "model1", "/test-endpoint")
     mock_metric.labels.return_value.inc.assert_called_once()
 
 
@@ -73,7 +73,7 @@ def test_record_llm_call_logs_metric_errors(mocker: MockerFixture) -> None:
     mock_metric.labels.return_value.inc.side_effect = AttributeError("missing")
     mock_logger = mocker.patch("metrics.recording.logger")
 
-    recording.record_llm_call("provider1", "model1")
+    recording.record_llm_call("provider1", "model1", "/test-endpoint")
 
     mock_logger.warning.assert_called_once_with(
         "Failed to update LLM call metric", exc_info=True
@@ -84,9 +84,9 @@ def test_record_llm_failure_records_counter(mocker: MockerFixture) -> None:
     """Test that LLM failure recording increments the provider/model counter."""
     mock_metric = mocker.patch("metrics.recording.metrics.llm_calls_failures_total")
 
-    recording.record_llm_failure("provider1", "model1")
+    recording.record_llm_failure("provider1", "model1", "/test-endpoint")
 
-    mock_metric.labels.assert_called_once_with("provider1", "model1")
+    mock_metric.labels.assert_called_once_with("provider1", "model1", "/test-endpoint")
     mock_metric.labels.return_value.inc.assert_called_once()
 
 
@@ -96,7 +96,7 @@ def test_record_llm_failure_logs_metric_errors(mocker: MockerFixture) -> None:
     mock_metric.labels.return_value.inc.side_effect = TypeError("bad")
     mock_logger = mocker.patch("metrics.recording.logger")
 
-    recording.record_llm_failure("provider1", "model1")
+    recording.record_llm_failure("provider1", "model1", "/test-endpoint")
 
     mock_logger.warning.assert_called_once_with(
         "Failed to update LLM failure metric", exc_info=True
@@ -109,9 +109,10 @@ def test_record_llm_validation_error_records_counter(mocker: MockerFixture) -> N
         "metrics.recording.metrics.llm_calls_validation_errors_total"
     )
 
-    recording.record_llm_validation_error()
+    recording.record_llm_validation_error("/test-endpoint")
 
-    mock_metric.inc.assert_called_once()
+    mock_metric.labels.assert_called_once_with("/test-endpoint")
+    mock_metric.labels.return_value.inc.assert_called_once()
 
 
 def test_record_llm_validation_error_logs_metric_errors(
@@ -121,10 +122,10 @@ def test_record_llm_validation_error_logs_metric_errors(
     mock_metric = mocker.patch(
         "metrics.recording.metrics.llm_calls_validation_errors_total"
     )
-    mock_metric.inc.side_effect = ValueError("bad")
+    mock_metric.labels.return_value.inc.side_effect = ValueError("bad")
     mock_logger = mocker.patch("metrics.recording.logger")
 
-    recording.record_llm_validation_error()
+    recording.record_llm_validation_error("/test-endpoint")
 
     mock_logger.warning.assert_called_once_with(
         "Failed to update LLM validation error metric", exc_info=True
@@ -136,11 +137,13 @@ def test_record_llm_token_usage_records_counters(mocker: MockerFixture) -> None:
     mock_sent = mocker.patch("metrics.recording.metrics.llm_token_sent_total")
     mock_received = mocker.patch("metrics.recording.metrics.llm_token_received_total")
 
-    recording.record_llm_token_usage("provider1", "model1", 100, 50)
+    recording.record_llm_token_usage("provider1", "model1", 100, 50, "/test-endpoint")
 
-    mock_sent.labels.assert_called_once_with("provider1", "model1")
+    mock_sent.labels.assert_called_once_with("provider1", "model1", "/test-endpoint")
     mock_sent.labels.return_value.inc.assert_called_once_with(100)
-    mock_received.labels.assert_called_once_with("provider1", "model1")
+    mock_received.labels.assert_called_once_with(
+        "provider1", "model1", "/test-endpoint"
+    )
     mock_received.labels.return_value.inc.assert_called_once_with(50)
 
 
@@ -151,7 +154,7 @@ def test_record_llm_token_usage_logs_metric_errors(mocker: MockerFixture) -> Non
     mocker.patch("metrics.recording.metrics.llm_token_received_total")
     mock_logger = mocker.patch("metrics.recording.logger")
 
-    recording.record_llm_token_usage("provider1", "model1", 100, 50)
+    recording.record_llm_token_usage("provider1", "model1", 100, 50, "/test-endpoint")
 
     mock_logger.warning.assert_called_once_with(
         "Failed to update token metrics", exc_info=True

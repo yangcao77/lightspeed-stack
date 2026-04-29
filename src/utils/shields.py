@@ -122,6 +122,7 @@ def validate_shield_ids_override(
 async def run_shield_moderation(
     client: AsyncLlamaStackClient,
     input_text: str,
+    endpoint_path: str,
     shield_ids: Optional[list[str]] = None,
 ) -> ShieldModerationResult:
     """
@@ -134,6 +135,7 @@ async def run_shield_moderation(
     ----------
         client: The Llama Stack client.
         input_text: The text to moderate.
+        endpoint_path: The API endpoint path for metric labeling.
         shield_ids: Optional list of shield IDs to use. If None, uses all shields.
                    If empty list, skips all shields.
 
@@ -178,7 +180,7 @@ async def run_shield_moderation(
 
         if moderation_result.results and moderation_result.results[0].flagged:
             result = moderation_result.results[0]
-            recording.record_llm_validation_error()
+            recording.record_llm_validation_error(endpoint_path)
             logger.warning(
                 "Shield '%s' flagged content: categories=%s",
                 shield.identifier,

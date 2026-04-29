@@ -241,6 +241,7 @@ async def retrieve_simple_response(
     instructions: str,
     tools: Optional[list[Any]] = None,
     model_id: Optional[str] = None,
+    endpoint_path: str = "/v1/infer",
 ) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
@@ -263,7 +264,7 @@ async def retrieve_simple_response(
     """
     resolved_model_id = model_id or await _get_default_model_id()
     response = await _call_llm(question, instructions, tools, resolved_model_id)
-    extract_token_usage(response.usage, resolved_model_id)
+    extract_token_usage(response.usage, resolved_model_id, endpoint_path)
     return extract_text_from_response_items(response.output)
 
 
@@ -366,12 +367,13 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
     background_tasks.add_task(send_splunk_event, event, sourcetype)
 
 
-async def _check_shield_moderation(
+async def _check_shield_moderation(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     input_text: str,
     request_id: str,
     background_tasks: BackgroundTasks,
     infer_request: RlsapiV1InferRequest,
     request: Request,
+    endpoint_path: str,
 ) -> Optional[RlsapiV1InferResponse]:
     """Run shield moderation and return a refusal response if blocked.
 
@@ -384,13 +386,14 @@ async def _check_shield_moderation(
         background_tasks: FastAPI background tasks for async Splunk event sending.
         infer_request: The original inference request (for Splunk event context).
         request: The FastAPI request object (for Splunk event context).
+        endpoint_path: The API endpoint path for metric labeling.
 
     Returns:
         An RlsapiV1InferResponse containing the refusal message if the input
         was blocked, or None if moderation passed.
     """
     client = AsyncLlamaStackClientHolder().get_client()
-    moderation_result = await run_shield_moderation(client, input_text)
+    moderation_result = await run_shield_moderation(client, input_text, endpoint_path)
 
     if moderation_result.decision != "blocked":
         return None
@@ -432,6 +435,7 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
     start_time: float,
     model: str,
     provider: str,
+    endpoint_path: str,
 ) -> float:
     """Record metrics and queue Splunk event for an inference failure.
 
@@ -442,12 +446,15 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
         request_id: Unique identifier for the request.
         error: The exception that caused the failure.
         start_time: Monotonic clock time when inference started.
+        model: The model name.
+        provider: The provider name.
+        endpoint_path: The API endpoint path for metric labeling.
 
     Returns:
         The total inference time in seconds.
     """
     inference_time = time.monotonic() - start_time
-    recording.record_llm_failure(provider, model)
+    recording.record_llm_failure(provider, model, endpoint_path)
     _queue_splunk_event(
         background_tasks,
         infer_request,
@@ -530,6 +537,7 @@ def _build_infer_response(
     request_id: str,
     response: Optional[OpenAIResponseObject],
     model_id: str,
+    endpoint_path: str,
 ) -> RlsapiV1InferResponse:
     """Build the final inference response, with optional verbose metadata.
 
@@ -549,7 +557,11 @@ def _build_infer_response(
     """
     if response is not None:
         turn_summary = build_turn_summary(
-            response, model_id, vector_store_ids=None, rag_id_mapping=None
+            response,
+            model_id,
+            endpoint_path,
+            vector_store_ids=None,
+            rag_id_mapping=None,
         )
         return RlsapiV1InferResponse(
             data=RlsapiV1InferData(
@@ -673,12 +685,19 @@ async def infer_endpoint(  # pylint: disable=R0914
         "Request %s: Combined input source length: %d", request_id, len(input_source)
     )
 
+    endpoint_path = "/v1/infer"
+
     # Run shield moderation on user input before inference.
     # Uses all configured shields; no-op when no shields are registered.
     # Runs before model/tool discovery so blocked requests short-circuit
     # without incurring external I/O.
     blocked_response = await _check_shield_moderation(
-        input_source, request_id, background_tasks, infer_request, request
+        input_source,
+        request_id,
+        background_tasks,
+        infer_request,
+        request,
+        endpoint_path,
     )
     if blocked_response is not None:
         return blocked_response
@@ -700,11 +719,11 @@ async def infer_endpoint(  # pylint: disable=R0914
             model_id=model_id,
         )
         response_text = extract_text_from_response_items(response.output)
-        token_usage = extract_token_usage(response.usage, model_id)
+        token_usage = extract_token_usage(response.usage, model_id, endpoint_path)
         inference_time = time.monotonic() - start_time
     except _INFER_HANDLED_EXCEPTIONS as error:
         if response is not None:
-            extract_token_usage(response.usage, model_id)  # type: ignore[arg-type]
+            extract_token_usage(response.usage, model_id, endpoint_path)  # type: ignore[arg-type]
         _record_inference_failure(
             background_tasks,
             infer_request,
@@ -714,6 +733,7 @@ async def infer_endpoint(  # pylint: disable=R0914
             start_time,
             model,
             provider,
+            endpoint_path,
         )
         mapped_error = _map_inference_error_to_http_exception(
             error,
@@ -755,4 +775,5 @@ async def infer_endpoint(  # pylint: disable=R0914
         request_id,
         response if verbose_enabled else None,
         model_id,
+        endpoint_path,
     )
