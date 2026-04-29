@@ -38,11 +38,7 @@ from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import ENDPOINT_PATH_RESPONSES, SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
 from log import get_logger
-from models.common.responses.responses_api_params import ResponsesApiParams
-from models.common.responses.responses_context import ResponsesContext
-from models.config import Action
-from models.requests import ResponsesRequest
-from models.responses import (
+from models.api.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES_WITH_MCP_OAUTH,
     ConflictResponse,
     ForbiddenResponse,
@@ -50,10 +46,16 @@ from models.responses import (
     NotFoundResponse,
     PromptTooLongResponse,
     QuotaExceededResponse,
-    ResponsesResponse,
     ServiceUnavailableResponse,
     UnauthorizedResponse,
     UnprocessableEntityResponse,
+)
+from models.common.responses.responses_api_params import ResponsesApiParams
+from models.common.responses.responses_context import ResponsesContext
+from models.config import Action
+from models.requests import ResponsesRequest
+from models.responses import (
+    ResponsesResponse,
 )
 from observability import ResponsesEventData, build_responses_event, send_splunk_event
 from utils.conversations import append_turn_items_to_conversation

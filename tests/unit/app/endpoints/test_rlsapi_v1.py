@@ -31,7 +31,7 @@ from app.endpoints.rlsapi_v1 import (
 from authentication.interface import AuthTuple
 from authentication.rh_identity import RHIdentityData
 from configuration import AppConfig
-from models.responses import ServiceUnavailableResponse
+from models.api.responses import ServiceUnavailableResponse
 from models.rlsapi.requests import (
     RlsapiV1Attachment,
     RlsapiV1Context,
