@@ -15,7 +15,7 @@ Agent Skills support allows LS app teams (e.g., RHEL Lightspeed, Ansible Lightsp
 
 **Note**: End users of LS app products do NOT have the ability to add skills, similar to how they cannot add MCP servers. Skill configuration is controlled by product teams at deployment time.
 
-The LLM discovers available skills via a `list_skills` tool and loads full instructions on demand via an `activate_skill` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
+The LLM discovers available skills via a `list_skills` tool, loads full instructions on demand via an `activate_skill` tool, and retrieves reference files via a `load_skill_resource` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
 
 ## Why
 
@@ -35,9 +35,9 @@ Skills solve this by giving the LLM access to procedural knowledge and domain-sp
 - **R1:** Skill paths are specified in `lightspeed-stack.yaml`; name and description are read from `SKILL.md` frontmatter
 - **R2:** Each skill path must point to a directory containing a valid `SKILL.md` file
 - **R3:** The system prompt contains behavioral instructions for skill discovery and activation
-- **R4:** The LLM can discover skills via `list_skills` tool and load full instructions via `activate_skill` tool
-- **R5:** Skill content is returned with structured wrapping (`<skill_content>` tags) per agentskills.io spec
-- **R6:** The LLM can read files from a skill's `references/` subdirectory (allowlisted paths)
+- **R4:** The LLM can discover skills via `list_skills` tool, load full instructions via `activate_skill` tool, and load reference files via `load_skill_resource` tool
+- **R5:** Skill content is returned with structured wrapping (`<skill_content>` and `<skill_resource>` tags) per agentskills.io spec
+- **R6:** The LLM can load files from a skill's `references/` subdirectory via `load_skill_resource` tool (path-restricted)
 - **R7:** Script execution (`scripts/` subdirectory) is not supported
 - **R8:** Skill configuration is validated at startup with clear error messages
 - **R9:** Activated skills are tracked per conversation to prevent duplicate injection
@@ -83,7 +83,7 @@ Request flow:
            │
            ▼
   ┌─────────────────┐
-  │ Register tools  │──► Add list_skills + activate_skill tools
+  │ Register tools  │──► Add list_skills + activate_skill + load_skill_resource tools
   └────────┬────────┘
            │
            ▼
@@ -94,13 +94,19 @@ Request flow:
            │
            ▼ (if skill relevant)
   ┌─────────────────┐
-  │ activate_skill  │──► Returns <skill_content> with body + resources
+  │ activate_skill  │──► Returns <skill_content> with body + resource list
   │ tool invocation │
   └────────┬────────┘
            │
-           ▼
+           ▼ (if resource needed)
+  ┌──────────────────────┐
+  │ load_skill_resource  │──► Returns <skill_resource> with file content
+  │ tool invocation      │
+  └──────────┬───────────┘
+             │
+             ▼
   ┌─────────────────┐
-  │ LLM uses skill  │──► May read reference files if needed
+  │ LLM uses skill  │──► Follows instructions with loaded resources
   │ instructions    │
   └─────────────────┘
 ```
@@ -239,6 +245,10 @@ catalog with name and description for each skill.
 When a task matches a skill's description, call the activate_skill tool with
 the skill's name to load its full instructions. You MUST load and follow the
 skill instructions before proceeding with the task.
+
+If the skill instructions reference files in the skill's references/ directory,
+use the load_skill_resource tool to load them. Pass the skill name and the
+relative path (e.g., "references/guide.md") to retrieve the file content.
 ```
 
 #### Implementation
@@ -255,6 +265,10 @@ catalog with name and description for each skill.
 When a task matches a skill's description, call the activate_skill tool with
 the skill's name to load its full instructions. You MUST load and follow the
 skill instructions before proceeding with the task.
+
+If the skill instructions reference files in the skill's references/ directory,
+use the load_skill_resource tool to load them. Pass the skill name and the
+relative path (e.g., "references/guide.md") to retrieve the file content.
 """
 
 def get_skill_instructions(skills: list[LoadedSkill]) -> str:
@@ -285,7 +299,7 @@ def get_system_prompt(system_prompt: Optional[str], loaded_skills: list[LoadedSk
 
 ### Skill tools
 
-Two tools are registered for skill discovery and activation. This follows the [tool-based activation pattern](https://agentskills.io/client-implementation/adding-skills-support#dedicated-tool-activation) from agentskills.io and aligns with Google ADK's approach.
+Three tools are registered for skill discovery, activation, and resource loading. This follows the [tool-based activation pattern](https://agentskills.io/client-implementation/adding-skills-support#dedicated-tool-activation) from agentskills.io and aligns with Google ADK's approach.
 
 #### list_skills tool
 
@@ -408,6 +422,88 @@ def handle_activate_skill(name: str, skills: list[LoadedSkill]) -> str:
     return "\n".join(lines)
 ```
 
+#### load_skill_resource tool
+
+The `load_skill_resource` tool loads files from a skill's `references/` subdirectory:
+
+```python
+def get_load_skill_resource_tool(skills: list[LoadedSkill]) -> Optional[InputTool]:
+    """Create the load_skill_resource tool if skills are configured.
+
+    Loads files from a skill's references/ directory.
+    """
+    if not skills:
+        return None
+
+    skill_names = [skill.name for skill in skills]
+
+    return InputTool(
+        type="function",
+        function={
+            "name": "load_skill_resource",
+            "description": "Load a file from a skill's references/ directory. Use this when skill instructions reference additional documentation.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "skill_name": {
+                        "type": "string",
+                        "enum": skill_names,
+                        "description": "The name of the skill containing the resource",
+                    },
+                    "path": {
+                        "type": "string",
+                        "description": "Relative path to the resource file (e.g., 'references/guide.md')",
+                    },
+                },
+                "required": ["skill_name", "path"],
+            },
+        },
+    )
+
+
+def handle_load_skill_resource(
+    skill_name: str, path: str, skills: list[LoadedSkill]
+) -> str:
+    """Handle load_skill_resource tool invocation.
+
+    Returns file content wrapped in structured tags.
+    """
+    skill = next((s for s in skills if s.name == skill_name), None)
+    if not skill:
+        return f"<error>Unknown skill: {skill_name}</error>"
+
+    # Resolve the path relative to skill directory
+    resource_path = (skill.path / path).resolve()
+    skill_dir = skill.path.resolve()
+
+    # Security check: ensure path is within skill directory
+    try:
+        resource_path.relative_to(skill_dir)
+    except ValueError:
+        return f"<error>Path '{path}' is outside skill directory</error>"
+
+    if not resource_path.is_file():
+        return f"<error>Resource not found: {path}</error>"
+
+    try:
+        content = resource_path.read_text()
+    except Exception as e:
+        return f"<error>Failed to read resource: {e}</error>"
+
+    return f'<skill_resource skill="{skill_name}" path="{path}">\n{content}\n</skill_resource>'
+```
+
+#### Example load_skill_resource response
+
+```xml
+<skill_resource skill="openshift-troubleshooting" path="references/common-errors.md">
+# Common OpenShift Errors
+
+## ImagePullBackOff
+...
+</skill_resource>
+```
+
 #### Example tool response
 
 ```xml
@@ -432,26 +528,20 @@ Relative paths in this skill are relative to the skill directory.
 
 ### Reference file access
 
-Skills can include a `references/` subdirectory with additional documentation. The LLM can read these files using existing file-read capabilities when skill instructions reference them.
+Skills can include a `references/` subdirectory with additional documentation. The LLM loads these files using the `load_skill_resource` tool when skill instructions reference them.
 
-**Path restriction**: File reads are restricted to configured skill directories. The skill tool returns the `base_path` so the LLM can construct valid paths like `{base_path}/references/guide.md`.
+**Path restriction**: The `load_skill_resource` tool validates that requested paths are within the skill directory. Attempts to traverse outside the skill directory (e.g., using `../`) are rejected with an error.
 
-#### Permission allowlisting
-
-Following the [agentskills.io guidance](https://agentskills.io/client-implementation/adding-skills-support#permission-allowlisting), skill directories should be allowlisted for file access so the model can read bundled resources without triggering permission prompts. Without this, every reference to a bundled file results in a permission dialog, breaking the flow.
+**Security**: The path validation in `handle_load_skill_resource` prevents directory traversal attacks by resolving the full path and checking it remains within the skill directory:
 
 ```python
-def is_path_in_skill_directory(path: str, skills: list[LoadedSkill]) -> bool:
-    """Check if a path is within a configured skill directory."""
-    resolved_path = Path(path).resolve()
-    for skill in skills:
-        skill_dir = skill.path.resolve()
-        try:
-            resolved_path.relative_to(skill_dir)
-            return True
-        except ValueError:
-            continue
-    return False
+# Security check: ensure path is within skill directory
+resource_path = (skill.path / path).resolve()
+skill_dir = skill.path.resolve()
+try:
+    resource_path.relative_to(skill_dir)
+except ValueError:
+    return f"<error>Path '{path}' is outside skill directory</error>"
 ```
 
 ### Context management
@@ -462,12 +552,15 @@ Once skill instructions are in the conversation context, they must remain effect
 
 If lightspeed-stack implements context compaction (conversation history summarization), skill content must be exempted from pruning. Skill instructions are durable behavioral guidance — losing them mid-conversation silently degrades performance.
 
-The `<skill_content>` tags from structured wrapping enable identification during compaction:
+The `<skill_content>` and `<skill_resource>` tags from structured wrapping enable identification during compaction:
 
 ```python
 def is_skill_content(message: str) -> bool:
     """Check if a message contains skill content that should be protected."""
-    return "<skill_content" in message and "</skill_content>" in message
+    return (
+        ("<skill_content" in message and "</skill_content>" in message) or
+        ("<skill_resource" in message and "</skill_resource>" in message)
+    )
 ```
 
 #### Deduplicate activations
@@ -508,7 +601,10 @@ if skill_tracker.is_activated(conversation_id, name):
 | SKILL.md not found | Startup fails: "SKILL.md not found at {path}/SKILL.md" |
 | Name mismatch | Startup fails: "Skill name mismatch: config has '{x}' but SKILL.md has '{y}'" |
 | Invalid YAML frontmatter | Startup fails: "Invalid SKILL.md frontmatter: {error}" |
-| Unknown skill in read_skill | Tool returns: {"error": "Unknown skill: {name}"} |
+| Unknown skill in activate_skill | Tool returns: `<error>Unknown skill: {name}</error>` |
+| Unknown skill in load_skill_resource | Tool returns: `<error>Unknown skill: {skill_name}</error>` |
+| Path outside skill directory | Tool returns: `<error>Path '{path}' is outside skill directory</error>` |
+| Resource file not found | Tool returns: `<error>Resource not found: {path}</error>` |
 
 ## Implementation Suggestions
 
@@ -517,9 +613,9 @@ if skill_tracker.is_activated(conversation_id, name):
 | File | What to do |
 |------|------------|
 | `src/models/config.py` | Add `SkillsConfiguration` class and `skills` field to `Configuration` |
-| `src/utils/skills.py` | New module: `LoadedSkill`, `load_skills()`, `parse_skill_md()`, `get_skill_instructions()`, `handle_list_skills()`, `handle_activate_skill()` |
+| `src/utils/skills.py` | New module: `LoadedSkill`, `load_skills()`, `parse_skill_md()`, `get_skill_instructions()`, `handle_list_skills()`, `handle_activate_skill()`, `handle_load_skill_resource()` |
 | `src/utils/prompts.py` | Modify `get_system_prompt()` to append behavioral instructions |
-| `src/utils/responses.py` | Modify `prepare_tools()` to include `list_skills` and `activate_skill` tools |
+| `src/utils/responses.py` | Modify `prepare_tools()` to include `list_skills`, `activate_skill`, and `load_skill_resource` tools |
 | `src/constants.py` | Add skill-related constants |
 
 ### Insertion point detail
@@ -536,8 +632,8 @@ if skill_tracker.is_activated(conversation_id, name):
 
 **Tool registration** (`src/utils/responses.py`):
 - `prepare_tools()` at line 204 builds the tool list
-- Add `list_skills` and `activate_skill` tools after MCP tools (around line 260)
-- Tool handlers need to be registered for both `list_skills` and `activate_skill` function types
+- Add `list_skills`, `activate_skill`, and `load_skill_resource` tools after MCP tools (around line 260)
+- Tool handlers need to be registered for all three skill tool function types
 
 ### SKILL.md parsing
 
@@ -636,6 +732,7 @@ These are test instructions.
 
 | Date | Change | Reason |
 |------|--------|--------|
+| 2026-04-29 | Add `load_skill_resource` tool as third skill tool | Dedicated tool for loading reference files instead of relying on generic file-read |
 | 2026-04-27 | Tool-based discovery: `list_skills` returns catalog, system prompt has behavioral instructions only | Scales better, clean evolution path to search-based discovery |
 | 2026-04-27 | Config specifies paths only; name/description read from SKILL.md | Keep config lightweight, avoid bloating CR |
 | 2026-04-09 | Initial version | Spike completion |

@@ -4,7 +4,7 @@
 
 **The problem**: Lightspeed Core has no mechanism for extending agent capabilities with specialized instructions or domain knowledge. Users cannot package reusable workflows, troubleshooting guides, or domain expertise into portable, discoverable units that the LLM can use on demand.
 
-**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with filesystem-based discovery. Config specifies paths to skill directories; skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. The LLM discovers available skills via a `list_skills` tool and loads full instructions on demand via an `activate_skill` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
+**The recommendation**: Implement the [Agent Skills open standard](https://agentskills.io) with filesystem-based discovery. Config specifies paths to skill directories; skill metadata (name, description) is read from `SKILL.md` frontmatter at startup. The LLM discovers available skills via a `list_skills` tool, loads full instructions on demand via an `activate_skill` tool, and retrieves reference files via a `load_skill_resource` tool. The system prompt contains behavioral instructions for how to use these tools, not the skill catalog itself.
 
 **PoC validation**: Not applicable for this spike. The feature is well-defined by the agentskills.io specification and has been implemented by 30+ agent products including Claude Code, GitHub Copilot, Cursor, and OpenAI Codex.
 
@@ -64,7 +64,7 @@ Architecture-level and implementation-level decisions.
 | Option | Description |
 |--------|-------------|
 | A | System prompt catalog (skill catalog embedded in system prompt, LLM decides) |
-| B | Tool-based discovery (`list_skills` tool returns catalog, `activate_skill` loads instructions) |
+| B | Tool-based discovery (`list_skills` tool returns catalog, `activate_skill` loads instructions, `load_skill_resource` loads reference files) |
 | C | Per-request parameter (client specifies which skills to activate) |
 | D | Hybrid (catalog in system prompt if < N skills, tool-based discovery otherwise) |
 
@@ -73,11 +73,14 @@ Architecture-level and implementation-level decisions.
 1. **System prompt** contains behavioral instructions only:
    - How to discover skills (`list_skills`)
    - How to activate skills (`activate_skill`)
+   - How to load reference files (`load_skill_resource`)
    - Requirement to load full instructions before proceeding
 
 2. **`list_skills` tool** returns the skill catalog (name + description for each skill)
 
 3. **`activate_skill` tool** loads full `SKILL.md` instructions when the LLM decides a skill is relevant
+
+4. **`load_skill_resource` tool** loads files from the skill's `references/` subdirectory when needed
 
 **Rationale**: This pattern follows Google ADK's proven approach and provides a clean evolution path:
 
@@ -105,7 +108,7 @@ Option D (hybrid) remains viable for deployments with predictable skill counts, 
 **Recommendation**: **B** (Progressive disclosure). This follows the agentskills.io pattern:
 1. **Catalog** (~50-100 tokens/skill) - name + description returned by `list_skills` tool
 2. **Instructions** (<5000 tokens) - full `SKILL.md` body loaded via `activate_skill` tool when needed
-3. **Resources** (on-demand) - `references/` files loaded via file-read tool when referenced
+3. **Resources** (on-demand) - `references/` files loaded via `load_skill_resource` tool when referenced
 
 This keeps the base context small while giving the LLM access to specialized knowledge on demand.
 
@@ -181,14 +184,14 @@ Follow the MCP server config pattern (ModelContextProtocolServer class, line 468
 - Create `src/utils/skills.py` module with skill catalog management
 - Add `list_skills` tool registration in `prepare_tools()` in `src/utils/responses.py`
 - Implement tool handler that returns formatted skill catalog (name + description)
-- Modify `get_system_prompt()` in `src/utils/prompts.py` to add behavioral instructions for skill discovery and activation
+- Modify `get_system_prompt()` in `src/utils/prompts.py` to add behavioral instructions for skill discovery, activation, and resource loading
 
 **Acceptance criteria**:
 
 - LLM can call `list_skills()` to get the catalog of available skills
 - Tool returns name and description for each configured skill
 - Tool returns empty list when no skills are configured
-- System prompt includes behavioral instructions (how to use `list_skills` and `activate_skill`)
+- System prompt includes behavioral instructions (how to use `list_skills`, `activate_skill`, and `load_skill_resource`)
 - Unit tests verify tool registration, catalog formatting, and system prompt instructions
 
 **Agentic tool instruction**:
@@ -232,28 +235,63 @@ src/utils/skills.py.
 
 <!-- type: Task -->
 <!-- key: LCORE-???? -->
-### LCORE-???? Add skill reference file access
+### LCORE-???? Implement load_skill_resource tool
 
-**Description**: Enable the LLM to read files from the skill's `references/` subdirectory when skill instructions reference them.
+**Description**: Register a `load_skill_resource` tool that the LLM can call to load files from a skill's `references/` subdirectory. This is the third skill tool, complementing `list_skills` and `activate_skill`.
 
 **Scope**:
 
-- Ensure existing file-read tool can access skill reference directories
+- Add `load_skill_resource` tool registration in `prepare_tools()` in `src/utils/responses.py`
+- Implement tool handler that reads files from skill `references/` directories
 - Add path validation to restrict access to configured skill directories only
-- Document the pattern for skill authors to reference files
+- Return file content wrapped in structured tags
 
 **Acceptance criteria**:
 
-- LLM can read files from `<skill-path>/references/` using existing file-read capability
+- LLM can call `load_skill_resource(skill_name="skill-name", path="references/guide.md")` to load a reference file
+- Tool returns file content for valid paths within the skill's directory
+- Tool returns error if skill name is invalid or path is outside skill directory
 - Access is restricted to configured skill directories (no arbitrary filesystem access)
-- Skill instructions can use relative paths like `references/troubleshooting-guide.md`
 - Integration test verifies reference file access works end-to-end
 
 **Agentic tool instruction**:
 
 ```text
-Read the "Reference file access" section in docs/design/agent-skills/agent-skills.md.
-Key files: src/utils/responses.py, existing file-read tool implementation.
+Read the "load_skill_resource tool" section in docs/design/agent-skills/agent-skills.md.
+Key files: src/utils/responses.py (prepare_tools function, line 204),
+src/utils/skills.py.
+```
+
+<!-- type: Task -->
+<!-- key: LCORE-???? -->
+### LCORE-???? Wire skill tools into request flow
+
+**Description**: Integrate the three skill tools (`list_skills`, `activate_skill`, `load_skill_resource`) into the request processing flow. This includes tool registration, invocation handling, and context management.
+
+**Scope**:
+
+- Register all three skill tools when skills are configured
+- Add tool invocation routing in the response handler to dispatch skill tool calls
+- Integrate skill behavioral instructions into `get_system_prompt()`
+- Implement `SkillTracker` for per-conversation activation deduplication
+- Ensure skill content (`<skill_content>`, `<skill_resource>` tags) is protected from context compaction
+
+**Acceptance criteria**:
+
+- All three skill tools are registered when skills are configured in `lightspeed-stack.yaml`
+- Tool invocations are correctly routed to their handlers in `src/utils/skills.py`
+- System prompt includes behavioral instructions when skills are configured
+- Duplicate skill activations within a conversation return a note instead of re-injecting content
+- Skill content in conversation context is preserved during compaction
+- Integration test verifies end-to-end flow: list → activate → load_resource
+
+**Agentic tool instruction**:
+
+```text
+Read the "Skill tools" and "Context management" sections in docs/design/agent-skills/agent-skills.md.
+Key files: src/utils/responses.py (prepare_tools, response handling),
+src/utils/prompts.py (get_system_prompt),
+src/utils/skills.py (tool handlers, SkillTracker).
 ```
 
 <!-- type: Story -->
@@ -284,27 +322,81 @@ Reference the agentskills.io specification for SKILL.md format details.
 
 <!-- type: Task -->
 <!-- key: LCORE-???? -->
-### LCORE-???? Add integration and E2E tests for skills
+### LCORE-???? Add integration tests for skills
 
-**Description**: Add integration tests and E2E tests to verify the skills feature works correctly end-to-end.
+**Description**: Add integration tests to verify skill loading, catalog injection, and tool invocation with mocked LLM responses.
 
 **Scope**:
 
-- Integration tests: skill loading, catalog injection, tool invocation with mocked LLM
-- E2E tests: full flow with real LLM, verify skill activation and usage
+- Test skill configuration loading and validation
+- Test catalog generation with skills injected
+- Test tool invocation handling with mocked LLM
 
 **Acceptance criteria**:
 
 - Integration tests cover skill configuration, catalog generation, and tool handling
-- E2E tests verify a configured skill can be discovered and used by the LLM
 - Tests use example skills from `examples/skills/`
+- Tests mock LLM responses to verify tool invocation flow
 
 **Agentic tool instruction**:
 
 ```text
 Read the "Testing" section in docs/design/agent-skills/agent-skills.md.
-Key test files: tests/integration/endpoints/, tests/e2e/features/.
-Follow existing test patterns in the codebase.
+Key test files: tests/integration/endpoints/.
+Follow existing integration test patterns in the codebase.
+```
+
+<!-- type: Task -->
+<!-- key: LCORE-???? -->
+### LCORE-???? Add E2E feature file for skills
+
+**Description**: Write Gherkin feature file(s) defining E2E test scenarios for the skills feature.
+
+**Scope**:
+
+- Define feature file with scenarios for skill discovery and usage
+- Cover skill activation via conversation
+- Include scenarios for skill tool invocation
+
+**Acceptance criteria**:
+
+- Feature file(s) created in `tests/e2e/features/`
+- Scenarios cover skill discovery, activation, and usage
+- Scenarios use example skills from `examples/skills/`
+- Feature file follows existing Gherkin patterns in the codebase
+
+**Agentic tool instruction**:
+
+```text
+Read the "Testing" section in docs/design/agent-skills/agent-skills.md.
+Key test files: tests/e2e/features/*.feature.
+Follow existing feature file patterns in the codebase.
+```
+
+<!-- type: Task -->
+<!-- key: LCORE-???? -->
+### LCORE-???? Implement E2E step definitions for skills
+
+**Description**: Implement the step definitions to support the skills E2E feature file scenarios.
+
+**Scope**:
+
+- Implement step definitions for skill-related Gherkin steps
+- Handle skill configuration setup in test environment
+- Verify skill tool invocation and responses
+
+**Acceptance criteria**:
+
+- Step definitions implemented in `tests/e2e/features/steps/`
+- All scenarios in the skills feature file pass
+- Steps follow existing step definition patterns in the codebase
+
+**Agentic tool instruction**:
+
+```text
+Read the "Testing" section in docs/design/agent-skills/agent-skills.md.
+Key test files: tests/e2e/features/steps/.
+Follow existing step definition patterns using behave framework.
 ```
 
 ## Background sections
@@ -350,7 +442,7 @@ The agentskills.io spec recommends a three-tier loading strategy:
 |------|---------------|------|------------|
 | 1. Catalog | Name + description | LLM calls `list_skills` | ~50-100 tokens/skill |
 | 2. Instructions | Full SKILL.md body | LLM calls `activate_skill` | <5000 tokens (recommended) |
-| 3. Resources | References, assets | LLM reads reference files | Varies |
+| 3. Resources | References, assets | LLM calls `load_skill_resource` | Varies |
 
 This keeps base context small while giving the LLM access to specialized knowledge on demand. The system prompt contains only behavioral instructions (~200 tokens) regardless of skill count.
 
@@ -385,7 +477,7 @@ OpenAI's SDK already includes `LocalSkill` and `Skill` types in its responses mo
 | OpenAI Codex | API-based | API-based | Yes |
 | Google ADK | `list_skills` tool | `load_skill` + `load_skill_resource` tools | Yes (`run_skill_script`) |
 
-**Note**: Google ADK's approach aligns with our recommendation. Their system prompt contains behavioral instructions (how to use the tools), not the skill catalog itself. The `list_skills` tool returns the catalog on demand.
+**Note**: Google ADK's approach aligns with our recommendation. They use three tools: `list_skills` returns the catalog, `load_skill` loads instructions, and `load_skill_resource` loads reference files. Their system prompt contains behavioral instructions (how to use the tools), not the skill catalog itself.
 
 ### Alternative designs considered
 
