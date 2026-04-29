@@ -32,6 +32,7 @@ MANIFEST_DIR="$SCRIPT_DIR/../manifests/lightspeed"
 # Written by pipeline.sh when it starts LCS port-forward; e2e-ops kills this PID before rebinding 8080.
 E2E_LSC_PORT_FORWARD_PID_FILE="${E2E_LSC_PORT_FORWARD_PID_FILE:-/tmp/e2e-lightspeed-port-forward.pid}"
 E2E_LLAMA_PORT_FORWARD_PID_FILE="${E2E_LLAMA_PORT_FORWARD_PID_FILE:-/tmp/e2e-llama-port-forward.pid}"
+E2E_JWKS_PORT_FORWARD_PID_FILE="${E2E_JWKS_PORT_FORWARD_PID_FILE:-/tmp/e2e-jwks-port-forward.pid}"
 
 # ============================================================================
 # Helper functions
@@ -148,6 +149,23 @@ kill_stale_llama_forward() {
     free_local_tcp_port "$port"
 }
 
+# Kill anything likely to hold the mock-jwks local forward (localhost:8000).
+kill_stale_jwks_forward() {
+    local port="${1:-8000}"
+    local saved_pf
+    if [[ -f "$E2E_JWKS_PORT_FORWARD_PID_FILE" ]]; then
+        read -r saved_pf <"$E2E_JWKS_PORT_FORWARD_PID_FILE" 2>/dev/null || true
+        if [[ "$saved_pf" =~ ^[0-9]+$ ]]; then
+            kill -9 "$saved_pf" 2>/dev/null || true
+        fi
+    fi
+    pkill -9 -f "port-forward.*mock-jwks.*${port}:${port}" 2>/dev/null || true
+    pkill -9 -f "oc port-forward svc/mock-jwks ${port}:${port}" 2>/dev/null || true
+    free_local_tcp_port "$port"
+    sleep 1
+    free_local_tcp_port "$port"
+}
+
 # After oc port-forward dies in <2s, show recent oc stderr from the log file.
 e2e_ops_emit_port_forward_immediate_failure_diag() {
     echo "[e2e-ops] /tmp/port-forward.log (tail 25):"
@@ -172,21 +190,30 @@ verify_connectivity() {
     local max_attempts="${1:-6}"
     local local_port="${LOCAL_PORT:-8080}"
     local http_code=""
-    
+
     for ((attempt=1; attempt<=max_attempts; attempt++)); do
-        # Check readiness endpoint - accept 200 or 401 (auth required but service is up)
+        # First check /readiness to see if port-forward is alive (accept 200 or 401)
         http_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://localhost:$local_port/readiness" 2>/dev/null) || http_code="000"
-        
+
         if [[ "$http_code" == "200" || "$http_code" == "401" ]]; then
-            return 0
+            # Port-forward works; now verify the app is fully initialized by hitting
+            # a real endpoint. /v1/models requires the Llama Stack handshake to complete.
+            # Accept 200 (no auth) or 401 (auth enabled) — both prove the full app
+            # stack is up, not just the TCP socket.
+            local models_code
+            models_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "http://localhost:$local_port/v1/models" 2>/dev/null) || models_code="000"
+            if [[ "$models_code" == "200" || "$models_code" == "401" ]]; then
+                return 0
+            fi
+            echo "[e2e-ops] /readiness=$http_code but /v1/models=$models_code (app still initializing, attempt $attempt/$max_attempts)"
         fi
-        
+
         if [[ $attempt -lt $max_attempts ]]; then
-            sleep 2
+            sleep 5
         fi
     done
-    
-    echo "Connectivity check failed (HTTP: ${http_code:-unknown})"
+
+    echo "Connectivity check failed (readiness: ${http_code:-unknown})"
     return 1
 }
 
@@ -235,33 +262,50 @@ wait_for_llama_stack_http_health() {
 
 cmd_restart_lightspeed() {
     echo "Restarting lightspeed-stack service..."
-    
+
+    # LCS hangs at startup if Llama Stack is unreachable (blocks Llama handshake,
+    # never opens port 8080, readiness probe never passes).  Ensure Llama Stack
+    # is healthy before recreating the LCS pod.
+    if ! _llama_stack_http_health_once 2>/dev/null; then
+        echo "⚠️  Llama Stack not healthy — restoring before LCS restart..."
+        cmd_restart_llama_stack || echo "⚠️  Llama Stack restore failed; LCS may be slow to start"
+    fi
+
     # Delete existing pod (short wait so hook stays within timeout; force if needed)
     timeout 20 oc delete pod lightspeed-stack-service -n "$NAMESPACE" --ignore-not-found=true --wait=true 2>/dev/null || {
         oc delete pod lightspeed-stack-service -n "$NAMESPACE" --ignore-not-found=true --force --grace-period=0 2>/dev/null || true
         sleep 2
     }
     
-    # Apply manifest (expand LIGHTSPEED_STACK_IMAGE)
+    # Apply manifest (expand LIGHTSPEED_STACK_IMAGE only; filter prevents blanking other $VAR refs)
     LIGHTSPEED_STACK_IMAGE="${LIGHTSPEED_STACK_IMAGE:-quay.io/lightspeed-core/lightspeed-stack:dev-latest}"
     export LIGHTSPEED_STACK_IMAGE
     _ls_manifest="$MANIFEST_DIR/lightspeed-stack.yaml"
-    if command -v envsubst >/dev/null 2>&1; then
-        envsubst < "$_ls_manifest" | oc apply -n "$NAMESPACE" -f -
-    else
-        sed "s|\${LIGHTSPEED_STACK_IMAGE}|${LIGHTSPEED_STACK_IMAGE}|g" "$_ls_manifest" |
-            oc apply -n "$NAMESPACE" -f -
+    sed "s|\${LIGHTSPEED_STACK_IMAGE}|${LIGHTSPEED_STACK_IMAGE}|g" "$_ls_manifest" |
+        oc apply -n "$NAMESPACE" -f -
+    
+    # Wait for pod to be ready (TCP probe passes when app listens on 8080).
+    # Don't let a timeout here abort the function — still attempt port-forward
+    # and diagnostics so later scenarios have a chance to recover.
+    local pod_ready=true
+    if ! wait_for_pod "lightspeed-stack-service" 40; then
+        pod_ready=false
+        echo "⚠️  Pod not ready within 120s — dumping diagnostics:"
+        oc describe pod lightspeed-stack-service -n "$NAMESPACE" 2>&1 | tail -30 || true
+        oc logs lightspeed-stack-service -n "$NAMESPACE" --tail=40 2>&1 || true
     fi
-    
-    # Wait for pod to be ready (TCP probe passes when app listens on 8080)
-    wait_for_pod "lightspeed-stack-service" 40
-    
+
     # Re-label pod for service discovery
     oc label pod lightspeed-stack-service pod=lightspeed-stack-service -n "$NAMESPACE" --overwrite
-    
-    # Re-establish port-forward
+
+    # Re-establish port-forwards (may succeed even if readiness was slow)
     cmd_restart_port_forward
-    
+    cmd_restart_jwks_port_forward || echo "⚠️  Mock JWKS port-forward failed (RBAC tests may fail)"
+
+    if [[ "$pod_ready" == "false" ]]; then
+        echo "⚠️  Lightspeed restart completed but pod was slow to become ready"
+        return 1
+    fi
     echo "✓ Lightspeed restart complete"
 }
 
@@ -291,12 +335,9 @@ cmd_restart_llama_stack() {
         fi
     else
         # Prow: vLLM Llama Stack image (matches pipeline.sh / pipeline-services.sh)
-        if command -v envsubst >/dev/null 2>&1; then
-            envsubst < "$MANIFEST_DIR/llama-stack.yaml" | oc apply -n "$NAMESPACE" -f -
-        else
-            sed "s|\${LLAMA_STACK_IMAGE}|${LLAMA_STACK_IMAGE:-}|g" "$MANIFEST_DIR/llama-stack.yaml" |
-                oc apply -n "$NAMESPACE" -f -
-        fi
+        # Use sed instead of envsubst to avoid blanking $VAR references in embedded bash scripts
+        sed "s|\${LLAMA_STACK_IMAGE}|${LLAMA_STACK_IMAGE:-}|g" "$MANIFEST_DIR/llama-stack-prow.yaml" |
+            oc apply -n "$NAMESPACE" -f -
         wait_for_pod "llama-stack-service" 24
         echo "Labeling pod for service..."
         oc label pod llama-stack-service pod=llama-stack-service -n "$NAMESPACE" --overwrite
@@ -453,6 +494,66 @@ cmd_restart_llama_port_forward() {
     return 1
 }
 
+cmd_restart_jwks_port_forward() {
+    local local_port="${LOCAL_JWKS_PORT:-8000}"
+    local remote_port="${REMOTE_JWKS_PORT:-8000}"
+    local max_attempts=4
+    local pf_pid
+    local jwks_pf_log="/tmp/port-forward-jwks.log"
+
+    # Check if existing forward is still alive
+    if [[ -f "$E2E_JWKS_PORT_FORWARD_PID_FILE" ]]; then
+        local saved_pf
+        read -r saved_pf <"$E2E_JWKS_PORT_FORWARD_PID_FILE" 2>/dev/null || true
+        if [[ "$saved_pf" =~ ^[0-9]+$ ]] && kill -0 "$saved_pf" 2>/dev/null; then
+            local http_code
+            http_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 "http://127.0.0.1:$local_port/tokens" 2>/dev/null) || http_code="000"
+            if [[ "$http_code" != "000" ]]; then
+                echo "✓ Mock JWKS port-forward already healthy (PID: $saved_pf)"
+                return 0
+            fi
+        fi
+    fi
+
+    echo "Re-establishing mock-jwks port-forward on $local_port:$remote_port..."
+
+    for ((attempt=1; attempt<=max_attempts; attempt++)); do
+        kill_stale_jwks_forward "$local_port"
+        sleep 2
+
+        echo "JWKS port-forward attempt $attempt/$max_attempts"
+
+        : >"$jwks_pf_log"
+        nohup oc port-forward svc/mock-jwks "$local_port:$remote_port" -n "$NAMESPACE" \
+            </dev/null >"$jwks_pf_log" 2>&1 &
+        pf_pid=$!
+        disown "$pf_pid" 2>/dev/null || true
+        sleep 3
+
+        if ! kill -0 "$pf_pid" 2>/dev/null; then
+            echo "JWKS port-forward process exited immediately"
+            continue
+        fi
+
+        local http_code
+        http_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$local_port/tokens" 2>/dev/null) || http_code="000"
+        if [[ "$http_code" != "000" ]]; then
+            echo "$pf_pid" >"$E2E_JWKS_PORT_FORWARD_PID_FILE"
+            echo "✓ Mock JWKS port-forward established (PID: $pf_pid)"
+            return 0
+        fi
+
+        if [[ $attempt -lt $max_attempts ]]; then
+            echo "JWKS forward attempt $attempt failed, retrying..."
+            kill -9 "$pf_pid" 2>/dev/null || true
+            sleep 2
+        fi
+    done
+
+    echo "Failed to establish mock-jwks port-forward on :$local_port"
+    return 1
+}
+
 cmd_wait_for_pod() {
     local pod_name="${1:?Pod name required}"
     local max_attempts="${2:-24}"
@@ -462,16 +563,24 @@ cmd_wait_for_pod() {
 cmd_update_configmap() {
     local configmap_name="${1:?ConfigMap name required}"
     local source_file="${2:?Source file required}"
-    
+
     echo "Updating ConfigMap $configmap_name from $source_file..."
-    
-    # Delete existing configmap
-    oc delete configmap "$configmap_name" -n "$NAMESPACE" --ignore-not-found=true
-    
-    # Create new configmap from the source file
-    oc create configmap "$configmap_name" -n "$NAMESPACE" \
-        --from-file="lightspeed-stack.yaml=$source_file"
-    
+
+    if [[ ! -f "$source_file" ]]; then
+        echo "ERROR: source file does not exist: $source_file" >&2
+        return 1
+    fi
+
+    # Use dry-run + apply to avoid the delete-then-create race.
+    # If delete succeeds but create fails the ConfigMap is gone and every
+    # subsequent attempt cascades into failure.
+    if ! oc create configmap "$configmap_name" -n "$NAMESPACE" \
+            --from-file="lightspeed-stack.yaml=$source_file" \
+            --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -; then
+        echo "ERROR: oc apply for ConfigMap $configmap_name failed" >&2
+        return 1
+    fi
+
     echo "✓ ConfigMap $configmap_name updated successfully"
 }
 
@@ -514,6 +623,9 @@ case "$COMMAND" in
         ;;
     restart-llama-port-forward)
         cmd_restart_llama_port_forward
+        ;;
+    restart-jwks-port-forward)
+        cmd_restart_jwks_port_forward
         ;;
     restart-port-forward)
         cmd_restart_port_forward

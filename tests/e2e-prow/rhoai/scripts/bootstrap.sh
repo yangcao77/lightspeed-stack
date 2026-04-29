@@ -92,5 +92,11 @@ oc get csv -n openshift-nfd
 
 echo "--> Applying DataScienceCluster from ds-cluster.yaml..."
 oc apply -f "$BASE_DIR/manifests/operators/ds-cluster.yaml"
+sleep 5
+sleep 10
+
+echo "--> Checking DSCInitialization and DSC status..."
+oc get dsci -A -o jsonpath='{range .items[*]}DSCI: {.metadata.name} applicationsNS: {.spec.applicationsNamespace}{"\n"}{end}' 2>/dev/null || echo "No DSCInitialization found"
+oc get dsc -A -o jsonpath='{range .items[*]}DSC: {.metadata.name} phase: {.status.phase}{"\n"}{end}' 2>/dev/null || echo "No DSC status yet"
 
 echo "All files applied successfully. The DataScienceCluster is now provisioning."

@@ -17,13 +17,20 @@ from behave.model import Feature, Scenario
 from behave.runner import Context
 
 from tests.e2e.features.steps.common import (
+    get_llama_stack_hostname,
+    get_llama_stack_port,
     reset_active_lightspeed_stack_config_basename,
 )
-from tests.e2e.features.steps.health import reset_llama_stack_disrupt_once_tracking
+from tests.e2e.features.steps.health import (
+    get_llama_stack_was_running,
+    reset_llama_stack_disrupt_once_tracking,
+    reset_llama_stack_was_running,
+)
 from tests.e2e.utils.llama_stack_utils import register_shield
 from tests.e2e.utils.prow_utils import (
     restart_pod,
     restore_llama_stack_pod,
+    run_e2e_ops,
 )
 from tests.e2e.utils.utils import (
     is_prow_environment,
@@ -133,6 +140,49 @@ def before_all(context: Context) -> None:
             )
 
 
+def _ensure_prow_port_forward(context: Context) -> None:
+    """Check that the lightspeed port-forward is alive; restart it if dead.
+
+    Probes localhost:{E2E_LSC_PORT}/readiness — if it fails, calls e2e-ops
+    restart-port-forward to re-establish the tunnel before the scenario runs.
+    """
+    host = os.getenv("E2E_LSC_HOSTNAME", "localhost")
+    port = os.getenv("E2E_LSC_PORT", "8080")
+    url = f"http://{host}:{port}/readiness"
+    try:
+        resp = requests.get(url, timeout=5)
+        if resp.status_code in (200, 401):
+            return
+    except requests.RequestException:
+        pass
+
+    print("[before_scenario] Port-forward appears dead, restarting...")
+    try:
+        result = run_e2e_ops("restart-port-forward", timeout=60)
+        print(result.stdout, end="")
+        if result.returncode == 0:
+            print("[before_scenario] Port-forward re-established")
+            return
+        print(result.stderr, end="")
+    except subprocess.TimeoutExpired:
+        pass
+
+    # Port-forward alone failed — the pod itself may be dead (e.g. Llama Stack
+    # was never restored after a disruption feature). Attempt a full restart,
+    # which also checks Llama health before recreating LCS.
+    print("[before_scenario] Port-forward failed; attempting full pod restart...")
+    try:
+        result = run_e2e_ops("restart-lightspeed", timeout=200)
+        print(result.stdout, end="")
+        if result.returncode != 0:
+            print(result.stderr, end="")
+            print("[before_scenario] Warning: full pod restart failed")
+        else:
+            print("[before_scenario] Pod restart + port-forward re-established")
+    except subprocess.TimeoutExpired:
+        print("[before_scenario] Warning: full pod restart timed out")
+
+
 def before_scenario(context: Context, scenario: Scenario) -> None:
     """Run before each scenario is run.
 
@@ -156,6 +206,17 @@ def before_scenario(context: Context, scenario: Scenario) -> None:
     if context.is_library_mode and "skip-in-library-mode" in scenario.effective_tags:
         scenario.skip("Skipped in library mode (no separate llama-stack container)")
         return
+
+    # Skip scenarios that depend on services not deployed in Prow/OpenShift
+    # (e.g. mock-tls-inference, proxy sidecars only available in Docker Compose)
+    if is_prow_environment() and "skip-in-prow" in scenario.effective_tags:
+        scenario.skip("Skipped in Prow (requires Docker Compose services)")
+        return
+
+    # In Prow, verify the lightspeed port-forward is alive before each scenario.
+    # Port-forwards can silently die between scenarios (e.g. pod restart, TCP reset).
+    if is_prow_environment():
+        _ensure_prow_port_forward(context)
 
     context.scenario_lightspeed_override_active = False
     context.lightspeed_stack_skip_restart = False
@@ -253,7 +314,7 @@ def _print_llama_stack_diagnostics() -> None:
     print("--- end diagnostics ---")
 
 
-def _restore_llama_stack(context: Context) -> None:
+def _restore_llama_stack() -> None:
     """Restore Llama Stack connection after disruption."""
     if is_prow_environment():
         # Recreate llama pod, then restart LCS so in-process clients reconnect (Llama IP/pod changed).
@@ -306,7 +367,7 @@ def _restore_llama_stack(context: Context) -> None:
                         "llama-stack",
                         "curl",
                         "-sf",
-                        f"http://{context.hostname_llama}:{context.port_llama}/v1/health",
+                        f"http://{get_llama_stack_hostname()}:{get_llama_stack_port()}/v1/health",
                     ],
                     capture_output=True,
                     timeout=5,
@@ -382,11 +443,12 @@ def after_feature(context: Context, feature: Feature) -> None:
     when ``context.feedback_e2e_conversation_cleanup`` is set by feedback steps,
     delete tracked feedback test conversations.
     """
-    # Restore Llama Stack FIRST (before any lightspeed-stack restart)
-    llama_was_running = getattr(context, "llama_stack_was_running", False)
-    if llama_was_running:
-        _restore_llama_stack(context)
-        context.llama_stack_was_running = False
+    # Restore Llama Stack FIRST (before any lightspeed-stack restart).
+    # Read from module-level state — Behave clears custom context attributes
+    # between scenarios, so context.llama_stack_was_running is unreliable here.
+    if get_llama_stack_was_running():
+        _restore_llama_stack()
+        reset_llama_stack_was_running()
 
     if getattr(context, "feedback_e2e_conversation_cleanup", False):
         token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Ikpva"

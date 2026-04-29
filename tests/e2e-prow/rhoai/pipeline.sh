@@ -9,13 +9,14 @@ export RUNNING_PROW=true
 # 1. GLOBAL CONFIG
 #========================================
 NAMESPACE="e2e-rhoai-dsc"
+export NAMESPACE
 MODEL_NAME="meta-llama/Llama-3.1-8B-Instruct"
 PIPELINE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# RHOAI llama-stack image
-LLAMA_STACK_IMAGE="${LLAMA_STACK_IMAGE:-quay.io/rhoai/odh-llama-stack-core-rhel9:rhoai-3.3}"
-echo "Using llama-stack image: $LLAMA_STACK_IMAGE"
-export LLAMA_STACK_IMAGE
+# RHOAI llama-stack image (unused when building from source via llama-stack-openai.yaml)
+# LLAMA_STACK_IMAGE="${LLAMA_STACK_IMAGE:-quay.io/rhoai/odh-llama-stack-core-rhel9:rhoai-3.4-ea.2}"
+# echo "Using llama-stack image: $LLAMA_STACK_IMAGE"
+# export LLAMA_STACK_IMAGE
 
 #========================================
 # 2. ENVIRONMENT SETUP
@@ -38,15 +39,21 @@ oc version
 oc whoami
 
 #========================================
-# 3. CREATE NAMESPACE & SECRETS
+# 3. BOOTSTRAP OPERATORS & DSC (before namespace — DSC operator may delete it)
 #========================================
-echo "===== Creating namespace & secrets ====="
-oc get ns "$NAMESPACE" >/dev/null 2>&1 || oc create namespace "$NAMESPACE"
-
-# Create NFD and NVIDIA namespaces
+echo "===== Bootstrapping operators ====="
+# Create NFD and NVIDIA namespaces (needed by operator subscriptions)
 oc apply -f "$PIPELINE_DIR/manifests/namespaces/nfd.yaml"
 oc apply -f "$PIPELINE_DIR/manifests/namespaces/nvidia-operator.yaml"
 
+# Install operators and apply DataScienceCluster (this may delete/recreate namespaces)
+"$PIPELINE_DIR/scripts/bootstrap.sh" "$PIPELINE_DIR"
+
+#========================================
+# 4. CREATE NAMESPACE & SECRETS (after DSC settles)
+#========================================
+echo "===== Creating namespace & secrets ====="
+oc get ns "$NAMESPACE" >/dev/null 2>&1 || oc create namespace "$NAMESPACE"
 
 create_secret() {
     local name=$1; shift
@@ -56,6 +63,22 @@ create_secret() {
 
 create_secret hf-token-secret --from-literal=token="$HUGGING_FACE_HUB_TOKEN"
 create_secret vllm-api-key-secret --from-literal=key="$VLLM_API_KEY"
+create_secret openai-api-key-secret --from-literal=key=""
+
+# MCP token secrets for lightspeed-stack
+REPO_ROOT="$(cd "$PIPELINE_DIR/../../.." && pwd)"
+if [ -f "$REPO_ROOT/tests/e2e/secrets/mcp-token" ]; then
+  oc create secret generic mcp-file-auth-token -n "$NAMESPACE" \
+    --from-file=token="$REPO_ROOT/tests/e2e/secrets/mcp-token" \
+    --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -
+  echo "✅ mcp-file-auth-token secret applied"
+fi
+if [ -f "$REPO_ROOT/tests/e2e/secrets/invalid-mcp-token" ]; then
+  oc create secret generic mcp-invalid-file-auth-token -n "$NAMESPACE" \
+    --from-file=token="$REPO_ROOT/tests/e2e/secrets/invalid-mcp-token" \
+    --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -
+  echo "✅ mcp-invalid-file-auth-token secret applied"
+fi
 
 # Create Quay pull secret for llama-stack images
 echo "Creating Quay pull secret..."
@@ -70,7 +93,7 @@ oc secrets link default quay-lightspeed-pull-secret --for=pull -n "$NAMESPACE" 2
 
 
 #========================================
-# 4. CONFIGMAPS
+# 5. CONFIGMAPS
 #========================================
 echo "===== Setting up configmaps ====="
 
@@ -79,14 +102,17 @@ curl -sL -o tool_chat_template_llama3.1_json.jinja \
     || { echo "❌ Failed to download jinja template"; exit 1; }
 
 oc create configmap vllm-chat-template -n "$NAMESPACE" \
-    --from-file=tool_chat_template_llama3.1_json.jinja --dry-run=client -o yaml | oc apply -f -
+    --from-file=tool_chat_template_llama3.1_json.jinja --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -
 
 
 #========================================
-# 5. DEPLOY vLLM
+# 6. DEPLOY vLLM (GPU setup + deploy, bootstrap already done)
 #========================================
 echo "===== Deploying vLLM ====="
-./pipeline-vllm.sh
+"$PIPELINE_DIR/scripts/gpu-setup.sh" "$PIPELINE_DIR"
+source "$PIPELINE_DIR/scripts/fetch-vllm-image.sh"
+"$PIPELINE_DIR/scripts/deploy-vllm.sh" "$PIPELINE_DIR"
+"$PIPELINE_DIR/scripts/get-vllm-pod-info.sh"
 oc get pods -n "$NAMESPACE"
 
 
@@ -162,18 +188,18 @@ REPO_ROOT="$(cd "$PIPELINE_DIR/../../.." && pwd)"
 echo "Creating mock server ConfigMaps..."
 oc create configmap mock-jwks-script -n "$NAMESPACE" \
     --from-file=server.py="$REPO_ROOT/tests/e2e/mock_jwks_server/server.py" \
-    --dry-run=client -o yaml | oc apply -f -
+    --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -
 
 oc create configmap mock-mcp-script -n "$NAMESPACE" \
     --from-file=server.py="$REPO_ROOT/tests/e2e/mock_mcp_server/server.py" \
-    --dry-run=client -o yaml | oc apply -f -
+    --dry-run=client -o yaml | oc apply -n "$NAMESPACE" -f -
 
 # Deploy mock server pods and services
 echo "Deploying mock-jwks..."
-oc apply -f "$PIPELINE_DIR/manifests/lightspeed/mock-jwks.yaml"
+oc apply -n "$NAMESPACE" -f "$PIPELINE_DIR/manifests/lightspeed/mock-jwks.yaml"
 
 echo "Deploying mock-mcp..."
-oc apply -f "$PIPELINE_DIR/manifests/lightspeed/mock-mcp.yaml"
+oc apply -n "$NAMESPACE" -f "$PIPELINE_DIR/manifests/lightspeed/mock-mcp.yaml"
 
 # Wait for mock servers to be ready
 echo "Waiting for mock servers to be ready..."
@@ -189,7 +215,39 @@ oc wait pod/mock-jwks pod/mock-mcp \
 echo "✅ Mock servers deployed"
 
 #========================================
-# 8. DEPLOY LIGHTSPEED STACK AND LLAMA STACK
+# 8. BUILD LLAMA STACK IMAGE
+#========================================
+echo "===== Building llama-stack image ====="
+LLAMA_STACK_IMAGE="image-registry.openshift-image-registry.svc:5000/${NAMESPACE}/llama-stack-e2e:latest"
+export LLAMA_STACK_IMAGE
+
+# Create BuildConfig (idempotent)
+oc new-build --name=llama-stack-e2e \
+  --binary \
+  --strategy=docker \
+  --image="registry.access.redhat.com/ubi9/ubi-minimal" \
+  --to="llama-stack-e2e:latest" \
+  -n "$NAMESPACE" 2>/dev/null || echo "BuildConfig llama-stack-e2e already exists"
+
+# Patch BuildConfig to use test.containerfile instead of Dockerfile
+oc patch bc llama-stack-e2e -n "$NAMESPACE" --type=json \
+  -p '[{"op":"replace","path":"/spec/strategy/dockerStrategy/dockerfilePath","value":"test.containerfile"}]' 2>/dev/null || true
+
+# Build from repo root
+oc start-build llama-stack-e2e \
+  --from-dir="$REPO_ROOT" \
+  --follow \
+  -n "$NAMESPACE" || { echo "❌ llama-stack image build failed"; exit 1; }
+
+echo "✅ llama-stack image built: $LLAMA_STACK_IMAGE"
+
+# Allow default SA to pull from the internal registry
+oc policy add-role-to-user system:image-puller \
+  system:serviceaccount:${NAMESPACE}:default \
+  -n "$NAMESPACE" 2>/dev/null || true
+
+#========================================
+# 9. DEPLOY LIGHTSPEED STACK AND LLAMA STACK
 #========================================
 echo "===== Deploying Services ====="
 
@@ -281,6 +339,15 @@ oc describe pod llama-stack-service -n "$NAMESPACE" || true
 #========================================
 # 9. EXPOSE SERVICE & START PORT-FORWARD
 #========================================
+# Export PID file paths so e2e-ops.sh can find and kill stale port-forwards
+# during test-triggered pod restarts (matches pipeline-konflux.sh).
+export E2E_LSC_PORT_FORWARD_PID_FILE="${E2E_LSC_PORT_FORWARD_PID_FILE:-/tmp/e2e-lightspeed-port-forward.pid}"
+export E2E_LLAMA_PORT_FORWARD_PID_FILE="${E2E_LLAMA_PORT_FORWARD_PID_FILE:-/tmp/e2e-llama-port-forward.pid}"
+export E2E_JWKS_PORT_FORWARD_PID_FILE="${E2E_JWKS_PORT_FORWARD_PID_FILE:-/tmp/e2e-jwks-port-forward.pid}"
+rm -f "$E2E_LSC_PORT_FORWARD_PID_FILE"
+rm -f "$E2E_LLAMA_PORT_FORWARD_PID_FILE"
+rm -f "$E2E_JWKS_PORT_FORWARD_PID_FILE"
+
 oc label pod lightspeed-stack-service pod=lightspeed-stack-service -n $NAMESPACE
 
 oc expose pod lightspeed-stack-service \
@@ -289,20 +356,36 @@ oc expose pod lightspeed-stack-service \
   --type=ClusterIP \
   -n $NAMESPACE
 
-# Kill any existing processes on ports 8080 and 8000
-echo "Checking for existing processes on ports 8080 and 8000..."
-lsof -ti:8080 | xargs kill -9 2>/dev/null || true
-lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+# Kill any existing processes on ports 8080, 8000, and 8321 (lsof may be missing in minimal images)
+echo "Checking for existing processes on ports 8080, 8000, and 8321..."
+if command -v lsof >/dev/null 2>&1; then
+    lsof -ti:8080 | xargs kill -9 2>/dev/null || true
+    lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+    lsof -ti:8321 | xargs kill -9 2>/dev/null || true
+elif command -v fuser >/dev/null 2>&1; then
+    fuser -k 8080/tcp 2>/dev/null || true
+    fuser -k 8000/tcp 2>/dev/null || true
+    fuser -k 8321/tcp 2>/dev/null || true
+fi
 
 # Start port-forward for lightspeed-stack
 echo "Starting port-forward for lightspeed-stack..."
 oc port-forward svc/lightspeed-stack-service-svc 8080:8080 -n $NAMESPACE &
 PF_LCS_PID=$!
+echo "$PF_LCS_PID" >"$E2E_LSC_PORT_FORWARD_PID_FILE"
 
 # Start port-forward for mock-jwks (needed for RBAC tests to get tokens)
 echo "Starting port-forward for mock-jwks..."
 oc port-forward svc/mock-jwks 8000:8000 -n $NAMESPACE &
 PF_JWKS_PID=$!
+echo "$PF_JWKS_PID" >"$E2E_JWKS_PORT_FORWARD_PID_FILE"
+
+# Behave steps that call Llama Stack directly (MCP toolgroups, shields, disrupt/restore)
+# need localhost:8321. Without this forward those tests hit "Connection refused".
+echo "Starting port-forward for llama-stack..."
+oc port-forward svc/llama-stack-service-svc 8321:8321 -n $NAMESPACE &
+PF_LLAMA_PID=$!
+echo "$PF_LLAMA_PID" >"$E2E_LLAMA_PORT_FORWARD_PID_FILE"
 
 # Wait for port-forward to be usable (app may not be listening immediately; port-forward can drop)
 echo "Waiting for port-forward to lightspeed-stack to be ready..."
@@ -313,8 +396,18 @@ for i in $(seq 1 36); do
   fi
   if [ $i -eq 36 ]; then
     echo "❌ Port-forward to lightspeed-stack never became ready (3 min)"
+    echo ""
+    echo "DEBUG: lightspeed-stack-service logs:"
+    oc logs lightspeed-stack-service -n "$NAMESPACE" --tail=100 || true
+    echo ""
+    echo "DEBUG: llama-stack-service logs:"
+    oc logs llama-stack-service -n "$NAMESPACE" --tail=100 || true
+    echo ""
+    echo "DEBUG: Pod status:"
+    oc get pods -n "$NAMESPACE" -o wide || true
     kill $PF_LCS_PID 2>/dev/null || true
     kill $PF_JWKS_PID 2>/dev/null || true
+    kill $PF_LLAMA_PID 2>/dev/null || true
     exit 1
   fi
   # If port-forward process died, restart it (e.g. "connection refused" / "lost connection to pod")
@@ -322,14 +415,42 @@ for i in $(seq 1 36); do
     echo "Port-forward died, restarting (attempt $i)..."
     oc port-forward svc/lightspeed-stack-service-svc 8080:8080 -n $NAMESPACE &
     PF_LCS_PID=$!
+    echo "$PF_LCS_PID" >"$E2E_LSC_PORT_FORWARD_PID_FILE"
+  fi
+  sleep 5
+done
+
+# Wait for Llama Stack port-forward to be usable
+echo "Waiting for Llama Stack port-forward (localhost:8321 /v1/health)..."
+for i in $(seq 1 36); do
+  if curl -sf http://localhost:8321/v1/health > /dev/null 2>&1; then
+    echo "✅ Llama Stack port-forward ready after $(( i * 5 ))s"
+    break
+  fi
+  if [ $i -eq 36 ]; then
+    echo "❌ Port-forward to llama-stack never became healthy (3 min)"
+    oc logs llama-stack-service -n "$NAMESPACE" --tail=100 || true
+    kill $PF_LCS_PID 2>/dev/null || true
+    kill $PF_JWKS_PID 2>/dev/null || true
+    kill $PF_LLAMA_PID 2>/dev/null || true
+    exit 1
+  fi
+  if ! kill -0 $PF_LLAMA_PID 2>/dev/null; then
+    echo "Llama port-forward died, restarting (attempt $i)..."
+    oc port-forward svc/llama-stack-service-svc 8321:8321 -n $NAMESPACE &
+    PF_LLAMA_PID=$!
+    echo "$PF_LLAMA_PID" >"$E2E_LLAMA_PORT_FORWARD_PID_FILE"
   fi
   sleep 5
 done
 
 export E2E_LSC_HOSTNAME="localhost"
 export E2E_JWKS_HOSTNAME="localhost"
+export E2E_DEFAULT_MODEL_OVERRIDE="$MODEL_NAME"
+export E2E_DEFAULT_PROVIDER_OVERRIDE="vllm"
 echo "LCS accessible at: http://$E2E_LSC_HOSTNAME:8080"
 echo "Mock JWKS accessible at: http://$E2E_JWKS_HOSTNAME:8000"
+echo "Llama Stack accessible at: http://localhost:8321"
 
 
 
@@ -352,8 +473,11 @@ TEST_EXIT_CODE=$(cat "$E2E_EXIT_CODE_FILE" 2>/dev/null || echo 1)
 # Kill first so wait doesn't block (if a port-forward is still running, wait would hang)
 kill $PF_LCS_PID 2>/dev/null || true
 kill $PF_JWKS_PID 2>/dev/null || true
+kill $PF_LLAMA_PID 2>/dev/null || true
 wait $PF_LCS_PID 2>/dev/null || true
 wait $PF_JWKS_PID 2>/dev/null || true
+wait $PF_LLAMA_PID 2>/dev/null || true
+rm -f "$E2E_LSC_PORT_FORWARD_PID_FILE" "$E2E_LLAMA_PORT_FORWARD_PID_FILE" "$E2E_JWKS_PORT_FORWARD_PID_FILE"
 set -e
 trap 'echo "❌ Pipeline failed at line $LINENO"; exit 1' ERR
 
