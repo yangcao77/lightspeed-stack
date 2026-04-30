@@ -91,6 +91,7 @@ from configuration import configuration
 from constants import DEFAULT_RAG_TOOL
 from log import get_logger
 from metrics import recording
+from models.common.responses.responses_api_params import ResponsesApiParams
 from models.config import ByokRag
 from models.database.conversations import UserConversation
 from models.requests import QueryRequest
@@ -118,7 +119,6 @@ from utils.types import (
     ReferencedDocument,
     ResponseInput,
     ResponseItem,
-    ResponsesApiParams,
     ToolCallSummary,
     ToolResultSummary,
     TurnSummary,

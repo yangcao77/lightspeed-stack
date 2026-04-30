@@ -21,12 +21,8 @@ from llama_stack_api.openai_responses import (
 from llama_stack_api.openai_responses import (
     OpenAIResponseText as Text,
 )
-from llama_stack_api.openai_responses import (
-    OpenAIResponseToolMCP as OutputToolMCP,
-)
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from configuration import configuration
 from constants import (
     MCP_AUTH_CLIENT,
     MCP_AUTH_KUBERNETES,
@@ -38,7 +34,6 @@ from constants import (
 )
 from log import get_logger
 from utils import suid
-from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.types import IncludeParameter, ResponseInput
 
 logger = get_logger(__name__)
@@ -866,28 +861,6 @@ class ResponsesRequest(BaseModel):
         if value is not None and value.startswith("modr"):
             raise ValueError("You cannot provide context by moderation response.")
         return value
-
-    def echoed_params(self) -> dict[str, Any]:
-        """Build kwargs echoed into synthetic OpenAI-style responses (e.g. moderation blocks).
-
-        Returns:
-            dict[str, Any]: Field names and values to merge into the response object.
-        """
-        data = self.model_dump(include=_ECHOED_FIELDS)
-        if self.tools is not None:
-            tool_dicts: list[dict[str, Any]] = [
-                (
-                    OutputToolMCP.model_validate(t.model_dump()).model_dump()
-                    if t.type == "mcp"
-                    else t.model_dump()
-                )
-                for t in self.tools
-            ]
-            data["tools"] = translate_vector_store_ids_to_user_facing(
-                tool_dicts, configuration.rag_id_mapping
-            )
-
-        return data
 
 
 class MCPServerRegistrationRequest(BaseModel):

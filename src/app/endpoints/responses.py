@@ -22,7 +22,6 @@ from llama_stack_api import (
 )
 from llama_stack_client import (
     APIConnectionError,
-    AsyncLlamaStackClient,
 )
 from llama_stack_client import (
     APIStatusError as LLSApiStatusError,
@@ -39,6 +38,8 @@ from client import AsyncLlamaStackClientHolder
 from configuration import configuration
 from constants import SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
 from log import get_logger
+from models.common.responses.responses_api_params import ResponsesApiParams
+from models.common.responses.responses_context import ResponsesContext
 from models.config import Action
 from models.requests import ResponsesRequest
 from models.responses import (
@@ -98,10 +99,7 @@ from utils.suid import (
 )
 from utils.tool_formatter import translate_vector_store_ids_to_user_facing
 from utils.types import (
-    RAGContext,
-    ResponsesApiParams,
     ShieldModerationBlocked,
-    ShieldModerationResult,
     TurnSummary,
 )
 from utils.vector_search import (
@@ -372,15 +370,14 @@ async def responses_endpoint_handler(
             original_request.input, inline_rag_context.context_text
         )
 
-    response_handler = (
-        handle_streaming_response
-        if original_request.stream
-        else handle_non_streaming_response
+    api_params = ResponsesApiParams.model_validate(
+        {
+            **updated_request.model_dump(exclude={"tools"}),
+            "tools": updated_request.tools,
+        }
     )
-    return await response_handler(
+    context = ResponsesContext(
         client=client,
-        original_request=original_request,
-        updated_request=updated_request,
         auth=auth,
         input_text=input_text,
         started_at=started_at,
@@ -391,120 +388,102 @@ async def responses_endpoint_handler(
         rh_identity_context=rh_identity_context,
         user_agent=_get_user_agent(request),
         endpoint_path=endpoint_path,
+        generate_topic_summary=updated_request.generate_topic_summary,
+    )
+    response_handler = (
+        handle_streaming_response
+        if original_request.stream
+        else handle_non_streaming_response
+    )
+    return await response_handler(
+        original_request=original_request,
+        api_params=api_params,
+        context=context,
     )
 
 
 async def handle_streaming_response(
-    client: AsyncLlamaStackClient,
     original_request: ResponsesRequest,
-    updated_request: ResponsesRequest,
-    auth: AuthTuple,
-    input_text: str,
-    started_at: datetime,
-    moderation_result: ShieldModerationResult,
-    inline_rag_context: RAGContext,
-    filter_server_tools: bool = False,
-    background_tasks: Optional[BackgroundTasks] = None,
-    rh_identity_context: tuple[str, str] = ("", ""),
-    user_agent: Optional[str] = None,
-    endpoint_path: str = "",
+    api_params: ResponsesApiParams,
+    context: ResponsesContext,
 ) -> StreamingResponse:
     """Handle streaming response from Responses API.
 
     Args:
         client: The AsyncLlamaStackClient instance
-        request: ResponsesRequest (LCORE-specific fields e.g. generate_topic_summary)
-        auth: Authentication tuple
-        input_text: The extracted input text
-        started_at: Timestamp when the conversation started
-        moderation_result: Result of shield moderation check
-        inline_rag_context: Inline RAG context to be used for the response
-        filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
-        background_tasks: FastAPI background task manager for telemetry events
-        rh_identity_context: Tuple of (org_id, system_id) from RH identity
-        user_agent: Sanitized User-Agent string from request headers, or None.
+        original_request: Original request (read-only)
+        api_params: API parameters
+        responses_context: Responses context
     Returns:
         StreamingResponse with SSE-formatted events
     """
-    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
     turn_summary = TurnSummary()
     # Handle blocked response
-    if moderation_result.decision == "blocked":
-        turn_summary.id = moderation_result.moderation_id
-        turn_summary.llm_response = moderation_result.message
-        available_quotas = get_available_quotas(
-            quota_limiters=configuration.quota_limiters, user_id=auth[0]
-        )
-        generator = shield_violation_generator(
-            moderation_result,
-            api_params.conversation,
-            updated_request.echoed_params(),
-            started_at,
-            available_quotas,
-        )
+    if context.moderation_result.decision == "blocked":
+        turn_summary.id = context.moderation_result.moderation_id
+        turn_summary.llm_response = context.moderation_result.message
+        generator = shield_violation_generator(api_params, context)
         if api_params.store:
             await append_turn_items_to_conversation(
-                client=client,
+                client=context.client,
                 conversation_id=api_params.conversation,
-                user_input=updated_request.input,
-                llm_output=[moderation_result.refusal_response],
+                user_input=api_params.input,
+                llm_output=[context.moderation_result.refusal_response],
             )
         _queue_responses_splunk_event(
-            background_tasks=background_tasks,
-            input_text=input_text,
-            response_text=moderation_result.message,
+            background_tasks=context.background_tasks,
+            input_text=context.input_text,
+            response_text=context.moderation_result.message,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            rh_identity_context=rh_identity_context,
-            inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+            rh_identity_context=context.rh_identity_context,
+            inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
             sourcetype="responses_shield_blocked",
-            user_agent=user_agent,
+            user_agent=context.user_agent,
         )
     else:
         try:
-            response = await client.responses.create(
+            response = await context.client.responses.create(
                 **api_params.model_dump(exclude_none=True)
             )
             generator = response_generator(
                 stream=cast(AsyncIterator[OpenAIResponseObjectStream], response),
                 original_request=original_request,
-                updated_request=updated_request,
                 api_params=api_params,
-                user_id=auth[0],
+                context=context,
                 turn_summary=turn_summary,
-                inline_rag_context=inline_rag_context,
-                filter_server_tools=filter_server_tools,
-                endpoint_path=endpoint_path,
             )
         except RuntimeError as e:  # library mode wraps 413 into runtime error
             if is_context_length_error(str(e)):
                 _queue_responses_splunk_event(
-                    background_tasks=background_tasks,
-                    input_text=input_text,
+                    background_tasks=context.background_tasks,
+                    input_text=context.input_text,
                     response_text=str(e),
                     conversation_id=normalize_conversation_id(api_params.conversation),
                     model=api_params.model,
-                    rh_identity_context=rh_identity_context,
-                    inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                    rh_identity_context=context.rh_identity_context,
+                    inference_time=(
+                        datetime.now(UTC) - context.started_at
+                    ).total_seconds(),
                     sourcetype="responses_error",
                     fire_and_forget=True,
-                    user_agent=user_agent,
+                    user_agent=context.user_agent,
                 )
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e
         except APIConnectionError as e:
             _queue_responses_splunk_event(
-                background_tasks=background_tasks,
-                input_text=input_text,
+                background_tasks=context.background_tasks,
+                input_text=context.input_text,
                 response_text=str(e),
                 conversation_id=normalize_conversation_id(api_params.conversation),
                 model=api_params.model,
-                rh_identity_context=rh_identity_context,
-                inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                rh_identity_context=context.rh_identity_context,
+                inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
-                user_agent=user_agent,
+                user_agent=context.user_agent,
             )
             error_response = ServiceUnavailableResponse(
                 backend_name="Llama Stack",
@@ -513,16 +492,16 @@ async def handle_streaming_response(
             raise HTTPException(**error_response.model_dump()) from e
         except (LLSApiStatusError, OpenAIAPIStatusError) as e:
             _queue_responses_splunk_event(
-                background_tasks=background_tasks,
-                input_text=input_text,
+                background_tasks=context.background_tasks,
+                input_text=context.input_text,
                 response_text=str(e),
                 conversation_id=normalize_conversation_id(api_params.conversation),
                 model=api_params.model,
-                rh_identity_context=rh_identity_context,
-                inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                rh_identity_context=context.rh_identity_context,
+                inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
-                user_agent=user_agent,
+                user_agent=context.user_agent,
             )
             error_response = handle_known_apistatus_errors(e, api_params.model)
             raise HTTPException(**error_response.model_dump()) from e
@@ -530,61 +509,42 @@ async def handle_streaming_response(
     return StreamingResponse(
         generate_response(
             generator=generator,
-            turn_summary=turn_summary,
-            client=client,
-            auth=auth,
-            input_text=input_text,
-            started_at=started_at,
             api_params=api_params,
-            generate_topic_summary=updated_request.generate_topic_summary or False,
-            background_tasks=background_tasks,
-            rh_identity_context=rh_identity_context,
-            shield_blocked=(moderation_result.decision == "blocked"),
-            user_agent=user_agent,
+            context=context,
+            turn_summary=turn_summary,
         ),
         media_type="text/event-stream",
     )
 
 
 async def shield_violation_generator(
-    moderation_result: ShieldModerationBlocked,
-    conversation_id: str,
-    echoed_params: dict[str, Any],
-    created_at: datetime,
-    available_quotas: dict[str, int],
+    api_params: ResponsesApiParams,
+    context: ResponsesContext,
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted streaming response for shield-blocked requests.
 
-    Follows the Open Responses spec:
-    - Content-Type: text/event-stream
-    - Each event has 'event:' field matching the type in the event body
-    - Data objects are JSON-encoded strings
-    - Terminal event is the literal string [DONE]
-    - Emits full event sequence: response.created (in_progress), output_item.added,
-      output_item.done, response.completed (completed)
-    - Performs topic summary and persistence after [DONE] is emitted
-
     Args:
-        moderation_result: The moderation result
-        conversation_id: The conversation ID to include in the response
-        echoed_params: Echoed parameters from the request
-        created_at: Unix timestamp when the response was created
-        available_quotas: Available quotas dictionary for the user
+        api_params: ResponsesApiParams
+        context: ResponsesContext
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
     """
-    normalized_conv_id = normalize_conversation_id(conversation_id)
+    normalized_conv_id = normalize_conversation_id(api_params.conversation)
+    available_quotas = get_available_quotas(
+        quota_limiters=configuration.quota_limiters, user_id=context.auth[0]
+    )
+    moderation_result = cast(ShieldModerationBlocked, context.moderation_result)
 
     # 1. Send response.created event with status "in_progress" and empty output
     created_response_object = ResponsesResponse.model_construct(
         id=moderation_result.moderation_id,
-        created_at=int(created_at.timestamp()),
+        created_at=int(context.started_at.timestamp()),
         status="in_progress",
         output=[],
         conversation=normalized_conv_id,
         available_quotas={},
         output_text="",
-        **echoed_params,
+        **api_params.echoed_params(configuration.rag_id_mapping),
     )
     created_response_dict = created_response_object.model_dump(
         exclude_none=True, by_alias=True
@@ -622,7 +582,7 @@ async def shield_violation_generator(
     # 4. Send response.completed event with status "completed" and output populated
     completed_response_object = ResponsesResponse.model_construct(
         id=moderation_result.moderation_id,
-        created_at=int(created_at.timestamp()),
+        created_at=int(context.started_at.timestamp()),
         completed_at=int(datetime.now(UTC).timestamp()),
         status="completed",
         output=[moderation_result.refusal_response],
@@ -630,7 +590,7 @@ async def shield_violation_generator(
         conversation=normalized_conv_id,
         available_quotas=available_quotas,
         output_text=moderation_result.message,
-        **echoed_params,
+        **api_params.echoed_params(configuration.rag_id_mapping),
     )
     completed_response_dict = completed_response_object.model_dump(
         exclude_none=True, by_alias=True
@@ -707,7 +667,6 @@ def _is_server_mcp_output_item(
 
 def _should_filter_mcp_chunk(
     chunk: OpenAIResponseObjectStream,
-    event_type: Optional[str],
     configured_mcp_labels: set[str],
     server_mcp_output_indices: set[int],
 ) -> bool:
@@ -722,7 +681,7 @@ def _should_filter_mcp_chunk(
     Returns:
         True if the chunk should be filtered out from the client stream.
     """
-    if event_type == "response.output_item.added":
+    if chunk.type == "response.output_item.added":
         item_added_chunk = cast(OutputItemAddedChunk, chunk)
         item = item_added_chunk.item
         item_type = getattr(item, "type", None)
@@ -732,16 +691,16 @@ def _should_filter_mcp_chunk(
                 server_mcp_output_indices.add(item_added_chunk.output_index)
                 return True
 
-    if event_type and (
-        event_type.startswith("response.mcp_call.")
-        or event_type.startswith("response.mcp_list_tools.")
-        or event_type.startswith("response.mcp_approval_request.")
+    if chunk.type and (
+        chunk.type.startswith("response.mcp_call.")
+        or chunk.type.startswith("response.mcp_list_tools.")
+        or chunk.type.startswith("response.mcp_approval_request.")
     ):
         output_index = getattr(chunk, "output_index", None)
         if output_index in server_mcp_output_indices:
             return True
 
-    if event_type == "response.output_item.done":
+    if chunk.type == "response.output_item.done":
         item_done_chunk = cast(OutputItemDoneChunk, chunk)
         item = item_done_chunk.item
         item_type = getattr(item, "type", None)
@@ -755,19 +714,17 @@ def _should_filter_mcp_chunk(
 
 def _populate_turn_summary(
     response_object: OpenAIResponseObject,
-    turn_summary: TurnSummary,
     api_params: ResponsesApiParams,
-    inline_rag_context: RAGContext,
-    filter_server_tools: bool,
+    context: ResponsesContext,
+    turn_summary: TurnSummary,
 ) -> None:
     """Populate turn summary with metadata extracted from the final response object.
 
     Args:
         response_object: The completed response object from Llama Stack
-        turn_summary: TurnSummary to populate
         api_params: ResponsesApiParams
-        inline_rag_context: Inline RAG context used for the response
-        filter_server_tools: Whether to filter server-deployed MCP tool events
+        context: Responses context
+        turn_summary: TurnSummary to populate
     """
     turn_summary.id = response_object.id
     vector_store_ids = extract_vector_store_ids_from_tools(api_params.tools)
@@ -775,10 +732,10 @@ def _populate_turn_summary(
         response_object, vector_store_ids, configuration.rag_id_mapping
     )
     turn_summary.referenced_documents = deduplicate_referenced_documents(
-        inline_rag_context.referenced_documents + tool_rag_docs
+        context.inline_rag_context.referenced_documents + tool_rag_docs
     )
     for item in response_object.output:
-        if filter_server_tools and not is_server_deployed_output(item):
+        if context.filter_server_tools and not is_server_deployed_output(item):
             continue
         tool_call, tool_result = build_tool_call_summary(item)
         if tool_call:
@@ -791,37 +748,27 @@ def _populate_turn_summary(
         vector_store_ids,
         configuration.rag_id_mapping,
     )
-    turn_summary.rag_chunks = inline_rag_context.rag_chunks + tool_rag_chunks
+    turn_summary.rag_chunks = context.inline_rag_context.rag_chunks + tool_rag_chunks
 
 
 async def response_generator(
     stream: AsyncIterator[OpenAIResponseObjectStream],
     original_request: ResponsesRequest,
-    updated_request: ResponsesRequest,
     api_params: ResponsesApiParams,
-    user_id: str,
+    context: ResponsesContext,
     turn_summary: TurnSummary,
-    inline_rag_context: RAGContext,
-    filter_server_tools: bool = False,
-    endpoint_path: str = "",
 ) -> AsyncIterator[str]:
     """Generate SSE-formatted streaming response with LCORE-enriched events.
 
     Args:
         stream: The streaming response from Llama Stack
-        original_request: Original request object
-        updated_request: Updated request object
+        original_request: Original request (read-only)
         api_params: ResponsesApiParams
-        user_id: User ID for quota retrieval
+        context: Responses context
         turn_summary: TurnSummary to populate during streaming
-        inline_rag_context: Inline RAG context to be used for the response
-        filter_server_tools: Whether to filter server-deployed MCP tool events from the stream
-        endpoint_path: API endpoint path used for metric labeling.
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
     """
-    normalized_conv_id = normalize_conversation_id(api_params.conversation)
-
     logger.debug("Starting streaming response (Responses API) processing")
 
     latest_response_object: Optional[OpenAIResponseObject] = None
@@ -831,14 +778,13 @@ async def response_generator(
     server_mcp_output_indices: set[int] = set()
 
     async for chunk in stream:
-        event_type = getattr(chunk, "type", None)
-        logger.debug("Processing streaming chunk, type: %s", event_type)
+        logger.debug("Processing streaming chunk, type: %s", chunk.type)
 
         # Filter out streaming events for server-deployed MCP tools.
         # These are handled internally by LCS and should not be forwarded
         # to clients that don't understand the mcp_call item type.
         if _should_filter_mcp_chunk(
-            chunk, event_type, configured_mcp_labels, server_mcp_output_indices
+            chunk, configured_mcp_labels, server_mcp_output_indices
         ):
             continue
 
@@ -849,7 +795,9 @@ async def response_generator(
         sequence_number += 1
 
         if "response" in chunk_dict:
-            chunk_dict["response"]["conversation"] = normalized_conv_id
+            chunk_dict["response"]["conversation"] = normalize_conversation_id(
+                api_params.conversation
+            )
             _sanitize_response_dict(
                 chunk_dict["response"],
                 configured_mcp_labels,
@@ -864,12 +812,12 @@ async def response_generator(
                     )
                 )
         # Intermediate response - no quota consumption and text yet
-        if event_type == "response.in_progress":
+        if chunk.type == "response.in_progress":
             chunk_dict["response"]["available_quotas"] = {}
             chunk_dict["response"]["output_text"] = ""
 
         # Handle completion, incomplete, and failed events - only quota handling here
-        if event_type in (
+        if chunk.type in (
             "response.completed",
             "response.incomplete",
             "response.failed",
@@ -880,44 +828,40 @@ async def response_generator(
 
             # Extract and consume tokens if any were used
             turn_summary.token_usage = extract_token_usage(
-                latest_response_object.usage, api_params.model, endpoint_path
+                latest_response_object.usage, api_params.model, context.endpoint_path
             )
             consume_query_tokens(
-                user_id=user_id,
+                user_id=context.auth[0],
                 model_id=api_params.model,
                 token_usage=turn_summary.token_usage,
             )
 
             # Get available quotas after token consumption
-            available_quotas = get_available_quotas(
-                quota_limiters=configuration.quota_limiters, user_id=user_id
+            chunk_dict["response"]["available_quotas"] = get_available_quotas(
+                quota_limiters=configuration.quota_limiters, user_id=context.auth[0]
             )
-            chunk_dict["response"]["available_quotas"] = available_quotas
             turn_summary.llm_response = extract_text_from_response_items(
                 latest_response_object.output
             )
             chunk_dict["response"]["output_text"] = turn_summary.llm_response
 
-        data_json = json.dumps(chunk_dict)
-        yield f"event: {event_type or 'error'}\ndata: {data_json}\n\n"
+        yield f"event: {chunk.type or 'error'}\ndata: {json.dumps(chunk_dict)}\n\n"
 
     # Extract response metadata from final response object
     if latest_response_object:
         _populate_turn_summary(
             latest_response_object,
-            turn_summary,
             api_params,
-            inline_rag_context,
-            filter_server_tools,
+            context,
+            turn_summary,
         )
 
-    client = AsyncLlamaStackClientHolder().get_client()
     # Explicitly append the turn to conversation if context passed by previous response
     if api_params.store and api_params.previous_response_id and latest_response_object:
         await append_turn_items_to_conversation(
-            client,
+            context.client,
             api_params.conversation,
-            updated_request.input,
+            api_params.input,
             latest_response_object.output,
         )
 
@@ -926,17 +870,9 @@ async def response_generator(
 
 async def generate_response(
     generator: AsyncIterator[str],
-    turn_summary: TurnSummary,
-    client: AsyncLlamaStackClient,
-    auth: AuthTuple,
-    input_text: str,
-    started_at: datetime,
     api_params: ResponsesApiParams,
-    generate_topic_summary: bool,
-    background_tasks: Optional[BackgroundTasks] = None,
-    rh_identity_context: tuple[str, str] = ("", ""),
-    shield_blocked: bool = False,
-    user_agent: Optional[str] = None,
+    context: ResponsesContext,
+    turn_summary: TurnSummary,
 ) -> AsyncIterator[str]:
     """Stream the response from the generator and persist conversation details.
 
@@ -945,28 +881,23 @@ async def generate_response(
     Args:
         generator: The SSE event generator
         turn_summary: TurnSummary populated during streaming
-        client: The AsyncLlamaStackClient instance
-        auth: Authentication tuple
-        input_text: The extracted input text
-        started_at: Timestamp when the conversation started
         api_params: ResponsesApiParams
-        generate_topic_summary: Whether to generate topic summary for new conversations
-        background_tasks: FastAPI background task manager for telemetry events
-        rh_identity_context: Tuple of (org_id, system_id) from RH identity
-        shield_blocked: Whether the request was blocked by a shield
-        user_agent: Sanitized User-Agent string from request headers, or None.
+        context: Responses context
+        turn_summary: TurnSummary to populate during streaming
     Yields:
         SSE-formatted strings from the generator
     """
-    user_id, _, skip_userid_check, _ = auth
+    user_id, _, skip_userid_check, _ = context.auth
     async for event in generator:
         yield event
 
     # Get topic summary for new conversation
     topic_summary = None
-    if generate_topic_summary:
+    if context.generate_topic_summary:
         logger.debug("Generating topic summary for new conversation")
-        topic_summary = await get_topic_summary(input_text, client, api_params.model)
+        topic_summary = await get_topic_summary(
+            context.input_text, context.client, api_params.model
+        )
 
     completed_at = datetime.now(UTC)
     if api_params.store:
@@ -974,111 +905,84 @@ async def generate_response(
             user_id=user_id,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            started_at=started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            started_at=context.started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             completed_at=completed_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             summary=turn_summary,
-            query=input_text,
+            query=context.input_text,
             attachments=[],
             skip_userid_check=skip_userid_check,
             topic_summary=topic_summary,
         )
-    if not shield_blocked:
+    if context.moderation_result.decision == "passed":
         _queue_responses_splunk_event(
-            background_tasks=background_tasks,
-            input_text=input_text,
+            background_tasks=context.background_tasks,
+            input_text=context.input_text,
             response_text=turn_summary.llm_response,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            rh_identity_context=rh_identity_context,
-            inference_time=(completed_at - started_at).total_seconds(),
+            rh_identity_context=context.rh_identity_context,
+            inference_time=(completed_at - context.started_at).total_seconds(),
             sourcetype="responses_completed",
-            input_tokens=(
-                turn_summary.token_usage.input_tokens if turn_summary.token_usage else 0
-            ),
-            output_tokens=(
-                turn_summary.token_usage.output_tokens
-                if turn_summary.token_usage
-                else 0
-            ),
-            user_agent=user_agent,
+            input_tokens=turn_summary.token_usage.input_tokens,
+            output_tokens=turn_summary.token_usage.output_tokens,
         )
 
 
 async def handle_non_streaming_response(
-    client: AsyncLlamaStackClient,
     original_request: ResponsesRequest,
-    updated_request: ResponsesRequest,
-    auth: AuthTuple,
-    input_text: str,
-    started_at: datetime,
-    moderation_result: ShieldModerationResult,
-    inline_rag_context: RAGContext,
-    filter_server_tools: bool = False,
-    background_tasks: Optional[BackgroundTasks] = None,
-    rh_identity_context: tuple[str, str] = ("", ""),
-    user_agent: Optional[str] = None,
-    endpoint_path: str = "",
+    api_params: ResponsesApiParams,
+    context: ResponsesContext,
 ) -> ResponsesResponse:
     """Handle non-streaming response from Responses API.
 
     Args:
-        client: The AsyncLlamaStackClient instance
-        original_request: Original request object
-        updated_request: Updated request object
-        auth: Authentication tuple
-        input_text: The extracted input text
-        started_at: Timestamp when the conversation started
-        moderation_result: Result of shield moderation check
-        inline_rag_context: Inline RAG context to be used for the response
-        filter_server_tools: Whether to filter server-deployed MCP tool output
-        background_tasks: FastAPI background task manager for telemetry events
-        rh_identity_context: Tuple of (org_id, system_id) from RH identity
-        user_agent: Sanitized User-Agent string from request headers, or None.
+        original_request: Original request (read-only)
+        api_params: API parameters
+        context: Responses context
     Returns:
         ResponsesResponse with the completed response
     """
-    user_id, _, skip_userid_check, _ = auth
-    api_params = ResponsesApiParams.model_validate(updated_request.model_dump())
+    user_id, _, skip_userid_check, _ = context.auth
 
     # Fork: Get response object (blocked vs normal)
-    if moderation_result.decision == "blocked":
-        output_text = moderation_result.message
+    if context.moderation_result.decision == "blocked":
+        output_text = context.moderation_result.message
         api_response = OpenAIResponseObject.model_construct(
-            id=moderation_result.moderation_id,
-            created_at=int(started_at.timestamp()),
+            id=context.moderation_result.moderation_id,
+            created_at=int(context.started_at.timestamp()),
             status="completed",
-            output=[moderation_result.refusal_response],
+            output=[context.moderation_result.refusal_response],
             usage=get_zero_usage(),
-            **updated_request.echoed_params(),
+            **api_params.echoed_params(configuration.rag_id_mapping),
         )
         if api_params.store:
             await append_turn_items_to_conversation(
-                client=client,
+                client=context.client,
                 conversation_id=api_params.conversation,
-                user_input=updated_request.input,
-                llm_output=[moderation_result.refusal_response],
+                user_input=api_params.input,
+                llm_output=[context.moderation_result.refusal_response],
             )
         _queue_responses_splunk_event(
-            background_tasks=background_tasks,
-            input_text=input_text,
+            background_tasks=context.background_tasks,
+            input_text=context.input_text,
             response_text=output_text,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            rh_identity_context=rh_identity_context,
-            inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+            rh_identity_context=context.rh_identity_context,
+            inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
             sourcetype="responses_shield_blocked",
-            user_agent=user_agent,
+            user_agent=context.user_agent,
         )
     else:
         try:
             api_response = cast(
                 OpenAIResponseObject,
-                await client.responses.create(
+                await context.client.responses.create(
                     **api_params.model_dump(exclude_none=True)
                 ),
             )
             token_usage = extract_token_usage(
-                api_response.usage, api_params.model, endpoint_path
+                api_response.usage, api_params.model, context.endpoint_path
             )
             logger.info("Consuming tokens")
             consume_query_tokens(
@@ -1090,41 +994,43 @@ async def handle_non_streaming_response(
             # Explicitly append the turn to conversation if context passed by previous response
             if api_params.store and api_params.previous_response_id:
                 await append_turn_items_to_conversation(
-                    client,
+                    context.client,
                     api_params.conversation,
-                    updated_request.input,
+                    api_params.input,
                     api_response.output,
                 )
 
         except RuntimeError as e:
             if is_context_length_error(str(e)):
                 _queue_responses_splunk_event(
-                    background_tasks=background_tasks,
-                    input_text=input_text,
+                    background_tasks=context.background_tasks,
+                    input_text=context.input_text,
                     response_text=str(e),
                     conversation_id=normalize_conversation_id(api_params.conversation),
                     model=api_params.model,
-                    rh_identity_context=rh_identity_context,
-                    inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                    rh_identity_context=context.rh_identity_context,
+                    inference_time=(
+                        datetime.now(UTC) - context.started_at
+                    ).total_seconds(),
                     sourcetype="responses_error",
                     fire_and_forget=True,
-                    user_agent=user_agent,
+                    user_agent=context.user_agent,
                 )
                 error_response = PromptTooLongResponse(model=api_params.model)
                 raise HTTPException(**error_response.model_dump()) from e
             raise e
         except APIConnectionError as e:
             _queue_responses_splunk_event(
-                background_tasks=background_tasks,
-                input_text=input_text,
+                background_tasks=context.background_tasks,
+                input_text=context.input_text,
                 response_text=str(e),
                 conversation_id=normalize_conversation_id(api_params.conversation),
                 model=api_params.model,
-                rh_identity_context=rh_identity_context,
-                inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                rh_identity_context=context.rh_identity_context,
+                inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
-                user_agent=user_agent,
+                user_agent=context.user_agent,
             )
             error_response = ServiceUnavailableResponse(
                 backend_name="Llama Stack",
@@ -1133,16 +1039,16 @@ async def handle_non_streaming_response(
             raise HTTPException(**error_response.model_dump()) from e
         except (LLSApiStatusError, OpenAIAPIStatusError) as e:
             _queue_responses_splunk_event(
-                background_tasks=background_tasks,
-                input_text=input_text,
+                background_tasks=context.background_tasks,
+                input_text=context.input_text,
                 response_text=str(e),
                 conversation_id=normalize_conversation_id(api_params.conversation),
                 model=api_params.model,
-                rh_identity_context=rh_identity_context,
-                inference_time=(datetime.now(UTC) - started_at).total_seconds(),
+                rh_identity_context=context.rh_identity_context,
+                inference_time=(datetime.now(UTC) - context.started_at).total_seconds(),
                 sourcetype="responses_error",
                 fire_and_forget=True,
-                user_agent=user_agent,
+                user_agent=context.user_agent,
             )
             error_response = handle_known_apistatus_errors(e, api_params.model)
             raise HTTPException(**error_response.model_dump()) from e
@@ -1154,53 +1060,49 @@ async def handle_non_streaming_response(
     )
     # Get topic summary for new conversation
     topic_summary = None
-    if updated_request.generate_topic_summary:
+    if context.generate_topic_summary:
         logger.debug("Generating topic summary for new conversation")
-        topic_summary = await get_topic_summary(input_text, client, api_params.model)
+        topic_summary = await get_topic_summary(
+            context.input_text, context.client, api_params.model
+        )
 
     vector_store_ids = extract_vector_store_ids_from_tools(api_params.tools)
     turn_summary = build_turn_summary(
         api_response,
         api_params.model,
-        endpoint_path,
+        context.endpoint_path,
         vector_store_ids,
         configuration.rag_id_mapping,
-        filter_server_tools=filter_server_tools,
+        filter_server_tools=context.filter_server_tools,
     )
     turn_summary.referenced_documents = deduplicate_referenced_documents(
-        inline_rag_context.referenced_documents + turn_summary.referenced_documents
+        context.inline_rag_context.referenced_documents
+        + turn_summary.referenced_documents
     )
-    turn_summary.rag_chunks.extend(inline_rag_context.rag_chunks)
+    turn_summary.rag_chunks.extend(context.inline_rag_context.rag_chunks)
     completed_at = datetime.now(UTC)
-    if moderation_result.decision != "blocked":
+    if context.moderation_result.decision == "passed":
         _queue_responses_splunk_event(
-            background_tasks=background_tasks,
-            input_text=input_text,
+            background_tasks=context.background_tasks,
+            input_text=context.input_text,
             response_text=output_text,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            rh_identity_context=rh_identity_context,
-            inference_time=(completed_at - started_at).total_seconds(),
+            rh_identity_context=context.rh_identity_context,
+            inference_time=(completed_at - context.started_at).total_seconds(),
             sourcetype="responses_completed",
-            input_tokens=(
-                turn_summary.token_usage.input_tokens if turn_summary.token_usage else 0
-            ),
-            output_tokens=(
-                turn_summary.token_usage.output_tokens
-                if turn_summary.token_usage
-                else 0
-            ),
-            user_agent=user_agent,
+            input_tokens=turn_summary.token_usage.input_tokens,
+            output_tokens=turn_summary.token_usage.output_tokens,
         )
     if api_params.store:
         store_query_results(
             user_id=user_id,
             conversation_id=normalize_conversation_id(api_params.conversation),
             model=api_params.model,
-            started_at=started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            started_at=context.started_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             completed_at=completed_at.strftime("%Y-%m-%dT%H:%M:%SZ"),
             summary=turn_summary,
-            query=input_text,
+            query=context.input_text,
             attachments=[],
             skip_userid_check=skip_userid_check,
             topic_summary=topic_summary,

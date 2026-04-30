@@ -10,9 +10,9 @@ from llama_stack_api.openai_responses import (
 )
 from pydantic import AnyUrl, ValidationError
 
+from models.common.responses.responses_api_params import ResponsesApiParams
 from utils.types import (
     ReferencedDocument,
-    ResponsesApiParams,
     ToolCallSummary,
     ToolResultSummary,
     content_to_str,

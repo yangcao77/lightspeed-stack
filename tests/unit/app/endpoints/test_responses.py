@@ -26,11 +26,19 @@ from app.endpoints.responses import (
 )
 from configuration import AppConfig
 from constants import DEFAULT_SYSTEM_PROMPT, SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
+from models.common.responses.responses_api_params import ResponsesApiParams
+from models.common.responses.responses_context import ResponsesContext
 from models.config import Action, ModelContextProtocolServer
 from models.database.conversations import UserConversation
 from models.requests import ResponsesRequest
 from models.responses import ResponsesResponse
-from utils.types import RAGContext, ResponsesConversationContext, TurnSummary
+from utils.types import (
+    RAGContext,
+    ResponsesConversationContext,
+    ShieldModerationBlocked,
+    ShieldModerationPassed,
+    TurnSummary,
+)
 
 MOCK_AUTH = (
     "00000001-0001-0001-0001-000000000001",
@@ -45,6 +53,46 @@ ENDPOINTS_MODULE = "utils.endpoints"
 UTILS_RESPONSES_MODULE = "utils.responses"
 MODEL = "google-vertex/publishers/google/models/gemini-2.5-flash"
 SERVER_INSTRUCTIONS = "Server instructions"
+
+
+def build_api_params_and_context(  # pylint: disable=too-many-arguments
+    *,
+    updated_request: ResponsesRequest,
+    client: Any,
+    auth: tuple[str, str, bool, str],
+    input_text: str,
+    started_at: datetime,
+    moderation_result: Any,
+    inline_rag_context: RAGContext,
+    background_tasks: Any = None,
+    rh_identity_context: tuple[str, str] = ("", ""),
+    filter_server_tools: bool = False,
+    generate_topic_summary: bool = False,
+    endpoint_path: str = "/responses",
+    user_agent: Optional[str] = None,
+) -> tuple[ResponsesApiParams, ResponsesContext]:
+    """Build api_params/context for direct helper invocation tests."""
+    api_params = ResponsesApiParams.model_validate(
+        {
+            **updated_request.model_dump(exclude={"tools"}),
+            "tools": updated_request.tools,
+        }
+    )
+    context = ResponsesContext.model_construct(
+        client=client,
+        auth=auth,
+        input_text=input_text,
+        started_at=started_at,
+        moderation_result=moderation_result,
+        inline_rag_context=inline_rag_context,
+        filter_server_tools=filter_server_tools,
+        background_tasks=background_tasks,
+        rh_identity_context=rh_identity_context,
+        generate_topic_summary=generate_topic_summary,
+        endpoint_path=endpoint_path,
+        user_agent=user_agent,
+    )
+    return api_params, context
 
 
 def _patch_base(mocker: MockerFixture, config: AppConfig) -> None:
@@ -115,14 +163,24 @@ def _patch_rag(
 
 
 def _patch_moderation(mocker: MockerFixture, decision: str = "passed") -> Any:
-    """Patch run_shield_moderation; return mock moderation result."""
-    mock_moderation = mocker.Mock()
-    mock_moderation.decision = decision
+    """Patch run_shield_moderation; return typed moderation result."""
+    if decision == "blocked":
+        moderation_result = ShieldModerationBlocked(
+            message="Content blocked",
+            moderation_id="mod_blocked",
+            refusal_response=OpenAIResponseMessage(
+                role="assistant",
+                content="Content blocked",
+                type="message",
+            ),
+        )
+    else:
+        moderation_result = ShieldModerationPassed()
     mocker.patch(
         f"{MODULE}.run_shield_moderation",
-        new=mocker.AsyncMock(return_value=mock_moderation),
+        new=mocker.AsyncMock(return_value=moderation_result),
     )
-    return mock_moderation
+    return moderation_result
 
 
 def _make_responses_response(
@@ -635,8 +693,8 @@ class TestResponsesEndpointHandler:
         # The handler passes tools=None and tool_choice=None to the response handler
         # (the endpoint deep-copies the request, so we inspect the handler call args)
         call_kwargs = mock_handle.call_args[1]
-        assert call_kwargs["updated_request"].tools is None
-        assert call_kwargs["updated_request"].tool_choice is None
+        assert call_kwargs["api_params"].tools is None
+        assert call_kwargs["api_params"].tool_choice is None
 
     @pytest.mark.asyncio
     async def test_responses_endpoint_rejects_without_responses_action(
@@ -720,15 +778,19 @@ class TestHandleNonStreamingResponse:
             return_value=mock_api_response,
         )
 
-        response = await handle_non_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Bad input",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_non_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         assert isinstance(response, ResponsesResponse)
         assert response.output_text == "Content blocked"
@@ -791,15 +853,19 @@ class TestHandleNonStreamingResponse:
             return_value=VALID_CONV_ID_NORMALIZED,
         )
 
-        response = await handle_non_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hello",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_non_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
 
         assert isinstance(response, ResponsesResponse)
@@ -868,15 +934,19 @@ class TestHandleNonStreamingResponse:
             new=mocker.AsyncMock(),
         )
 
-        await handle_non_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        await handle_non_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
 
         mock_append.assert_awaited_once()
@@ -906,15 +976,19 @@ class TestHandleNonStreamingResponse:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await handle_non_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Long input",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_non_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
 
         assert exc_info.value.status_code == 413
@@ -944,15 +1018,19 @@ class TestHandleNonStreamingResponse:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await handle_non_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_non_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
 
         assert exc_info.value.status_code == 503
@@ -992,15 +1070,19 @@ class TestHandleNonStreamingResponse:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            await handle_non_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_non_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
 
         assert exc_info.value.status_code == 500
@@ -1027,15 +1109,19 @@ class TestHandleNonStreamingResponse:
         )
 
         with pytest.raises(RuntimeError, match="Some other error"):
-            await handle_non_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_non_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
 
 
@@ -1073,15 +1159,19 @@ class TestHandleStreamingResponse:
         mocker.patch(f"{MODULE}.store_query_results")
 
         mock_client.conversations.items.create = mocker.AsyncMock()
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Bad",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
 
         assert isinstance(response, StreamingResponse)
@@ -1153,15 +1243,19 @@ class TestHandleStreamingResponse:
         mock_holder = mocker.Mock()
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         assert isinstance(response, StreamingResponse)
         collected: list[str] = []
@@ -1237,15 +1331,19 @@ class TestHandleStreamingResponse:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -1321,15 +1419,19 @@ class TestHandleStreamingResponse:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -1399,15 +1501,19 @@ class TestHandleStreamingResponse:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -1443,15 +1549,19 @@ class TestHandleStreamingResponse:
             return_value=VALID_CONV_ID_NORMALIZED,
         )
         with pytest.raises(HTTPException) as exc_info:
-            await handle_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Long",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
         assert exc_info.value.status_code == 413
 
@@ -1479,15 +1589,19 @@ class TestHandleStreamingResponse:
             return_value=VALID_CONV_ID_NORMALIZED,
         )
         with pytest.raises(HTTPException) as exc_info:
-            await handle_streaming_response(
-                client=mock_client,
-                original_request=request,
+            api_params, context = build_api_params_and_context(
                 updated_request=request,
+                client=mock_client,
                 auth=MOCK_AUTH,
                 input_text="Hi",
                 started_at=datetime.now(UTC),
                 moderation_result=mock_moderation,
                 inline_rag_context=RAGContext(),
+            )
+            await handle_streaming_response(
+                original_request=request,
+                api_params=api_params,
+                context=context,
             )
 
         assert exc_info.value.status_code == 503
@@ -1539,7 +1653,7 @@ class TestResponsesInstructionResolution:
         # The updated request passed to handle_non_streaming_response should have
         # instructions resolved to the default system prompt.
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["updated_request"].instructions == DEFAULT_SYSTEM_PROMPT
+        assert call_kwargs["api_params"].instructions == DEFAULT_SYSTEM_PROMPT
 
     @pytest.mark.asyncio
     async def test_client_provided_instructions_pass_through(
@@ -1584,7 +1698,7 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["updated_request"].instructions == custom_instructions
+        assert call_kwargs["api_params"].instructions == custom_instructions
 
     @pytest.mark.asyncio
     async def test_configured_system_prompt_used_when_no_client_instructions(
@@ -1646,8 +1760,7 @@ class TestResponsesInstructionResolution:
 
         call_kwargs = mock_handler.call_args[1]
         assert (
-            call_kwargs["updated_request"].instructions
-            == "You are a deployment assistant."
+            call_kwargs["api_params"].instructions == "You are a deployment assistant."
         )
 
     @pytest.mark.asyncio
@@ -1734,7 +1847,7 @@ class TestResponsesInstructionResolution:
         )
 
         call_kwargs = mock_handler.call_args[1]
-        assert call_kwargs["updated_request"].instructions == DEFAULT_SYSTEM_PROMPT
+        assert call_kwargs["api_params"].instructions == DEFAULT_SYSTEM_PROMPT
 
 
 class TestIsServerMcpOutputItem:
@@ -1796,11 +1909,11 @@ class TestShouldFilterMcpChunk:
         """Test that response.mcp_call.* events are filtered for tracked indices."""
         chunk = mocker.Mock()
         chunk.output_index = 5
+        chunk.type = "response.mcp_call.in_progress"
         server_mcp_output_indices: set[int] = {5}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.mcp_call.in_progress",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1813,11 +1926,11 @@ class TestShouldFilterMcpChunk:
         """Test that response.mcp_list_tools.* events are filtered for tracked indices."""
         chunk = mocker.Mock()
         chunk.output_index = 3
+        chunk.type = "response.mcp_list_tools.in_progress"
         server_mcp_output_indices: set[int] = {3}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.mcp_list_tools.in_progress",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1830,11 +1943,11 @@ class TestShouldFilterMcpChunk:
         """Test that response.mcp_approval_request.* events are filtered for tracked indices."""
         chunk = mocker.Mock()
         chunk.output_index = 7
+        chunk.type = "response.mcp_approval_request.in_progress"
         server_mcp_output_indices: set[int] = {7}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.mcp_approval_request.in_progress",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1847,11 +1960,11 @@ class TestShouldFilterMcpChunk:
         """Test that mcp_approval_request events for untracked indices pass through."""
         chunk = mocker.Mock()
         chunk.output_index = 7
+        chunk.type = "response.mcp_approval_request.in_progress"
         server_mcp_output_indices: set[int] = {99}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.mcp_approval_request.in_progress",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1862,11 +1975,11 @@ class TestShouldFilterMcpChunk:
         """Test that mcp_call events for untracked indices pass through."""
         chunk = mocker.Mock()
         chunk.output_index = 10
+        chunk.type = "response.mcp_call.completed"
         server_mcp_output_indices: set[int] = {5}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.mcp_call.completed",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1883,11 +1996,11 @@ class TestShouldFilterMcpChunk:
         chunk = mocker.Mock()
         chunk.item = item
         chunk.output_index = 2
+        chunk.type = "response.output_item.added"
         server_mcp_output_indices: set[int] = set()
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.output_item.added",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1904,11 +2017,11 @@ class TestShouldFilterMcpChunk:
         chunk = mocker.Mock()
         chunk.item = item
         chunk.output_index = 2
+        chunk.type = "response.output_item.done"
         server_mcp_output_indices: set[int] = {2}
         assert (
             _should_filter_mcp_chunk(
                 chunk,
-                "response.output_item.done",
                 {"server-a"},
                 server_mcp_output_indices,
             )
@@ -1919,12 +2032,8 @@ class TestShouldFilterMcpChunk:
     def test_does_not_filter_non_mcp_event(self, mocker: MockerFixture) -> None:
         """Test that non-MCP events pass through."""
         chunk = mocker.Mock()
-        assert (
-            _should_filter_mcp_chunk(
-                chunk, "response.output_text.delta", {"server-a"}, set()
-            )
-            is False
-        )
+        chunk.type = "response.output_text.delta"
+        assert _should_filter_mcp_chunk(chunk, {"server-a"}, set()) is False
 
 
 def mock_original_request(
@@ -2222,15 +2331,19 @@ class TestSanitizesOutputAndModel:
             return_value=VALID_CONV_ID_NORMALIZED,
         )
 
-        response = await handle_non_streaming_response(
-            client=mock_client,
-            original_request=original_request,
+        api_params, context = build_api_params_and_context(
             updated_request=updated_request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
+        )
+        response = await handle_non_streaming_response(
+            original_request=original_request,
+            api_params=api_params,
+            context=context,
         )
 
         assert isinstance(response, ResponsesResponse)
@@ -2340,16 +2453,20 @@ class TestSanitizesOutputAndModel:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=original_request,
+        api_params, context = build_api_params_and_context(
             updated_request=updated_request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
             filter_server_tools=False,
+        )
+        response = await handle_streaming_response(
+            original_request=original_request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -2458,16 +2575,20 @@ class TestMcpEventsFilteredUnconditionally:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
             filter_server_tools=False,
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:
@@ -2550,16 +2671,20 @@ class TestMcpEventsFilteredUnconditionally:
         mock_holder.get_client.return_value = mock_client
         mocker.patch(f"{MODULE}.AsyncLlamaStackClientHolder", return_value=mock_holder)
 
-        response = await handle_streaming_response(
-            client=mock_client,
-            original_request=request,
+        api_params, context = build_api_params_and_context(
             updated_request=request,
+            client=mock_client,
             auth=MOCK_AUTH,
             input_text="Hi",
             started_at=datetime.now(UTC),
             moderation_result=mock_moderation,
             inline_rag_context=RAGContext(),
             filter_server_tools=False,
+        )
+        response = await handle_streaming_response(
+            original_request=request,
+            api_params=api_params,
+            context=context,
         )
         collected: list[str] = []
         async for part in response.body_iterator:

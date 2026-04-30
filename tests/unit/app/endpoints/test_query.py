@@ -12,6 +12,7 @@ from pytest_mock import MockerFixture
 
 from app.endpoints.query import query_endpoint_handler, retrieve_response
 from configuration import AppConfig
+from models.common.responses.responses_api_params import ResponsesApiParams
 from models.database.conversations import UserConversation
 from models.requests import Attachment, QueryRequest
 from models.responses import QueryResponse
@@ -20,7 +21,6 @@ from utils.types import (
     RAGChunk,
     RAGContext,
     ReferencedDocument,
-    ResponsesApiParams,
     ShieldModerationPassed,
     ToolCallSummary,
     ToolResultSummary,

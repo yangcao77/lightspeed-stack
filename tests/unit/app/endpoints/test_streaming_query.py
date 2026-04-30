@@ -64,6 +64,7 @@ from constants import (
     MEDIA_TYPE_JSON,
     MEDIA_TYPE_TEXT,
 )
+from models.common.responses.responses_api_params import ResponsesApiParams
 from models.config import Action
 from models.context import ResponseGeneratorContext
 from models.requests import Attachment, QueryRequest
@@ -74,7 +75,6 @@ from utils.types import (
     RAGChunk,
     RAGContext,
     ReferencedDocument,
-    ResponsesApiParams,
     ShieldModerationPassed,
     TurnSummary,
 )
