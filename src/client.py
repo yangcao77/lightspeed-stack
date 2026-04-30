@@ -13,8 +13,8 @@ from llama_stack_client import APIConnectionError, APIStatusError, AsyncLlamaSta
 from configuration import configuration
 from llama_stack_configuration import YamlDumper, enrich_byok_rag, enrich_solr
 from log import get_logger
+from models.api.responses import ServiceUnavailableResponse
 from models.config import LlamaStackConfiguration
-from models.responses import ServiceUnavailableResponse
 from utils.types import Singleton
 
 logger = get_logger(__name__)

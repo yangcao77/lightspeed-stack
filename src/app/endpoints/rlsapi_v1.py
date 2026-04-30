@@ -25,8 +25,7 @@ from configuration import configuration
 from constants import ENDPOINT_PATH_INFER
 from log import get_logger
 from metrics import recording
-from models.config import Action
-from models.responses import (
+from models.api.responses import (
     UNAUTHORIZED_OPENAPI_EXAMPLES,
     ForbiddenResponse,
     InternalServerErrorResponse,
@@ -37,6 +36,7 @@ from models.responses import (
     UnauthorizedResponse,
     UnprocessableEntityResponse,
 )
+from models.config import Action
 from models.rlsapi.requests import RlsapiV1InferRequest, RlsapiV1SystemInfo
 from models.rlsapi.responses import RlsapiV1InferData, RlsapiV1InferResponse
 from observability import InferenceEventData, build_inference_event, send_splunk_event
@@ -87,7 +87,7 @@ infer_responses: dict[int | str, dict[str, Any]] = {
     413: PromptTooLongResponse.openapi_response(examples=["context window exceeded"]),
     422: UnprocessableEntityResponse.openapi_response(),
     429: QuotaExceededResponse.openapi_response(),
-    500: InternalServerErrorResponse.openapi_response(examples=["generic"]),
+    500: InternalServerErrorResponse.openapi_response(examples=["configuration"]),
     503: ServiceUnavailableResponse.openapi_response(
         examples=["llama stack", "kubernetes api"]
     ),
