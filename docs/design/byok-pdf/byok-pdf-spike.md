@@ -43,7 +43,7 @@ These determine scope and approach.
 | B | All in `rag-content` (skip stack docs update) |
 | C | All in `lightspeed-stack` (move BYOK pipeline) |
 
-**Recommendation**: **A**. The "existing tool for producing BYOK vector store" *is* `rag-content`. `lightspeed-stack/docs/byok_guide.md` line 106-118 currently tells customers "PDFs must be converted to markdown first" — that needs to change to reflect native support. Confidence: 95%.
+**Recommendation**: **A**. The "existing tool for producing BYOK vector store" *is* `rag-content`. `lightspeed-stack/docs/byok_guide.md` currently lists PDF under "Requires conversion" and tells customers PDFs must be converted to Markdown first — that needs to change to reflect native support. Confidence: 95%.
 
 ## Technical decisions for @maxrubyonrails
 
@@ -70,7 +70,7 @@ After docling exports to Markdown, how is the content chunked into vector-store 
 
 | Option | Description |
 |--------|-------------|
-| A | Reuse the existing `MarkdownNodeParser`. Add `"pdf"` to the `doc_type` branches at `document_processor.py:75,87`. |
+| A | Reuse the existing `MarkdownNodeParser`. Add `"pdf"` to the `doc_type` branches in `_BaseDB.__init__` and `_LlamaStackDB.__init__` (extracted to a shared `MARKDOWN_COMPATIBLE_DOC_TYPES` constant — see spec doc). |
 | B | Use docling's hybrid chunker (PDF-aware, page-boundary-aware). Different node parser path. |
 
 **Recommendation**: **A**. docling already exports clean Markdown for body content (PoC evidence: tables, lists, paragraphs all preserved). The `MarkdownNodeParser` we use for HTML and Markdown is well-tested and handles the output. **B** adds a parallel chunking pipeline and complicates `document_processor.py`. If retrieval quality on PDFs is poor in practice, **B** is a clean follow-up. Confidence: 85%.
@@ -108,10 +108,11 @@ Four sub-JIRAs under [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471). 
 **Scope**:
 
 - New package `src/lightspeed_rag_content/pdf/` with `__init__.py`, `__main__.py`, `pdf_reader.py`.
-- `PDFReader(BaseReader)` exposing `load_data(file: Path) -> list[Document]`.
+- `PDFReader(BaseReader)` exposing `load_data(file: Path) -> list[Document]`. Use `TableFormerMode.ACCURATE` (enum), not the string `"accurate"`. Match `HTMLReader` on whether to invoke `super().__init__()`.
 - `convert_pdf_file_to_markdown` and `convert_pdf_string_to_markdown` convenience helpers (mirror HTML).
 - CLI subcommands `convert` and `batch` (mirror `html/__main__.py`).
-- Update `document_processor.py` line 75 and line 87: `doc_type in ("markdown", "html", "pdf")`.
+- Per **R7**, `PDFReader.load_data` emits a `logger.warning` when the resulting Markdown is empty / under a small threshold (likely a scanned PDF). Threshold is a module-level `Final[int]` constant.
+- Extract the `("markdown", "html", "pdf")` predicate in `document_processor.py` to a single module-level `MARKDOWN_COMPATIBLE_DOC_TYPES: Final[tuple[str, ...]]` constant and reference it from both `_BaseDB.__init__` and `_LlamaStackDB.__init__` (do not duplicate the tuple).
 - Update `rag-content/README.md`: list PDF as a directly supported input format.
 - Pass `uv run make format && uv run make verify` (or rag-content equivalent).
 - No new entries in `pyproject.toml` — docling is already there.
@@ -126,11 +127,12 @@ Four sub-JIRAs under [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471). 
 **Agentic tool instruction**:
 
 ```text
-Read the "Architecture" and "Implementation" sections in
-docs/design/byok-pdf/byok-pdf.md (in the lightspeed-stack repo).
+Read the "Architecture", "Chunking", and "Implementation Suggestions"
+sections in docs/design/byok-pdf/byok-pdf.md (in the lightspeed-stack
+repo). R7 (warn on empty output) is in the "Requirements" section.
 Key files in rag-content:
-  src/lightspeed_rag_content/html/         (precedent — mirror this)
-  src/lightspeed_rag_content/document_processor.py:75,87
+  src/lightspeed_rag_content/html/                       (precedent — mirror this)
+  src/lightspeed_rag_content/document_processor.py       (extract MARKDOWN_COMPATIBLE_DOC_TYPES, use it in _BaseDB.__init__ and _LlamaStackDB.__init__)
   README.md
 Mirror html/ into pdf/ with InputFormat.PDF and the pipeline options
 listed in the spec doc's "Pipeline configuration" section.
@@ -175,7 +177,6 @@ Use docling's mock-friendly seam from the HTML tests.
 
 **Scope**:
 
-- Reuse the local-stack-testing pattern from [docs/local-stack-testing.md](../../local-stack-testing.md).
 - Add an e2e feature file under `tests/e2e/features/` (BDD style).
 - Step definitions that (1) generate a vector store from a sample PDF, (2) start the stack pointed at it, (3) issue a query, (4) assert retrieved content matches PDF source.
 - Add the new feature to `tests/e2e/test_list.txt`.
@@ -190,7 +191,6 @@ Use docling's mock-friendly seam from the HTML tests.
 ```text
 Read the "End-to-end validation" section in docs/design/byok-pdf/byok-pdf.md.
 Key files:
-  docs/local-stack-testing.md
   tests/e2e/features/                  (existing BDD features for pattern)
   tests/integration/endpoints/test_query_byok_integration.py  (similar pattern)
 Generate the vector store ahead of stack startup using the rag-content
@@ -206,9 +206,8 @@ custom_processor.py invocation documented in the spec doc.
 **Scope**:
 
 - Edit `docs/byok_guide.md`:
-  - Line ~106 (`Directly supported`): add PDF.
-  - Line ~107 (`Requires conversion`): remove PDF; clarify which formats still require conversion.
-  - Line ~114-118 (Step 1): remove the docling-as-pre-conversion example, replace with a note that PDFs can be passed directly to `custom_processor.py`.
+  - "Knowledge Sources" subsection (under Prerequisites): move PDF from "Requires conversion" to "Directly supported"; clarify which formats still require conversion (e.g., AsciiDoc).
+  - "Step 1: Prepare Your Knowledge Sources": remove the docling-as-pre-conversion example for PDFs, replace with a note that PDFs can be passed directly to `custom_processor.py`.
 - Sanity-check no other parts of `docs/` give stale conversion advice (search for `docling` and `convert.*PDF`).
 
 **Acceptance criteria**:
@@ -221,7 +220,8 @@ custom_processor.py invocation documented in the spec doc.
 ```text
 Read the "Documentation impact" section in docs/design/byok-pdf/byok-pdf.md.
 Key files:
-  docs/byok_guide.md                   (lines 106-118)
+  docs/byok_guide.md                          (Knowledge Sources subsection
+                                                + Step 1)
   examples/lightspeed-stack-byok-okp-rag.yaml  (no change, but verify still
                                                 accurate after PDF support)
 ```
@@ -249,21 +249,16 @@ The PoC mirrors the production `HTMLReader` but configures docling for PDF (`Inp
 | sample_jira_1311.pdf | 217 KB | 332 s (incl. ~290 s model load) | 7,608 chars / 288 lines | High — clean headings, body, tables |
 | sample_jira_836.pdf | 372 KB | ~70 s (warm) | 3,084 chars / 165 lines | Body clean; **headings degraded** (letter-spaced font) |
 
-Detailed findings, log excerpts, and converted Markdown are in [`poc-results/`](poc-results/):
+**What the PoC proved (validated against both samples)**:
 
-- [`01-poc-report.txt`](poc-results/01-poc-report.txt) — methodology, findings, implications
-- [`02-conversion-log.txt`](poc-results/02-conversion-log.txt) — exact commands and timings
-- [`03-sample-jira-1311.md`](poc-results/03-sample-jira-1311.md) — converted output (clean)
-- [`04-sample-jira-836.md`](poc-results/04-sample-jira-836.md) — converted output (heading degradation visible)
+1. **No new dependencies are needed.** docling, already in `pyproject.toml` for HTML, handles PDF via the same `DocumentConverter` API with `InputFormat.PDF` and `PdfFormatOption(pipeline_options=...)`.
+2. **Body text and tables convert cleanly.** The 1311 sample produced two well-formed GitHub-flavored Markdown tables (Component/Behavior, Area/Impact) with correct headers and cell boundaries. Body paragraphs were free of hyphenation artifacts and broken sentences.
+3. **`MarkdownNodeParser` will work for chunking.** Heading prefixes (`## `, `### `) survive intact, so the existing chunker splits on heading boundaries without modification.
+4. **No parallel chunking pipeline needed.** A single `doc_type` branch addition is sufficient.
 
-**Key takeaways the PoC proved**:
+**Honest limitation surfaced by sample 836** (Confluence "Export to PDF"): letter-spaced display fonts cause docling to extract heading text with spaces between letters (e.g., `S t r e a m l i n e   l i g h t s p e e d - s t a c k   c o n f i g`). The `## ` prefix remains intact so chunking still happens at heading boundaries; only the heading *text* is corrupted. Body content under the heading is unaffected. This is a docling extraction limitation, not a `PdfPipelineOptions` knob. Documented as a known v1 caveat in the spec doc; no production fix in v1. A heading-cleanup post-processor is noted as a follow-up.
 
-1. No new dependencies are needed (docling already covers PDF).
-2. Recommended pipeline defaults produce clean Markdown for body content.
-3. Tables are preserved as proper Markdown tables.
-4. `MarkdownNodeParser` will work for chunking — no parallel pipeline needed.
-
-**Honest limitation surfaced**: PDFs with letter-spaced display fonts (typical of Confluence "Export to PDF" output) produce noisy headings. This is a docling extraction limitation, not something `PdfPipelineOptions` controls. Document as a known caveat in the spec doc; no production fix in v1.
+> The full PoC report, conversion logs, sample inputs, and converted outputs were committed under `poc/` and `poc-results/` for review purposes. Per the spike workflow ([`howto-run-a-spike.md`](../../contributing/howto-run-a-spike.md) step 10), those artifacts are removed before merge; their content is summarised above so the spike doc stays self-contained in the merged history. The PR diff at the time of review (PR #1598) is the canonical reference if the raw artifacts are needed later.
 
 ## Background sections
 
@@ -286,15 +281,14 @@ rag-content/
         └── html_reader.py        # 165 LoC, BaseReader, uses docling
 ```
 
-The `document_processor.py` file already routes by `doc_type`:
+The `document_processor.py` file already routes by `doc_type` inside both `_BaseDB.__init__` and `_LlamaStackDB.__init__`:
 
 ```python
-# src/lightspeed_rag_content/document_processor.py:75
 if config.doc_type in ("markdown", "html"):
     Settings.node_parser = MarkdownNodeParser()
 ```
 
-This is the only line that needs to grow `"pdf"` for chunking to work.
+These are the only two predicates that need to grow `"pdf"` for chunking to work. The implementation ticket extracts the tuple to a shared `MARKDOWN_COMPATIBLE_DOC_TYPES` constant so the predicate cannot drift between the two call sites.
 
 ### HTML precedent (LCORE-1035)
 

@@ -25,6 +25,7 @@ Today, customers with PDF content must convert it to Markdown themselves before 
 - **R4**: No new entries in `pyproject.toml` (docling is already a dependency).
 - **R5**: OCR is not invoked. Scanned/image-only PDFs are out of scope; their conversion may yield empty or near-empty Markdown without erroring.
 - **R6**: The `lightspeed-stack/docs/byok_guide.md` no longer instructs users to pre-convert PDFs.
+- **R7**: When `PDFReader.load_data` produces empty or near-empty Markdown (a likely indicator of a scanned/image-only PDF given R5), the reader emits a `logger.warning` with the file path and resulting length. This makes the silent-degradation case visible in `custom_processor.py` logs without raising. The empty-output threshold is a small module-level constant (e.g., `EMPTY_OUTPUT_THRESHOLD: Final[int] = 50`) so it is easy to find and tune.
 
 ## Use Cases
 
@@ -70,6 +71,7 @@ PDF support reuses the entire downstream pipeline. The only new code is the read
 ```python
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import PdfPipelineOptions
+from docling.datamodel.pipeline_options import TableFormerMode
 from docling.document_converter import DocumentConverter, PdfFormatOption
 
 class PDFReader(BaseReader):
@@ -77,7 +79,7 @@ class PDFReader(BaseReader):
         opts = PdfPipelineOptions()
         opts.do_ocr = False
         opts.do_table_structure = True
-        opts.table_structure_options.mode = "accurate"
+        opts.table_structure_options.mode = TableFormerMode.ACCURATE
         self.converter = DocumentConverter(
             allowed_formats=[InputFormat.PDF],
             format_options={
@@ -87,8 +89,11 @@ class PDFReader(BaseReader):
 
     def load_data(self, file: Path, extra_info=None, **kwargs):
         # identical body to HTMLReader.load_data — see html_reader.py
+        # Plus R7: warn-log when the resulting markdown is empty / very short.
         ...
 ```
+
+Mirror `HTMLReader`'s `__init__` choice on whether to call `super().__init__()` — `BaseReader` from llama-index does not strictly require it, but matching the precedent keeps the two readers symmetric. Use `TableFormerMode.ACCURATE` (the enum), not the string literal `"accurate"`; docling's Pydantic coercion accepts both, but the enum is the idiomatic form and is type-checked.
 
 ### Pipeline configuration
 
@@ -105,16 +110,22 @@ These are baked into `PDFReader.__init__`. **No CLI flags expose them in v1.** I
 
 ### Chunking
 
-PDFs go through the same chunking path as HTML and Markdown. The change is in `document_processor.py`:
+PDFs go through the same chunking path as HTML and Markdown. Two predicates in `document_processor.py` need to learn `"pdf"`:
+
+- The `Settings.node_parser = MarkdownNodeParser()` branch in `_BaseDB.__init__`.
+- The same branch in `_LlamaStackDB.__init__` (currently a separate copy of the predicate).
+
+To prevent these two tuples from drifting, extract a single module-level constant and use it from both call sites:
 
 ```python
-# document_processor.py:75 — _LlamaStackDB
-if config.doc_type in ("markdown", "html"):       # before
-if config.doc_type in ("markdown", "html", "pdf"): # after
+from typing import Final
 
-# document_processor.py:87 — _BaseDB
-if config.doc_type in ("markdown", "html"):       # before
-if config.doc_type in ("markdown", "html", "pdf"): # after
+# At module top
+MARKDOWN_COMPATIBLE_DOC_TYPES: Final[tuple[str, ...]] = ("markdown", "html", "pdf")
+
+# In _BaseDB.__init__ and _LlamaStackDB.__init__
+if config.doc_type in MARKDOWN_COMPATIBLE_DOC_TYPES:
+    Settings.node_parser = MarkdownNodeParser()
 ```
 
 `MarkdownNodeParser` operates on the markdown that docling exports. It splits on heading boundaries, which works because docling produces well-formed `# ` / `## ` / `### ` headings for body content. Heading-text degradation in some PDFs (see "Known limitations") corrupts the heading *text* but does not break splitting.
@@ -144,7 +155,7 @@ Mirror HTMLReader exactly:
 - `RuntimeError` (with the underlying exception chained via `from exc`) if docling conversion fails.
 - The CLI catches both, logs, and exits non-zero.
 
-A scanned (image-only) PDF will produce empty or near-empty Markdown. This is not an error — the document parses fine; it just contains no extractable text. Customers will see a valid but empty-ish vector store entry. Document this in the rag-content README.
+A scanned (image-only) PDF will produce empty or near-empty Markdown. This is not an error — the document parses fine; it just contains no extractable text. Customers will see a valid but empty-ish vector store entry. Per **R7**, the reader emits a `logger.warning` in this case (file path + resulting length) so the condition shows up in `custom_processor.py` logs. Document the same caveat in the rag-content README.
 
 ### Migration / backwards compatibility
 
@@ -159,31 +170,36 @@ None. This is purely additive: existing pipelines that don't pass PDFs are unaff
 | rag-content | `src/lightspeed_rag_content/pdf/__init__.py` | New — minimal package init mirroring `html/__init__.py` |
 | rag-content | `src/lightspeed_rag_content/pdf/__main__.py` | New — CLI mirroring `html/__main__.py` |
 | rag-content | `src/lightspeed_rag_content/pdf/pdf_reader.py` | New — `PDFReader(BaseReader)` mirroring `html_reader.py` |
-| rag-content | `src/lightspeed_rag_content/document_processor.py` | Edit lines 75 and 87 — add `"pdf"` to the `doc_type in (...)` tuples |
+| rag-content | `src/lightspeed_rag_content/document_processor.py` | Add a module-level `MARKDOWN_COMPATIBLE_DOC_TYPES` constant (incl. `"pdf"`) and use it in both `_BaseDB.__init__` and `_LlamaStackDB.__init__` where the predicate `config.doc_type in (...)` currently appears |
 | rag-content | `tests/pdf/__init__.py` | New |
 | rag-content | `tests/pdf/test_pdf_reader.py` | New — mirror `tests/html/test_html_reader.py` |
 | rag-content | `tests/pdf/test__main__.py` | New — mirror `tests/html/test__main__.py` |
 | rag-content | `tests/pdf/fixture.pdf` | New — small text-extractable test PDF (< 50 KB) |
 | rag-content | `README.md` | Edit — add PDF to the supported input formats list |
-| lightspeed-stack | `docs/byok_guide.md` | Edit lines ~106-118 — list PDF as directly supported, drop the docling pre-conversion example |
+| lightspeed-stack | `docs/byok_guide.md` | In the "Knowledge Sources" subsection: add PDF to "Directly supported", remove it from "Requires conversion". In Step 1 ("Prepare Your Knowledge Sources"): drop the docling-as-pre-conversion example. |
 
 ### Insertion point detail
 
-`document_processor.py:75` (inside `_LlamaStackDB.__init__`):
+There are two predicates in `document_processor.py` that route by `doc_type`:
+
+- One inside `_LlamaStackDB.__init__`.
+- One inside `_BaseDB.__init__`.
+
+Both look like:
 
 ```python
 if config.doc_type in ("markdown", "html"):
     Settings.node_parser = MarkdownNodeParser()
 ```
 
-`document_processor.py:87` (inside `_BaseDB.__init__`):
+Both should be replaced with the shared `MARKDOWN_COMPATIBLE_DOC_TYPES` constant introduced in the [Chunking](#chunking) section so the predicates cannot drift:
 
 ```python
-if config.doc_type in ("markdown", "html"):
+if config.doc_type in MARKDOWN_COMPATIBLE_DOC_TYPES:
     Settings.node_parser = MarkdownNodeParser()
 ```
 
-Both lines need `"pdf"` added to the tuple. No other branches in the file route by `doc_type`.
+No other branches in the file route by `doc_type`.
 
 ### Config pattern
 
@@ -199,6 +215,7 @@ Mirror the HTML test layout exactly:
   - Test that `FileNotFoundError` is raised for a non-existent path.
   - Test that `RuntimeError` is raised when docling raises (mock the converter).
   - Test that `extra_info` is preserved in `Document.metadata`.
+  - Test (per **R7**) that empty / sub-threshold docling output triggers a single `logger.warning` containing the file path (use `caplog` and assert `record.levelname == "WARNING"`).
 - `tests/pdf/test__main__.py`:
   - Test argument parsing for `convert` and `batch`.
   - Test that `convert` writes output to the inferred path when `-o` is omitted.
@@ -219,7 +236,7 @@ Use the existing `mocker` patterns from `tests/html/`. The PDF fixture should be
 
 These are intentional v1 trade-offs documented for the rag-content README and the BYOK guide:
 
-- **Scanned PDFs**: produce empty or near-empty Markdown. Use a separate OCR step today; native OCR support tracked as a follow-up.
+- **Scanned PDFs**: produce empty or near-empty Markdown. Per **R7** the reader emits a `logger.warning` so the condition is visible in `custom_processor.py` logs rather than silently degrading. Use a separate OCR step today; native OCR support tracked as a follow-up.
 - **Letter-spaced display fonts**: typical of Confluence "Export to PDF" output. Headings may extract with spaces between letters (`H e a d i n g`). Body text is unaffected. The `## ` heading prefix is intact, so chunking still happens at heading boundaries; only the heading *text* is corrupted, which slightly degrades retrieval if a query mentions the heading literally.
 - **Performance**: ~30-90 seconds per small/medium PDF on CPU after model warm-up. Acceptable for offline indexing; not suitable for interactive use.
 
@@ -228,6 +245,7 @@ These are intentional v1 trade-offs documented for the rag-content README and th
 | Date       | Change          | Reason                          |
 |------------|-----------------|---------------------------------|
 | 2026-04-27 | Initial version | Spike deliverable for LCORE-1471 |
+| 2026-04-30 | Added R7 (warn-log empty output); switched chunking section to symbol anchors + shared `MARKDOWN_COMPATIBLE_DOC_TYPES` constant; switched code sketch to `TableFormerMode.ACCURATE` enum; added `super().__init__()` mirroring note | Reviewer feedback on PR #1598 (CodeRabbit) |
 
 ## Appendix A: PoC evidence
 
