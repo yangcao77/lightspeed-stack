@@ -36,7 +36,7 @@ class ResponsesContext(BaseModel):
         description="Background tasks for telemetry, if enabled",
     )
     rh_identity_context: tuple[str, str] = Field(
-        default_factory=lambda: ("", ""),
+        default=("", ""),
         description="RH identity (org_id, system_id) for Splunk events",
     )
     user_agent: Optional[str] = Field(
