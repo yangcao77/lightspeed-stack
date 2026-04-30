@@ -95,13 +95,20 @@ After docling exports to Markdown, how is the content chunked into vector-store 
 
 **Recommendation**: **A** for the test JIRA, **C** as a separate e2e JIRA. The `tests/html/` precedent gives us the unit-test pattern; e2e is real work that needs the full local stack running. Confidence: 80%.
 
-## Proposed JIRAs
+## Filed JIRAs
 
-Four sub-JIRAs under [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471). Each `agentic tool instruction` points to the spec doc, not this spike doc.
+Filed 2026-04-30 via `dev-tools/file-jiras.sh`, all under epic [LCORE-2090](https://issues.redhat.com/browse/LCORE-2090) which itself sits under feature ticket [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471):
+
+- [LCORE-2091](https://issues.redhat.com/browse/LCORE-2091) — Implement PDF support in rag-content
+- [LCORE-2092](https://issues.redhat.com/browse/LCORE-2092) — Unit and integration tests for PDF support
+- [LCORE-2093](https://issues.redhat.com/browse/LCORE-2093) — End-to-end test (PDF-built vector store consumed by lightspeed-stack)
+- [LCORE-2094](https://issues.redhat.com/browse/LCORE-2094) — Update lightspeed-stack BYOK guide for native PDF support
+
+Each `agentic tool instruction` points to the spec doc, not this spike doc.
 
 <!-- type: Task -->
-<!-- key: LCORE-???? -->
-### LCORE-????: Implement PDF support in rag-content
+<!-- key: LCORE-2091 -->
+### LCORE-2091: Implement PDF support in rag-content
 
 **Description**: Add a `PDFReader` to `rag-content` mirroring the existing `HTMLReader`. Use `docling` (already a dependency) configured for `InputFormat.PDF`. Wire it into `document_processor.py` so PDFs are recognized and parsed via `MarkdownNodeParser`. Update the `rag-content` README to list PDF as supported.
 
@@ -139,8 +146,8 @@ listed in the spec doc's "Pipeline configuration" section.
 ```
 
 <!-- type: Task -->
-<!-- key: LCORE-???? -->
-### LCORE-????: Unit and integration tests for PDF support
+<!-- key: LCORE-2092 -->
+### LCORE-2092: Unit and integration tests for PDF support
 
 **Description**: Add unit tests for `PDFReader` and the CLI module mirroring the HTML test layout. Add an integration test that builds a small Faiss vector store from a real PDF and runs a query that returns expected content.
 
@@ -170,8 +177,8 @@ Use docling's mock-friendly seam from the HTML tests.
 ```
 
 <!-- type: Task -->
-<!-- key: LCORE-???? -->
-### LCORE-????: End-to-end test — PDF-built vector store consumed by lightspeed-stack
+<!-- key: LCORE-2093 -->
+### LCORE-2093: End-to-end test — PDF-built vector store consumed by lightspeed-stack
 
 **Description**: Verify that a vector store generated from a PDF (via the new `pdf` module) is consumed correctly by `lightspeed-stack` end-to-end: the stack starts up, the BYOK source is registered, and a query that should retrieve content from the PDF actually returns it.
 
@@ -198,8 +205,8 @@ custom_processor.py invocation documented in the spec doc.
 ```
 
 <!-- type: Task -->
-<!-- key: LCORE-???? -->
-### LCORE-????: Update lightspeed-stack BYOK guide for native PDF support
+<!-- key: LCORE-2094 -->
+### LCORE-2094: Update lightspeed-stack BYOK guide for native PDF support
 
 **Description**: Update `docs/byok_guide.md` to reflect that PDF is a directly supported input format, removing the "convert PDFs to Markdown first" instruction.
 

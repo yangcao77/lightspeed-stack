@@ -6,6 +6,7 @@
 | **Component**      | rag-content (primary), lightspeed-stack (docs only) |
 | **Authors**        | Maxim Svistunov                           |
 | **Feature**        | [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471) |
+| **Epic**           | [LCORE-2090](https://issues.redhat.com/browse/LCORE-2090) (covers LCORE-2091..2094) |
 | **Spike**          | [LCORE-1471](https://issues.redhat.com/browse/LCORE-1471) — see [byok-pdf-spike.md](byok-pdf-spike.md) |
 | **Precedent**      | [LCORE-1035](https://issues.redhat.com/browse/LCORE-1035) — HTML support (PR `7f688b0`) |
 
@@ -246,6 +247,7 @@ These are intentional v1 trade-offs documented for the rag-content README and th
 |------------|-----------------|---------------------------------|
 | 2026-04-27 | Initial version | Spike deliverable for LCORE-1471 |
 | 2026-04-30 | Added R7 (warn-log empty output); switched chunking section to symbol anchors + shared `MARKDOWN_COMPATIBLE_DOC_TYPES` constant; switched code sketch to `TableFormerMode.ACCURATE` enum; added `super().__init__()` mirroring note | Reviewer feedback on PR #1598 (CodeRabbit) |
+| 2026-04-30 | JIRAs filed under epic LCORE-2090 (LCORE-2091..2094); added Epic row to the metadata table | Step 9 of howto-run-a-spike.md |
 
 ## Appendix A: PoC evidence
 
