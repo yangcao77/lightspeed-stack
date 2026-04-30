@@ -251,7 +251,7 @@ These are intentional v1 trade-offs documented for the rag-content README and th
 
 ## Appendix A: PoC evidence
 
-See [`poc-results/`](poc-results/) in the spike PR for the full PoC report, conversion logs, and converted Markdown samples. The PoC validated the recommendations above on two real PDFs and surfaced the heading-degradation limitation documented in "Known limitations".
+The full PoC report, conversion logs, sample input PDFs, and converted Markdown samples were committed to PR #1598 under `docs/design/byok-pdf/poc/` and `docs/design/byok-pdf/poc-results/`, then removed before merge per `howto-run-a-spike.md` step 10. Refer to PR #1598's diff (commits `56be99cb` and `250881e2`) for the raw artifacts. The "PoC results" section of [`byok-pdf-spike.md`](byok-pdf-spike.md) summarises what the PoC proved and surfaces the heading-degradation limitation documented in "Known limitations".
 
 ## Appendix B: HTML precedent
 

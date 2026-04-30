@@ -235,7 +235,7 @@ Key files:
 
 ## PoC results
 
-A working PoC script (`poc/pdf_reader.py`) implements `PDFReader` in 60 lines and was run against two real-world PDFs.
+A 60-line PoC script implementing `PDFReader` was committed to PR #1598 (commit `56be99cb`) under `docs/design/byok-pdf/poc/` along with two sample PDFs, then removed from the merged tree per [`howto-run-a-spike.md`](../../contributing/howto-run-a-spike.md) step 10. The PoC was run against both samples to validate that docling's PDF pipeline produces usable Markdown.
 
 ### What the PoC does
 
@@ -265,7 +265,7 @@ The PoC mirrors the production `HTMLReader` but configures docling for PDF (`Inp
 
 **Honest limitation surfaced by sample 836** (Confluence "Export to PDF"): letter-spaced display fonts cause docling to extract heading text with spaces between letters (e.g., `S t r e a m l i n e   l i g h t s p e e d - s t a c k   c o n f i g`). The `## ` prefix remains intact so chunking still happens at heading boundaries; only the heading *text* is corrupted. Body content under the heading is unaffected. This is a docling extraction limitation, not a `PdfPipelineOptions` knob. Documented as a known v1 caveat in the spec doc; no production fix in v1. A heading-cleanup post-processor is noted as a follow-up.
 
-> The full PoC report, conversion logs, sample inputs, and converted outputs were committed under `poc/` and `poc-results/` for review purposes. Per the spike workflow ([`howto-run-a-spike.md`](../../contributing/howto-run-a-spike.md) step 10), those artifacts are removed before merge; their content is summarised above so the spike doc stays self-contained in the merged history. The PR diff at the time of review (PR #1598) is the canonical reference if the raw artifacts are needed later.
+> The full PoC report, conversion logs, sample input PDFs, and converted Markdown outputs were committed to PR #1598 under `docs/design/byok-pdf/poc/` and `docs/design/byok-pdf/poc-results/` for review purposes, then removed before merge per [`howto-run-a-spike.md`](../../contributing/howto-run-a-spike.md) step 10. Their content is summarised above so the spike doc stays self-contained in the merged history. PR #1598's diff (commits `56be99cb` and `250881e2`) is the canonical reference if the raw artifacts are needed later.
 
 ## Background sections
 
