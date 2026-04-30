@@ -22,6 +22,7 @@ from authentication.interface import AuthTuple
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
+from constants import ENDPOINT_PATH_INFER
 from log import get_logger
 from metrics import recording
 from models.config import Action
@@ -241,7 +242,7 @@ async def retrieve_simple_response(
     instructions: str,
     tools: Optional[list[Any]] = None,
     model_id: Optional[str] = None,
-    endpoint_path: str = "/v1/infer",
+    endpoint_path: str = ENDPOINT_PATH_INFER,
 ) -> str:
     """Retrieve a simple response from the LLM for a stateless query.
 
@@ -678,7 +679,7 @@ async def infer_endpoint(  # pylint: disable=R0914
     if quota_id is not None:
         check_tokens_available(configuration.quota_limiters, quota_id)
 
-    endpoint_path = "/v1/infer"
+    endpoint_path = ENDPOINT_PATH_INFER
 
     request_id = get_suid()
 

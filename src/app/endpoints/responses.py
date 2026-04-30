@@ -36,7 +36,7 @@ from authorization.azure_token_manager import AzureEntraIDManager
 from authorization.middleware import authorize
 from client import AsyncLlamaStackClientHolder
 from configuration import configuration
-from constants import SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
+from constants import ENDPOINT_PATH_RESPONSES, SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
 from log import get_logger
 from models.common.responses.responses_api_params import ResponsesApiParams
 from models.common.responses.responses_context import ResponsesContext
@@ -329,7 +329,7 @@ async def responses_endpoint_handler(
     )
     attachments_text = extract_attachments_text(original_request.input)
 
-    endpoint_path = "/v1/responses"
+    endpoint_path = ENDPOINT_PATH_RESPONSES
     moderation_result = await run_shield_moderation(
         client,
         input_text + "\n\n" + attachments_text,
