@@ -1672,9 +1672,7 @@ def main() -> None:
     logger, and ``logging.lastResort`` would drop everything below WARNING.
     """
     parser = ArgumentParser(
-        description="Generate the OGX run configuration from a "
-        "lightspeed-stack.yaml: synthesized in unified mode, or enriched "
-        "from --input in legacy mode (auto-detected)",
+        description="Enrich or synthesize OGX config from Lightspeed values",
     )
     parser.add_argument(
         "-c",
@@ -1686,14 +1684,20 @@ def main() -> None:
         "-i",
         "--input",
         default="run.yaml",
-        help="Input OGX config enriched in legacy mode; ignored in "
-        "unified mode (default: run.yaml)",
+        help="Input OGX config for legacy enrichment mode; ignored "
+        "with --synthesize (default: run.yaml)",
     )
     parser.add_argument(
         "-o",
         "--output",
         default="run_.yaml",
-        help="Output generated config (default: run_.yaml)",
+        help="Output config file (default: run_.yaml)",
+    )
+    parser.add_argument(
+        "--synthesize",
+        action="store_true",
+        help="Build a complete run.yaml from -c alone instead of enriching "
+        "an existing run.yaml given by -i",
     )
     args = parser.parse_args()
 
@@ -1707,9 +1711,9 @@ def main() -> None:
     setup_logging()
 
     with open(args.config, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
+        config = yaml.safe_load(f) or {}
 
-    if has_synthesis_input(config):
+    if args.synthesize or has_synthesis_input(config):
         config_file_dir = os.path.dirname(os.path.abspath(args.config))
         synthesize_to_file(config, args.output, config_file_dir)
     else:
