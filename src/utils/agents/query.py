@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from enum import StrEnum
 from typing import Optional
 
@@ -44,6 +45,7 @@ from utils.otel_tracing import (
     SpanAttributes,
     SpanEvents,
     add_span_event,
+    llm_inference_span_attributes,
     set_span_attributes,
 )
 from utils.pydantic_ai_helpers import build_agent, captured_output_items
@@ -206,16 +208,9 @@ def build_turn_summary_from_agent_run(
                 if isinstance(request_part, ToolReturnPart):
                     process_function_tool_result(state, request_part)
 
-    # Add tool execution attributes to current span (parent llm.inference span)
+    # Emit tool execution event on current span (parent llm.inference span)
     current_span = trace.get_current_span()
     if current_span.is_recording() and tool_call_names:
-        set_span_attributes(
-            current_span,
-            {
-                SpanAttributes.TOOL_CALLS_COUNT: len(tool_call_names),
-                SpanAttributes.TOOL_CALLS_NAMES: tool_call_names,
-            },
-        )
         add_span_event(
             current_span,
             SpanEvents.TOOL_EXECUTION_COMPLETED,
@@ -276,6 +271,7 @@ async def retrieve_agent_response(
 
         # Emit inference started event
         add_span_event(span, SpanEvents.LLM_INFERENCE_STARTED)
+        inference_start_time = time.monotonic()
 
         try:
             agent = build_agent(
@@ -301,16 +297,7 @@ async def retrieve_agent_response(
             response = map_agent_inference_error(exc, responses_params.model)
             raise HTTPException(**response.model_dump()) from exc
 
-        # Set token usage attributes
-        if run_result.usage:
-            set_span_attributes(
-                span,
-                {
-                    SpanAttributes.LLM_USAGE_INPUT_TOKENS: run_result.usage.input_tokens,
-                    SpanAttributes.LLM_USAGE_OUTPUT_TOKENS: run_result.usage.output_tokens,
-                },
-            )
-
+        inference_time = time.monotonic() - inference_start_time
         vector_store_ids = extract_vector_store_ids_from_tools(responses_params.tools)
         rag_id_mapping = configuration.rag_id_mapping
         turn_summary = build_turn_summary_from_agent_run(
@@ -324,6 +311,15 @@ async def retrieve_agent_response(
         # persist the turn exactly as OGX would have (LCORE-3883).
         turn_summary.output_items = captured_output_items(agent)
 
+        set_span_attributes(
+            span,
+            llm_inference_span_attributes(
+                turn_summary,
+                model_id,
+                provider_id,
+                inference_time,
+            ),
+        )
         # Emit inference completed event after successful summary build
         add_span_event(span, SpanEvents.LLM_INFERENCE_COMPLETED)
 

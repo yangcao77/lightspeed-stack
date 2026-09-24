@@ -1,6 +1,7 @@
 """Unit tests for vector search utilities."""
 
 # pylint: disable=too-many-lines
+import json
 from collections.abc import Awaitable, Callable
 from typing import Any
 
@@ -1725,6 +1726,7 @@ class TestBuildRagContextOtel:
         )
         assert span.attributes is not None
         assert span.attributes[SpanAttributes.RAG_SOURCES_COUNT] == 0
+        assert span.attributes[SpanAttributes.RAG_CHUNKS] == "[]"
         completed = next(
             event
             for event in span.events
@@ -1773,6 +1775,13 @@ class TestBuildRagContextOtel:
         )
         assert span.attributes is not None
         assert span.attributes[SpanAttributes.RAG_SOURCES_COUNT] == 1
+        rag_chunks_attr = span.attributes[SpanAttributes.RAG_CHUNKS]
+        assert isinstance(rag_chunks_attr, str)
+        rag_chunks = json.loads(rag_chunks_attr)
+        assert len(rag_chunks) == 1
+        assert rag_chunks[0]["content"] == "chunk text"
+        assert rag_chunks[0]["source"] == "source-a"
+        assert rag_chunks[0]["score"] == 0.9
         completed = next(
             event
             for event in span.events

@@ -44,6 +44,7 @@ from utils.otel_tracing import (
     SpanEvents,
     add_span_event,
     anonymize_value,
+    root_span_turn_attributes,
     set_span_attributes,
 )
 from utils.query import (
@@ -326,13 +327,10 @@ async def _handle_query_with_tracing(
 
     logger.info("Building final response")
 
-    # Set final span attributes
+    # Set final root-span attributes (llm.* attrs live on the llm.inference span)
     set_span_attributes(
         root_span,
-        {
-            SpanAttributes.SESSION_ID: conversation_id,
-            SpanAttributes.OUTPUT: turn_summary.llm_response,
-        },
+        root_span_turn_attributes(turn_summary, conversation_id, compaction.compacted),
     )
 
     # Emit LLM response completed event

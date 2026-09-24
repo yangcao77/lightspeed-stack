@@ -56,7 +56,7 @@ from models.common.agents import (
 from models.common.query import Attachment as QueryAttachment
 from models.common.responses.contexts import ResponseGeneratorContext
 from models.common.responses.responses_api_params import ResponsesApiParams
-from models.common.turn_summary import RAGContext, TurnSummary
+from models.common.turn_summary import RAGChunk, RAGContext, TurnSummary
 from utils.agents.query import AgentFinishReason
 from utils.agents.streaming import (
     DEFAULT_REFUSAL_RESPONSE,
@@ -882,6 +882,7 @@ class TestGenerateAgentResponseOtel:
         assert root.attributes is not None
         assert root.attributes[SpanAttributes.SESSION_ID] == context.conversation_id
         assert root.attributes[SpanAttributes.OUTPUT] == "The answer is 42"
+        assert root.attributes[SpanAttributes.COMPACTED] is False
         event_names = [e.name for e in root.events]
         assert SpanEvents.TURN_PERSISTED in event_names
         assert SpanEvents.LLM_RESPONSE_COMPLETED in event_names
@@ -900,6 +901,11 @@ class TestGenerateAgentResponseOtel:
         tracer, exporter = otel
         mocker.patch("utils.agents.streaming.tracer", tracer)
         context = make_generator_context()
+        context.inline_rag_context = RAGContext(
+            rag_chunks=[
+                RAGChunk(content="inline chunk", source="byok", score=0.8),
+            ]
+        )
         turn_summary = TurnSummary()
         run_result = make_agent_run_result(
             content="Answer",
@@ -958,8 +964,14 @@ class TestGenerateAgentResponseOtel:
         assert span.attributes[SpanAttributes.LLM_MODEL_ID] == "model1"
         assert span.attributes[SpanAttributes.LLM_USAGE_INPUT_TOKENS] == 4
         assert span.attributes[SpanAttributes.LLM_USAGE_OUTPUT_TOKENS] == 2
-        assert span.attributes[SpanAttributes.TOOL_CALLS_COUNT] == 1
-        assert span.attributes[SpanAttributes.TOOL_CALLS_NAMES] == (WebSearchTool.kind,)
+        assert SpanAttributes.INFERENCE_TIME in span.attributes
+        assert SpanAttributes.TOOL_CALLS in span.attributes
+        assert SpanAttributes.TOOL_RESULTS in span.attributes
+        assert SpanAttributes.RAG_CHUNKS in span.attributes
+        rag_chunks_attr = span.attributes[SpanAttributes.RAG_CHUNKS]
+        assert isinstance(rag_chunks_attr, str)
+        assert json.loads(rag_chunks_attr) == []
+        assert [chunk.content for chunk in turn_summary.rag_chunks] == ["inline chunk"]
         event_names = [e.name for e in span.events]
         assert SpanEvents.LLM_INFERENCE_STARTED in event_names
         assert SpanEvents.LLM_INFERENCE_COMPLETED in event_names
