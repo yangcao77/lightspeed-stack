@@ -51,7 +51,7 @@ async def _get_cross_encoder(model_name: str) -> Any:
             _cross_encoder_models[model_name] = model
             logger.info("Loaded cross-encoder for RAG reranking: %s", model_name)
         except (
-            Exception  # pylint: disable=broad-exception-caught  # noqa: BLE001 RUF100
+            Exception  # pylint: disable=broad-exception-caught  # noqa: BLE001
         ) as e:
             logger.warning(
                 "Could not load cross-encoder for reranking (%s): %s", model_name, e
@@ -171,7 +171,7 @@ async def rerank_chunks_with_cross_encoder(
         ]
 
     except (
-        Exception  # pylint: disable=broad-exception-caught  # noqa: BLE001 RUF100
+        Exception  # pylint: disable=broad-exception-caught  # noqa: BLE001
     ) as e:
         logger.warning(
             "Cross-encoder reranking failed, falling back to original scoring: %s", e
