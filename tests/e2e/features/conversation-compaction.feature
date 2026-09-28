@@ -13,9 +13,11 @@ Feature: Conversation compaction
   A fourth query states one more fact without summarizing anything (only
   one turn follows the summary), and the fifth summarizes the long third
   turn into a second summary. It asks for the datacenter name, which only
-  the first summary holds (the third query asks for the other two names,
-  so its answer never repeats it), so the second summary must not replace
-  the first.
+  the first summary holds (the third query asks for the other two names, so
+  its answer never repeats it), so the second summary must not replace the
+  first; and for the team name, which the second query left in the verbatim
+  buffer and no later answer repeats, so the buffered turn must survive the
+  compaction that follows it (LCORE-4219).
 
   Background:
     Given The service is started locally
@@ -37,7 +39,7 @@ Feature: Conversation compaction
       And I store conversation details
      When I use "query" to ask question with same conversation_id
      """
-     {"query": "My application namespace is called blue-lagoon. Remember that name too and reply with OK only.", "model": "{MODEL}", "provider": "{PROVIDER}"}
+     {"query": "My application namespace is called blue-lagoon and the team that owns it is called lantern-ops. Remember both names too and reply with OK only.", "model": "{MODEL}", "provider": "{PROVIDER}"}
      """
      Then The status code of the response is 200
       And The response context_status is "full"
@@ -59,20 +61,21 @@ Feature: Conversation compaction
       And The response context_status is "summarized"
      When I use "query" to ask question with same conversation_id
      """
-     {"query": "What is the name of my datacenter and what is the name of my database? Reply with the two names only, separated by a comma.", "model": "{MODEL}", "provider": "{PROVIDER}"}
+     {"query": "What is the name of my datacenter, what is the name of the team that owns my namespace, and what is the name of my database? Reply with the three names only, separated by commas.", "model": "{MODEL}", "provider": "{PROVIDER}"}
      """
      Then The status code of the response is 200
       And The response context_status is "summarized"
       And The response contains following fragments
           | Fragments in LLM response |
           | north-quarry              |
+          | lantern-ops               |
           | green-harbor              |
      When I use REST API conversation endpoint with conversation_id from above using HTTP GET method
      Then The status code of the response is 200
       And The conversation history includes the following user queries
-          | User query                                                                                                                                 |
-          | My OpenShift cluster is named aurora-prod-7 and it runs in the datacenter called north-quarry. Remember both names and reply with OK only. |
-          | My application namespace is called blue-lagoon. Remember that name too and reply with OK only.                                             |
+          | User query                                                                                                                                      |
+          | My OpenShift cluster is named aurora-prod-7 and it runs in the datacenter called north-quarry. Remember both names and reply with OK only.      |
+          | My application namespace is called blue-lagoon and the team that owns it is called lantern-ops. Remember both names too and reply with OK only. |
 
 
   Scenario: the native stream announces compaction on the query that crosses the threshold
