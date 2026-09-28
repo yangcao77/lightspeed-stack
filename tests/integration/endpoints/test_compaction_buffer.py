@@ -59,20 +59,33 @@ def _setup_mocks(
     )
 
 
+WORDS = ["one", "two", "three", "four", "five", "six"]
+
+
+def _turns(count: int = 2) -> list[OpenAIResponseMessage]:
+    """Build a conversation of *count* turns, each big enough to matter."""
+    items: list[OpenAIResponseMessage] = []
+    for word in WORDS[:count]:
+        items.append(msg("user", f"question {word} " * 20))
+        items.append(msg("assistant", f"answer {word} " * 20))
+    return items
+
+
 def _two_turns() -> list[OpenAIResponseMessage]:
     """Build a two-turn conversation big enough to cross the threshold."""
-    return [
-        msg("user", "question one " * 20),
-        msg("assistant", "answer one " * 20),
-        msg("user", "question two " * 20),
-        msg("assistant", "answer two " * 20),
-    ]
+    return _turns(2)
 
 
 def _agent_input(mock_query_agent: AsyncMockType) -> list[str]:
     """Return the text of every item the agent was asked to run on."""
     params = mock_query_agent.build_agent_mock.call_args[0][1]
     return [getattr(item, "content", "") for item in params.input]
+
+
+def _was_compacted(mock_query_agent: AsyncMockType) -> bool:
+    """Whether the last request built its own input instead of passing the conversation."""
+    params = mock_query_agent.build_agent_mock.call_args[0][1]
+    return bool(params.omit_conversation) and isinstance(params.input, list)
 
 
 async def _ask(test_request: Any, test_auth: AuthTuple, query: str) -> None:
@@ -124,6 +137,54 @@ class TestCompactionBufferAcrossRequests:
         assert any(
             "question two" in text for text in second_input
         ), f"the buffered turn reached neither a summary nor the input: {second_input}"
+
+    @pytest.mark.asyncio
+    async def test_nothing_is_lost_across_compactions_with_a_larger_buffer(
+        self,
+        test_config: AppConfig,
+        mock_ogx_client: AsyncMockType,
+        mock_query_agent: AsyncMockType,
+        mock_conversation_store: InMemoryConversationStore,
+        test_request: Any,
+        test_auth: AuthTuple,
+        patch_db_session: Session,
+        mocker: MockerFixture,
+    ) -> None:
+        """With ``buffer_turns=2`` every turn stays reachable over repeated compactions.
+
+        A marker then sits *between* turns that are still being kept, so the
+        boundary cannot be derived by subtracting the kept turns from the total
+        stored items: doing so points one turn too far and drops it.
+        """
+        _ = mock_ogx_client
+        enable_compaction(test_config, buffer_turns=2, buffer_max_ratio=0.9)
+        user_id, _, _, _ = test_auth
+        create_existing_conversation(patch_db_session, user_id)
+        # Six turns: two fit the buffer, the rest are summarized on the first
+        # request, so later requests have a marker among the kept turns.
+        await mock_conversation_store.create(
+            conversation_id=CONV_ID_LLAMA, items=_turns(6)
+        )
+        _setup_mocks(mocker, mock_query_agent)
+
+        compacted_rounds = 0
+        for round_number in range(1, 6):
+            await _ask(test_request, test_auth, f"follow-up {round_number}")
+            if not _was_compacted(mock_query_agent):
+                # Nothing summarized yet: OGX still replays the conversation.
+                continue
+            compacted_rounds += 1
+            seen = " ".join(_agent_input(mock_query_agent))
+            for turn in (f"question {word}" for word in WORDS):
+                assert turn in seen, (
+                    f"{turn!r} reached neither a summary nor the input in round "
+                    f"{round_number}"
+                )
+            for earlier in range(1, round_number):
+                assert (
+                    f"follow-up {earlier}" in seen
+                ), f"follow-up {earlier} was lost in round {round_number}"
+        assert compacted_rounds >= 2, "the test never reached a second compaction"
 
     @pytest.mark.asyncio
     async def test_marker_records_the_items_its_summary_covers(

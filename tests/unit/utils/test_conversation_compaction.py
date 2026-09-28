@@ -123,6 +123,40 @@ def test_items_after_last_marker_drops_older_markers() -> None:
     assert cc._items_after_last_marker(items) == [_msg("user", "buffered question")]
 
 
+def test_covered_item_count_with_a_marker_among_the_kept_turns() -> None:
+    """The count is the kept turn's real position, not a subtraction.
+
+    With ``buffer_turns`` above one, an older marker can sit among the turns
+    being kept. Subtracting the kept turns from the total would then point one
+    item too far and drop a turn that is still verbatim.
+    """
+    kept = [
+        _msg("user", "u3"),
+        _msg("assistant", "a3"),
+        _msg("user", "u4"),
+        _msg("assistant", "a4"),
+    ]
+    items = [
+        _msg("user", "u1"),
+        _msg("assistant", "a1"),
+        _msg("user", "u2"),
+        _msg("assistant", "a2"),
+        kept[0],
+        kept[1],
+        _marker_covering(2, "summary of the first turn"),
+        kept[2],
+        kept[3],
+    ]
+    assert cc._covered_item_count(items, kept) == 4
+    assert len(items) - len(kept) == 5  # what subtracting would give: one turn too far
+
+
+def test_covered_item_count_without_a_buffer() -> None:
+    """An empty buffer means the summary covers everything stored so far."""
+    items = [_msg("user", "u1"), _msg("assistant", "a1")]
+    assert cc._covered_item_count(items, []) == 2
+
+
 def test_split_marker_text() -> None:
     """The covered-item count is parsed out, and is absent on legacy markers."""
     assert cc._split_marker_text(_marker_covering(4, "text")) == (4, "text")

@@ -256,6 +256,26 @@ def _items_after_last_marker(items: list[Any]) -> list[Any]:
     return [item for item in items[boundary:] if not is_marker_item(item)]
 
 
+def _covered_item_count(items: list[Any], keep_items: list[Any]) -> int:
+    """Return how many leading items of *items* a new summary covers.
+
+    That is the position of the first kept turn, so the count is a raw index
+    into the stored items, markers included. It cannot be derived by
+    subtracting the kept turns from the total: markers are filtered out of the
+    recent turns, so an older marker may sit among the items being kept, and
+    subtracting would then place the boundary past a turn that is still
+    verbatim (which would drop it, the bug LCORE-4219 fixes). An empty buffer
+    means the summary covers everything stored so far.
+    """
+    if not keep_items:
+        return len(items)
+    first_kept = keep_items[0]
+    for index, item in enumerate(items):
+        if item is first_kept:
+            return index
+    return len(items) - len(keep_items)
+
+
 def _marker_summaries(items: list[Any]) -> list[str]:
     """Return the summary texts of every marker item, in order (oldest first)."""
     return [_summary_text_of(item) for item in items if is_marker_item(item)]
@@ -720,12 +740,11 @@ async def apply_compaction(  # pylint: disable=too-many-arguments,too-many-posit
                     encoding_name=encoding_name,
                 )
                 if old_items:
-                    already = len(items) - len(recent_items)
                     summary = await summarize_chunk(
                         client,
                         model,
                         old_items,
-                        summarized_through_turn=already + len(old_items),
+                        summarized_through_turn=_covered_item_count(items, keep_items),
                         encoding_name=encoding_name,
                     )
                     await _persist_new_summary_chunk(
