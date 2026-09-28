@@ -5,6 +5,9 @@ appended to the conversation *before* the summary marker, so a boundary taken
 from the marker's position dropped them from every later request.
 """
 
+# pylint: disable=too-many-arguments
+# pylint: disable=too-many-positional-arguments
+
 from typing import Any
 
 import pytest
