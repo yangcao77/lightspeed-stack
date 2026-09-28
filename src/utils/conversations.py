@@ -598,8 +598,8 @@ async def replace_last_assistant_message(
             (
                 item
                 for item in recent_items.data
-                if getattr(item, "type", None) == "message"
-                and getattr(item, "role", None) == "assistant"
+                if isinstance(item.actual_instance, ConversationMessage)
+                and item.actual_instance.role == "assistant"
             ),
             None,
         )
