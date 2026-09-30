@@ -1,8 +1,8 @@
 # pylint: disable=redefined-outer-name, unused-import
 """OpenTelemetry unit tests for the /responses REST API endpoint."""
 
-from collections.abc import Sequence
-from typing import Any, cast
+import json
+from typing import Any
 
 import pytest
 from fastapi import HTTPException, Request
@@ -75,28 +75,25 @@ def minimal_config_fixture() -> AppConfig:
 class TestFinalizeResponsesRootSpanOtel:  # pylint: disable=too-few-public-methods
     """OTEL attrs/events for _finalize_responses_root_span."""
 
-    def test_finalize_sets_output_and_response_completed(
+    def test_finalize_sets_output_and_compacted_only(
         self,
         otel: tuple[Any, InMemorySpanExporter],
     ) -> None:
-        """Root finalize records output only; usage/tools live on llm.inference."""
+        """Root span gets output/compacted/session.id; llm.* attrs stay off the root."""
         tracer, exporter = otel
         root_span = tracer.start_span("responses.handle_request")
         turn_summary = make_turn_summary_with_tools(["file_search", "mcp_tool"])
-        _finalize_responses_root_span(root_span, turn_summary)
+        _finalize_responses_root_span(root_span, turn_summary, False, "conv-1")
         root_span.end()
 
         span = find_span(exporter.get_finished_spans(), "responses.handle_request")
         assert span.attributes is not None
         assert span.attributes[SpanAttributes.OUTPUT] == "The answer is 42"
-        assert SpanAttributes.LLM_USAGE_INPUT_TOKENS not in span.attributes
-        assert SpanAttributes.LLM_USAGE_OUTPUT_TOKENS not in span.attributes
-        assert SpanAttributes.TOOL_CALLS_COUNT not in span.attributes
-        assert SpanAttributes.TOOL_CALLS_NAMES not in span.attributes
+        assert span.attributes[SpanAttributes.COMPACTED] is False
+        assert span.attributes[SpanAttributes.SESSION_ID] == "conv-1"
 
         event_names = [event.name for event in span.events]
         assert SpanEvents.LLM_RESPONSE_COMPLETED in event_names
-        assert SpanEvents.TOOL_EXECUTION_COMPLETED not in event_names
 
 
 class TestResponsesInferenceSpanOtel:
@@ -116,7 +113,7 @@ class TestResponsesInferenceSpanOtel:
         )
         parent = tracer.start_span("responses.handle_request")
 
-        inference_span = _start_llm_inference_span("provider1/model1", parent=parent)
+        inference_span = _start_llm_inference_span("provider1/model1", parent)
         inference_span.end()
         parent.end()
 
@@ -134,40 +131,44 @@ class TestResponsesInferenceSpanOtel:
             (["file_search", "mcp_tool"], True),
         ],
     )
-    def test_complete_sets_tokens_tools_and_completed_event(
+    def test_complete_sets_turn_summary_attrs_and_completed_event(
         self,
         otel: tuple[Any, InMemorySpanExporter],
         tool_names: list[str],
         expect_tool_event: bool,
     ) -> None:
-        """_complete_llm_inference_span records usage, optional tools, and completed."""
+        """_complete_llm_inference_span records tools/RAG/tokens and completed event."""
         tracer, exporter = otel
         inference_span = tracer.start_span("llm.inference")
         turn_summary = (
-            make_turn_summary_with_tools(tool_names, input_tokens=12, output_tokens=7)
+            make_turn_summary_with_tools(tool_names)
             if tool_names
-            else make_turn_summary_without_tools(input_tokens=12, output_tokens=7)
+            else make_turn_summary_without_tools()
         )
 
-        _complete_llm_inference_span(inference_span, turn_summary)
+        _complete_llm_inference_span(
+            inference_span, turn_summary, "provider1/model1", 1.5
+        )
 
         span = find_span(exporter.get_finished_spans(), "llm.inference")
         assert span.attributes is not None
-        assert span.attributes[SpanAttributes.LLM_USAGE_INPUT_TOKENS] == 12
-        assert span.attributes[SpanAttributes.LLM_USAGE_OUTPUT_TOKENS] == 7
+        assert span.attributes[SpanAttributes.LLM_USAGE_INPUT_TOKENS] == 10
+        assert span.attributes[SpanAttributes.LLM_USAGE_OUTPUT_TOKENS] == 5
+        assert span.attributes[SpanAttributes.LLM_MODEL_ID] == "model1"
+        assert span.attributes[SpanAttributes.LLM_PROVIDER_ID] == "provider1"
+        assert span.attributes[SpanAttributes.INFERENCE_TIME] == 1.5
+        assert SpanAttributes.RAG_CHUNKS in span.attributes
+        assert SpanAttributes.TOOL_CALLS in span.attributes
+        assert SpanAttributes.TOOL_RESULTS in span.attributes
+        tool_calls_attr = span.attributes[SpanAttributes.TOOL_CALLS]
+        assert isinstance(tool_calls_attr, str)
+        tool_calls = json.loads(tool_calls_attr)
+        assert len(tool_calls) == len(tool_names)
+        assert [call["name"] for call in tool_calls] == tool_names
+
         event_names = [event.name for event in span.events]
         assert SpanEvents.LLM_INFERENCE_COMPLETED in event_names
         if expect_tool_event:
-            assert span.attributes[SpanAttributes.TOOL_CALLS_COUNT] == len(tool_names)
-            assert (
-                list(
-                    cast(
-                        "Sequence[str]",
-                        span.attributes[SpanAttributes.TOOL_CALLS_NAMES],
-                    )
-                )
-                == tool_names
-            )
             tool_events = [
                 event
                 for event in span.events
@@ -177,9 +178,6 @@ class TestResponsesInferenceSpanOtel:
             tool_event_attrs = tool_events[0].attributes
             assert tool_event_attrs is not None
             assert tool_event_attrs["tool.calls"] == ", ".join(tool_names)
-        else:
-            assert SpanAttributes.TOOL_CALLS_COUNT not in span.attributes
-            assert SpanEvents.TOOL_EXECUTION_COMPLETED not in event_names
 
     def test_record_exception_adds_response_attrs(
         self,

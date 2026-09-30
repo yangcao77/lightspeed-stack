@@ -7,6 +7,7 @@ and processing RAG chunks that is shared between query_v2.py and streaming_query
 # pylint: disable=unused-import
 
 import asyncio
+import json
 import traceback
 from typing import TYPE_CHECKING, Any, Optional, cast
 from urllib.parse import urljoin
@@ -713,12 +714,15 @@ async def build_rag_context(  # pylint: disable=too-many-locals,too-many-branche
         all_documents = byok_documents + solr_documents
         top_documents = _filter_documents_for_chunks(all_documents, context_chunks)
 
-        # Set RAG attributes
+        # Set RAG attributes (inline chunks only; tool RAG lives on llm.inference)
         set_span_attributes(
             span,
             {
                 SpanAttributes.RAG_SOURCES_COUNT: len(top_documents),
                 SpanAttributes.RAG_SOURCES: [doc.doc_url for doc in top_documents],
+                SpanAttributes.RAG_CHUNKS: json.dumps(
+                    [chunk.model_dump(mode="json") for chunk in context_chunks]
+                ),
             },
         )
 
