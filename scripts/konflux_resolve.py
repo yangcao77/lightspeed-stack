@@ -1012,7 +1012,7 @@ def uv_resolve(
         "run",
         "--rm",
         "--volume",
-        f"{os.getcwd()}:/io:ro",
+        f"{os.getcwd()}:/io:ro,Z",
         "--workdir",
         "/io",
         UV_IMAGE,
