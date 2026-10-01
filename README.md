@@ -1383,7 +1383,7 @@ If this configuration file does not exist, you will be prompted to specify API t
 
 # Security policy
 
-* See [security policy document](SECURITY.MD).
+* See [security policy document](SECURITY.md).
 
 # Contributing
 
