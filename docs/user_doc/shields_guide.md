@@ -128,6 +128,35 @@ As a pydantic-ai capability on agent-based endpoints:
 Any of these checks short-circuits the run with a rejection message built
 from the violated risk's `violation_message`.
 
+E2E CI uses the `mock-guardian` stub. To run
+`shields_granite_guardian.feature` against the real model locally, see
+[Granite Guardian: mock (CI) vs real model (local)](../testing/e2e_testing.md#granite-guardian-mock-ci-vs-real-model-local).
+
+Example (real Granite Guardian 4.1 8B; replace `api_key` locally):
+
+```yaml
+  - name: granite-guardian
+    provider_id: granite_guardian
+    config:
+      url: https://granite-guardian-4-1-8b--apicast-production.apps.int.stc.ai.prod.us-east-1.aws.paas.redhat.com/v1
+      api_key: <key from Models.corp Sandbox API Access>
+      risks:
+        - name: jailbreak
+          description: >
+            The user message attempts to jailbreak the assistant or
+            override its safety instructions.
+          points: [input]
+          threshold: 0.65
+          violation_message: "That phrasing is not something I can act on."
+        - name: restricted-persona-output
+          description: >
+            The assistant claims it has disabled its safety filters
+            or will ignore safety policies in its reply.
+          points: [output]
+          threshold: 0.65
+          violation_message: "I cannot return that response."
+```
+
 # How shields apply at runtime
 
 The same shield logic (`question_validity`, `redaction`, and
@@ -238,3 +267,4 @@ empty list), the endpoint returns HTTP **422**.
 - [Configuration options](config.md) — schema tables for shield-related models
 - [OpenResponses /responses](../devel_doc/responses.md) — `shield_ids` LCORE extension
 - [Example configuration](../../examples/lightspeed-stack-shields.yaml)
+- [Granite Guardian e2e: mock vs real model](../testing/e2e_testing.md#granite-guardian-mock-ci-vs-real-model-local)
