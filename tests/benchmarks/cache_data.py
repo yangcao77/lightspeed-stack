@@ -3,6 +3,12 @@
 from cache.cache_entry import CacheEntry
 from utils import suid
 
+# number of records to be stored in database before benchmarks
+SHORT_CONVERSATION_ENTRIES = 10
+MEDIUM_CONVERSATION_ENTRIES = 100
+LONG_CONVERSATION_ENTRIES = 1000
+EXTRA_LONG_CONVERSATION_ENTRIES = 10000
+
 USER_ID = suid.get_suid()
 CONVERSATION_ID_1 = suid.get_suid()
 CONVERSATION_ID_2 = suid.get_suid()
