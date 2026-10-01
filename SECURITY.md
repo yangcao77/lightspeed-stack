@@ -7,7 +7,8 @@ Security updates are provided for the following versions of this project:
 | Version | Supported  |
 | ------- | ---------- |
 | main    | Yes        |
-| 0.5.x   | Yes        |
+| 0.5.1   | Yes        |
+| 0.5.2   | Yes        |
 | 0.6.x   | Yes        |
 | 0.7.x   | Yes        |
 
