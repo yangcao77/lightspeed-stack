@@ -20,6 +20,8 @@ Instead, report the vulnerability privately by contacting:
 
 **secalert@redhat.com**
 
+For more info please look at [Security Contacts and Procedures](https://access.redhat.com/security/team/contact)
+
 Please include the following information, where possible:
 
 - A description of the vulnerability
