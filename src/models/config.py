@@ -816,7 +816,10 @@ class UnifiedOgxConfig(ConfigurationBase):
             of the loaded lightspeed-stack.yaml.
         native_override: Raw OGX schema deep-merged last (maps merge
             recursively, lists and scalars replace). The escape hatch for
-            anything the high-level sections do not express.
+            anything the high-level sections do not express. Note:
+            `registered_resources.models` is a list, so a native_override
+            that sets it replaces — not merges with — any LLM models LCORE
+            auto-registered from `inference.providers[].allowed_models`.
     """
 
     baseline: Literal["default", "empty", "byo-llm"] = Field(
@@ -839,7 +842,10 @@ class UnifiedOgxConfig(ConfigurationBase):
         default_factory=dict,
         title="Native override",
         description="Raw OGX schema deep-merged last (maps "
-        "merge recursively; lists and scalars replace).",
+        "merge recursively; lists and scalars replace). Note: setting "
+        "registered_resources.models here replaces, not merges with, any "
+        "LLM models LCORE auto-registered from "
+        "inference.providers[].allowed_models.",
     )
 
 
