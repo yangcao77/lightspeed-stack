@@ -116,6 +116,14 @@ product questions using backend LLM services, agents, and RAG databases.
 
 [List of e2e scenarios](https://lightspeed-core.github.io/lightspeed-stack/testing/e2e_scenarios.html)
 
+### Benchmarks
+
+[DB operations](https://lightspeed-core.github.io/lightspeed-stack/benchmarks/DB/README.html)
+
+[Conversation cache](https://lightspeed-core.github.io/lightspeed-stack/benchmarks/cache/README.html)
+
+[Tokenizer](https://lightspeed-core.github.io/lightspeed-stack/benchmarks/tokenizer/README.html)
+
 ## Maintenance
 
 [Status of Lightspeed Core Stack versions](https://lightspeed-core.github.io/lightspeed-stack/maintenance/version_status.html)
