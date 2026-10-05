@@ -376,7 +376,7 @@ def check_tool_call_name(context: Context, name: str) -> None:
     assert tool_calls, "No tool_calls to check"
     names = [tc.get("name") for tc in tool_calls]
     assert name in names, (
-        f"Expected tool_call with name {name!r}, " f"but found names {names!r}"
+        f"Expected tool_call with name {name!r}, but found names {names!r}"
     )
 
 
