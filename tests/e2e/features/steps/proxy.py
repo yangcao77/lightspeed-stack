@@ -618,9 +618,7 @@ def configure_ogx_ciphers(context: Context, ciphers: str) -> None:
 # --- Proxy Verification Steps ---
 
 
-@then(
-    "The tunnel proxy handled at least {count:d} CONNECT request to the LLM provider"
-)
+@then("The tunnel proxy handled at least {count:d} CONNECT request to the LLM provider")
 def verify_tunnel_proxy_used(context: Context, count: int) -> None:
     """Verify the tunnel proxy received CONNECT requests."""
     if is_prow_environment():
@@ -634,9 +632,9 @@ def verify_tunnel_proxy_used(context: Context, count: int) -> None:
         return
 
     proxy = context.tunnel_proxy
-    assert proxy.connect_count >= count, (
-        f"Expected at least {count} CONNECT requests, got {proxy.connect_count}"
-    )
+    assert (
+        proxy.connect_count >= count
+    ), f"Expected at least {count} CONNECT requests, got {proxy.connect_count}"
     assert proxy.last_connect_target is not None, "No CONNECT target recorded"
 
 
