@@ -55,7 +55,7 @@ dependencies = [
     # Used by OGX version checker
     "semver<4.0.0",
     # Used by authorization resolvers
-    "jsonpath-ng>=1.6.1",
+    "jsonpath-ng>=1.6.1,<1.9.0",
     "psycopg2-binary>=2.9.10",
     # LCORE-1565
     "litellm>=1.83.7",
