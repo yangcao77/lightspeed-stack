@@ -109,11 +109,11 @@ def _make_config(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("splunk_config",),
+    "splunk_config",
     [
-        (None,),
-        ("disabled",),
-        ("incomplete",),
+        None,
+        "disabled",
+        "incomplete",
     ],
     ids=["config_none", "disabled", "incomplete"],
 )
