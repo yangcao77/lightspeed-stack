@@ -157,17 +157,11 @@ async def test_sends_event_successfully(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    ("error_setup",),
+    "error_setup",
     [
-        (
-            lambda s: setattr(
-                s.post.return_value.__aenter__.return_value, "status", 503
-            ),
-        ),
-        (
-            lambda s: setattr(
-                s.return_value.__aenter__, "side_effect", aiohttp.ClientError()
-            ),
+        lambda s: setattr(s.post.return_value.__aenter__.return_value, "status", 503),
+        lambda s: setattr(
+            s.return_value.__aenter__, "side_effect", aiohttp.ClientError()
         ),
     ],
     ids=["http_error", "client_error"],
