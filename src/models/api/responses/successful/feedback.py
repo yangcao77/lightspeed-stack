@@ -12,6 +12,7 @@ class FeedbackResponse(AbstractSuccessfulResponse):
 
     Attributes:
         response: The response of the feedback request.
+
     """
 
     response: str = Field(
@@ -37,6 +38,7 @@ class FeedbackStatusUpdateResponse(AbstractSuccessfulResponse):
 
     Attributes:
         status: The previous and current status of the service and who updated it.
+
     """
 
     status: dict[str, Any]

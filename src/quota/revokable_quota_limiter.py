@@ -47,6 +47,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             subject_type (str): Identifier for the kind of subject the limiter
             applies to (e.g., user, customer); when set to "c" the limiter
             treats subject IDs as empty strings.
+
         """
         self.subject_type = subject_type
         self.initial_quota = initial_quota
@@ -69,6 +70,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         Returns:
         -------
             int: The available quota for the subject. Returns 0 if no backend is configured.
+
         """
         if self.subject_type == "c":
             subject_id = ""
@@ -96,6 +98,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         -------
             int: The available quota for the subject; `initial_quota` if a new
                  record was initialized.
+
         """
         # it is not possible to use context manager there, because SQLite does
         # not support it
@@ -123,6 +126,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
                 subject_id (str): Identifier of the subject whose quota will be
                 revoked. If the limiter's `subject_type` is `"c"`, this value
                 is ignored and treated as an empty string.
+
         """
         if self.subject_type == "c":
             subject_id = ""
@@ -146,6 +150,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
                                  and `revoked_at` for a subject.
             subject_id (str): Identifier of the subject whose quota will be
                               revoked.
+
         """
         # timestamp to be used
         revoked_at = datetime.now(tz=UTC)
@@ -170,6 +175,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             increased. When the limiter's `subject_type` is `"c"`, this value
             is normalized to the empty string and treated as a
             global/customer-level entry.
+
         """
         if self.subject_type == "c":
             subject_id = ""
@@ -196,6 +202,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         ----------
             set_statement (str): SQL statement that increments the available quota for a subject.
             subject_id (str): Identifier of the subject whose quota will be increased.
+
         """
         # timestamp to be used
         updated_at = datetime.now(tz=UTC)
@@ -222,6 +229,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         ------
                 QuotaExceedError: If the available quota for the subject is
                 less than or equal to zero.
+
         """
         if self.subject_type == "c":
             subject_id = ""
@@ -253,6 +261,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             input_tokens (int): Number of input tokens to consume.
             output_tokens (int): Number of output tokens to consume.
             subject_id (str): Identifier of the subject whose quota will be consumed.
+
         """
         if self.subject_type == "c":
             subject_id = ""
@@ -299,6 +308,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
             The function updates the quota by -(input_tokens + output_tokens)
             and stamps the record with the current datetime, then commits the
             change.
+
         """
         # timestamp to be used
         updated_at = datetime.now(tz=UTC)
@@ -343,6 +353,7 @@ class RevokableQuotaLimiter(QuotaLimiter):
         ----------
             subject_id (str): Identifier of the subject whose quota to
             initialize. Defaults to empty string.
+
         """
         # timestamp to be used
         revoked_at = datetime.now(tz=UTC)

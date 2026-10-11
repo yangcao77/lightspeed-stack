@@ -16,6 +16,7 @@ class TokenCounter:
         output_tokens: number of tokens received from LLM
         input_tokens_counted: number of input tokens counted by the handler
         llm_calls: number of LLM calls
+
     """
 
     input_tokens: int = 0
@@ -30,6 +31,7 @@ class TokenCounter:
         Returns:
             summary (str): A formatted string containing `input_tokens`,
                            `output_tokens`, `input_tokens_counted`, and `llm_calls`.
+
         """
         return (
             f"{self.__class__.__name__}: "

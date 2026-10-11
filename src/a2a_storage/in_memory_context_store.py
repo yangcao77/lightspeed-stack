@@ -35,6 +35,7 @@ class InMemoryA2AContextStore(A2AContextStore):
 
         Returns:
             The OGX conversation ID, or None if not found.
+
         """
         async with self._lock:
             conversation_id = self._contexts.get(context_id)
@@ -52,6 +53,7 @@ class InMemoryA2AContextStore(A2AContextStore):
         Args:
             context_id: The A2A context ID.
             conversation_id: The OGX conversation ID.
+
         """
         async with self._lock:
             self._contexts[context_id] = conversation_id
@@ -66,6 +68,7 @@ class InMemoryA2AContextStore(A2AContextStore):
 
         Args:
             context_id: The A2A context ID to delete.
+
         """
         async with self._lock:
             if context_id in self._contexts:
@@ -89,5 +92,6 @@ class InMemoryA2AContextStore(A2AContextStore):
 
         Returns:
             True, as in-memory store is always ready after construction.
+
         """
         return self._initialized

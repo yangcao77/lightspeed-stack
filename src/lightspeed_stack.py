@@ -39,6 +39,7 @@ def create_argument_parser() -> ArgumentParser:
 
     Returns:
         Configured ArgumentParser for parsing the service CLI options.
+
     """
     parser = ArgumentParser()
     parser.add_argument(
@@ -155,6 +156,7 @@ def main() -> None:
 
     Raises:
         SystemExit: when configuration dumping or migration fails (exits with status 1).
+
     """
     logger.info("Lightspeed Core Stack startup")
     parser = create_argument_parser()

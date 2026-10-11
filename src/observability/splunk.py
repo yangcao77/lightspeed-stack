@@ -40,6 +40,7 @@ async def send_splunk_event(event: dict[str, Any], sourcetype: str) -> None:
     Args:
         event: The event payload to send.
         sourcetype: The Splunk sourcetype (e.g., "infer_with_llm", "infer_error").
+
     """
     splunk_config = configuration.splunk
     if splunk_config is None or not splunk_config.enabled:
@@ -138,6 +139,7 @@ def dispatch_splunk_event(
         background_tasks: FastAPI background task manager, or None.
         fire_and_forget: When True, dispatch via ``asyncio.create_task()``
             instead of ``background_tasks``.
+
     """
     if fire_and_forget:
         task = asyncio.create_task(send_splunk_event(event, sourcetype))

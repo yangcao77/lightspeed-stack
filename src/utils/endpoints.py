@@ -35,6 +35,7 @@ def delete_conversation(conversation_id: str) -> bool:
 
     Returns:
         bool: True if the conversation was deleted, False if it was not found.
+
     """
     with get_session() as session:
         db_conversation = (
@@ -60,6 +61,7 @@ def retrieve_conversation(conversation_id: str) -> Optional[UserConversation]:
 
     Returns:
         Optional[UserConversation]: The conversation object if found, otherwise None.
+
     """
     with get_session() as session:
         return session.query(UserConversation).filter_by(id=conversation_id).first()
@@ -76,6 +78,7 @@ def retrieve_conversation_turns(conversation_id: str) -> list[UserTurn]:
 
     Raises:
         HTTPException: 500 if a database error occurs.
+
     """
     try:
         with get_session() as session:
@@ -106,6 +109,7 @@ def can_access_conversation(
 
     Returns:
         bool: True if the user is allowed to access the conversation, False otherwise.
+
     """
     if others_allowed:
         return True
@@ -148,6 +152,7 @@ def validate_and_retrieve_conversation(
             - 403 Forbidden: If user doesn't have access to the conversation.
             - 404 Not Found: If conversation doesn't exist in database.
             - 500 Internal Server Error: If database error occurs.
+
     """
     if not can_access_conversation(
         normalized_conv_id,
@@ -217,6 +222,7 @@ async def resolve_response_context(
     ------
         HTTPException: 404 if previous_response_id is set but the turn does not exist;
             other HTTP exceptions from validate_and_retrieve_conversation.
+
     """
     client = AsyncOgxClientHolder().get_client()
     # Context for the LLM passed by conversation
@@ -291,6 +297,7 @@ def retrieve_turn_by_response_id(response_id: str) -> UserTurn:
 
     Raises:
         HTTPException: 404 if no turn has this response_id; 500 on database error.
+
     """
     try:
         with get_session() as session:
@@ -318,6 +325,7 @@ def check_turn_existence(response_id: str) -> bool:
 
     Returns:
         bool: True if the turn exists, False otherwise.
+
     """
     try:
         with get_session() as session:
@@ -342,6 +350,7 @@ def check_configuration_loaded(config: AppConfig) -> None:
 
     Raises:
         HTTPException: If configuration is missing.
+
     """
     try:
         _ = config.configuration
@@ -371,6 +380,7 @@ def _process_http_source(
             - `doc_title`: the last path segment of the URL or `src` if no path
                segment is present.
         Returns `None` if `src` was already present in `doc_urls`.
+
     """
     if src not in doc_urls:
         doc_urls.add(src)
@@ -416,6 +426,7 @@ def _process_document_id(
         `validated_url` is a validated `AnyUrl` or `None` and `doc_title` is
         the chosen title string; returns `None` if the `src` or its URL was
         already processed.
+
     """
     if src in doc_ids:
         return None
@@ -496,6 +507,7 @@ def _process_rag_chunks_for_documents(
         list[tuple[Optional[AnyUrl], str]]: Ordered list of tuples where the first
         element is a validated URL object or `None` (if no URL is available)
         and the second element is the document title.
+
     """
     doc_urls: set[str] = set()
     doc_ids: set[str] = set()
@@ -553,6 +565,7 @@ def create_referenced_documents(
     Returns:
     -------
         List of ReferencedDocument objects or dictionaries with doc_url and doc_title
+
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks, metadata_map)
 
@@ -590,6 +603,7 @@ def create_referenced_documents_with_metadata(
         list[ReferencedDocument]: ReferencedDocument objects with `doc_url` and
         `doc_title` populated; `doc_url` may be `None` if no valid URL could be
         determined.
+
     """
     document_entries = _process_rag_chunks_for_documents(
         summary.rag_chunks, metadata_map
@@ -618,6 +632,7 @@ def create_referenced_documents_from_chunks(
         list[ReferencedDocument]: ReferencedDocument instances created from the
         chunks; each contains `doc_url` (validated URL or `None`) and
         `doc_title`.
+
     """
     document_entries = _process_rag_chunks_for_documents(rag_chunks)
     return [

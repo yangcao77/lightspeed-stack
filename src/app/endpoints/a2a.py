@@ -104,6 +104,7 @@ async def _get_task_store() -> TaskStore:
 
     Returns:
         TaskStore instance based on configuration.
+
     """
     global _TASK_STORE  # pylint: disable=global-statement
     if _TASK_STORE is None:
@@ -116,6 +117,7 @@ async def _get_context_store() -> A2AContextStore:
 
     Returns:
         A2AContextStore instance based on configuration.
+
     """
     global _CONTEXT_STORE  # pylint: disable=global-statement
     if _CONTEXT_STORE is None:
@@ -141,6 +143,7 @@ def _build_a2a_parts_from_agent_result(
 
     Returns:
         List of A2A Part objects for the final artifact.
+
     """
     if run_result is not None:
         final_text = run_result.response.text or "".join(accumulated_text)
@@ -157,6 +160,7 @@ def _record_model_span(span: trace.Span, model_id: str) -> None:
     Parameters:
         span: The active OpenTelemetry span.
         model_id: Full model identifier in "provider/model" format.
+
     """
     provider_id, bare_model_id = extract_provider_and_model_from_model_id(model_id)
     set_span_attributes(
@@ -183,6 +187,7 @@ def _record_execution_span(
         run_result: Completed agent run result, or None.
         compacted: Whether the turn used compacted conversation context.
         inference_time: Request processing duration in seconds.
+
     """
     if tool_call_names:
         set_span_attributes(
@@ -234,6 +239,7 @@ async def _persist_compacted_a2a_turn(
             the request was served in compacted mode.
         agent: The pydantic-ai agent whose model captured the output items.
         task_id: A2A task identifier, used for error reporting.
+
     """
     if not compaction.compacted or compaction.original_input is None:
         return
@@ -275,6 +281,7 @@ class TaskResultAggregator:
 
         Args:
             event: The event to process
+
         """
         if isinstance(event, TaskStatusUpdateEvent):
             if event.status.state == TaskState.failed:
@@ -335,6 +342,7 @@ class A2AAgentExecutor(AgentExecutor):
             auth_token: Authentication token for the request
             mcp_headers: MCP headers for context propagation
             request_headers: Incoming HTTP request headers for allowlist propagation
+
         """
         self.auth_token: str = auth_token
         self.mcp_headers: McpHeaders = mcp_headers or {}
@@ -352,6 +360,7 @@ class A2AAgentExecutor(AgentExecutor):
         Args:
             context: The request context containing user input and metadata
             event_queue: Queue for sending response events
+
         """
         if not context.message:
             raise ValueError("A2A request must have a message")
@@ -406,6 +415,7 @@ class A2AAgentExecutor(AgentExecutor):
             task_updater: Task updater for sending events
             task_id: The task ID to use for this execution
             context_id: The context ID to use for this execution
+
         """
         if not task_id or not context_id:
             raise ValueError("Task ID and Context ID are required")
@@ -628,6 +638,7 @@ class A2AAgentExecutor(AgentExecutor):
 
         Yields:
             A2A events (TaskStatusUpdateEvent or TaskArtifactUpdateEvent)
+
         """
         if not task_id or not context_id:
             raise ValueError("Task ID and Context ID are required")
@@ -686,6 +697,7 @@ class A2AAgentExecutor(AgentExecutor):
 
         Returns:
             A2A TaskStatusUpdateEvent, or None if the event is not mapped.
+
         """
         _ = artifact_id
 
@@ -752,6 +764,7 @@ class A2AAgentExecutor(AgentExecutor):
 
         Returns:
             TaskStatusUpdateEvent with the text delta.
+
         """
         return TaskStatusUpdateEvent(
             task_id=task_id,
@@ -781,6 +794,7 @@ class A2AAgentExecutor(AgentExecutor):
 
         Raises:
             NotImplementedError: Task cancellation is not currently supported
+
         """
         logger.info("Cancellation requested but not currently supported")
         raise NotImplementedError("Task cancellation not currently supported")
@@ -798,6 +812,7 @@ def get_lightspeed_agent_card() -> AgentCard:
 
     Returns:
         AgentCard: The agent card describing Lightspeed's capabilities.
+
     """
     # Get base URL from configuration or construct it
     service_config = configuration.service_configuration
@@ -922,6 +937,7 @@ async def _create_a2a_app(
 
     Returns:
         A2A Starlette ASGI application
+
     """
     agent_executor = A2AAgentExecutor(
         auth_token=auth_token,
@@ -1061,6 +1077,7 @@ async def _handle_a2a_jsonrpc(  # pylint: disable=too-many-locals,too-many-state
 
     Returns:
         JSON-RPC response or streaming response
+
     """
     logger.debug("A2A endpoint called: %s %s", request.method, request.url.path)
 

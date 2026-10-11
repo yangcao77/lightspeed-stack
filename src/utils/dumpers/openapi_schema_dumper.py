@@ -18,6 +18,7 @@ def dump_openapi_schema(models: list, filename: str) -> None:
     Raises:
     ------
         IOError: If the file cannot be written.
+
     """
     with open(filename, "w", encoding="utf-8") as fout:
         _, schemas = models_json_schema(

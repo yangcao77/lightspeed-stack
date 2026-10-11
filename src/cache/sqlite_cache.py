@@ -173,6 +173,7 @@ class SQLiteCache(Cache):
             config (SQLiteDatabaseConfiguration): Configuration containing the
             SQLite database path and related settings used to create and open
             the connection.
+
         """
         self.sqlite_config = config
 
@@ -190,6 +191,7 @@ class SQLiteCache(Cache):
         Raises:
             sqlite3.Error: If the database cannot be opened or the cache schema
             cannot be initialized.
+
         """
         logger.info("Connecting to storage")
         # make sure the connection will have known state
@@ -213,6 +215,7 @@ class SQLiteCache(Cache):
 
         Returns:
             bool: `True` if a working connection to storage exists, `False` otherwise.
+
         """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
@@ -247,6 +250,7 @@ class SQLiteCache(Cache):
 
         Raises:
             CacheError: if the database connection is not established.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -288,6 +292,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is disconnected.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -385,6 +390,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -482,6 +488,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -563,6 +570,7 @@ class SQLiteCache(Cache):
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -596,6 +604,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -637,6 +646,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -683,6 +693,7 @@ class SQLiteCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -710,5 +721,6 @@ class SQLiteCache(Cache):
 
         Returns:
             True if the cache is ready, False otherwise.
+
         """
         return True

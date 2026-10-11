@@ -28,6 +28,7 @@ class DegradedModeTracker(metaclass=Singleton):
 
         Parameters:
             reason: Description of why degraded mode was entered.
+
         """
         self._is_degraded = True
         self._degraded_reason = reason
@@ -48,6 +49,7 @@ class DegradedModeTracker(metaclass=Singleton):
 
         Returns:
             True if service is in degraded mode, False otherwise.
+
         """
         return self._is_degraded
 
@@ -56,5 +58,6 @@ class DegradedModeTracker(metaclass=Singleton):
 
         Returns:
             Description of why degraded mode was entered, or None if healthy.
+
         """
         return self._degraded_reason

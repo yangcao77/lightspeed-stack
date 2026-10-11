@@ -275,6 +275,7 @@ def build_conversation_turn_from_cache_entry(entry: CacheEntry) -> ConversationT
 
     Returns:
         ConversationTurn object with messages, tool_calls, tool_results, and timestamps
+
     """
     # Create Message objects for user and assistant
     messages = [

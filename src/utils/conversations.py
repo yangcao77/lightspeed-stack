@@ -79,6 +79,7 @@ def to_conversation_item(data: dict[str, Any]) -> Optional[ConversationItem]:
     Returns:
         ConversationItem if parsing succeeds,
         None otherwise.
+
     """
     try:
         return ConversationItem.from_dict(data)
@@ -94,6 +95,7 @@ def build_add_items_request(items: Sequence[dict[str, Any]]) -> AddItemsRequest:
 
     Returns:
         Request body for items.create.
+
     """
     return AddItemsRequest(
         items=[
@@ -112,6 +114,7 @@ def _extract_text_from_content(content: Any) -> str:
 
     Returns:
         Extracted text content as a string
+
     """
     if isinstance(content, str):
         return content
@@ -146,6 +149,7 @@ def _function_call_output_to_str(output: FunctionCallOutputContent) -> str:
 
     Returns:
         Plain string content for ``ToolResultSummary``.
+
     """
     if isinstance(output, str):
         return output
@@ -168,6 +172,7 @@ def _parse_message_item(item: ConversationMessage) -> Message:
 
     Returns:
         Message object with extracted content and type (user or assistant)
+
     """
     return Message(
         content=_extract_text_from_content(item.content),
@@ -187,6 +192,7 @@ def _build_tool_call_summary_from_item(  # pylint: disable=too-many-return-state
     Returns:
         A tuple of (ToolCallSummary, ToolResultSummary) one of them possibly None
         if the item type doesn't provide both call and result information.
+
     """
     item_type = getattr(item, "type", None)
 
@@ -352,6 +358,7 @@ def _create_dummy_turn_metadata(started_at: datetime) -> UserTurn:
     Returns:
         UserTurn instance with default values (N/A for provider/model, provided timestamp)
         for legacy conversations that don't have stored turn metadata.
+
     """
     # Create a UserTurn instance with default values for legacy conversations
     # Note: conversation_id and turn_number are not used, so we use placeholder values
@@ -381,6 +388,7 @@ def _create_turn_from_db_metadata(
 
     Returns:
         ConversationTurn object with all metadata populated
+
     """
     started_at = turn_metadata.started_at.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
     completed_at = turn_metadata.completed_at.astimezone(UTC).strftime(
@@ -410,6 +418,7 @@ def _group_items_into_turns(
 
     Returns:
         List of turns, where each turn is a list of items belonging to that turn
+
     """
     turns: list[list[ConversationItem]] = []
     current_turn_items: list[ConversationItem] = []
@@ -452,6 +461,7 @@ def _process_turn_items(
 
     Returns:
         Tuple of (messages, tool_calls, tool_results)
+
     """
     messages: list[Message] = []
     tool_calls: list[ToolCallSummary] = []
@@ -491,6 +501,7 @@ def build_conversation_turns_from_items(
 
     Returns:
         List of ConversationTurn objects, oldest first
+
     """
     # Group items into turns first
     turn_items_list = _group_items_into_turns(items)
@@ -539,6 +550,7 @@ async def append_turn_items_to_conversation(
         conversation_id: The OGX conversation ID.
         user_input: User input text or list of ResponseItem.
         llm_output: Output from the LLM: a list of OpenAIResponseOutput.
+
     """
     if isinstance(user_input, str):
         items: list[dict[str, Any]] = [
@@ -601,6 +613,7 @@ async def replace_last_assistant_message(
         client: The OGX client.
         conversation_id: The OGX conversation ID.
         replacement_message: The violation message to persist instead.
+
     """
     try:
         recent_items = await client.items.list(
@@ -653,6 +666,7 @@ async def get_all_conversation_items(
 
     Returns:
         List of all items in the conversation, oldest first.
+
     """
     items: list[ConversationItem] = []
     after: Optional[str] = None
@@ -697,6 +711,7 @@ async def append_turn_to_conversation(
         conversation_id: The OGX conversation ID.
         user_message: The user's input message.
         assistant_message: The shield violation response message.
+
     """
     try:
         await client.items.create(

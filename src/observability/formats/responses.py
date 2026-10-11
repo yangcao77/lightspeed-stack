@@ -35,6 +35,7 @@ def build_responses_event(data: ResponsesEventData) -> dict[str, Any]:
 
     Returns:
         A dictionary matching the responses Splunk event format.
+
     """
     return {
         "input_text": data.input_text,

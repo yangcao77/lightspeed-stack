@@ -76,6 +76,7 @@ class ErrorStreamPayload(StreamPayloadBase):
 
         Returns:
             Error stream payload instance.
+
         """
         return cls(
             data=ErrorEventData(status_code=status_code, response=response, cause=cause)
@@ -90,6 +91,7 @@ class ErrorStreamPayload(StreamPayloadBase):
 
         Returns:
             Error stream payload instance.
+
         """
         return cls.create(
             status_code=error_response.status_code,
@@ -118,6 +120,7 @@ class StartStreamPayload(StreamPayloadBase):
 
         Returns:
             Start stream payload instance.
+
         """
         return cls(
             data=StartEventData(conversation_id=conversation_id, request_id=request_id)
@@ -139,6 +142,7 @@ class InterruptedStreamPayload(StreamPayloadBase):
 
         Returns:
             Interrupted stream payload instance.
+
         """
         return cls(data=InterruptedEventData(request_id=request_id))
 
@@ -173,6 +177,7 @@ class EndStreamPayload(StreamPayloadBase):
 
         Returns:
             End stream payload instance.
+
         """
         return cls(
             data=EndEventData(
@@ -218,6 +223,7 @@ class TokenStreamPayload(StreamPayloadBase):
 
         Returns:
             Token stream payload instance.
+
         """
         return cls(data=TokenChunkData(id=chunk_id, token=token))
 
@@ -242,6 +248,7 @@ class TurnCompleteStreamPayload(StreamPayloadBase):
 
         Returns:
             Turn-complete stream payload instance.
+
         """
         return cls(data=TokenChunkData(id=chunk_id, token=token))
 

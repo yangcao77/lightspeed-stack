@@ -21,6 +21,7 @@ def measure_response_duration(path: str) -> Iterator[None]:
 
     Args:
         path: Normalized route path used as the metric label.
+
     """
     try:
         cm = metrics.response_duration_seconds.labels(path).time()
@@ -38,6 +39,7 @@ def record_rest_api_call(path: str, status_code: int) -> None:
     Args:
         path: Normalized route path used as the metric label.
         status_code: HTTP response status code returned by the endpoint.
+
     """
     try:
         metrics.rest_api_calls_total.labels(path, status_code).inc()
@@ -52,6 +54,7 @@ def record_llm_call(provider: str, model: str, endpoint_path: str) -> None:
         provider: LLM provider identifier.
         model: LLM model identifier without the provider prefix.
         endpoint_path: The API endpoint path for metric labeling.
+
     """
     try:
         metrics.llm_calls_total.labels(provider, model, endpoint_path).inc()
@@ -66,6 +69,7 @@ def record_llm_failure(provider: str, model: str, endpoint_path: str) -> None:
         provider: LLM provider identifier.
         model: LLM model identifier without the provider prefix.
         endpoint_path: The API endpoint path for metric labeling.
+
     """
     try:
         metrics.llm_calls_failures_total.labels(provider, model, endpoint_path).inc()
@@ -78,6 +82,7 @@ def record_llm_validation_error(endpoint_path: str = "") -> None:
 
     Args:
         endpoint_path: The API endpoint path for metric labeling.
+
     """
     try:
         metrics.llm_calls_validation_errors_total.labels(endpoint_path).inc()
@@ -100,6 +105,7 @@ def record_llm_token_usage(
         input_tokens: Number of tokens sent to the LLM.
         output_tokens: Number of tokens received from the LLM.
         endpoint_path: The API endpoint path for metric labeling.
+
     """
     try:
         metrics.llm_token_sent_total.labels(provider, model, endpoint_path).inc(
@@ -130,6 +136,7 @@ def normalize_llm_inference_result(result: str) -> str:
 
     Returns:
         A value guaranteed to be in ``ALLOWED_LLM_INFERENCE_RESULTS``.
+
     """
     return (
         result
@@ -149,6 +156,7 @@ def record_llm_inference_duration(
         endpoint_path: API endpoint path for metric labeling.
         result: Bounded result label, such as ``success`` or ``failure``.
         duration: Inference call duration in seconds.
+
     """
     bounded_result = normalize_llm_inference_result(result)
     try:
@@ -167,6 +175,7 @@ def set_started_in_degraded_mode(is_degraded: bool) -> None:
 
     Args:
         is_degraded: True if service started in degraded mode, False if healthy.
+
     """
     try:
         metrics.started_in_degraded_mode.set(1 if is_degraded else 0)

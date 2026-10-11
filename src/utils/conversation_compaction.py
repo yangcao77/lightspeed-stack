@@ -165,6 +165,7 @@ class CompactionStartedEvent:
 
     Attributes:
         conversation_id: The conversation being compacted (OGX format).
+
     """
 
     conversation_id: str
@@ -190,6 +191,7 @@ class CompactionResult:
             caller must append this plus the LLM output to the conversation
             items itself, since the ``conversation`` parameter is no longer
             passed to OGX.
+
     """
 
     params: ResponsesApiParams
@@ -335,6 +337,7 @@ def exclude_marker_items(items: Sequence[Any]) -> list[Any]:
 
     Returns:
         The items that are not markers, in their original order.
+
     """
     return [
         item
@@ -360,6 +363,7 @@ def agent_prompt_text(params: ResponsesApiParams) -> str:
         ``params.input`` unchanged when it is a string; otherwise the text of
         the last message item in the explicit list, or ``""`` when there is
         none.
+
     """
     if isinstance(params.input, str):
         return params.input
@@ -403,6 +407,7 @@ def reject_image_attachments_in_compacted_mode(
 
     Raises:
         HTTPException: 422 when the turn is compacted and carries images.
+
     """
     if not image_attachments or not params.omit_conversation:
         return
@@ -729,6 +734,7 @@ async def apply_compaction(  # pylint: disable=too-many-arguments,too-many-posit
 
     Yields:
         Zero or more CompactionStartedEvent, then exactly one CompactionResult.
+
     """
     if not compaction_config.enabled:
         # ``enabled: false`` is a full off-switch: the request passes through
@@ -876,6 +882,7 @@ async def needs_compaction_path(
 
     Returns:
         True if the compaction-aware streaming path should be used.
+
     """
     if not compaction_config.enabled:
         return False

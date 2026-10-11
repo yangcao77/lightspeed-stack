@@ -54,6 +54,7 @@ def _process_html_tags(line: str, html_stack: list[str]) -> Optional[str]:
     Returns:
         The name of a raw tag that was opened and not closed on this
         line, or ``None`` if no raw-content zone was entered.
+
     """
     in_raw: Optional[str] = None
 
@@ -97,6 +98,7 @@ def _find_raw_close(line: str, raw_tag: str) -> Optional[int]:
     Returns:
         The character position immediately after the closing tag,
         or ``None`` if no close tag was found.
+
     """
     for tag_match in _TAG_RE.finditer(line):
         if tag_match.group(1) == "/" and tag_match.group(2).lower() == raw_tag:
@@ -117,6 +119,7 @@ def _raw_tag_open_at(line: str, position: int) -> bool:
 
     Returns:
         True if a raw-tag zone is open at *position*.
+
     """
     open_raw: Optional[str] = None
     for tag_match in _TAG_RE.finditer(line):
@@ -148,6 +151,7 @@ def _strip_comments_with_zone_priority(line: str, in_comment: bool) -> tuple[str
 
     Returns:
         A tuple of (processed_line, updated_in_comment).
+
     """
     result: list[str] = []
     remaining = line
@@ -199,6 +203,7 @@ def _process_fence_match(
 
     Returns:
         Updated ``(in_code_fence, fence_char, fence_len)`` tuple.
+
     """
     group_3 = fence_match.group(3)
     matched_group = group_3 or fence_match.group(4)
@@ -228,6 +233,7 @@ def close_open_markdown(text: str) -> str:
 
     Returns:
         A suffix string to append that closes open constructs.
+
     """
     if not text or not text.strip():
         return ""

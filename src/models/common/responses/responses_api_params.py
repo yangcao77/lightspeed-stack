@@ -139,6 +139,7 @@ class ResponsesApiParams(BaseModel):
 
         Returns:
             Serializable dict for the Responses API request body.
+
         """
         result = super().model_dump(*args, **kwargs)
         if self.previous_response_id or self.omit_conversation:
@@ -152,6 +153,7 @@ class ResponsesApiParams(BaseModel):
             rag_id_mapping: OGX vector_db_id to user-facing RAG id (from app config).
         Returns:
             dict[str, Any]: Field names and values to merge into the response object.
+
         """
         data = self.model_dump(include=_ECHOED_FIELDS)
         if self.tools is not None:

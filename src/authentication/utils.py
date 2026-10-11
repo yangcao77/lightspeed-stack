@@ -21,6 +21,7 @@ def extract_user_token(headers: Headers) -> str:
     Raises:
     ------
         HTTPException: If the Authorization header is missing or malformed.
+
     """
     authorization_header = headers.get("Authorization")
     if not authorization_header:

@@ -51,6 +51,7 @@ def validate_saved_prompt_quota(
 
     Raises:
         SavedPromptLimitExceededError: If ``current_count >= max_prompts_per_user``.
+
     """
     if current_count >= max_prompts_per_user:
         raise SavedPromptLimitExceededError(
@@ -79,6 +80,7 @@ def validate_saved_prompt_name(
 
     Raises:
         SavedPromptValidationError: If the name fails validation.
+
     """
     stripped_name = name.strip()
     if not stripped_name:
@@ -108,6 +110,7 @@ def validate_saved_prompt_content(
 
     Raises:
         SavedPromptValidationError: If the content fails validation.
+
     """
     if not content.strip():
         raise SavedPromptValidationError("Saved prompt content must not be empty")
@@ -144,6 +147,7 @@ def create_saved_prompt(
         SavedPromptLimitExceededError: If the user is already at the limit.
         SavedPromptConflictError: If insert violates a unique constraint
             (practically always duplicate ``(user_id, name)``).
+
     """
     with get_session() as session:
         current_count = session.query(SavedPrompt).filter_by(user_id=user_id).count()
@@ -187,6 +191,7 @@ def list_saved_prompts_by_user(user_id: str) -> list[SavedPrompt]:
     Returns:
         List of ``SavedPrompt`` rows for the user. Empty list if none exist.
         Tie order when ``created_at`` values are equal is database-defined.
+
     """
     with get_session() as session:
         return (
@@ -209,6 +214,7 @@ def delete_saved_prompt_by_id_and_user(prompt_id: str, user_id: str) -> None:
         SavedPromptNotFoundError: If no row exists for ``prompt_id``.
         SavedPromptAccessDeniedError: If the row exists but ``user_id`` does not
             match the owner.
+
     """
     with get_session() as session:
         saved_prompt = session.query(SavedPrompt).filter_by(id=prompt_id).first()

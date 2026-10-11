@@ -54,6 +54,7 @@ def queue_responses_splunk_event(  # pylint: disable=too-many-arguments,too-many
             of background_tasks.  Use for error paths where an HTTPException
             follows, since FastAPI discards BackgroundTasks on non-2xx responses.
         user_agent: Sanitized User-Agent string from the request header, or None.
+
     """
     if not fire_and_forget and background_tasks is None:
         return
@@ -89,6 +90,7 @@ def queue_responses_error_event(
         error: The backend exception being converted into an HTTP error.
         api_params: Responses API parameters for the failed request.
         context: Request-scoped Responses API context.
+
     """
     queue_responses_splunk_event(
         background_tasks=context.background_tasks,
@@ -115,6 +117,7 @@ def queue_blocked_response_event(
         api_params: Responses API parameters for the blocked request.
         context: Request-scoped Responses API context.
         response_text: Refusal text sent to the client.
+
     """
     queue_responses_splunk_event(
         background_tasks=context.background_tasks,
@@ -144,6 +147,7 @@ def queue_completed_response_event(
         turn_summary: Summary containing token usage for telemetry.
         completed_at: Time when response handling completed.
         response_text: Final text sent to the client.
+
     """
     if context.moderation_result.decision != "passed":
         return

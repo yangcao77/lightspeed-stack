@@ -43,6 +43,7 @@ def _redact_string_content(
 
     Returns:
         The redacted string if redaction occurred, None otherwise.
+
     """
     result = redact_text(text, compiled_patterns)
     if result.redacted:
@@ -61,6 +62,7 @@ def _redact_text_content(
 
     Returns:
         A new TextContent with redacted content if changed, None otherwise.
+
     """
     redacted_text = _redact_string_content(item.content, compiled_patterns)
     if redacted_text is not None:
@@ -79,6 +81,7 @@ def _redact_content_item(
 
     Returns:
         A tuple of (redacted_item, changed_flag).
+
     """
     if isinstance(item, TextContent):
         redacted = _redact_text_content(item, compiled_patterns)
@@ -106,6 +109,7 @@ def _redact_content_list(
 
     Returns:
         A new list with redacted items if any changed, None otherwise.
+
     """
     new_items: list[UserContent] = []
     any_changed = False
@@ -135,6 +139,7 @@ def _redact_user_prompt_part(
 
     Returns:
         A new UserPromptPart with redacted content, or the original.
+
     """
     if isinstance(part.content, str):
         redacted_text = _redact_string_content(part.content, compiled_patterns)
@@ -159,6 +164,7 @@ def _redact_message_parts(
 
     Returns:
         A new list with redacted parts if any changed, None otherwise.
+
     """
     new_parts: list[ModelRequestPart] = []
     any_changed = False
@@ -187,6 +193,7 @@ def _redact_model_request(
 
     Returns:
         A new ModelRequest with redacted parts if changed, None otherwise.
+
     """
     redacted_parts = _redact_message_parts(message.parts, compiled_patterns)
     if redacted_parts is not None:
@@ -208,6 +215,7 @@ def _redact_messages(
 
     Returns:
         A new list with redacted messages, or the original list.
+
     """
     new_messages: list[ModelMessage] = []
     any_changed = False
@@ -242,6 +250,7 @@ def _redact_response(
 
     Returns:
         A new ModelResponse with redacted content, or the original.
+
     """
     changed = False
     new_parts: list[ModelResponsePart] = []
@@ -276,6 +285,7 @@ class PiiRedactionCapability(AbstractSafetyCapability):
 
     Attributes:
         config: Redaction configuration with compiled regex rules.
+
     """
 
     config: RedactionConfig
@@ -294,6 +304,7 @@ class PiiRedactionCapability(AbstractSafetyCapability):
         Returns:
             A new ModelRequestContext with redacted messages, or the
             original if no redaction occurred.
+
         """
         new_messages = _redact_messages(
             request_context.messages,
@@ -320,6 +331,7 @@ class PiiRedactionCapability(AbstractSafetyCapability):
         Returns:
             A new ModelResponse with redacted text parts, or the
             original if no redaction occurred.
+
         """
         return _redact_response(
             response,

@@ -49,6 +49,7 @@ def _get_encoding(encoding_name: str) -> tiktoken.Encoding:
     Raises:
         ValueError: Propagated from tiktoken when the encoding name is
             unknown.
+
     """
     return tiktoken.get_encoding(encoding_name)
 
@@ -70,6 +71,7 @@ def estimate_tokens(text: str, encoding_name: str = DEFAULT_ENCODING_NAME) -> in
 
     Raises:
         ValueError: When *encoding_name* is not recognized by tiktoken.
+
     """
     if not text:
         return 0
@@ -90,6 +92,7 @@ def extract_message_text(message: Any) -> str:
     Returns:
         The textual content joined by spaces, or the empty string when
         no text can be located.
+
     """
     content = getattr(message, "content", None)
     if content is None:
@@ -135,6 +138,7 @@ def estimate_conversation_tokens(
 
     Returns:
         The total token count.
+
     """
     encoding = _get_encoding(encoding_name)
     total = 0
@@ -166,5 +170,6 @@ def get_context_window(
 
     Returns:
         The context window size in tokens, or ``None`` when unset.
+
     """
     return inference_config.context_windows.get(model)

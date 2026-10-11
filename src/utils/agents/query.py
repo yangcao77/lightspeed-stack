@@ -78,6 +78,7 @@ def get_agent_finish_reason(response: ModelResponse) -> AgentFinishReason:
 
     Returns:
         Resolved finish reason.
+
     """
     raw_finish_reason = (response.provider_details or {}).get("finish_reason")
     if raw_finish_reason == "cancelled":
@@ -99,6 +100,7 @@ def get_finish_reason_error(
 
     Returns:
         Structured error response for HTTP or SSE error events.
+
     """
     match finish_reason:
         case AgentFinishReason.LENGTH:
@@ -131,6 +133,7 @@ def extract_agent_token_usage(
 
     Returns:
         Aggregated token usage counter for the run.
+
     """
     provider_id, model_id = extract_provider_and_model_from_model_id(model)
     token_counter = TokenCounter(
@@ -177,6 +180,7 @@ def build_turn_summary_from_agent_run(
 
     Raises:
         HTTPException: When the run failed.
+
     """
     finish_reason = get_agent_finish_reason(run_result.response)
     if finish_reason != AgentFinishReason.SUCCESS:
@@ -253,6 +257,7 @@ async def retrieve_agent_response(
 
     Raises:
         HTTPException: On agent or provider failure.
+
     """
     with tracer.start_as_current_span("llm.inference") as span:
         # Extract provider and model from model_id

@@ -118,6 +118,7 @@ def anonymize_value(value: str, max_length: int = 50) -> str:
     Raises:
         ValueError: If OTEL_ANONYMIZATION_SECRET environment variable is not set
             and OTEL SDK is enabled.
+
     """
     # Get HMAC secret from environment - fail clearly if not configured
     secret = os.environ.get(OTEL_ANONYMIZATION_SECRET_ENV_VAR)
@@ -146,6 +147,7 @@ def set_span_attributes(
     Parameters:
         span: The OpenTelemetry span to set attributes on.
         attributes: Mapping of ``SpanAttributes`` keys to values.
+
     """
     for key, value in attributes.items():
         span.set_attribute(key, value)
@@ -161,6 +163,7 @@ def shield_span_attributes(
 
     Returns:
         Span attribute mapping with decision and, when blocked, reason.
+
     """
     attributes: dict[SpanAttributes, Any] = {
         SpanAttributes.SHIELD_RESULT: moderation_result.decision,
@@ -186,6 +189,7 @@ def llm_inference_span_attributes(
 
     Returns:
         Span attribute mapping ready for ``set_span_attributes``.
+
     """
     return {
         SpanAttributes.RAG_CHUNKS: json.dumps(
@@ -219,6 +223,7 @@ def root_span_turn_attributes(
 
     Returns:
         Span attribute mapping ready for ``set_span_attributes``.
+
     """
     attributes: dict[SpanAttributes, Any] = {
         SpanAttributes.OUTPUT: turn_summary.llm_response,
@@ -238,6 +243,7 @@ def add_span_event(
         span: The OpenTelemetry span to add the event to.
         event_name: Name of the event.
         attributes: Optional dictionary of event attributes.
+
     """
     if attributes is None:
         attributes = {}
@@ -255,6 +261,7 @@ def record_exception(
         span: The OpenTelemetry span to record the exception on.
         exception: The exception to record.
         attributes: Optional additional attributes for the exception event.
+
     """
     span_attributes = (
         {str(key): value for key, value in attributes.items()} if attributes else None

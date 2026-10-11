@@ -25,6 +25,7 @@ def input_schema_to_parameters(
 
     Returns:
         Flat parameter models for the tools endpoint response.
+
     """
     if not schema or "properties" not in schema:
         return []
@@ -65,6 +66,7 @@ def extract_clean_description(description: str) -> str:
     Returns:
     -------
         Clean description without metadata
+
     """
     min_description_length = 20
     fallback_truncation_length = 200
@@ -130,6 +132,7 @@ def build_catalog_tool(
 
     Returns:
         Typed catalog tool entry.
+
     """
     cleaned_description = tool.description or ""
     if cleaned_description and (
@@ -163,6 +166,7 @@ def translate_vector_store_ids_to_user_facing(
     -------
         list[dict[str, Any]]: New list of tool dicts; file_search entries get
             updated vector_store_ids.
+
     """
     if not rag_id_mapping:
         return list(tools)

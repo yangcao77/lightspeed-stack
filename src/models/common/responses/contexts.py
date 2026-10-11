@@ -90,6 +90,7 @@ class ResponseGeneratorContext:  # pylint: disable=too-many-instance-attributes
         inline_rag_context: Inline RAG context
         vector_store_ids: Vector store IDs used in the query for source resolution.
         rag_id_mapping: Mapping from vector_db_id to user-facing rag_id.
+
     """
 
     # Conversation & User context

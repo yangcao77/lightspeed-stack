@@ -18,6 +18,7 @@ class SavedPromptsConfigResponse(AbstractSuccessfulResponse):
         max_prompts_per_user: Maximum number of saved prompts allowed per user.
         max_display_name_length: Maximum character length for prompt display name.
         max_content_length: Maximum character length for prompt content body.
+
     """
 
     max_prompts_per_user: int = Field(
@@ -59,6 +60,7 @@ class SavedPromptResponse(AbstractSuccessfulResponse):
         content: Prompt body text.
         created_at: When the prompt was created.
         updated_at: When the prompt was last updated.
+
     """
 
     id: str = Field(
@@ -109,6 +111,7 @@ class SavedPromptsListResponse(AbstractSuccessfulResponse):
 
     Attributes:
         prompts: Saved prompts ordered by created_at descending (newest first).
+
     """
 
     prompts: list[SavedPromptResponse] = Field(
@@ -144,6 +147,7 @@ class SavedPromptDeleteResponse(AbstractDeleteResponse):
         prompt_id: Saved prompt identifier that was passed to delete.
         deleted: Whether the prompt was deleted successfully.
         response: Human-readable outcome of the delete operation.
+
     """
 
     resource_name: ClassVar[str] = "Saved prompt"

@@ -42,6 +42,7 @@ class ServiceUnavailableResponse(AbstractErrorResponse):
         Args:
             backend_name: Name of the backend service that could not be contacted.
             cause: Optional detailed explanation; defaults to a generic connection error.
+
         """
         response = f"Unable to connect to {backend_name}"
         super().__init__(

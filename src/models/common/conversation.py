@@ -18,6 +18,7 @@ class ConversationData(BaseModel):
         conversation_id: The conversation ID
         topic_summary: The topic summary for the conversation (can be None)
         last_message_timestamp: The timestamp of the last message in the conversation
+
     """
 
     conversation_id: str
@@ -49,6 +50,7 @@ class ConversationDetails(BaseModel):
             topic_summary="Openshift Microservices Deployment Strategies",
         )
         ```
+
     """
 
     conversation_id: str = Field(
@@ -101,6 +103,7 @@ class Message(BaseModel):
         content: The message content.
         type: The type of message.
         referenced_documents: Optional list of documents referenced in an assistant response.
+
     """
 
     content: str = Field(
@@ -130,6 +133,7 @@ class ConversationTurn(BaseModel):
         model: Model identifier used for this turn.
         started_at: ISO 8601 timestamp when the turn started.
         completed_at: ISO 8601 timestamp when the turn completed.
+
     """
 
     messages: list[Message] = Field(

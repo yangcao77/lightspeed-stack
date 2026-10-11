@@ -17,6 +17,7 @@ def extract_message_str_from_user_content(
 
     Returns:
         A single string with all text content joined by newlines.
+
     """
     str_arr: list[str] = []
     for c in user_content:
@@ -37,6 +38,7 @@ def message_to_str(message: Optional[str | Sequence[UserContent]]) -> str:
 
     Returns:
         A plain-text representation of the message, or an empty string for None.
+
     """
     match message:
         case str() as s:
@@ -60,6 +62,7 @@ def extract_conversation_id(model: Model) -> Optional[str]:
 
     Returns:
         The conversation ID, or None if the model has no such setting.
+
     """
     extra_body = (model.settings or {}).get("extra_body")
     if not isinstance(extra_body, dict):

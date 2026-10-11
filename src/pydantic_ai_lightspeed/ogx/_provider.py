@@ -66,6 +66,7 @@ class OgxProvider(Provider[AsyncOpenAI]):
 
         Returns:
             Configured ``OgxProvider`` instance.
+
         """
         if isinstance(client, AsyncOGXAsLibraryClient):
             return OgxProvider(library_client=client)
@@ -103,6 +104,7 @@ class OgxProvider(Provider[AsyncOpenAI]):
                 Mutually exclusive with ``base_url``, ``api_key``, and ``http_client``.
             http_client: An existing ``httpx.AsyncClient`` to use for making HTTP requests.
                 Must be ``None`` when ``library_client`` is provided.
+
         """
         if library_client is not None:
             if base_url is not None:
@@ -148,5 +150,6 @@ class OgxProvider(Provider[AsyncOpenAI]):
 
         Args:
             http_client: The async HTTP client to use for subsequent requests.
+
         """
         self._client._client = http_client  # pyright: ignore[reportPrivateUsage]  # pylint: disable=protected-access

@@ -53,6 +53,7 @@ class BadRequestResponse(AbstractErrorResponse):
         Args:
             resource: Type of the resource (for message), e.g. conversation or provider.
             resource_id: The invalid resource identifier used in the error message.
+
         """
         response = f"Invalid {resource} ID format"
         cause = f"The {resource} ID {resource_id} has invalid format."

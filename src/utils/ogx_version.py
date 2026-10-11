@@ -45,6 +45,7 @@ async def check_ogx_version(
         ApiException: If OGX is unreachable after all retries.
         InvalidOgxVersionException: If the detected version is outside
         the supported range or cannot be parsed.
+
     """
     if max_retries < 1:
         raise ValueError("max_retries must be >= 1")
@@ -91,6 +92,7 @@ def compare_versions(version_info: str, minimal: str, maximal: str) -> None:
     ------
         InvalidOgxVersionException: If `version_info` is outside the
         inclusive range defined by `minimal` and `maximal`.
+
     """
     version_pattern = r"\d+\.\d+\.\d+"
     match = re.search(version_pattern, version_info)

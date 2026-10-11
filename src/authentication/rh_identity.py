@@ -56,6 +56,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: If validation fails (400 for format errors, 403 for entitlements)
+
         """
         self.identity_data = identity_data
         self.required_entitlements = required_entitlements or []
@@ -66,6 +67,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 400 if required fields are missing or malformed
+
         """
         if (
             "identity" not in self.identity_data
@@ -104,6 +106,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 400 if required User fields are missing or malformed
+
         """
         if "user" not in identity:
             logger.warning(
@@ -130,6 +133,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 400 if required System fields are missing or malformed
+
         """
         if "system" not in identity:
             logger.warning(
@@ -166,6 +170,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 400 if required ServiceAccount fields are missing or malformed
+
         """
         if "service_account" not in identity:
             logger.warning(
@@ -195,6 +200,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 400 if validation fails
+
         """
         if not isinstance(value, str):
             logger.warning(
@@ -228,6 +234,7 @@ class RHIdentityData:
 
         Returns:
             Identity type string
+
         """
         return self.identity_data["identity"]["type"]
 
@@ -237,6 +244,7 @@ class RHIdentityData:
         Returns:
             User ID (user.user_id for User type, system.cn for System type,
             service_account.client_id for ServiceAccount type)
+
         """
         identity = self.identity_data["identity"]
         identity_type = self._get_identity_type()
@@ -259,6 +267,7 @@ class RHIdentityData:
             Username (user.username for User type;
             service_account.username for ServiceAccount type;
             account_number or system.cn for System type)
+
         """
         identity = self.identity_data["identity"]
         identity_type = self._get_identity_type()
@@ -279,6 +288,7 @@ class RHIdentityData:
 
         Returns:
             Organization ID string, or empty string if not present
+
         """
         return self.identity_data["identity"].get("org_id", "")
 
@@ -287,6 +297,7 @@ class RHIdentityData:
 
         Returns:
             System ID string for System identities, or empty string for User identities
+
         """
         if self._get_identity_type() == "System":
             return self.identity_data["identity"]["system"]["cn"]
@@ -300,6 +311,7 @@ class RHIdentityData:
 
         Returns:
             True if user has the entitlement and is_entitled is True
+
         """
         entitlements = self.identity_data.get("entitlements", {})
         service_entitlement = entitlements.get(service, {})
@@ -313,6 +325,7 @@ class RHIdentityData:
 
         Returns:
             True if user has ALL entitlements in the list
+
         """
         return all(self.has_entitlement(service) for service in services)
 
@@ -321,6 +334,7 @@ class RHIdentityData:
 
         Raises:
             HTTPException: 403 if required entitlements are missing
+
         """
         if not self.required_entitlements:
             return  # No validation required
@@ -359,6 +373,7 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
             max_header_size: Maximum allowed size in bytes for the base64-encoded
                 x-rh-identity header. Headers exceeding this size are rejected
                 before decoding.
+
         """
         self.required_entitlements = required_entitlements
         self.virtual_path = virtual_path
@@ -379,6 +394,7 @@ class RHIdentityAuthDependency(AuthInterface):  # pylint: disable=too-few-public
                 - 401: Missing x-rh-identity header
                 - 400: Invalid base64, invalid JSON, or missing required fields
                 - 403: Missing required entitlements
+
         """
         # Extract header
         identity_header = request.headers.get("x-rh-identity")

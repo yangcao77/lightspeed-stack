@@ -87,6 +87,7 @@ class TLSConfiguration(ConfigurationBase):
 
         Returns:
             Self: The validated model instance.
+
         """
         return self
 
@@ -149,6 +150,7 @@ class CORSConfiguration(ConfigurationBase):
 
         Returns:
             Self: The validated configuration instance.
+
         """
         # credentials are not allowed with wildcard origins per CORS/Fetch spec.
         # see https://fastapi.tiangolo.com/tutorial/cors/
@@ -264,6 +266,7 @@ class PostgreSQLDatabaseConfiguration(ConfigurationBase):
 
         Raises:
             ValueError: If `port` is greater than 65535.
+
         """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
@@ -297,6 +300,7 @@ class DatabaseConfiguration(ConfigurationBase):
         Returns:
             self: The configuration instance with exactly one
             database backend set.
+
         """
         total_configured_dbs = sum([self.sqlite is not None, self.postgres is not None])
 
@@ -323,6 +327,7 @@ class DatabaseConfiguration(ConfigurationBase):
 
         Raises:
             ValueError: If neither SQLite nor PostgreSQL configuration is set.
+
         """
         if self.sqlite is not None:
             return "sqlite"
@@ -343,6 +348,7 @@ class DatabaseConfiguration(ConfigurationBase):
         Raises:
             ValueError: If neither `sqlite` nor `postgres` is
             configured.
+
         """
         if self.sqlite is not None:
             return self.sqlite
@@ -470,6 +476,7 @@ class ServiceConfiguration(ConfigurationBase):
         ------
             ValueError: If root_path is missing a leading slash or has
                 a trailing slash.
+
         """
         if value and not value.startswith("/"):
             raise ValueError("root_path must start with '/'")
@@ -498,6 +505,7 @@ class ServiceConfiguration(ConfigurationBase):
 
         Returns:
             self: The validated model instance.
+
         """
         if self.port > 65535:
             raise ValueError("Port value should be less than 65536")
@@ -510,6 +518,7 @@ class ApprovalFilter(ConfigurationBase):
     Attributes:
         always: Tool names that always require human approval before execution.
         never: Tool names that never require approval (pre-approved).
+
     """
 
     always: list[str] = Field(
@@ -532,6 +541,7 @@ class ApprovalFilter(ConfigurationBase):
 
         Returns:
             Self: The validated model instance.
+
         """
         overlap = set(self.always) & set(self.never)
         if overlap:
@@ -549,6 +559,7 @@ class ApprovalsConfiguration(ConfigurationBase):
             before expiring.
         approval_retention_days: How long to retain decided approvals for audit
             purposes before cleanup.
+
     """
 
     approval_timeout_seconds: PositiveInt = Field(
@@ -682,6 +693,7 @@ class ModelContextProtocolServer(ConfigurationBase):
 
         Returns:
             Self: The model instance with resolved_authorization_headers populated.
+
         """
         if self.authorization_headers:
             self._resolved_authorization_headers = resolve_authorization_headers(
@@ -715,6 +727,7 @@ class UnifiedInferenceProvider(ConfigurationBase):
         extra: Additional provider-config keys merged verbatim into the
             synthesized provider's `config` block — an escape hatch for
             provider-specific knobs not modeled here.
+
     """
 
     type: Literal[
@@ -779,6 +792,7 @@ class UnifiedInferenceProvider(ConfigurationBase):
             ValueError: If the value is empty after stripping or contains
                 characters other than lowercase letters, digits, underscores,
                 and hyphens.
+
         """
         if value is None:
             return None
@@ -820,6 +834,7 @@ class UnifiedOgxConfig(ConfigurationBase):
             `registered_resources.models` is a list, so a native_override
             that sets it replaces — not merges with — any LLM models LCORE
             auto-registered from `inference.providers[].allowed_models`.
+
     """
 
     baseline: Literal["default", "empty", "byo-llm"] = Field(
@@ -966,6 +981,7 @@ class OgxConfiguration(ConfigurationBase):
         Raises:
             ValueError: If no URL is provided and library-client mode is
             unspecified or disabled.
+
         """
         if self.url is None:
             # when URL is not set, it is supposed that OGX should be run in library mode
@@ -1062,6 +1078,7 @@ class SplunkConfiguration(ConfigurationBase):
 
         Raises:
             ValueError: If enabled is True but required fields are missing.
+
         """
         if self.enabled:
             missing_fields = []
@@ -1121,6 +1138,7 @@ class UserDataCollection(ConfigurationBase):
 
         Returns:
             self: The validated UserDataCollection instance.
+
         """
         if self.feedback_enabled:
             if self.feedback_storage is None:
@@ -1205,6 +1223,7 @@ class JwtRoleRule(ConfigurationBase):
             ValueError: If the `jsonpath` cannot be parsed; the
             message includes the offending expression and parser
             error.
+
         """
         try:
             # try to parse the JSONPath
@@ -1226,6 +1245,7 @@ class JwtRoleRule(ConfigurationBase):
         Returns:
             self: The same `JwtRoleRule` instance when validation
             succeeds.
+
         """
         if not self.roles:
             raise ValueError("At least one role must be specified in the rule")
@@ -1252,6 +1272,7 @@ class JwtRoleRule(ConfigurationBase):
 
         Returns:
             Self: The same JwtRoleRule instance.
+
         """
         if self.operator == JsonPathOperator.MATCH:
             if not isinstance(self.value, str):
@@ -1275,6 +1296,7 @@ class JwtRoleRule(ConfigurationBase):
             Optional[Pattern[str]]: Compiled `re.Pattern` of `value` if
             `operator` is `JsonPathOperator.MATCH` and `value` is a `str`,
             `None` otherwise.
+
         """
         if self.operator == JsonPathOperator.MATCH and isinstance(self.value, str):
             return re.compile(self.value)
@@ -1560,6 +1582,7 @@ class AuthenticationConfiguration(ConfigurationBase):
             ValueError: If the module is unsupported, or if a required module-specific
                 configuration (jwk_config for JWK token or rh_identity_config for RH Identity)
                 is missing.
+
         """
         if self.module not in constants.SUPPORTED_AUTHENTICATION_MODULES:
             supported_modules = ", ".join(constants.SUPPORTED_AUTHENTICATION_MODULES)
@@ -1612,6 +1635,7 @@ class AuthenticationConfiguration(ConfigurationBase):
 
         Returns:
             JwkConfiguration: The configured JWK settings.
+
         """
         if self.module != constants.AUTH_MOD_JWK_TOKEN:
             raise ValueError(
@@ -1632,6 +1656,7 @@ class AuthenticationConfiguration(ConfigurationBase):
         Raises:
             ValueError: If the active authentication module is not RH Identity.
             ValueError: If the RH Identity configuration is missing when the module is RH Identity.
+
         """
         if self.module != constants.AUTH_MOD_RH_IDENTITY:
             raise ValueError(
@@ -1662,6 +1687,7 @@ class AuthenticationConfiguration(ConfigurationBase):
         Raises:
             ValueError: If the active authentication module is not trusted-proxy.
             ValueError: If the trusted-proxy configuration is missing.
+
         """
         if self.module != constants.AUTH_MOD_TRUSTED_PROXY:
             raise ValueError(
@@ -1707,6 +1733,7 @@ class CustomProfile:
 
         Returns:
             dict[str, str]: Mapping from prompt names to prompt text.
+
         """
         return self.prompts
 
@@ -1735,6 +1762,7 @@ class Customization(ConfigurationBase):
         Returns:
             self: The model instance, potentially with `custom_profile` or
                   `system_prompt` populated.
+
         """
         if self.profile_path:
             self.custom_profile = CustomProfile(path=self.profile_path)
@@ -1863,6 +1891,7 @@ class InferenceConfiguration(ConfigurationBase):
 
         Returns:
             self (Self): The validated configuration instance.
+
         """
         if self.default_model is None and self.default_provider is not None:
             raise ValueError(
@@ -1890,6 +1919,7 @@ class InferenceConfiguration(ConfigurationBase):
 
         Returns:
             self (Self): The validated configuration instance.
+
         """
         seen: set[str] = set()
         for provider in self.providers:
@@ -1929,6 +1959,7 @@ class CompactionConfiguration(ConfigurationBase):
         buffer_max_ratio: Hard cap on the fraction of the context
             window the buffer zone may occupy, regardless of
             buffer_turns.
+
     """
 
     enabled: bool = Field(
@@ -2021,6 +2052,7 @@ class ConversationHistoryConfiguration(ConfigurationBase):
 
         Returns:
             The validated model instance.
+
         """
         # if any backend config is provided, type must be explicitly selected
         if self.type is None:
@@ -2066,6 +2098,7 @@ class A2AStateConfiguration(ConfigurationBase):
     Attributes:
         sqlite: SQLite database configuration for A2A state storage.
         postgres: PostgreSQL database configuration for A2A state storage.
+
     """
 
     sqlite: Optional[SQLiteDatabaseConfiguration] = Field(
@@ -2307,6 +2340,7 @@ class VectorStoreProviderBase(ConfigurationBase):
             created against this provider.
         embedding_dimension: Dimensionality of embedding vectors for this
             provider.
+
     """
 
     id: str = Field(
@@ -2345,6 +2379,7 @@ class VectorStoreProviderBase(ConfigurationBase):
         Raises:
             ValueError: If the id is empty, uses the reserved ``byok_`` prefix,
                 or contains characters outside ``[a-z0-9_-]``.
+
         """
         stripped = value.strip()
         if not stripped:
@@ -2409,6 +2444,7 @@ class VectorStoreConfiguration(ConfigurationBase):
         providers: Dynamic vector-store provider capacity for runtime
             POST /v1/vector-stores creates. Not the same as rag.byok.stores (static
             registered corpora).
+
     """
 
     default_provider: Optional[str] = Field(
@@ -2446,6 +2482,7 @@ class VectorStoreConfiguration(ConfigurationBase):
             ValueError: If ids are duplicated, default_provider is missing
                 for a non-empty list, is set for an empty list, or does not
                 match a provider id.
+
         """
         # pylint: disable=no-member
         if not self.providers:
@@ -2620,6 +2657,7 @@ class QuotaHandlersConfiguration(ConfigurationBase):
         Raises:
             ValueError: If SQLite is configured and it can not use the period
             of a limiter.
+
         """
         if self.sqlite is None:
             return self
@@ -2898,6 +2936,7 @@ class SavedPromptsConfiguration(ConfigurationBase):
         max_prompts_per_user: Maximum number of saved prompts allowed per user.
         max_display_name_length: Maximum character length for the prompt display name.
         max_content_length: Maximum character length for the prompt content body.
+
     """
 
     max_prompts_per_user: PositiveInt = Field(
@@ -2955,6 +2994,7 @@ class RedactionRule(ConfigurationBase):
         case_sensitive: Per-rule override for case sensitivity.
             When None, the global ``RedactionConfig.case_sensitive``
             flag applies.
+
     """
 
     pattern: str = Field(
@@ -2987,6 +3027,7 @@ class RedactionConfig(ConfigurationBase):
         rules: Ordered list of redaction rules applied sequentially.
         case_sensitive: When False, patterns are compiled with
             ``re.IGNORECASE``. Defaults to False.
+
     """
 
     rules: list[RedactionRule] = Field(
@@ -3015,6 +3056,7 @@ class RedactionConfig(ConfigurationBase):
 
         Returns:
             The validated configuration instance.
+
         """
         global_case_sensitive = self.case_sensitive
         compiled: CompiledPatterns = []
@@ -3050,6 +3092,7 @@ class ObservabilityConfiguration(ConfigurationBase):
 
     Attributes:
         otel: Dictionary of OTEL_* environment variables with secrets redacted.
+
     """
 
     otel: dict[str, str] = Field(
@@ -3072,6 +3115,7 @@ class ObservabilityConfiguration(ConfigurationBase):
 
         Returns:
             New dictionary with sensitive values redacted
+
         """
         # Let Pydantic handle type validation for non-dict inputs
         if not isinstance(value, dict):
@@ -3120,6 +3164,7 @@ class ObservabilityConfiguration(ConfigurationBase):
 
         Returns:
             Header string with values redacted but keys preserved
+
         """
         if not header_string or "=" not in header_string:
             # No key=value pairs found, redact entire string
@@ -3146,6 +3191,7 @@ class ObservabilityConfiguration(ConfigurationBase):
 
         Returns:
             ObservabilityConfiguration with otel dict populated from environment.
+
         """
         otel_vars = {}
         for key, value in os.environ.items():
@@ -3161,6 +3207,7 @@ class QuestionValidityShieldConfiguration(ConfigurationBase):
         name: Unique, user-facing name identifying this shield instance.
         provider_id: Discriminator identifying this as a question-validity shield.
         config: Question-validity-specific configuration.
+
     """
 
     name: str = Field(
@@ -3189,6 +3236,7 @@ class RedactionShieldConfiguration(ConfigurationBase):
         name: Unique, user-facing name identifying this shield instance.
         provider_id: Discriminator identifying this as a redaction shield.
         config: Redaction-specific configuration.
+
     """
 
     name: str = Field(
@@ -3234,6 +3282,7 @@ class RiskDefinition(ConfigurationBase):
         To enable think mode (detailed reasoning) for a risk, add the risk name
         to the `thinking_enabled` list in `ModerationConfig`. Do not set
         `enable_thinking` directly - it is managed internally.
+
     """
 
     name: str = Field(
@@ -3363,6 +3412,7 @@ class GraniteGuardianConfig(ConfigurationBase):
 
         Returns:
             The validated configuration instance.
+
         """
         # pylint: disable=no-member
         if self.api_key is not None and not self.url.startswith("https://"):
@@ -3379,6 +3429,7 @@ class GraniteGuardianShieldConfiguration(ConfigurationBase):
         name: Unique, user-facing name identifying this shield instance.
         provider_id: Discriminator identifying this as a granite-guardian shield.
         config: Granite-guardian-specific configuration.
+
     """
 
     name: str = Field(
@@ -3427,6 +3478,7 @@ class Configuration(ConfigurationBase):
 
         Returns:
             Normalized mapping with the OGX section under ``ogx``.
+
         """
         if not isinstance(data, dict):
             return data
@@ -3659,6 +3711,7 @@ class Configuration(ConfigurationBase):
 
         Raises:
             ValueError: If two or more shields share the same name.
+
         """
         names = [shield.name for shield in self.shields]
         duplicates = {name for name in names if names.count(name) > 1}
@@ -3683,6 +3736,7 @@ class Configuration(ConfigurationBase):
 
         Returns:
             Self: The model instance after validation.
+
         """
         # Get authentication module value
         auth_module = getattr(self.authentication, "module", None)
@@ -3739,6 +3793,7 @@ class Configuration(ConfigurationBase):
         Raises:
             ValueError: If quota_subject requires rh-identity but a different
                 authentication module is configured.
+
         """
         quota_subject = self.rlsapi_v1.quota_subject  # pylint: disable=no-member
         if quota_subject is None:
@@ -3800,6 +3855,7 @@ class Configuration(ConfigurationBase):
                 ``library_client_config_path`` are set together, if library
                 mode has no run source at all, or if ``config_format_version``
                 contradicts the detected shape.
+
         """
         # pylint: disable=no-member
         synthesis_input = (
@@ -3850,6 +3906,7 @@ class Configuration(ConfigurationBase):
         Parameters:
         ----------
             filename (str | Path): Path to the output file (defaults to "configuration.json").
+
         """
         with open(filename, "w", encoding="utf-8") as fout:
             fout.write(self.model_dump_json(indent=4))

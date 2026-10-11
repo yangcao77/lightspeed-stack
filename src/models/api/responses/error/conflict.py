@@ -67,6 +67,7 @@ class ConflictResponse(AbstractErrorResponse):
         Args:
             resource: Type of the resource (e.g. MCP server).
             resource_id: The identifier of the conflicting resource.
+
         """
         response = f"{resource.title()} already exists"
         cause = f"{resource.title()} with name '{resource_id}' is already registered"
@@ -83,6 +84,7 @@ class ConflictResponse(AbstractErrorResponse):
 
         Returns:
             A response with a cause describing the MCP tool conflict.
+
         """
         return cls._from_cause(
             response="Tool conflict",
@@ -99,6 +101,7 @@ class ConflictResponse(AbstractErrorResponse):
 
         Returns:
             A response with a cause describing the file_search tool conflict.
+
         """
         return cls._from_cause(
             response="Tool conflict",
@@ -119,6 +122,7 @@ class ConflictResponse(AbstractErrorResponse):
 
         Returns:
             A new ConflictResponse instance.
+
         """
         instance = cls.__new__(cls)
         AbstractErrorResponse.__init__(

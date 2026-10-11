@@ -11,6 +11,7 @@ class ConfigurationResponse(AbstractSuccessfulResponse):
 
     Attributes:
         configuration: Parsed application configuration returned to the client.
+
     """
 
     configuration: Configuration

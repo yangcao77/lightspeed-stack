@@ -8,6 +8,7 @@ class ConversationUpdateRequest(BaseModel):
 
     Attributes:
         topic_summary: The new topic summary for the conversation.
+
     """
 
     topic_summary: str = Field(

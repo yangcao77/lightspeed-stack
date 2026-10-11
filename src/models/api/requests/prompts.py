@@ -11,6 +11,7 @@ class PromptCreateRequest(BaseModel):
     Attributes:
         prompt: Prompt text with variable placeholders.
         variables: Variable names allowed in the template.
+
     """
 
     prompt: str = Field(
@@ -46,6 +47,7 @@ class PromptUpdateRequest(BaseModel):
         version: Current version being updated.
         set_as_default: Whether the new version becomes the default.
         variables: Updated allowed variable names.
+
     """
 
     prompt: str = Field(

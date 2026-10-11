@@ -51,6 +51,7 @@ def is_context_length_error(error_message: str) -> bool:
 
     Returns:
         True if the error indicates context length was exceeded.
+
     """
     msg_lower = error_message.lower()
     return "context_length" in msg_lower or "context length" in msg_lower
@@ -79,6 +80,7 @@ def store_conversation_into_cache(
                                    operation must match the user id.
         topic_summary (Optional[str]): Optional topic summary to store alongside
                                     the conversation; ignored if None or empty.
+
     """
     if configuration.conversation_cache_configuration.type is None:
         logger.warning("Conversation cache is not configured")
@@ -111,6 +113,7 @@ def validate_model_provider_override(
     Raises:
         HTTPException: HTTP 403 if the request includes model/provider override and
         the caller lacks Action.MODEL_OVERRIDE permission.
+
     """
     has_override = provider is not None or (model is not None and "/" in model)
     if has_override and Action.MODEL_OVERRIDE not in authorized_actions:
@@ -135,6 +138,7 @@ def prepare_input(
 
     Returns:
         str: The input text with RAG context and text attachments appended (if any)
+
     """
     input_text: str = query_request.query
     if inline_rag_context:
@@ -163,6 +167,7 @@ def build_multimodal_input(
 
     Returns:
         List of UserContent items: the text string followed by ImageUrl objects.
+
     """
     parts: list[UserContent] = [text]
     for attachment in image_attachments:
@@ -205,6 +210,7 @@ def store_query_results(  # pylint: disable=too-many-arguments
 
     Raises:
         HTTPException: On any database, cache, or IO errors during processing
+
     """
     provider_id, model_id = extract_provider_and_model_from_model_id(model)
     # Store transcript if enabled
@@ -291,6 +297,7 @@ def consume_query_tokens(
 
     Raises:
         HTTPException: On database errors during token consumption
+
     """
     provider, model = extract_provider_and_model_from_model_id(model_id)
     try:
@@ -315,6 +322,7 @@ def is_transcripts_enabled() -> bool:
 
     Returns:
         bool: True if transcripts is enabled, False otherwise.
+
     """
     transcripts_enabled: bool = (
         configuration.user_data_collection_configuration.transcripts_enabled
@@ -343,6 +351,7 @@ def persist_user_conversation_details(
         provider_id: The provider identifier
         topic_summary: Optional topic summary for the conversation
         response_id: Response ID for the conversation
+
     """
     # Normalize the conversation ID (strip 'conv_' prefix if present)
     normalized_id = normalize_conversation_id(conversation_id)
@@ -431,6 +440,7 @@ def update_conversation_topic_summary(
         user_id: Optional user ID for cache update; when provided with cache
             configured, also updates the conversation cache.
         skip_userid_check: Whether to skip user ID validation for cache operations.
+
     """
     normalized_id = normalize_conversation_id(conversation_id)
     with get_session() as session:
@@ -470,6 +480,7 @@ def validate_attachments_metadata(attachments: list[Attachment]) -> None:
     Raises:
         HTTPException: If any attachment has an invalid type or content type,
         an HTTP 422 error is raised.
+
     """
     for attachment in attachments:
         if attachment.attachment_type not in constants.ATTACHMENT_TYPES:
@@ -502,6 +513,7 @@ def extract_provider_and_model_from_model_id(model_id: str) -> tuple[str, str]:
 
     Returns:
         tuple[str, str]: The provider and model.
+
     """
     split = model_id.split("/", 1)
     if len(split) == 2:
@@ -531,6 +543,7 @@ def normalize_vertex_ai_model_id(model_id: str) -> str:
 
     Returns:
         Normalized model ID with Vertex AI prefix stripped if present
+
     """
     if model_id.startswith("publishers/google/models/"):
         return model_id.replace("publishers/google/models/", "google/", 1)
@@ -550,6 +563,7 @@ def is_resource_exhausted_error(error_message: str) -> bool:
 
     Returns:
         True if the message indicates a wrapped RESOURCE_EXHAUSTED error.
+
     """
     return "resource_exhausted" in error_message.lower()
 
@@ -565,6 +579,7 @@ def handle_known_apistatus_errors(
 
     Returns:
         AbstractErrorResponse: The error response model.
+
     """
     error_message = getattr(error, "message", str(error))
     if is_context_length_error(error_message):

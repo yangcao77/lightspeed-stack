@@ -27,6 +27,7 @@ def connect_pg(config: PostgreSQLDatabaseConfiguration) -> Any:
     Raises:
     ------
         psycopg2.Error: If establishing the database connection fails.
+
     """
     logger.info("Connecting to PostgreSQL storage")
     namespace = "public"

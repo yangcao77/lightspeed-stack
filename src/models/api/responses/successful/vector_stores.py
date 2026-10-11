@@ -23,6 +23,7 @@ class VectorStoreResponse(AbstractSuccessfulResponse):
         status: Vector store status.
         usage_bytes: Storage usage in bytes.
         metadata: Optional metadata dictionary for storing session information.
+
     """
 
     id: str = Field(..., description="Vector store ID")
@@ -72,6 +73,7 @@ class VectorStoresListResponse(AbstractSuccessfulResponse):
     Attributes:
         data: List of vector store objects.
         object: Object type (always "list").
+
     """
 
     data: list[VectorStoreResponse] = Field(
@@ -191,6 +193,7 @@ class FileResponse(AbstractSuccessfulResponse):
         created_at: Unix timestamp when created.
         purpose: File purpose.
         object: Object type (always "file").
+
     """
 
     id: str = Field(..., description="File ID")
@@ -227,6 +230,7 @@ class VectorStoreFileResponse(AbstractSuccessfulResponse):
         attributes: Optional metadata key-value pairs.
         last_error: Optional error message if processing failed.
         object: Object type (always "vector_store.file").
+
     """
 
     id: str = Field(..., description="Vector store file ID")
@@ -267,6 +271,7 @@ class VectorStoreFilesListResponse(AbstractSuccessfulResponse):
     Attributes:
         data: List of vector store file objects.
         object: Object type (always "list").
+
     """
 
     data: list[VectorStoreFileResponse] = Field(

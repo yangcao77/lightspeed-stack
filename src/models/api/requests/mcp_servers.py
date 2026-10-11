@@ -17,6 +17,7 @@ class MCPServerRegistrationRequest(BaseModel):
         authorization_headers: Optional headers to send to the MCP server.
         headers: Optional list of HTTP header names to forward from incoming requests.
         timeout: Optional request timeout in seconds.
+
     """
 
     name: str = Field(
@@ -113,6 +114,7 @@ class MCPServerRegistrationRequest(BaseModel):
 
         Raises:
             ValueError: If URL does not start with http:// or https://.
+
         """
         if not value.startswith(("http://", "https://")):
             raise ValueError("URL must use http:// or https:// scheme")
@@ -138,6 +140,7 @@ class MCPServerRegistrationRequest(BaseModel):
 
         Raises:
             ValueError: If any header value is not a supported keyword.
+
         """
         if value is None:
             return value

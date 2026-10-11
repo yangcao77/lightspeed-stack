@@ -46,6 +46,7 @@ def consume_tokens(
     Returns:
     -------
         None
+
     """
     # record token usage history
     if token_usage_history is not None:
@@ -81,6 +82,7 @@ def check_tokens_available(quota_limiters: list[QuotaLimiter], user_id: str) -> 
     ------
         HTTPException: With status 500 if database communication fails,
             or status 429 if quota is exceeded.
+
     """
     with tracer.start_as_current_span("quota.check") as span:
         try:
@@ -118,6 +120,7 @@ def get_available_quotas(
 
     Raises:
         HTTPException: With status 500 if database communication fails.
+
     """
     available_quotas: dict[str, int] = {}
 

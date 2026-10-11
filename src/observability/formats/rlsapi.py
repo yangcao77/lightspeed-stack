@@ -38,6 +38,7 @@ def build_inference_event(data: InferenceEventData) -> dict[str, Any]:
 
     Returns:
         A dictionary matching the rlsapi Splunk event format.
+
     """
     return {
         "question": data.question,

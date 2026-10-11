@@ -63,6 +63,7 @@ def _is_file_search_provider(provider: ProviderInfo) -> bool:
 
     Returns:
         True when the provider implements file-search tool runtime.
+
     """
     return (
         provider.api == TOOL_RUNTIME_API
@@ -85,6 +86,7 @@ async def get_file_search_tools(
     Returns:
         Catalog tools for the configured file-search runtime, or an empty
         list when file search is not configured.
+
     """
     try:
         providers = await client.providers.list()

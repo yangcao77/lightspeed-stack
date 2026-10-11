@@ -39,6 +39,7 @@ class RolesResolver(ABC):  # pylint: disable=too-few-public-methods
         Returns:
         -------
             UserRoles: A set of role names associated with the authenticated subject.
+
         """
 
 
@@ -54,6 +55,7 @@ class NoopRolesResolver(RolesResolver):  # pylint: disable=too-few-public-method
 
         Returns:
             An empty set of role names.
+
         """
         _ = auth  # Unused
         return set()
@@ -67,6 +69,7 @@ def unsafe_get_claims(token: str) -> dict[str, Any]:
 
     Returns:
         dict[str, Any]: Claims dictionary parsed from the JWT payload.
+
     """
     payload = token.split(".")[1]
     padded = payload + "=" * (-len(payload) % 4)
@@ -87,6 +90,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
             claim matches to roles. Each rule specifies a JSONPath to evaluate,
             an operator to apply to matches, the roles to grant when the rule
             matches, and optional negation or regex matching.
+
         """
         self.role_rules = role_rules
 
@@ -99,6 +103,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         Returns:
             roles (UserRoles): Set of role names derived from all configured
             rules that match the token's claims.
+
         """
         jwt_claims = self._get_claims(auth)
         return {
@@ -124,6 +129,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         -------
             roles (set[str]): The set of roles from `rule.roles` if the rule
             matches `jwt_claims`, otherwise an empty set.
+
         """
         return (
             set(rule.roles)
@@ -149,6 +155,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
             dict[str, Any]: Decoded JWT claims as a dictionary. Returns an
             empty dict when the token equals constants.NO_USER_TOKEN (guest).
             The token payload is decoded without validating the JWT signature.
+
         """
         _, _, _, token = auth
         if token == constants.NO_USER_TOKEN:
@@ -184,6 +191,7 @@ class JwtRolesResolver(RolesResolver):  # pylint: disable=too-few-public-methods
         -------
             bool: `true` if the operator evaluation (after applying negation
             when set) succeeds, `false` otherwise.
+
         """
         result = False
         match rule.operator:
@@ -225,6 +233,7 @@ class AccessResolver(ABC):  # pylint: disable=too-few-public-methods
         -------
             bool: `true` if at least one role in `user_roles` grants the
             requested `action`, `false` otherwise.
+
         """
 
     @abstractmethod
@@ -242,6 +251,7 @@ class AccessResolver(ABC):  # pylint: disable=too-few-public-methods
             set[Action]: The aggregated set of allowed actions for the given
             roles. If `ADMIN` is included in the aggregated actions, returns
             all available non-`ADMIN` actions.
+
         """
 
 
@@ -261,6 +271,7 @@ class NoopAccessResolver(AccessResolver):  # pylint: disable=too-few-public-meth
         Returns:
         -------
             `true` always (access is always granted).
+
         """
         _ = action  # We're noop, it doesn't matter, everyone is allowed
         _ = user_roles  # We're noop, it doesn't matter, everyone is allowed
@@ -273,6 +284,7 @@ class NoopAccessResolver(AccessResolver):  # pylint: disable=too-few-public-meth
 
         Returns:
             allowed_actions (set[Action]): All defined `Action` values except `Action.ADMIN`.
+
         """
         _ = user_roles  # We're noop, it doesn't matter, everyone is allowed
         return set(Action) - {Action.ADMIN}
@@ -300,6 +312,7 @@ class GenericAccessResolver(AccessResolver):  # pylint: disable=too-few-public-m
         ------
             ValueError: If any rule contains the `Action.ADMIN` action together
                         with other actions.
+
         """
         for rule in access_rules:
             # Since this is nonsensical, it might be a mistake, so hard fail
@@ -334,6 +347,7 @@ class GenericAccessResolver(AccessResolver):  # pylint: disable=too-few-public-m
         -------
             true if at least one role permits the action or ADMIN override
             applies, false otherwise.
+
         """
         if action != Action.ADMIN and self.check_access(Action.ADMIN, user_roles):
             # Recurse to check if the roles allow the user to perform the admin action,
@@ -361,6 +375,7 @@ class GenericAccessResolver(AccessResolver):  # pylint: disable=too-few-public-m
             allowed_actions (set[Action]): Set of actions the user may perform.
             If any role grants Action.ADMIN, returns every Action except
             Action.ADMIN.
+
         """
         actions = {
             action

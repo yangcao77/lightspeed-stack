@@ -52,6 +52,7 @@ def _filter_documents_for_chunks(
 
     Returns:
         Filtered list of documents that correspond to the final chunks.
+
     """
     # Create a set of unique identifiers from final chunks
     final_chunk_identifiers = set()
@@ -90,6 +91,7 @@ def _get_okp_base_url() -> AnyUrl:
 
     Returns:
         Parsed base URL as ``AnyUrl``.
+
     """
     rhokp = configuration.okp.rhokp_url
     if rhokp is None:
@@ -130,6 +132,7 @@ def _build_query_params(
 
     Returns:
         Parameter dictionary for ``vector_io.query`` with extracted filters at top level.
+
     """
     resolved_mode = (
         solr.mode
@@ -188,6 +191,7 @@ def _extract_byok_rag_chunks(
 
     Returns:
         List of result dictionaries with weighted scores
+
     """
     result_chunks = []
     for chunk, score in zip(
@@ -232,6 +236,7 @@ def _format_rag_context(rag_chunks: list[RAGChunk], query: str) -> str:
 
     Returns:
         Formatted string with RAG context metadata attributes
+
     """
     if not rag_chunks:
         return ""
@@ -285,6 +290,7 @@ async def _query_store_for_byok_rag(  # pylint: disable=too-many-arguments,too-m
 
     Returns:
         List of weighted result dictionaries, or empty list on error
+
     """
     try:
         search_response = await client.vector_io.query(
@@ -346,6 +352,7 @@ def _process_byok_rag_chunks_for_documents(
 
     Returns:
         List of referenced documents extracted from BYOK RAG chunks
+
     """
     referenced_documents = []
     seen_doc_ids = set()
@@ -415,6 +422,7 @@ def _process_solr_chunks_for_documents(
 
     Returns:
         List of referenced documents extracted from Solr chunks
+
     """
     doc_ids_from_chunks = []
     metadata_doc_ids = set()
@@ -480,6 +488,7 @@ async def _fetch_byok_rag(  # pylint: disable=too-many-locals
         Tuple containing:
         - rag_chunks: RAG chunks from BYOK RAG
         - referenced_documents: Documents referenced in BYOK RAG results
+
     """
     limit = configuration.rag.byok.max_chunks
     rag_chunks: list[RAGChunk] = []
@@ -591,6 +600,7 @@ async def _fetch_okp_rag(  # pylint: disable=too-many-locals
         Tuple containing:
         - rag_chunks: RAG chunks from Solr
         - referenced_documents: Documents referenced in Solr results
+
     """
     rag_chunks: list[RAGChunk] = []
     referenced_documents: list[ReferencedDocument] = []
@@ -665,6 +675,7 @@ async def build_rag_context(  # pylint: disable=too-many-locals,too-many-branche
 
     Returns:
         RAGContext containing formatted context text and referenced documents
+
     """
     with tracer.start_as_current_span("rag.retrieve") as span:
         # Set RAG input attribute
@@ -749,6 +760,7 @@ def _join_okp_doc_url(base_url: AnyUrl, reference: Optional[str]) -> str:
 
     Returns:
         Well-formed doc_url string, or empty string if reference is empty.
+
     """
     if not reference:
         return ""
@@ -773,6 +785,7 @@ def _build_document_url(
         Tuple of (doc_url, reference_doc) where:
         - doc_url: The full URL for the document
         - reference_doc: The document reference used for deduplication
+
     """
     base_url = _get_okp_base_url()
     if offline:
@@ -798,6 +811,7 @@ def _convert_solr_chunks_to_rag_format(
 
     Returns:
         List of RAGChunk objects
+
     """
     rag_chunks = []
 
@@ -862,6 +876,7 @@ def append_inline_rag_context_to_responses_input(
     Returns:
     -------
         The same type as input_value, with context merged in.
+
     """
     if not inline_rag_context_text:
         return input_value

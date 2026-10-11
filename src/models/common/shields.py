@@ -15,6 +15,7 @@ class CatalogShield(BaseModel):
         provider_id: Shield provider / type discriminator.
         type: Catalog entry type; always shield.
         config: Type-specific shield configuration.
+
     """
 
     name: str = Field(description="Unique, user-facing name of the shield instance")

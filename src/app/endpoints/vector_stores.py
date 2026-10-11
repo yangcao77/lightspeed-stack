@@ -5,6 +5,8 @@ be removed in the next LCS release when OGX is dropped from the stack. Use BYOK
 RAG configuration instead (see docs/user_doc/byok_guide.md).
 """
 
+# pylint: disable=too-many-lines
+
 VECTOR_STORES_DEPRECATED_REASON: str = (
     "OGX proxy API; deprecated and scheduled for removal in the next LCS release."
 )
@@ -187,6 +189,7 @@ async def create_vector_store(
             - 403: Authorization failed
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -264,6 +267,7 @@ async def list_vector_stores(
             - 403: Authorization failed
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -329,6 +333,7 @@ async def get_vector_store(
             - 404: Vector store not found
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -397,6 +402,7 @@ async def update_vector_store(
             - 404: Vector store not found
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -467,6 +473,7 @@ async def delete_vector_store(
 
     Returns:
         VectorStoreDeleteResponse: Delete outcome for the requested vector store.
+
     """
     _ = auth
     _ = request
@@ -521,6 +528,7 @@ async def create_file(  # pylint: disable=too-many-branches,too-many-statements
             - 429: Too many concurrent file uploads
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
 
@@ -664,6 +672,7 @@ async def add_file_to_vector_store(  # pylint: disable=too-many-locals,too-many-
             - 429: Too many concurrent vector store file attachments
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -820,6 +829,7 @@ async def list_vector_store_files(
             - 404: Vector store not found
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -893,6 +903,7 @@ async def get_vector_store_file(
             - 404: File not found in vector store
             - 500: Lightspeed Stack configuration not loaded
             - 503: Unable to connect to OGX
+
     """
     _ = auth
     _ = request
@@ -964,6 +975,7 @@ async def delete_vector_store_file(
 
     Returns:
         VectorStoreFileDeleteResponse: Delete outcome for the requested file.
+
     """
     _ = auth
     _ = request

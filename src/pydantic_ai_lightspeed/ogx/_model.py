@@ -131,6 +131,7 @@ class _FilteredResponseStream:
                 object when OGX emits ``response.completed``. Used to capture
                 the structured output items for compacted-mode persistence
                 (LCORE-3883).
+
         """
         self._source = source
         self._on_completed = on_completed
@@ -197,6 +198,7 @@ class _FilteredResponseStream:
 
         Returns:
             List of buffered delta events to yield, unchanged.
+
         """
         buffered = self._buffered_deltas.pop(item_id, [])
         if buffered:
@@ -223,6 +225,7 @@ class _FilteredResponseStream:
 
         Returns:
             List containing one synthetic delta event, or empty if nothing buffered.
+
         """
         buffered = self._buffered_deltas.pop(item_id, [])
         if not buffered:
@@ -263,6 +266,7 @@ class OgxResponsesModel(OpenAIResponsesModel):
         Args:
             *args: Positional arguments forwarded to ``OpenAIResponsesModel``.
             **kwargs: Keyword arguments forwarded to ``OpenAIResponsesModel``.
+
         """
         super().__init__(*args, **kwargs)
         self._last_output_items: list[Any] = []
@@ -283,6 +287,7 @@ class OgxResponsesModel(OpenAIResponsesModel):
 
         Args:
             response: The OGX Responses API object for the completed call.
+
         """
         items = getattr(response, "output", None)
         if items:
@@ -309,6 +314,7 @@ class OgxResponsesModel(OpenAIResponsesModel):
 
         Returns:
             Response from the Responses API.
+
         """
         # Parent gates include on this profile flag; disable it for OGX.
         self.profile["openai_supports_encrypted_reasoning_content"] = False
@@ -440,6 +446,7 @@ class OgxResponsesModel(OpenAIResponsesModel):
 
         Yields:
             A StreamedResponse with the filtered event stream.
+
         """
         check_allow_model_requests()
         messages, model_settings = self._prepare_conversation_continuation(
@@ -523,6 +530,7 @@ class OgxResponsesModel(OpenAIResponsesModel):
 
         Returns:
             Configured ``OgxResponsesModel`` instance.
+
         """
         provider = OgxProvider.from_ogx_client(client)
 

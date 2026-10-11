@@ -26,6 +26,7 @@ class RlsapiV1InferData(ConfigurationBase):
         referenced_documents: Source documents referenced (verbose mode only).
         input_tokens: Number of input tokens consumed (verbose mode only).
         output_tokens: Number of output tokens generated (verbose mode only).
+
     """
 
     text: str = Field(
@@ -71,6 +72,7 @@ class RlsapiV1InferResponse(AbstractSuccessfulResponse):
 
     Attributes:
         data: Response data containing text and request_id.
+
     """
 
     data: RlsapiV1InferData = Field(

@@ -75,6 +75,7 @@ def _consume_sse_jsonrpc_stream(
         A tuple of (parsed JSON-RPC ``result`` objects, bounded diagnostic
         excerpt of the raw stream, first JSON-RPC ``error`` object seen, if
         any). The caller decides whether/when to raise on that error.
+
     """
     results: list[dict[str, Any]] = []
     excerpt = bytearray()

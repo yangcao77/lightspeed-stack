@@ -19,6 +19,7 @@ class AbstractErrorResponse(BaseModel):
     Attributes:
         status_code: HTTP status code for the error response.
         detail: The detail model containing error summary and cause.
+
     """
 
     status_code: int = Field(
@@ -35,6 +36,7 @@ class AbstractErrorResponse(BaseModel):
             response: A short, user-facing summary of the error.
             cause: A more detailed explanation of the error cause.
             status_code: The HTTP status code to associate with this error response.
+
         """
         super().__init__(
             status_code=status_code, detail=DetailModel(response=response, cause=cause)
@@ -47,6 +49,7 @@ class AbstractErrorResponse(BaseModel):
         Returns:
             The class description attribute if present; otherwise the class
             docstring; if neither is present, an empty string.
+
         """
         return getattr(cls, "description", cls.__doc__ or "")
 
@@ -70,6 +73,7 @@ class AbstractErrorResponse(BaseModel):
 
         Raises:
             SchemaError: If any example in the model schema lacks a label or detail field.
+
         """
         schema = cls.model_json_schema()
         model_examples = schema.get("examples", [])

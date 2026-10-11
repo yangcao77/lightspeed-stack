@@ -100,6 +100,7 @@ class NotFoundResponse(AbstractErrorResponse):
             resource: Resource type that was not found (e.g. conversation, model).
             resource_id: Identifier of the missing resource. If None, the resource type
                 is not configured (e.g. no model selected).
+
         """
         response = f"{resource.title()} not found"
         if resource_id is None:

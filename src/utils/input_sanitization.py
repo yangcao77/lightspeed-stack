@@ -72,6 +72,7 @@ def normalize_unicode(text: str) -> str:
 
     Returns:
         NFC-normalized text.
+
     """
     return unicodedata.normalize("NFC", text)
 
@@ -84,6 +85,7 @@ def _check_suspicious_unicode(text: str) -> Optional[str]:
 
     Returns:
         Description of the detected block, or None if clean.
+
     """
     for char in text:
         codepoint = ord(char)
@@ -105,6 +107,7 @@ def _check_binary_encoding(text: str) -> Optional[str]:
 
     Returns:
         Description if binary encoding is detected, or None if clean.
+
     """
     if _BINARY_PATTERN.search(text):
         return "Input appears to contain binary-encoded content."
@@ -119,6 +122,7 @@ def _check_hex_encoding(text: str) -> Optional[str]:
 
     Returns:
         Description if hex encoding is detected, or None if clean.
+
     """
     if _HEX_ESCAPE_PATTERN.search(text):
         return "Input appears to contain hex-encoded escape sequences."
@@ -135,6 +139,7 @@ def _check_xml_injection(text: str) -> Optional[str]:
 
     Returns:
         Description if suspicious XML tags are detected, or None if clean.
+
     """
     if _XML_INJECTION_PATTERN.search(text):
         return "Input contains suspicious XML/markup injection tags."
@@ -151,6 +156,7 @@ def detect_obfuscation(text: str) -> Optional[str]:
 
     Returns:
         Description of detected obfuscation, or None if the input is clean.
+
     """
     checks = [
         _check_suspicious_unicode,
@@ -180,6 +186,7 @@ def sanitize_input(text: str) -> tuple[str, Optional[str]]:
         normalized_text should be used for further processing.
         If rejection_reason is not None, the input should be
         rejected with the given reason.
+
     """
     normalized = normalize_unicode(text)
     rejection_reason = detect_obfuscation(normalized)

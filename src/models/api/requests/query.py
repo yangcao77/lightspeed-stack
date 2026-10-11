@@ -25,6 +25,7 @@ class QueryRequest(BaseModel):
         vector_store_ids: The optional list of specific vector store IDs to query for RAG.
         shield_ids: The optional list of configured shield names to apply.
         solr: Optional Solr inline RAG options (mode, filters) or legacy filter-only dict.
+
     """
 
     query: str = Field(
@@ -172,6 +173,7 @@ class QueryRequest(BaseModel):
         Raises:
             ValueError: If value is provided and does not conform to the
                 expected SUID format.
+
         """
         if value and not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID '{value}'")
@@ -186,6 +188,7 @@ class QueryRequest(BaseModel):
 
         Raises:
             ValueError: If only provider or only model is provided (they must be set together).
+
         """
         if self.model and not self.provider:
             raise ValueError("Provider must be specified if model is specified")
@@ -202,6 +205,7 @@ class QueryRequest(BaseModel):
 
         Raises:
             ValueError: If media_type is not equal to MEDIA_TYPE_JSON or MEDIA_TYPE_TEXT.
+
         """
         if self.media_type and self.media_type not in [
             MEDIA_TYPE_JSON,
@@ -218,6 +222,7 @@ class StreamingInterruptRequest(BaseModel):
 
     Attributes:
         request_id: Unique ID of the active streaming request to interrupt.
+
     """
 
     request_id: str = Field(
@@ -247,6 +252,7 @@ class StreamingInterruptRequest(BaseModel):
 
         Raises:
             ValueError: If the request identifier is not a valid SUID.
+
         """
         if not suid.check_suid(value):
             raise ValueError(f"Improper request ID {value}")

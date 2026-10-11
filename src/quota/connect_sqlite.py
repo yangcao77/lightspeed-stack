@@ -25,6 +25,7 @@ def connect_sqlite(config: SQLiteDatabaseConfiguration) -> Any:
     Raises:
     ------
         sqlite3.Error: If establishing the connection fails.
+
     """
     logger.info("Connecting to SQLite storage")
     # make sure the connection will have known state

@@ -42,6 +42,7 @@ class MaskingType(Enum):
             user-chosen rag_ids (potential PII), so only the count is emitted;
             the fixed OKP sentinel is surfaced as a boolean so telemetry can
             tell whether the OKP knowledge source is in use.
+
     """
 
     PASSTHROUGH = "passthrough"
@@ -56,6 +57,7 @@ class FieldSpec:
     Attributes:
         path: Dotted path to the field in the configuration object.
         masking: Type of masking to apply to the field value.
+
     """
 
     path: str
@@ -69,6 +71,7 @@ class ListFieldSpec:
     Attributes:
         path: Dotted path to the list field in the configuration object.
         item_fields: Sub-field specifications to extract from each list item.
+
     """
 
     path: str
@@ -458,6 +461,7 @@ def get_nested_value(obj: Any, path: str) -> Any:
     Returns:
     -------
         The value at the specified path, or None if not found.
+
     """
     current = obj
     for part in path.split("."):
@@ -480,6 +484,7 @@ def _serialize_passthrough(value: Any) -> Any:
     Returns:
     -------
         A JSON-serializable representation of the value.
+
     """
     if value is None:
         return None
@@ -514,6 +519,7 @@ def _summarize_rag_sources(value: Any) -> dict[str, Any]:
     Returns:
     -------
         A dict {'count': int, 'okp_enabled': bool}.
+
     """
     if not isinstance(value, (list, tuple)):
         return {"count": 0, "okp_enabled": False}
@@ -534,6 +540,7 @@ def mask_value(value: Any, masking: MaskingType) -> Any:
     Returns:
     -------
         The masked or serialized value.
+
     """
     if masking == MaskingType.SENSITIVE:
         if value is None or value == "":
@@ -552,6 +559,7 @@ def _set_nested_value(target: dict[str, Any], path: str, value: Any) -> None:
         target: The target dict to modify.
         path: Dotted path where the value should be set.
         value: The value to set.
+
     """
     parts = path.split(".")
     current = target
@@ -573,6 +581,7 @@ def _extract_field(source: Any, spec: FieldSpec) -> Any:
     Returns:
     -------
         The masked value of the field.
+
     """
     value = get_nested_value(source, spec.path)
     return mask_value(value, spec.masking)
@@ -592,6 +601,7 @@ def _extract_list_field(
     -------
         A list of dicts with masked sub-fields, or NOT_CONFIGURED if the
         list is None.
+
     """
     items = get_nested_value(source, spec.path)
     if items is None:
@@ -631,6 +641,7 @@ def _extract_snapshot_fields(
     Returns:
     -------
         A nested dict containing the extracted and masked fields.
+
     """
     snapshot: dict[str, Any] = {}
     for spec in field_registry:
@@ -661,6 +672,7 @@ def _extract_store_info(ogx_config: dict[str, Any], store_name: str) -> dict[str
     Returns:
     -------
         A dict with 'type' and 'db_path' keys, plus 'namespace' for metadata store.
+
     """
     store = get_nested_value(ogx_config, f"storage.stores.{store_name}")
     if store is None or not isinstance(store, dict):
@@ -705,6 +717,7 @@ def build_lightspeed_stack_snapshot(
     Returns:
     -------
         A nested dict containing the masked configuration snapshot.
+
     """
     return _extract_snapshot_fields(config, LIGHTSPEED_STACK_FIELDS)
 
@@ -719,6 +732,7 @@ def _read_yaml_file(config_path: str) -> Any:
     Returns:
     -------
         The parsed YAML content, or None on failure.
+
     """
     try:
         with open(config_path, encoding="utf-8") as f:
@@ -746,6 +760,7 @@ async def build_ogx_snapshot(
     -------
         A nested dict containing the masked OGX configuration snapshot,
         or a status dict if the config is not available.
+
     """
     if config_path is None:
         return {"status": NOT_AVAILABLE}
@@ -783,6 +798,7 @@ async def build_configuration_snapshot(
     -------
         A dict with 'lightspeed_stack' and 'ogx' keys containing
         the respective masked snapshots, ready for JSON serialization.
+
     """
     return {
         "lightspeed_stack": build_lightspeed_stack_snapshot(config),

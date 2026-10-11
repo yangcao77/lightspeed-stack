@@ -12,6 +12,7 @@ def get_suid() -> str:
 
     Returns:
         str: A UUID4 string suitable for use as a session identifier.
+
     """
     return str(uuid.uuid4())
 
@@ -37,6 +38,7 @@ def check_suid(suid: str) -> bool:
         1. Standard UUID format (e.g., '550e8400-e29b-41d4-a716-446655440000')
         2. 48-character hex string (OGX format)
         3. 'conv_' prefix + 48-character hex string (53 chars total)
+
     """
     if not isinstance(suid, str):
         return False
@@ -78,6 +80,7 @@ def normalize_conversation_id(conversation_id: str) -> str:
         'abc123'
         >>> normalize_conversation_id('550e8400-e29b-41d4-a716-446655440000')
         '550e8400-e29b-41d4-a716-446655440000'
+
     """
     if conversation_id.startswith("conv_"):
         return conversation_id[5:]  # Remove 'conv_' prefix
@@ -100,6 +103,7 @@ def to_ogx_conversation_id(conversation_id: str) -> str:
         'conv_abc123'
         >>> to_ogx_conversation_id('conv_abc123')
         'conv_abc123'
+
     """
     if not conversation_id.startswith("conv_"):
         return f"conv_{conversation_id}"
@@ -122,6 +126,7 @@ def check_suid_prompt(suid: str) -> bool:
 
     Returns:
         True if the string matches the prompt ID format; otherwise False.
+
     """
     prefix = "pmpt_"
     if not suid.startswith(prefix):

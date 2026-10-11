@@ -61,6 +61,7 @@ class QuotaLimiter(ABC):
         Returns:
         -------
             available_quota (int): Number of quota units currently available for the subject.
+
         """
 
     @abstractmethod
@@ -102,6 +103,7 @@ class QuotaLimiter(ABC):
             output_tokens (int): Number of output tokens to deduct from the subject's quota.
             subject_id (str): Identifier of the subject (user or service) whose
             quota will be reduced. If omitted, applies to the default subject.
+
         """
 
     @abstractmethod
@@ -116,6 +118,7 @@ class QuotaLimiter(ABC):
             postgres_connection_config
             (Optional[PostgreSQLDatabaseConfiguration]): PostgreSQL connection
             configuration or `None` when not configured.
+
         """
         self.sqlite_connection_config: Optional[SQLiteDatabaseConfiguration] = None
         self.postgres_connection_config: Optional[PostgreSQLDatabaseConfiguration] = (
@@ -174,6 +177,7 @@ class QuotaLimiter(ABC):
 
         Returns:
             `true` if the connection is alive, `false` otherwise.
+
         """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")

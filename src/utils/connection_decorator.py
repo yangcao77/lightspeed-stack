@@ -53,6 +53,7 @@ def connection(
     def list_history(self) -> list[str]:
        pass
     ```
+
     """
 
     def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> R:
@@ -69,6 +70,7 @@ def connection(
         Returns:
         -------
                 Any: The value returned by the wrapped callable.
+
         """
         if not self.connected():
             self.connect()

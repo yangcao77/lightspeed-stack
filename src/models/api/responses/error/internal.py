@@ -101,6 +101,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             InternalServerErrorResponse instance with the standard response message
             "Internal server error" and a cause explaining an unexpected processing error.
+
         """
         return cls(
             response="Internal server error",
@@ -115,6 +116,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             InternalServerErrorResponse with response "Configuration is not loaded" and
             cause "Lightspeed Stack configuration has not been initialized."
+
         """
         return cls(
             response="Configuration is not loaded",
@@ -132,6 +134,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             Error response with response message "Failed to store feedback" and a cause
             indicating the failed directory.
+
         """
         return cls(
             response="Failed to store feedback",
@@ -149,6 +152,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             Error response with response "Error while processing query" and the provided
             cause.
+
         """
         return cls(
             response="Error while processing query",
@@ -163,6 +167,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             Error response with a message that the conversation cache is not configured and
             a corresponding cause.
+
         """
         return cls(
             response="Conversation cache not configured",
@@ -177,6 +182,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             Instance with response "Database query failed" and cause "Failed to query the
             database".
+
         """
         return cls(
             response="Database query failed",
@@ -191,6 +197,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Returns:
             Error response with response "Failed to register MCP server" and cause
             "Could not register the MCP server with the remote service."
+
         """
         return cls(
             response="Failed to register MCP server",
@@ -203,6 +210,7 @@ class InternalServerErrorResponse(AbstractErrorResponse):
         Args:
             response: Public-facing error message.
             cause: Internal explanation of the error cause.
+
         """
         super().__init__(
             response=response,

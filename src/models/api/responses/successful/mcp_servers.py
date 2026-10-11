@@ -16,6 +16,7 @@ class MCPClientAuthOptionsResponse(AbstractSuccessfulResponse):
 
     Attributes:
         servers: MCP servers that declare client authentication headers.
+
     """
 
     servers: list[MCPServerAuthInfo] = Field(
@@ -51,6 +52,7 @@ class MCPServerRegistrationResponse(AbstractSuccessfulResponse):
         url: Registered MCP server URL.
         provider_id: MCP provider identification.
         message: Status message.
+
     """
 
     name: str = Field(..., description="Registered MCP server name")
@@ -77,6 +79,7 @@ class MCPServerListResponse(AbstractSuccessfulResponse):
 
     Attributes:
         servers: All registered MCP servers (static and dynamic).
+
     """
 
     servers: list[MCPServerInfo] = Field(
@@ -115,6 +118,7 @@ class MCPServerDeleteResponse(AbstractDeleteResponse):
         name: Name of the MCP server targeted for deletion.
         deleted: Whether the server was successfully deleted (True) or not found (False).
         response: Description of the result, e.g. "MCP server deleted successfully".
+
     """
 
     resource_name: ClassVar[str] = "MCP server"

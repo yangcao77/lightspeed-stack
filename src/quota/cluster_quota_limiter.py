@@ -28,6 +28,7 @@ class ClusterQuotaLimiter(RevokableQuotaLimiter):
         Notes:
         -----
             Establishes the database connection and ensures required tables exist.
+
         """
         subject = "c"  # cluster
         super().__init__(configuration, initial_quota, increase_by, subject)
@@ -44,6 +45,7 @@ class ClusterQuotaLimiter(RevokableQuotaLimiter):
             A string containing the class name and the values of
             `initial_quota` and `increase_by` specified in the service
             configuration.
+
         """
         name = type(self).__name__
         return f"{name}: initial quota: {self.initial_quota} increase by: {self.increase_by}"

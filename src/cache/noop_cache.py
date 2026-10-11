@@ -32,6 +32,7 @@ class NoopCache(Cache):
 
         Returns:
             `true` if the cache is connected, `false` otherwise.
+
         """
         return True
 
@@ -57,6 +58,7 @@ class NoopCache(Cache):
         Returns:
         -------
             list[CacheEntry]: An empty list (this cache does not persist entries).
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -81,6 +83,7 @@ class NoopCache(Cache):
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -100,6 +103,7 @@ class NoopCache(Cache):
         Returns:
         -------
             bool: True in all cases.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -121,6 +125,7 @@ class NoopCache(Cache):
         Returns:
         -------
             An empty list.
+
         """
         super()._check_user_id(user_id, skip_user_id_check)
         return []
@@ -141,6 +146,7 @@ class NoopCache(Cache):
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -161,6 +167,7 @@ class NoopCache(Cache):
             conversation_id: Conversation ID unique for given user.
             summary: The ConversationSummary chunk (not persisted).
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -180,6 +187,7 @@ class NoopCache(Cache):
         Returns:
         -------
             An empty list.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -201,6 +209,7 @@ class NoopCache(Cache):
             conversation_id: Conversation ID unique for given user.
             folded_summary: The folded summary (not persisted).
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -210,5 +219,6 @@ class NoopCache(Cache):
 
         Returns:
             True in all cases.
+
         """
         return True

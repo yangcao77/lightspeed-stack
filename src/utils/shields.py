@@ -68,6 +68,7 @@ def validate_shield_ids_override(
     Raises:
     ------
         HTTPException: If shield_ids override is disabled but shield_ids is provided.
+
     """
     shield_ids_override_disabled = (
         config.customization is not None
@@ -102,6 +103,7 @@ async def run_shield_moderation_v2(
 
     Returns:
         Result indicating if content was blocked or passed.
+
     """
     with tracer.start_as_current_span("shield.moderate") as span:
         # Sanitize input before running any shields (OFFSEC-307 / LCORE-2749).
@@ -160,6 +162,7 @@ def build_shield(
 
     Returns:
         The constructed safety capability.
+
     """
     match shield_config.config:
         case QuestionValidityConfig():
@@ -193,6 +196,7 @@ def get_shields_for_request(
     Raises:
         HTTPException: 404 if shield_ids is provided and any requested shield
             name is not present in shields.
+
     """
     if shield_ids is None:
         return list(shields)

@@ -128,6 +128,7 @@ async def list_mcp_tools(
     Returns:
         Tool definitions discovered from the MCP server, or an empty list when
         the server is unavailable or returns an error.
+
     """
     request_headers = _prepare_mcp_request_headers(headers)
     for index, (transport_name, list_via) in enumerate(_MCP_TRANSPORTS):

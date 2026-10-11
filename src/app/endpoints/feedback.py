@@ -79,6 +79,7 @@ def is_feedback_enabled() -> bool:
 
     Returns:
         bool: True if feedback collection is enabled; otherwise, False.
+
     """
     return configuration.user_data_collection_configuration.feedback_enabled
 
@@ -94,6 +95,7 @@ async def assert_feedback_enabled(_request: Request) -> None:
 
     Raises:
         HTTPException: If feedback collection is disabled.
+
     """
     feedback_enabled = is_feedback_enabled()
     if not feedback_enabled:
@@ -115,6 +117,7 @@ def _record_feedback_request_attributes(
         span: The root feedback span to annotate.
         feedback_request: The incoming feedback request.
         user_id: The authenticated user identifier (anonymized before recording).
+
     """
     set_span_attributes(
         span,
@@ -241,6 +244,7 @@ def store_feedback(user_id: str, feedback: dict) -> None:
     Raises:
     ------
         HTTPException: If writing the feedback file fails (HTTP 500).
+
     """
     logger.debug("Storing feedback for user %s", user_id)
     # Creates storage path only if it doesn't exist. The `exist_ok=True` prevents

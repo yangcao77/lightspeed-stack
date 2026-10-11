@@ -133,6 +133,7 @@ def _resolve_rag_id_to_vector_db_id(rag_id: str, byok_rags: list[RagStore]) -> s
     Returns:
     -------
         The OGX vector_db_id, or the original ID if no mapping found.
+
     """
     for brag in byok_rags:
         if brag.rag_id == rag_id:

@@ -30,6 +30,7 @@ class UserQuotaLimiter(RevokableQuotaLimiter):
         -----
             Establishes the database connection and initializes required tables
             as part of construction.
+
         """
         subject = "u"  # user
         super().__init__(configuration, initial_quota, increase_by, subject)
@@ -46,6 +47,7 @@ class UserQuotaLimiter(RevokableQuotaLimiter):
             A string containing the class name and the values of
             `initial_quota` and `increase_by` specified in the service
             configuration.
+
         """
         name = type(self).__name__
         return f"{name}: initial quota: {self.initial_quota} increase by: {self.increase_by}"

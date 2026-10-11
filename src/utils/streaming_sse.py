@@ -35,6 +35,7 @@ def stream_http_error_event(
     Returns:
         A Server-Sent Events (SSE) formatted error message containing
         the serialized error details.
+
     """
     logger.error("Error while obtaining answer for user question")
     media_type = media_type or MEDIA_TYPE_JSON
@@ -61,6 +62,7 @@ def format_stream_data(d: dict[str, Any]) -> str:
 
     Returns:
         The formatted SSE data string.
+
     """
     data = json.dumps(d)
     return f"data: {data}\n\n"
@@ -80,6 +82,7 @@ def stream_start_event(conversation_id: str, request_id: str) -> str:
 
     Returns:
         SSE-formatted string representing the start event.
+
     """
     return format_stream_data(
         {
@@ -103,6 +106,7 @@ def stream_compaction_event(conversation_id: str) -> str:
 
     Returns:
         SSE-formatted string representing the compaction event.
+
     """
     return format_stream_data(
         {
@@ -127,6 +131,7 @@ def stream_interrupted_event(request_id: str) -> str:
 
     Returns:
         SSE-formatted string representing the interrupted event.
+
     """
     return format_stream_data(
         {
@@ -156,6 +161,7 @@ def stream_end_event(
 
     Returns:
         A Server-Sent Events (SSE) formatted string representing the end event.
+
     """
     if media_type == MEDIA_TYPE_TEXT:
         ref_docs_string = "\n".join(
@@ -191,6 +197,7 @@ def stream_event(data: dict[str, Any], event_type: str, media_type: str) -> str:
 
     Returns:
         SSE-formatted string representing the event.
+
     """
     if media_type == MEDIA_TYPE_TEXT:
         if event_type == LLM_TOKEN_EVENT:
@@ -223,6 +230,7 @@ def http_exception_stream_event(exc: HTTPException) -> str:
 
     Returns:
         SSE-formatted error event string.
+
     """
     detail = (
         exc.detail if isinstance(exc.detail, dict) else {"response": str(exc.detail)}

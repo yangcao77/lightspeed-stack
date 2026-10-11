@@ -66,6 +66,7 @@ def replace_env_vars_preserving_native_override(
     Returns:
         dict[Any, Any]: The config with env refs resolved everywhere except
         inside native_override.
+
     """
     if not isinstance(config_dict, dict):
         return replace_env_vars(config_dict)
@@ -123,6 +124,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         Parameters:
         ----------
             filename (str): Path to the YAML configuration file to load.
+
         """
         with open(filename, encoding="utf-8") as fin:
             config_dict = yaml.safe_load(fin)
@@ -140,6 +142,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
             Configuration(**config_dict) and clears any cached conversation
             cache, quota limiters, and token usage history so they will be
             reinitialized on next access.
+
         """
         # clear cached values when configuration changes
         self._conversation_cache = None
@@ -157,6 +160,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -171,6 +175,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -185,6 +190,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the application configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -200,6 +206,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the application configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -214,6 +221,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration is not loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -225,6 +233,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Returns:
             set[str]: Names of MCP servers added via the API (not from config file).
+
         """
         return self._dynamic_mcp_server_names
 
@@ -239,6 +248,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         ------
             LogicError: If the configuration has not been loaded.
             ValueError: If an MCP server with the same name already exists.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -261,6 +271,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         ------
             LogicError: If the configuration has not been loaded.
             ValueError: If the server was not found or was statically configured.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -283,6 +294,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         Returns:
         -------
             bool: True if the server was registered via the API.
+
         """
         return name in self._dynamic_mcp_server_names
 
@@ -296,6 +308,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -313,6 +326,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -332,6 +346,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -347,6 +362,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -362,6 +378,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -377,6 +394,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -392,6 +410,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -406,6 +425,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -420,6 +440,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -441,6 +462,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -459,6 +481,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -483,6 +506,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -532,6 +556,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -575,6 +600,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -603,6 +629,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -621,6 +648,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -638,6 +666,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
 
         Raises:
             LogicError: If the configuration has not been loaded.
+
         """
         if self._configuration is None:
             raise LogicError("logic error: configuration is not loaded")
@@ -659,6 +688,7 @@ class AppConfig:  # pylint: disable=too-many-public-methods
         Returns:
         -------
             str: The user-facing index name from config, or the original ID.
+
         """
         mapping = rag_id_mapping if rag_id_mapping is not None else self.rag_id_mapping
         return mapping.get(vector_store_id, vector_store_id)

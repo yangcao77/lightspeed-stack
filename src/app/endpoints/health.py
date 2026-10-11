@@ -65,6 +65,7 @@ async def get_providers_health_statuses() -> list[ProviderHealthStatus]:
         list[ProviderHealthStatus]: A list containing the health
         status of each provider. If provider health cannot be
         determined, returns a single entry indicating an error.
+
     """
     try:
         client = AsyncOgxClientHolder().get_client()
@@ -102,6 +103,7 @@ async def check_default_model_available() -> tuple[bool, str]:
         A tuple of (available, reason) where available is True if the default
         model was found or no default model is configured, and reason describes
         the outcome.
+
     """
     inference = configuration.inference
     if (

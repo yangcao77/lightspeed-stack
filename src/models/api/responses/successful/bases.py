@@ -59,6 +59,7 @@ class AbstractDeleteResponse(BaseModel):
 
         Raises:
             SchemaError: If the model JSON schema has no examples list.
+
         """
         schema = cls.model_json_schema()
         model_examples = schema.get("examples")

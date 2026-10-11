@@ -95,6 +95,7 @@ class K8sClientSingleton:
 
         Returns:
             instance (K8sClientSingleton): The singleton instance.
+
         """
         if cls._instance is None:
             cls._instance = super().__new__(cls)
@@ -152,6 +153,7 @@ class K8sClientSingleton:
 
         Returns:
             kubernetes.client.AuthenticationV1Api: The initialized AuthenticationV1Api instance.
+
         """
         if cls._instance is None or cls._authn_api is None:
             cls()
@@ -166,6 +168,7 @@ class K8sClientSingleton:
         Returns:
             kubernetes.client.AuthorizationV1Api: The Kubernetes Authorization
                                                   API client instance.
+
         """
         if cls._instance is None or cls._authz_api is None:
             cls()
@@ -179,6 +182,7 @@ class K8sClientSingleton:
 
         Returns:
             kubernetes.client.CustomObjectsApi: The CustomObjectsApi client used by the singleton.
+
         """
         if cls._instance is None or cls._custom_objects_api is None:
             cls()
@@ -201,6 +205,7 @@ class K8sClientSingleton:
             ClusterVersionNotFoundError: If the ClusterVersion resource does not exist (404).
             ClusterVersionPermissionError: If access to ClusterVersion is denied (403).
             InvalidClusterVersionError: If ClusterVersion has invalid structure or missing fields.
+
         """
         try:
             custom_objects_api = cls.get_custom_objects_api()
@@ -291,6 +296,7 @@ class K8sClientSingleton:
             ClusterVersionNotFoundError: If the ClusterVersion resource does not exist.
             ClusterVersionPermissionError: If access to ClusterVersion is denied.
             InvalidClusterVersionError: If ClusterVersion has invalid structure.
+
         """
         if cls._instance is None:
             cls()
@@ -320,6 +326,7 @@ def get_user_info(token: str) -> Optional[kubernetes.client.V1TokenReviewStatus]
             503 if Kubernetes API is unavailable (5xx errors, 429 rate limit).
             503 if unable to initialize Kubernetes client.
             500 if Kubernetes API configuration issue (4xx errors).
+
     """
     try:
         auth_api = K8sClientSingleton.get_authn_api()
@@ -416,6 +423,7 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
             virtual_path: Stored `virtual_path` value.
             skip_userid_check (bool): Flag indicating whether user ID checks
                                       should be skipped; initialized to False.
+
         """
         self.virtual_path = virtual_path
         self.skip_userid_check = False
@@ -437,6 +445,7 @@ class K8SAuthDependency(AuthInterface):  # pylint: disable=too-few-public-method
         Raises:
         ------
             HTTPException: If authentication or authorization fails.
+
         """
         # LCORE-694: Config option to skip authorization for readiness and liveness probe
         if not request.headers.get("Authorization"):

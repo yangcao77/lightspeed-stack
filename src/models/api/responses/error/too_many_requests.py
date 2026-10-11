@@ -82,6 +82,7 @@ class QuotaExceededResponse(AbstractErrorResponse):
 
         Returns:
             Response with a standard message and a cause that includes the model name.
+
         """
         response = "The model quota has been exceeded"
         cause = f"The token quota for model {model_name} has been exceeded."
@@ -96,6 +97,7 @@ class QuotaExceededResponse(AbstractErrorResponse):
 
         Returns:
             Response with a standard quota-exceeded message and the exception text as cause.
+
         """
         response = "The quota has been exceeded"
         cause = str(exc)
@@ -109,6 +111,7 @@ class QuotaExceededResponse(AbstractErrorResponse):
         Args:
             response: Public-facing error message describing the quota condition.
             cause: Detailed cause stored in the error detail.
+
         """
         super().__init__(
             response=response,
@@ -151,6 +154,7 @@ class TooManyConcurrentRequestsResponse(AbstractErrorResponse):
 
         Returns:
             Response indicating the concurrent file upload limit was reached.
+
         """
         return cls(
             response="Too many concurrent file uploads",
@@ -163,6 +167,7 @@ class TooManyConcurrentRequestsResponse(AbstractErrorResponse):
 
         Returns:
             Response indicating the concurrent vector store attach limit was reached.
+
         """
         return cls(
             response="Too many concurrent vector store file attachments",
@@ -180,6 +185,7 @@ class TooManyConcurrentRequestsResponse(AbstractErrorResponse):
         Args:
             response: Public-facing error message describing the condition.
             cause: Detailed cause stored in the error detail.
+
         """
         super().__init__(
             response=response,

@@ -15,5 +15,6 @@ def dump_ogx_model(obj: Any) -> Any:
 
     Returns:
         A JSON-serializable dict, list, or primitive produced from obj.
+
     """
     return _OGX_SERIALIZER.sanitize_for_serialization(obj)  # type: ignore[no-untyped-call]

@@ -42,6 +42,7 @@ class SQLiteA2AContextStore(A2AContextStore):
         Args:
             engine: SQLAlchemy async engine connected to the SQLite database.
             create_table: If True, create the table on initialization.
+
         """
         logger.debug("Initializing SQLiteA2AContextStore")
         self._engine = engine
@@ -74,6 +75,7 @@ class SQLiteA2AContextStore(A2AContextStore):
 
         Returns:
             The OGX conversation ID, or None if not found.
+
         """
         await self._ensure_initialized()
 
@@ -98,6 +100,7 @@ class SQLiteA2AContextStore(A2AContextStore):
         Args:
             context_id: The A2A context ID.
             conversation_id: The OGX conversation ID.
+
         """
         await self._ensure_initialized()
 
@@ -125,6 +128,7 @@ class SQLiteA2AContextStore(A2AContextStore):
 
         Args:
             context_id: The A2A context ID to delete.
+
         """
         await self._ensure_initialized()
 
@@ -140,5 +144,6 @@ class SQLiteA2AContextStore(A2AContextStore):
 
         Returns:
             True if the store is initialized, False otherwise.
+
         """
         return self._initialized

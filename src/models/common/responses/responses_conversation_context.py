@@ -19,6 +19,7 @@ class ResponsesConversationContext(BaseModel):
         conversation: Conversation ID in OGX format to use for the request.
         user_conversation: Resolved user conversation record, or None for new ones.
         generate_topic_summary: Resolved value for request.generate_topic_summary.
+
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True)

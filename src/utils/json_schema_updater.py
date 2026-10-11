@@ -24,6 +24,7 @@ def recursive_update(
     -------
         dict[str, Any]: A new schema dictionary with all OpenAPI-compatible
         transformations applied.
+
     """
     new: dict[str, Any] = {}
     for key, value in original.items():
