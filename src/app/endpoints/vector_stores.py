@@ -5,6 +5,8 @@ be removed in the next LCS release when OGX is dropped from the stack. Use BYOK
 RAG configuration instead (see docs/user_doc/byok_guide.md).
 """
 
+# pylint: disable=too-many-lines
+
 VECTOR_STORES_DEPRECATED_REASON: str = (
     "OGX proxy API; deprecated and scheduled for removal in the next LCS release."
 )
