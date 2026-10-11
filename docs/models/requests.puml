@@ -5,7 +5,7 @@ class "ConversationUpdateRequest" as src.models.api.requests.conversations.Conve
   topic_summary : str
 }
 class "FeedbackRequest" as src.models.api.requests.feedback.FeedbackRequest {
-  categories : Optional[list[FeedbackCategory]]
+  categories : Optional[list[FeedbackCategory | PositiveFeedbackCategory]]
   conversation_id : str
   llm_response : str
   model_config : dict
@@ -15,7 +15,7 @@ class "FeedbackRequest" as src.models.api.requests.feedback.FeedbackRequest {
   check_feedback_provided() -> Self
   check_sentiment(value: Optional[int]) -> Optional[int]
   check_uuid(value: str) -> str
-  validate_categories(value: Optional[list[FeedbackCategory]]) -> Optional[list[FeedbackCategory]]
+  validate_categories(value: Optional[list[FeedbackCategory | PositiveFeedbackCategory]]) -> Optional[list[FeedbackCategory | PositiveFeedbackCategory]]
 }
 class "FeedbackStatusUpdateRequest" as src.models.api.requests.feedback.FeedbackStatusUpdateRequest {
   model_config : dict
