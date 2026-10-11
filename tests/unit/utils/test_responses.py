@@ -177,7 +177,7 @@ def make_content_part(
 
 
 @pytest.mark.parametrize(
-    "item_type,role,content,expected",
+    ("item_type", "role", "content", "expected"),
     [
         # Non-message types should return empty string
         ("function_call", "assistant", "some text", ""),
