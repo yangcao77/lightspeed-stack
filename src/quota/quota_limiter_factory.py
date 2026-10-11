@@ -30,6 +30,7 @@ class QuotaLimiterFactory:
             list[QuotaLimiter]: List of initialized quota limiter instances.
             Returns an empty list if storage configuration or limiter
             definitions are missing.
+
         """
         limiters: list[QuotaLimiter] = []
 
@@ -83,6 +84,7 @@ class QuotaLimiterFactory:
         Raises:
         ------
             ValueError: If `limiter_type` is not a recognized limiter identifier.
+
         """
         match limiter_type:
             case constants.USER_QUOTA_LIMITER:

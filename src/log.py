@@ -55,6 +55,7 @@ def resolve_log_level() -> int:
     Returns:
     -------
         int: A valid logging level constant (e.g., logging.INFO, logging.DEBUG).
+
     """
     level_str = os.environ.get(LIGHTSPEED_STACK_LOG_LEVEL_ENV_VAR, DEFAULT_LOG_LEVEL)
 

@@ -42,6 +42,7 @@ class ProviderHealthStatus(BaseModel):
         provider_id: The ID of the provider.
         status: The health status ('ok', 'unhealthy', 'not_implemented').
         message: Optional message about the health status.
+
     """
 
     provider_id: str = Field(

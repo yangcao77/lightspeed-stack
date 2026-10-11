@@ -60,6 +60,7 @@ class ResponsesRequest(BaseModel):
         shield_ids: LCORE-specific list of configured shield names to apply.
             If None, all configured shields are used.
         solr: Optional Solr inline RAG options (mode, filters) or legacy filter-only dict.
+
     """
 
     input: ResponseInput
@@ -122,6 +123,7 @@ class ResponsesRequest(BaseModel):
         Raises:
             ValueError: If the JSON-serialized size of ``values`` exceeds
                 65,536 characters.
+
         """
         try:
             serialized = json.dumps(values)
@@ -150,6 +152,7 @@ class ResponsesRequest(BaseModel):
 
         Returns:
             Self: The validated model instance.
+
         """
         if self.conversation and self.previous_response_id:
             raise ValueError(

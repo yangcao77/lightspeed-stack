@@ -39,6 +39,7 @@ class NoopWithTokenAuthDependency(
         Notes:
         -----
             Sets the instance attribute `virtual_path` and sets `skip_userid_check` to True.
+
         """
         self.virtual_path = virtual_path
         self.skip_userid_check = True
@@ -58,6 +59,7 @@ class NoopWithTokenAuthDependency(
                 - username: DEFAULT_USER_NAME.
                 - skip_userid_check: True to indicate user-id checks are skipped.
                 - user_token: Token extracted from the request headers.
+
         """
         logger.warning(
             "No-op with token authentication dependency is being used. "

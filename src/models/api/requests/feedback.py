@@ -18,6 +18,7 @@ class FeedbackRequest(BaseModel):
         sentiment: The optional sentiment.
         user_feedback: The optional user feedback.
         categories: The optional list of positive or negative feedback categories.
+
     """
 
     conversation_id: str = Field(
@@ -114,6 +115,7 @@ class FeedbackRequest(BaseModel):
 
         Raises:
             ValueError: If value is not a valid SUID.
+
         """
         if not suid.check_suid(value):
             raise ValueError(f"Improper conversation ID {value}")
@@ -132,6 +134,7 @@ class FeedbackRequest(BaseModel):
 
         Raises:
             ValueError: If value is not -1, 1, or None.
+
         """
         if value not in {-1, 1, None}:
             raise ValueError(
@@ -156,6 +159,7 @@ class FeedbackRequest(BaseModel):
 
         Returns:
             The normalized list with duplicates removed, or None.
+
         """
         if value is None:
             return value
@@ -174,6 +178,7 @@ class FeedbackRequest(BaseModel):
 
         Raises:
             ValueError: If none of sentiment, user_feedback, or categories are provided.
+
         """
         if (
             self.sentiment is None
@@ -192,6 +197,7 @@ class FeedbackStatusUpdateRequest(BaseModel):
 
     Attributes:
         status: Value of the desired feedback enabled state.
+
     """
 
     status: bool = Field(
@@ -208,5 +214,6 @@ class FeedbackStatusUpdateRequest(BaseModel):
 
         Returns:
             True if feedback is enabled, False otherwise.
+
         """
         return self.status

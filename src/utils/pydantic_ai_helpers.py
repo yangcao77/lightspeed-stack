@@ -47,6 +47,7 @@ def _skills_capability(
 
     Returns:
         SkillsCapability when skill paths are configured, or None when skills are disabled.
+
     """
     if skills_config is None or not skills_config.paths:
         return None
@@ -126,6 +127,7 @@ def get_skills_metadata(
 
     Returns:
         List of ``SkillMetadata`` with ``name`` and ``description`` for each loaded skill.
+
     """
     capability = _skills_capability(skills)
     if capability is None:
@@ -146,6 +148,7 @@ def get_agent_capability_tools(
 
     Returns:
         Catalog tools for the ``/tools`` endpoint response format.
+
     """
     capabilities = _agent_capabilities(skills) or []
 
@@ -173,6 +176,7 @@ def _shield_capability(shield: ShieldConfiguration) -> AgentCapability[object]:
 
     Raises:
         ValueError: If ``shield.config`` doesn't match a known shield config type.
+
     """
     match shield.config:
         case QuestionValidityConfig():
@@ -203,6 +207,7 @@ def _agent_capabilities(
 
     Returns:
         Configured capabilities, or None when no capabilities are enabled.
+
     """
     capabilities: list[AgentCapability[object]] = []
     for shield in shields or []:
@@ -239,6 +244,7 @@ def captured_output_items(agent: Any) -> list[Any]:
     Returns:
         The captured output items, or an empty list when the model did not
         capture any (for example a non-OGX model in a test double).
+
     """
     model = getattr(agent, "model", None)
     items = getattr(model, "last_output_items", None)
@@ -281,6 +287,7 @@ def build_agent(
     Returns:
         ``Agent`` configured for ``await agent.run(...)`` (or streaming) against the same
         stack configuration as ``client.responses.create(**responses_params.model_dump())``.
+
     """
     shield_configs = get_shields_for_request(config.shields, shields)
     capabilities = _agent_capabilities(config.skills, shield_configs, no_tools=no_tools)

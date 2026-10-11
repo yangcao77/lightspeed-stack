@@ -33,6 +33,7 @@ def _validate_image_magic_bytes(data: bytes, content_type: str) -> None:
 
     Raises:
         ValueError: If the data does not match the expected image format.
+
     """
     pattern = _IMAGE_SIGNATURES.get(content_type)
     if pattern and not pattern.match(data):
@@ -51,6 +52,7 @@ class Attachment(BaseModel):
         attachment_type: The attachment type, like "log", "configuration", "image" etc.
         content_type: The content type as defined in MIME standard
         content: The actual attachment content (text or base64-encoded image data)
+
     """
 
     attachment_type: str = Field(
@@ -77,6 +79,7 @@ class Attachment(BaseModel):
             ValueError: If attachment_type and content_type are inconsistent
                 (one indicates an image while the other does not),
                 if image content is not valid base64, or if decoded size exceeds the limit.
+
         """
         is_image_content_type = self.content_type in IMAGE_CONTENT_TYPES
         is_image_attachment_type = self.attachment_type == "image"
@@ -143,6 +146,7 @@ class SolrVectorSearchRequest(BaseModel):
 
     Legacy clients may send a plain JSON object with filter keys only;
     that object is accepted as filters with mode unset (server default applies).
+
     """
 
     model_config = ConfigDict(extra="forbid")
@@ -202,6 +206,7 @@ class SolrVectorSearchRequest(BaseModel):
 
         Returns:
             Normalized dict for Pydantic model validation, or the original non-dict value.
+
         """
         if data is None or not isinstance(data, dict):
             return data

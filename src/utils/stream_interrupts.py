@@ -43,6 +43,7 @@ class ActiveStream:
             regardless of where the ``CancelledError`` lands.
         conversation_id: Conversation the streaming request belongs to,
             surfaced for observability of interrupt requests.
+
     """
 
     user_id: str
@@ -89,6 +90,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
                 is cancelled, executed in a separate task.
             conversation_id: Conversation the stream belongs to, retained
                 for observability of subsequent interrupt requests.
+
         """
         with self._lock:
             self._streams[request_id] = ActiveStream(
@@ -118,6 +120,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
         Returns:
         -------
             CancelStreamResult: Structured cancellation result.
+
         """
         on_interrupt = None
         with self._lock:
@@ -147,6 +150,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
         Parameters:
         ----------
             request_id: Unique streaming request identifier.
+
         """
         with self._lock:
             self._streams.pop(request_id, None)
@@ -161,6 +165,7 @@ class StreamInterruptRegistry(metaclass=Singleton):
         Returns:
         -------
             Optional[ActiveStream]: Registered stream metadata, or None when absent.
+
         """
         with self._lock:
             return self._streams.get(request_id)
@@ -181,6 +186,7 @@ def deregister_stream(request_id: str) -> None:
     Parameters:
     ----------
         request_id: Unique streaming request identifier.
+
     """
     get_stream_interrupt_registry().deregister_stream(request_id)
 
@@ -198,6 +204,7 @@ async def background_update_topic_summary(
     ----------
         context: The response generator context.
         model: Model identifier used for topic summary generation.
+
     """
     try:
         topic_summary = await asyncio.wait_for(
@@ -240,6 +247,7 @@ def build_interrupted_response(partial_tokens: list[str]) -> tuple[str, str]:
         A tuple of (full_response_text, suffix_to_emit) where full_response_text
         is the complete message for persistence and suffix_to_emit is the new
         content to send as a final SSE token event.
+
     """
     partial_text = "".join(partial_tokens)
     repaired_text = close_open_markdown(partial_text)
@@ -276,6 +284,7 @@ async def persist_interrupted_turn(
             (the ``conversation`` parameter was dropped, and
             ``responses_params.input`` is the explicit rewrite); ``None``
             otherwise (LCORE-1572).
+
     """
     try:
         if original_input is not None:
@@ -369,6 +378,7 @@ def register_interrupt_callback(
         A mutable list ``[False]`` used as a persist-done guard; the
         caller should check ``guard[0]`` before persisting and set
         it to ``True`` afterwards.
+
     """
     guard: list[bool] = [False]
 

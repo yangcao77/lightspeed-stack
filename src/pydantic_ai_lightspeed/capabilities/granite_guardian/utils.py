@@ -80,6 +80,7 @@ def event_text(event: AgentStreamEvent) -> str:
 
     Returns:
         The text contributed by this event, or an empty string.
+
     """
     if isinstance(event, PartStartEvent) and isinstance(event.part, TextPart):
         return event.part.content
@@ -102,6 +103,7 @@ def tool_result_to_str(result: Any) -> str:
 
     Returns:
         A text representation of the result.
+
     """
     if isinstance(result, str):
         return result
@@ -123,6 +125,7 @@ async def aclose_if_supported(stream: AsyncIterable[AgentStreamEvent]) -> None:
 
     Parameters:
         stream: The stream to close, if it supports closing.
+
     """
     aclose = getattr(stream, "aclose", None)
     if aclose is not None:
@@ -149,6 +152,7 @@ def _search_tag(tag: str, buffer: str) -> tuple[str, bool]:
     Returns:
         A tuple of (remaining_buffer, found). The buffer is cleared when
         the content is not tag-like or when the tag is found.
+
     """
     if not buffer.strip().startswith("<"):
         return "", False
@@ -167,6 +171,7 @@ def _clean_up_candidates(candidates: list[ChatCompletionTokenLogprob]) -> None:
 
     Parameters:
         candidates: Mutable list of token logprobs to clean in place.
+
     """
     buffer = ""
     while len(candidates) != 0:
@@ -193,6 +198,7 @@ def _extract_tokens_inside_score_tag(
     Raises:
         UnexpectedModelBehavior: When the model output doesn't contain the
             expected tag structure, or the score tag has zero or multiple tokens.
+
     """
     cur_buffer = ""
     cur_status = ParsingStatus.BEFORE_THINK
@@ -257,6 +263,7 @@ def _get_risky_probabilities(token: ChatCompletionTokenLogprob) -> float:
     Raises:
         UnexpectedModelBehavior: When neither safe nor risky tokens appear
             in the top logprobs (underflow).
+
     """
     safe_prob, risky_prob = 0.0, 0.0
     for candidate_token in token.top_logprobs:
@@ -283,6 +290,7 @@ def is_safe(threshold: float, logprobs: list[dict[str, Any]]) -> bool:
 
     Returns:
         True if the risky probability is below the threshold (safe).
+
     """
     token_for_confidence_threshold = _extract_tokens_inside_score_tag(logprobs)
     p_risky = _get_risky_probabilities(token_for_confidence_threshold)

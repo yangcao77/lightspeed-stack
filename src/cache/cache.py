@@ -36,6 +36,7 @@ class Cache(ABC):
         Raises:
         ------
             ValueError: If validation is not skipped and `user_id` is invalid.
+
         """
         if skip_user_id_check:
             return
@@ -54,6 +55,7 @@ class Cache(ABC):
         ------
             ValueError: If `conversation_id` is not a valid SUID (UUID-format
             string; dashes are optional).
+
         """
         if not check_suid(conversation_id):
             raise ValueError(f"Invalid conversation ID {conversation_id}")
@@ -75,6 +77,7 @@ class Cache(ABC):
         Returns:
         -------
             str: Compound key in the form "user_id:conversation_id".
+
         """
         Cache._check_user_id(user_id, skip_user_id_check)
         Cache._check_conversation_id(conversation_id)
@@ -98,6 +101,7 @@ class Cache(ABC):
         -------
             list[CacheEntry]: List of cache entries for the specified key;
             empty list if no entries exist.
+
         """
 
     @abstractmethod
@@ -119,6 +123,7 @@ class Cache(ABC):
             conversation_id (str): Identifier of the conversation within the user's scope.
             cache_entry (CacheEntry): Cache entry to store or append.
             skip_user_id_check (bool): If True, skip validation of `user_id`.
+
         """
 
     @abstractmethod
@@ -136,6 +141,7 @@ class Cache(ABC):
         Returns:
         -------
             `True` if entries were deleted, `False` if no key was found.
+
         """
 
     @abstractmethod
@@ -152,6 +158,7 @@ class Cache(ABC):
             list[ConversationData]: A list of ConversationData objects for the
                         user's conversations, each containing `conversation_id`,
                         `topic_summary`, and `last_message_timestamp`.
+
         """
 
     @abstractmethod
@@ -170,6 +177,7 @@ class Cache(ABC):
             conversation_id (str): Conversation identifier used as part of the compound cache key.
             topic_summary (str): Text summary of the conversation topic to store.
             skip_user_id_check (bool): If True, skip validation of `user_id` before storing.
+
         """
 
     @abstractmethod
@@ -194,6 +202,7 @@ class Cache(ABC):
             conversation_id (str): Conversation identifier, part of the compound key.
             summary (ConversationSummary): The summary chunk to persist.
             skip_user_id_check (bool): If True, skip validation of `user_id`.
+
         """
 
     @abstractmethod
@@ -212,6 +221,7 @@ class Cache(ABC):
         -------
             list[ConversationSummary]: Summary chunks for the conversation,
             oldest first (ordered by ``created_at``); empty list if none exist.
+
         """
 
     @abstractmethod
@@ -238,6 +248,7 @@ class Cache(ABC):
             folded_summary (ConversationSummary): The folded summary that
                 supersedes the conversation's existing chunks.
             skip_user_id_check (bool): If True, skip validation of `user_id`.
+
         """
 
     @abstractmethod
@@ -246,4 +257,5 @@ class Cache(ABC):
 
         Returns:
             True if the cache is ready, False otherwise.
+
         """

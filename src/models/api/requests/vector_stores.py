@@ -15,6 +15,7 @@ class VectorStoreCreateRequest(BaseModel):
         chunking_strategy: Optional chunking strategy configuration.
         provider_id: Optional vector store provider identifier.
         metadata: Optional metadata dictionary for storing session information.
+
     """
 
     name: str = Field(
@@ -79,6 +80,7 @@ class VectorStoreUpdateRequest(BaseModel):
         name: New name for the vector store.
         expires_at: Optional expiration timestamp.
         metadata: Optional metadata dictionary for storing session information.
+
     """
 
     name: Optional[str] = Field(
@@ -124,6 +126,7 @@ class VectorStoreUpdateRequest(BaseModel):
 
         Returns:
             Self: The validated model instance.
+
         """
         if self.name is None and self.expires_at is None and self.metadata is None:
             raise ValueError(
@@ -139,6 +142,7 @@ class VectorStoreFileCreateRequest(BaseModel):
         file_id: ID of the file to add to the vector store.
         attributes: Optional metadata key-value pairs (max 16 pairs).
         chunking_strategy: Optional chunking strategy configuration.
+
     """
 
     file_id: str = Field(
@@ -198,6 +202,7 @@ class VectorStoreFileCreateRequest(BaseModel):
 
         Returns:
             The validated attributes dictionary.
+
         """
         if value is None:
             return value

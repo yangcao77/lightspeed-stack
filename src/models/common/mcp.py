@@ -21,6 +21,7 @@ class MCPServerInfo(BaseModel):
         url: URL of the MCP server endpoint.
         provider_id: MCP provider identification.
         source: Whether the server was registered statically (config) or dynamically (api).
+
     """
 
     name: str = Field(..., description="MCP server name")

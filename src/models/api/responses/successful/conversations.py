@@ -24,6 +24,7 @@ class ConversationResponse(AbstractSuccessfulResponse):
     Attributes:
         conversation_id: The conversation ID (UUID).
         chat_history: The chat history as a list of conversation turns.
+
     """
 
     conversation_id: str = Field(
@@ -122,6 +123,7 @@ class ConversationsListResponse(AbstractSuccessfulResponse):
 
     Attributes:
         conversations: List of conversation details associated with the user.
+
     """
 
     conversations: list[ConversationDetails]
@@ -160,6 +162,7 @@ class ConversationsListResponseV2(AbstractSuccessfulResponse):
 
     Attributes:
         conversations: List of conversation data associated with the user.
+
     """
 
     conversations: list[ConversationData]
@@ -188,6 +191,7 @@ class ConversationUpdateResponse(AbstractSuccessfulResponse):
         conversation_id: The conversation ID (UUID) that was updated.
         success: Whether the update was successful.
         message: A message about the update result.
+
     """
 
     conversation_id: str = Field(

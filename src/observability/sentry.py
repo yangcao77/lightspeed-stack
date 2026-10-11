@@ -37,6 +37,7 @@ def sentry_traces_sampler(tracing_context: dict) -> float:
     -------
         float: 0.0 for excluded routes (no sampling), or
             SENTRY_DEFAULT_TRACES_SAMPLE_RATE for all other routes.
+
     """
     asgi_scope = tracing_context.get("asgi_scope", {})
     path = asgi_scope.get("path") if isinstance(asgi_scope, dict) else None
@@ -73,6 +74,7 @@ def initialize_sentry() -> None:
     Returns:
     -------
         None
+
     """
     dsn = os.environ.get(SENTRY_DSN_ENV_VAR)
 

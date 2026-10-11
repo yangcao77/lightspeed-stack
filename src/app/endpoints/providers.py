@@ -117,6 +117,7 @@ def group_providers(
     Returns:
         Mapping from API type to list of providers containing
         only 'provider_id' and 'provider_type'.
+
     """
     result: dict[str, list[dict[str, Any]]] = {}
     for provider in providers:

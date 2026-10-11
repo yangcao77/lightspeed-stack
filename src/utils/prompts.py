@@ -39,6 +39,7 @@ def get_system_prompt(
             are disabled (disable_query_system_prompt) and a non-None
             `system_prompt` is provided; the response instructs the client to
             remove the relevant field from the request.
+
     """
     system_prompt_disabled = (
         configuration.customization is not None
@@ -87,6 +88,7 @@ def get_topic_summary_system_prompt() -> str:
     Returns:
         str: The topic summary system prompt from the active custom profile if
              set, otherwise the default prompt.
+
     """
     # profile takes precedence for setting prompt
     if (

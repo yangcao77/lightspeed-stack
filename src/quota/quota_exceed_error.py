@@ -26,6 +26,7 @@ class QuotaExceedError(Exception):
                 subject_id (str): Copied from the `subject_id` parameter.
                 available (int): Copied from the `available` parameter.
                 needed (int): Copied from the `needed` parameter.
+
         """
         message: str = ""
 

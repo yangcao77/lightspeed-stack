@@ -234,6 +234,7 @@ async def get_conversation_endpoint_handler(  # pylint: disable=too-many-locals,
     Returns:
         ConversationResponse: Structured response containing the conversation
         ID and simplified chat history
+
     """
     with tracer.start_as_current_span("conversations_v1.get") as span:
         check_configuration_loaded(configuration)
@@ -356,6 +357,7 @@ async def delete_conversation_endpoint_handler(
 
     Returns:
         ConversationDeleteResponse: Response indicating the result of the deletion operation
+
     """
     with tracer.start_as_current_span("conversations_v1.delete") as span:
         check_configuration_loaded(configuration)
@@ -477,6 +479,7 @@ async def update_conversation_endpoint_handler(  # pylint: disable=too-many-stat
 
     Returns:
         ConversationUpdateResponse: Response indicating the result of the update operation
+
     """
     with tracer.start_as_current_span("conversations_v1.update") as span:
         check_configuration_loaded(configuration)

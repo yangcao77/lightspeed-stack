@@ -29,6 +29,7 @@ def get_engine() -> Engine:
     Raises:
         RuntimeError: If the database engine has not been initialized; call
         initialize_database() first.
+
     """
     if engine is None:
         raise RuntimeError(
@@ -45,6 +46,7 @@ def create_tables() -> None:
     Raises:
         RuntimeError: If the global database engine is not initialized (call
         initialize_database() first).
+
     """
     Base.metadata.create_all(get_engine())
 
@@ -60,6 +62,7 @@ def get_session() -> Session:
     Raises:
         RuntimeError: If the database has not been initialized; call
         initialize_database() first.
+
     """
     if session_local is None:
         raise RuntimeError(
@@ -85,6 +88,7 @@ def _create_sqlite_engine(config: SQLiteDatabaseConfiguration, **kwargs: Any) ->
     ------
         FileNotFoundError: If the parent directory of `config.db_path` does not exist.
         RuntimeError: If engine creation fails.
+
     """
     if not Path(config.db_path).parent.exists():
         raise FileNotFoundError(
@@ -122,6 +126,7 @@ def _create_postgres_engine(
     Raises:
     ------
         RuntimeError: If engine creation fails or if creating the specified schema fails.
+
     """
     postgres_url = (
         f"postgresql://{config.user}:{config.password.get_secret_value()}@"

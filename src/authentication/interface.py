@@ -45,4 +45,5 @@ class AuthInterface(ABC):  # pylint: disable=too-few-public-methods
                 skip_user_id_check (bool): whether downstream handlers should
                                            skip user-id verification,
                 token (str): authentication token or NO_USER_TOKEN when no token is present.
+
         """

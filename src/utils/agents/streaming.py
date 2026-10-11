@@ -121,6 +121,7 @@ async def retrieve_agent_response_generator(
 
     Returns:
         Tuple of SSE async iterator and mutable turn summary.
+
     """
     turn_summary = TurnSummary()
     try:
@@ -169,6 +170,7 @@ async def _persist_compacted_turn(
             ``None`` the request was not compacted and nothing is written.
         persist_guard: Single-element flag shared with the interrupt path, so a
             turn is persisted at most once.
+
     """
     if original_input is None or persist_guard[0]:
         return
@@ -224,6 +226,7 @@ async def generate_agent_response(  # pylint: disable=too-many-statements
 
     Yields:
         SSE-formatted strings from the wrapped generator.
+
     """
     media_type = context.query_request.media_type or MEDIA_TYPE_JSON
     persist_guard = register_interrupt_callback(
@@ -395,6 +398,7 @@ async def agent_response_generator(
 
     Yields:
         Serialized SSE event strings.
+
     """
     with tracer.start_as_current_span("llm.inference") as span:
         provider_id, model_id = extract_provider_and_model_from_model_id(
@@ -510,6 +514,7 @@ def _process_token(
 
     Returns:
         Token stream payload containing the emitted token chunk.
+
     """
     state.text_parts.append(text)
     state.turn_summary.partial_tokens.append(text)
@@ -535,6 +540,7 @@ def dispatch_stream_event(  # pylint: disable=useless-return
 
     Returns:
         None when the event does not map to an SSE payload.
+
     """
     logger.debug("Ignoring event kind=%s", event.event_kind)
 
@@ -554,6 +560,7 @@ def _(
 
     Returns:
         Completion stream payload.
+
     """
     state.run_result = event.result
     state.turn_summary.id = state.run_result.response.provider_response_id or ""
@@ -587,6 +594,7 @@ def _(
 
     Returns:
         Optional stream payload emitted at part start.
+
     """
     part = event.part
     if isinstance(part, TextPart):
@@ -615,6 +623,7 @@ def _(
 
     Returns:
         Optional stream payload emitted for the delta.
+
     """
     delta = event.delta
     if isinstance(delta, TextPartDelta):
@@ -637,6 +646,7 @@ def _(
 
     Returns:
         Optional stream payload emitted at part end.
+
     """
     part = event.part
     if isinstance(part, TextPart):
@@ -668,6 +678,7 @@ def _(
 
     Returns:
         Tool call stream payload or None.
+
     """
     if summary := process_function_tool_call(state, event.part):
         return ToolCallStreamPayload(data=summary)
@@ -687,6 +698,7 @@ def _(
 
     Returns:
         Tool result stream payload or None.
+
     """
     part = event.part
     if not isinstance(part, ToolReturnPart):

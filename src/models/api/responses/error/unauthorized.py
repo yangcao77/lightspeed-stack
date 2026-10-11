@@ -91,6 +91,7 @@ class UnauthorizedResponse(AbstractErrorResponse):
 
         Args:
             cause: Human-readable explanation (e.g. missing token, expired token).
+
         """
         response_msg = "Missing or invalid credentials provided by client"
         super().__init__(

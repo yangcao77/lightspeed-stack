@@ -29,6 +29,7 @@ async def _get_cross_encoder(model_name: str) -> Any:
 
     Returns:
         Loaded CrossEncoder model instance, or None if loading fails.
+
     """
     # Check if reranking is enabled before attempting to load the model
     if (
@@ -73,6 +74,7 @@ async def rerank_chunks_with_cross_encoder(
 
     Returns:
         Top top_k chunks sorted by combined cross-encoder and weighted score (descending)
+
     """
     if not chunks:
         return []
@@ -192,6 +194,7 @@ def apply_byok_rerank_boost(
 
     Returns:
         Same chunks with BYOK scores boosted, sorted by score descending.
+
     """
     boosted = []
     for chunk in chunks:

@@ -48,6 +48,7 @@ async def check_mcp_auth(
     Raises:
     ------
         HTTPException: 401 when an MCP server requires authentication (from probe_mcp).
+
     """
     complete_headers = build_mcp_headers(
         configuration, mcp_headers or {}, request_headers, token
@@ -97,6 +98,7 @@ async def probe_mcp(
         HTTPException: 401 with WWW-Authenticate when the server returns 401
             and includes that header; 401 without the header when the server
             returns 401 without it or when the probe fails (timeout/connection).
+
     """
     cause = f"MCP server at {url} requires OAuth"
     error_response = UnauthorizedResponse(cause=cause)

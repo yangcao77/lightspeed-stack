@@ -64,6 +64,7 @@ class UnprocessableEntityResponse(AbstractErrorResponse):
         Args:
             response: Human-readable message describing what was unprocessable.
             cause: Specific cause or diagnostic information explaining the error.
+
         """
         super().__init__(
             response=response,

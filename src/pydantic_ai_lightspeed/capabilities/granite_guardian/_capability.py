@@ -109,6 +109,7 @@ class _ToolGuardrailViolation(Exception):
                 ``ToolReturnPart`` between the tool call and the rejection
                 message; currently always empty, since a denied function
                 tool call's result is never preserved either.
+
         """
         super().__init__(message)
         self.response_parts: tuple[ModelResponsePart, ...] = tuple(response_parts)
@@ -133,6 +134,7 @@ async def _drain_remaining(stream: AsyncIterable[AgentStreamEvent]) -> None:
 
     Parameters:
         stream: The stream to exhaust.
+
     """
     try:
         async for _ in stream:
@@ -158,6 +160,7 @@ async def _package_risk_check_task(
 
     Returns:
         A tuple of (model_response, threshold, violation_message).
+
     """
     name, block, threshold, violation_message = guardrail
     start = asyncio.get_event_loop().time()
@@ -198,6 +201,7 @@ async def _run_risk_check(
     Raises:
         UnexpectedModelBehavior: When the model response is missing
             provider_details or logprobs.
+
     """
     token_usage = RequestUsage()
 
@@ -244,6 +248,7 @@ def _is_mcp_list_tools_call(call_part: NativeToolCallPart) -> bool:
 
     Returns:
         True if this call is an MCP ``list_tools`` discovery call.
+
     """
     if not call_part.tool_name.startswith(_MCP_SERVER_TOOL_PREFIX):
         return False
@@ -269,6 +274,7 @@ def _deny_native_results_from(
     Returns:
         Flattened call/return parts, ready to use as ``response_parts`` on
         a ``_ToolGuardrailViolation``.
+
     """
     response_parts: list[ModelResponsePart] = []
     for index, (call_part, return_part) in enumerate(native_pairs):
@@ -298,6 +304,7 @@ def _filter_guardrails(
 
     Returns:
         A list of guardrail tuples for enabled risks matching the point.
+
     """
     return [
         (
@@ -321,6 +328,7 @@ def _get_batch_size(parallel: StrictBool | int, num_guardrail: int) -> int:
 
     Returns:
         The number of risk checks to run concurrently per batch.
+
     """
     if isinstance(parallel, bool):
         return max(1, num_guardrail) if parallel else 1
@@ -361,6 +369,7 @@ class GraniteGuardian(AbstractSafetyCapability):
         config: Granite Guardian configuration with risks and connection details.
         run_moderation_guardrail_point: The guardrail point used by the
             standalone ``run`` method.
+
     """
 
     config: GraniteGuardianConfig
@@ -422,6 +431,7 @@ class GraniteGuardian(AbstractSafetyCapability):
 
         Returns:
             The agent run result, either a rejection or the handler's result.
+
         """
         user_prompt = message_to_str(ctx.prompt)
 
@@ -489,6 +499,7 @@ class GraniteGuardian(AbstractSafetyCapability):
             An ``AgentRunResult`` whose output is the violation message, with
             ``tool_calls``/``tool_results`` still reflecting any preserved
             tool activity.
+
         """
         user_prompt = message_to_str(ctx.prompt)
         messages: list[ModelRequest | ModelResponse] = [
@@ -577,6 +588,7 @@ class GraniteGuardian(AbstractSafetyCapability):
 
         Raises:
             _OutputGuardrailViolation: When an OUTPUT-point risk is violated.
+
         """
         _ = ctx
         output_guardrails = _filter_guardrails(self.config.risks, "output")
@@ -693,6 +705,7 @@ class GraniteGuardian(AbstractSafetyCapability):
 
         Raises:
             _ToolGuardrailViolation: When a TOOL-point risk is violated.
+
         """
         _ = ctx, tool_def, args
         tool_guardrails = _filter_guardrails(self.config.risks, "tool")
@@ -768,6 +781,7 @@ class GraniteGuardian(AbstractSafetyCapability):
                 (and therefore the rejected turn's) usage totals. ``response``
                 is already the final, non-streaming result at this point, so
                 its usage is folded in explicitly before raising.
+
         """
         _ = request_context
         tool_guardrails = _filter_guardrails(self.config.risks, "tool")
@@ -811,6 +825,7 @@ class GraniteGuardian(AbstractSafetyCapability):
 
         Returns:
             A blocked result with the violation message, or a passed result.
+
         """
         filtered_guardrails = _filter_guardrails(
             self.config.risks, self.run_moderation_guardrail_point

@@ -50,6 +50,7 @@ class PromptTooLongResponse(AbstractErrorResponse):
         Args:
             response: Short summary of the error. Defaults to "Prompt is too long".
             model: The model identifier for which the prompt is too long.
+
         """
         if model:
             cause = f"The input exceeds the context window size of model '{model}'."
@@ -108,6 +109,7 @@ class FileTooLargeResponse(AbstractErrorResponse):
 
         Returns:
             A response whose cause includes both sizes and the maximum size in MB (floored).
+
         """
         cause = (
             f"File size {file_size} bytes exceeds maximum allowed "
@@ -130,6 +132,7 @@ class FileTooLargeResponse(AbstractErrorResponse):
 
         Returns:
             A response whose cause prefixes the message with a fixed label.
+
         """
         cause = f"File upload rejected: {message}"
         return cls(response=response, cause=cause)
@@ -140,6 +143,7 @@ class FileTooLargeResponse(AbstractErrorResponse):
         Args:
             response: Short summary of the error.
             cause: Detailed explanation for operators and clients.
+
         """
         super().__init__(
             response=response,

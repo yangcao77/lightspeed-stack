@@ -27,6 +27,7 @@ class NoopAuthDependency(AuthInterface):  # pylint: disable=too-few-public-metho
         ----------
             virtual_path (str): Virtual path context used by the dependency
                                 (defaults to DEFAULT_VIRTUAL_PATH).
+
         """
         self.virtual_path = virtual_path
         self.skip_userid_check = True
@@ -46,6 +47,7 @@ class NoopAuthDependency(AuthInterface):  # pylint: disable=too-few-public-metho
                 - username: DEFAULT_USER_NAME.
                 - skip_userid_check: True to indicate the user ID check is skipped.
                 - token: NO_USER_TOKEN.
+
         """
         logger.warning(
             "No-op authentication dependency is being used. "

@@ -194,6 +194,7 @@ async def _handle_streaming_query_with_tracing(  # pylint: disable=too-many-loca
 
     Raises:
         HTTPException: On authentication, authorization, quota, or model errors.
+
     """
     check_configuration_loaded(configuration)
 
@@ -410,6 +411,7 @@ async def generate_response_with_compaction(
 
     Yields:
         SSE-formatted strings.
+
     """
     try:
         media_type = context.query_request.media_type or MEDIA_TYPE_JSON

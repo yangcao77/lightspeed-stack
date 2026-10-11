@@ -10,6 +10,7 @@ class ModelFilter(BaseModel):
 
     Attributes:
         model_type: Required model type, such as 'llm', 'embeddings' etc.
+
     """
 
     model_config = {"extra": "forbid"}

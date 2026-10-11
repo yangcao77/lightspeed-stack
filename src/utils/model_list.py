@@ -28,6 +28,7 @@ def parse_openai_style_model(model: OpenAIModel) -> CatalogModel:
 
     Returns:
         CatalogModel: Normalized catalog entry.
+
     """
     custom_metadata = dict(model.custom_metadata or {})
     model_type = custom_metadata.pop("model_type", None) or "unknown"
@@ -53,6 +54,7 @@ def parse_anthropic_model(model: AnthropicModelInfo) -> CatalogModel:
 
     Returns:
         CatalogModel: Normalized catalog entry. Treated as an LLM.
+
     """
     metadata: dict[str, Any] = {
         "display_name": model.display_name,
@@ -82,6 +84,7 @@ def parse_google_model(model: GoogleModelInfo) -> CatalogModel:
 
     Returns:
         CatalogModel: Normalized catalog entry. Treated as an LLM.
+
     """
     metadata: dict[str, Any] = {
         "display_name": model.display_name,
@@ -110,6 +113,7 @@ def parse_model_list_response(
 
     Returns:
         list[CatalogModel]: Parsed models in the unified catalog shape.
+
     """
     match response.actual_instance:
         case OpenAIListModelsResponse(data=data):

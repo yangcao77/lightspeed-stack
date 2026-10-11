@@ -179,6 +179,7 @@ class PostgresCache(Cache):
         ----------
             config (PostgreSQLDatabaseConfiguration): Configuration used to
             connect to the PostgreSQL server and configure the cache.
+
         """
         self.postgres_config = config
 
@@ -233,6 +234,7 @@ class PostgresCache(Cache):
         Returns:
             bool: `True` if the connection exists and a simple probe query
             succeeds, `False` otherwise.
+
         """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")
@@ -257,6 +259,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache is disconnected.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -305,6 +308,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache connection is not available.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -402,6 +406,7 @@ class PostgresCache(Cache):
         ------
             CacheError: If the cache is disconnected or a database error occurs
             while persisting the entry.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -500,6 +505,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache is disconnected or a database error occurs.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -582,6 +588,7 @@ class PostgresCache(Cache):
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -617,6 +624,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache is disconnected or a database error occurs.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -660,6 +668,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache is disconnected or a database error occurs.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -711,6 +720,7 @@ class PostgresCache(Cache):
         Raises:
         ------
             CacheError: If the cache is disconnected or a database error occurs.
+
         """
         if self.connection is None:
             logger.error("Cache is disconnected")
@@ -743,5 +753,6 @@ class PostgresCache(Cache):
 
         Returns:
             True if the cache is ready, False otherwise.
+
         """
         return True

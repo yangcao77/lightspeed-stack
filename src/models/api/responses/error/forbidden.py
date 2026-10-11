@@ -121,6 +121,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Returns:
             Error response indicating the user is not permitted to perform the
             specified action on the conversation, with response and cause set.
+
         """
         response = "User does not have permission to perform this action"
         cause = (
@@ -141,6 +142,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Returns:
             Error response indicating the user is not permitted to perform the
             specified action on the saved prompt.
+
         """
         response = "User does not have permission to perform this action"
         cause = (
@@ -158,6 +160,7 @@ class ForbiddenResponse(AbstractErrorResponse):
 
         Returns:
             Error response with a message and a cause referencing the given user_id.
+
         """
         response = "User does not have permission to access this endpoint"
         cause = f"User {user_id} is not authorized to access this endpoint."
@@ -170,6 +173,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Returns:
             Error response with response set to "Storing feedback is disabled"
             and cause set to "Storing feedback is disabled.".
+
         """
         return cls(
             response="Storing feedback is disabled",
@@ -184,6 +188,7 @@ class ForbiddenResponse(AbstractErrorResponse):
             An error response with a user-facing message instructing removal of
             model/provider fields and a cause stating the missing MODEL_OVERRIDE
             permission.
+
         """
         return cls(
             response=(
@@ -207,6 +212,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Returns:
             A ``ForbiddenResponse`` with the static-delete user message and a cause
             that names ``server_name`` and states it cannot be removed via the API.
+
         """
         return cls(
             response="Cannot delete statically configured MCP server",
@@ -222,6 +228,7 @@ class ForbiddenResponse(AbstractErrorResponse):
         Args:
             response: Human-facing error message describing the forbidden action.
             cause: Detailed reason for the denial, for logs or diagnostics.
+
         """
         super().__init__(
             response=response, cause=cause, status_code=status.HTTP_403_FORBIDDEN

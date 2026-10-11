@@ -30,6 +30,7 @@ def decode_request_headers(request: httpx.Request) -> dict[str, str]:
 
     Returns:
         Request headers with byte keys and values decoded to UTF-8 strings.
+
     """
     return {
         k.decode("utf-8") if isinstance(k, bytes) else k: (
@@ -51,6 +52,7 @@ def inject_provider_data_into_headers(
 
     Returns:
         Headers with provider data injected when absent from the request.
+
     """
     if not provider_data:
         return dict(headers)
@@ -73,6 +75,7 @@ def request_with_provider_data_headers(
 
     Returns:
         The original request, or a copy with provider data headers added.
+
     """
     headers = inject_provider_data_into_headers(
         decode_request_headers(request),
@@ -102,6 +105,7 @@ def wrap_http_client_with_provider_data(
     Returns:
         The original client when ``provider_data`` is empty, otherwise a new
         client with a wrapping transport.
+
     """
     if not provider_data:
         return http_client
@@ -131,6 +135,7 @@ class OgxServerTransport(httpx.AsyncBaseTransport):
         Args:
             transport: The underlying transport used for real HTTP requests.
             provider_data: Provider credentials/metadata to forward to OGX.
+
         """
         self._transport = transport
         self._provider_data = provider_data
@@ -143,6 +148,7 @@ class OgxServerTransport(httpx.AsyncBaseTransport):
 
         Returns:
             The response from the wrapped transport.
+
         """
         request = request_with_provider_data_headers(request, self._provider_data)
         return await self._transport.handle_async_request(request)
@@ -160,6 +166,7 @@ class _AsyncByteStream(httpx.AsyncByteStream):
 
         Args:
             gen: An async generator producing byte chunks to stream.
+
         """
         self._gen = gen
 
@@ -168,6 +175,7 @@ class _AsyncByteStream(httpx.AsyncByteStream):
 
         Returns:
             An async iterator of bytes fulfilling the httpx.AsyncByteStream contract.
+
         """
         async for chunk in self._gen:
             yield chunk
@@ -187,6 +195,7 @@ class OgxLibraryTransport(httpx.AsyncBaseTransport):
         Args:
             client: An initialized ``AsyncOGXAsLibraryClient`` whose route
                 handlers will receive dispatched requests.
+
         """
         self._client = client
 
@@ -201,6 +210,7 @@ class OgxLibraryTransport(httpx.AsyncBaseTransport):
 
         Raises:
             RuntimeError: If the library client has not been initialized.
+
         """
         if self._client.route_impls is None:
             raise RuntimeError(
@@ -244,6 +254,7 @@ class OgxLibraryTransport(httpx.AsyncBaseTransport):
 
         Raises:
             RuntimeError: If route_impls is not initialized.
+
         """
         if self._client.route_impls is None:
             raise RuntimeError("route_impls is not initialized")
@@ -292,6 +303,7 @@ class OgxLibraryTransport(httpx.AsyncBaseTransport):
 
         Raises:
             RuntimeError: If route_impls is not initialized.
+
         """
         if self._client.route_impls is None:
             raise RuntimeError("route_impls is not initialized")

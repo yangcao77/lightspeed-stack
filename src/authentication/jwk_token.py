@@ -45,6 +45,7 @@ async def get_jwk_set(url: str) -> KeySet:
 
     Returns:
         KeySet: The JWK `KeySet` corresponding to the URL.
+
     """
     async with _jwk_cache_lock:
         if url not in _jwk_cache:
@@ -81,6 +82,7 @@ def key_resolver_func(
         callable: A function `header, payload -> Key` that resolves and returns
                   the verification key.
         Raises `KeyNotFoundError` when resolution fails.
+
     """
 
     def _internal(header: dict[str, Any], _payload: dict[str, Any]) -> Key:
@@ -100,6 +102,7 @@ def key_resolver_func(
             KeyNotFoundError: If the header is missing `alg`, no matching key
             is found, multiple keys match a `kid`, or a found key's algorithm
             does not match the header's `alg`.
+
         """
         if "alg" not in header:
             raise KeyNotFoundError("Token header missing 'alg' field")
@@ -175,6 +178,7 @@ class JwkTokenAuthDependency(AuthInterface):  # pylint: disable=too-few-public-m
         Notes:
         -----
             Initializes the instance and sets `skip_userid_check` to False.
+
         """
         self.virtual_path: str = virtual_path
         self.config: JwkConfiguration = config
@@ -204,6 +208,7 @@ class JwkTokenAuthDependency(AuthInterface):  # pylint: disable=too-few-public-m
             AuthTuple: A tuple (user_id, username, skip_userid_check, token)
             extracted from the validated JWT. Only returned on successful
             authentication; all error paths raise HTTPException.
+
         """
         if not request.headers.get("Authorization"):
             if _should_skip_auth(request):

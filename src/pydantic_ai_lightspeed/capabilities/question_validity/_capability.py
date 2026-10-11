@@ -66,6 +66,7 @@ class QuestionValidity(AbstractSafetyCapability):
         model = OpenAIResponsesModel("gpt-4o-mini")
         agent = Agent("openai:gpt-4.1", capabilities=[QuestionValidity(model)])
         ```
+
     """
 
     config: QuestionValidityConfig
@@ -89,6 +90,7 @@ class QuestionValidity(AbstractSafetyCapability):
 
         Returns:
             The rendered prompt string ready to send to the validity model.
+
         """
         return Template(self.config.model_prompt).substitute(
             message=message_to_str(message),
@@ -112,6 +114,7 @@ class QuestionValidity(AbstractSafetyCapability):
 
         Returns:
             The agent run result, either from the main agent or a rejection.
+
         """
         prompt = self._build_prompt(ctx.prompt)
 

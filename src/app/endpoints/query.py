@@ -150,6 +150,7 @@ async def _handle_query_with_tracing(
 
     Raises:
         HTTPException: On authentication, authorization, quota, or model errors.
+
     """
     check_configuration_loaded(configuration)
 

@@ -22,6 +22,7 @@ class CacheEntry(BaseModel):
         referenced_documents: List of documents referenced by the response
         tool_calls: List of tool calls made during response generation
         tool_results: List of tool results from tool calls
+
     """
 
     query: str

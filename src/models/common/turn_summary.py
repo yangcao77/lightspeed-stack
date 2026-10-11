@@ -40,6 +40,7 @@ class ReferencedDocument(BaseModel):
         doc_url: Url to the referenced doc.
         doc_title: Title of the referenced doc.
         document_id: Document ID for preserving identity during deduplication.
+
     """
 
     doc_url: Optional[AnyUrl] = Field(
@@ -68,6 +69,7 @@ class RAGContext(BaseModel):
         context_text: Formatted RAG context string for injection into the query.
         rag_chunks: RAG chunks from pre-query sources (BYOK + Solr).
         referenced_documents: Referenced documents from pre-query sources.
+
     """
 
     context_text: str = Field(default="", description="Formatted context for injection")

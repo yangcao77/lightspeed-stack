@@ -40,6 +40,7 @@ class ConversationSummary(BaseModel):
             summarization LLM call (e.g., ``"openai/gpt-4o-mini"``).
             Preserved for audit and for diagnostics when summary
             quality varies between models.
+
     """
 
     summary_text: str = Field(

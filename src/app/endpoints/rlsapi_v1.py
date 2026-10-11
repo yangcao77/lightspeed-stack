@@ -124,6 +124,7 @@ def _build_instructions(systeminfo: RlsapiV1SystemInfo) -> str:
 
     Returns:
         The rendered instructions string for the LLM.
+
     """
     prompt = (
         configuration.customization.system_prompt
@@ -156,6 +157,7 @@ def _compile_prompt_template(prompt: str) -> jinja2.Template:
 
     Raises:
         TemplateRenderError: If the template contains invalid Jinja2 syntax.
+
     """
     env = SandboxedEnvironment()
     try:
@@ -178,6 +180,7 @@ async def _get_default_model_id() -> str:
 
     Raises:
         HTTPException: If no model can be determined from configuration or discovery.
+
     """
     # 1. Try configured defaults
     if configuration.inference is not None:
@@ -237,6 +240,7 @@ async def _resolve_validated_model_id() -> str:
     Raises:
         HTTPException: 404 if the resolved model does not exist in OGX.
         HTTPException: 503 if OGX is unreachable during resolution or validation.
+
     """
     model_id = await _get_default_model_id()
     client = AsyncOgxClientHolder().get_client()
@@ -272,6 +276,7 @@ async def _call_llm(
     Raises:
         ApiException: If the OGX service is unreachable.
         HTTPException: 503 if no default model is configured.
+
     """
     client = AsyncOgxClientHolder().get_client()
     resolved_model_id = model_id or await _get_default_model_id()
@@ -324,6 +329,7 @@ def _queue_splunk_event(  # pylint: disable=too-many-arguments,too-many-position
         sourcetype: Splunk sourcetype to use when sending the event.
         input_tokens: Number of prompt tokens consumed by the LLM call.
         output_tokens: Number of completion tokens produced by the LLM call.
+
     """
     org_id, system_id = get_rh_identity_context(request)
     systeminfo = infer_request.context.systeminfo
@@ -383,6 +389,7 @@ async def _check_shield_moderation(  # pylint: disable=too-many-arguments,too-ma
         A tuple of (refusal_response, moderated_input). refusal_response is
         None when moderation passed; moderated_input is the (possibly
         redacted) text to forward to inference.
+
     """
     logger.info("Running shield moderation for rlsapi v1 request %s", request_id)
 
@@ -465,6 +472,7 @@ def _record_inference_failure(  # pylint: disable=too-many-arguments,too-many-po
 
     Returns:
         The total inference time in seconds.
+
     """
     inference_time = time.monotonic() - start_time
     recording.record_llm_failure(provider, model, endpoint_path)
@@ -504,6 +512,7 @@ def _resolve_quota_subject(request: Request, auth: AuthTuple) -> Optional[str]:
 
     Returns:
         The resolved subject identifier string, or None if quota is disabled.
+
     """
     quota_subject = configuration.rlsapi_v1.quota_subject
     if quota_subject is None:
@@ -557,6 +566,7 @@ def _build_infer_response(
 
     Returns:
         Tuple of the assembled ``RlsapiV1InferResponse`` and its ``TurnSummary``.
+
     """
     if response is not None:
         turn_summary = build_turn_summary(
@@ -690,6 +700,7 @@ async def infer_endpoint(  # pylint: disable=R0914,R0915
 
     Raises:
         HTTPException: 503 if the LLM service is unavailable.
+
     """
     # Authentication enforced by get_auth_dependency(), authorization by @authorize decorator.
     with tracer.start_as_current_span("rlsapi_v1.infer") as span:

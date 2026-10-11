@@ -18,6 +18,7 @@ class InfoResponse(AbstractSuccessfulResponse):
         name: Service name.
         service_version: Service version.
         ogx_version: OGX version.
+
     """
 
     name: str = Field(
@@ -58,6 +59,7 @@ class ReadinessResponse(AbstractSuccessfulResponse):
         overall_status: Overall service health status (healthy/degraded/unhealthy).
         impacts: Optional list of functional impacts when degraded or unhealthy.
         providers: List of unhealthy providers (empty when all healthy).
+
     """
 
     ready: bool = Field(
@@ -128,6 +130,7 @@ class LivenessResponse(AbstractSuccessfulResponse):
 
     Attributes:
         alive: If app is alive.
+
     """
 
     alive: bool = Field(
@@ -154,6 +157,7 @@ class StatusResponse(AbstractSuccessfulResponse):
     Attributes:
         functionality: The functionality of the service.
         status: The status of the service.
+
     """
 
     functionality: str = Field(
@@ -188,6 +192,7 @@ class AuthorizedResponse(AbstractSuccessfulResponse):
         user_id: The ID of the logged in user.
         username: The name of the logged in user.
         skip_userid_check: Whether to skip the user ID check.
+
     """
 
     user_id: str = Field(

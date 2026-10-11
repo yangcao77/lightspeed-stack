@@ -34,6 +34,7 @@ class QueryResponse(AbstractSuccessfulResponse):
         input_tokens: Number of tokens sent to LLM.
         output_tokens: Number of tokens received from LLM.
         available_quotas: Quota available as measured by all configured quota limiters.
+
     """
 
     conversation_id: Optional[str] = Field(
@@ -225,6 +226,7 @@ class StreamingInterruptResponse(AbstractSuccessfulResponse):
         request_id: The streaming request ID targeted by the interrupt call.
         interrupted: Whether an in-progress stream was interrupted.
         message: Human-readable interruption status message.
+
     """
 
     request_id: str = Field(

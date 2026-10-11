@@ -19,6 +19,7 @@ class PromptResourceResponse(AbstractSuccessfulResponse):
         is_default: Whether this version is the default.
         prompt: Prompt text with placeholders.
         variables: Variable names used in the template.
+
     """
 
     prompt_id: str = Field(..., description="Prompt identifier from OGX")
@@ -52,6 +53,7 @@ class PromptsListResponse(AbstractSuccessfulResponse):
 
     Attributes:
         data: Prompt entries as returned by the OGX list API.
+
     """
 
     data: list[PromptResourceResponse] = Field(
@@ -86,6 +88,7 @@ class PromptDeleteResponse(AbstractDeleteResponse):
         prompt_id: Prompt identifier that was passed to delete.
         deleted: Whether the prompt was deleted successfully
         response: Human readable response
+
     """
 
     resource_name: ClassVar[str] = "Prompt"

@@ -24,6 +24,7 @@ class InMemoryCache(Cache):
         Parameters:
         ----------
             config (InMemoryCacheConfig): Configuration options controlling cache behavior.
+
         """
         self.cache_config = config
 
@@ -46,6 +47,7 @@ class InMemoryCache(Cache):
 
         Returns:
             True if the cache is available, False otherwise.
+
         """
         return True
 
@@ -74,6 +76,7 @@ class InMemoryCache(Cache):
         Returns:
         -------
             Empty list.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -101,6 +104,7 @@ class InMemoryCache(Cache):
             conversation_id: Conversation ID unique for given user.
             cache_entry: The `CacheEntry` object to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -122,6 +126,7 @@ class InMemoryCache(Cache):
         Returns:
         -------
             bool: True in all cases.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -162,6 +167,7 @@ class InMemoryCache(Cache):
             conversation_id: Conversation ID unique for given user.
             topic_summary: The topic summary to store.
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -185,6 +191,7 @@ class InMemoryCache(Cache):
             conversation_id: Conversation ID unique for given user.
             summary: The ConversationSummary chunk (not persisted).
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -204,6 +211,7 @@ class InMemoryCache(Cache):
         Returns:
         -------
             An empty list.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -228,6 +236,7 @@ class InMemoryCache(Cache):
             conversation_id: Conversation ID unique for given user.
             folded_summary: The folded summary (not persisted).
             skip_user_id_check: Skip user_id suid check.
+
         """
         # just check if user_id and conversation_id are UUIDs
         super().construct_key(user_id, conversation_id, skip_user_id_check)
@@ -237,5 +246,6 @@ class InMemoryCache(Cache):
 
         Returns:
             True (`bool`): Always `True` for this in-memory cache implementation.
+
         """
         return True

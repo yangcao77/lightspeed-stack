@@ -140,6 +140,7 @@ def _count_request_attachments(response_input: ResponseInput) -> int:
 
     Returns:
         Number of input_file and input_image content parts.
+
     """
     if isinstance(response_input, str):
         return 0
@@ -170,6 +171,7 @@ def _finalize_responses_root_span(
         turn_summary: Completed turn summary with the LLM response text.
         compacted: Whether the turn used compacted conversation context.
         session_id: Normalized conversation id for ``session.id``.
+
     """
     set_span_attributes(
         root_span,
@@ -190,6 +192,7 @@ def _start_llm_inference_span(
 
     Returns:
         Started OpenTelemetry span for the inference call.
+
     """
     provider_id, bare_model_id = extract_provider_and_model_from_model_id(model_id)
     span = tracer.start_span(
@@ -220,6 +223,7 @@ def _complete_llm_inference_span(
         turn_summary: Completed turn summary with tools, tool-based RAG, and tokens.
         model: Composite model identifier in ``provider/model`` format.
         inference_time: Inference duration in seconds.
+
     """
     provider_id, bare_model_id = extract_provider_and_model_from_model_id(model)
     set_span_attributes(
@@ -254,6 +258,7 @@ def _get_user_agent(request: Request) -> Optional[str]:
 
     Returns:
         Sanitized User-Agent string, or None if the header is absent or empty.
+
     """
     raw = request.headers.get("User-Agent", "")
     if not raw:
@@ -299,6 +304,7 @@ def _error_response_for_response_api_error(
 
     Returns:
         Structured error response for known API failures, or None for unknown errors.
+
     """
     if isinstance(error, RuntimeError):
         if not is_context_length_error(str(error)):
@@ -324,6 +330,7 @@ def _record_inference_span_exception(
         inference_span: The ``llm.inference`` span to annotate.
         error: Exception to record on the span.
         error_response: Mapped structured error response for attribute enrichment.
+
     """
     attributes = (
         {
@@ -353,6 +360,7 @@ def _raise_response_api_http_exception(
     Raises:
         Exception: Re-raises unknown RuntimeError instances unchanged.
         HTTPException: Raised for known Responses API failures.
+
     """
     error_response = _error_response_for_response_api_error(error, api_params)
     _record_inference_span_exception(inference_span, error, error_response)
@@ -372,6 +380,7 @@ async def _persist_blocked_response_turn(
     Args:
         api_params: Responses API parameters for the blocked request.
         context: Request-scoped Responses API context with moderation details.
+
     """
     if api_params.store:
         moderation_result = cast("ShieldModerationBlocked", context.moderation_result)
@@ -409,6 +418,7 @@ async def _append_previous_response_turn(
         api_params: Responses API parameters containing conversation details.
         context: Request-scoped Responses API context.
         output: Final output items from the Responses API object.
+
     """
     if not api_params.store:
         return
@@ -446,6 +456,7 @@ def _store_response_query_results(
 
     Returns:
         True when query results were stored, False when storage is disabled.
+
     """
     if not api_params.store:
         return False
@@ -502,6 +513,7 @@ async def responses_endpoint_handler(
             - 429: Quota limit exceeded - The token quota for model or user has been exceeded
             - 500: Internal Server Error - Configuration not loaded or other server errors
             - 503: Service Unavailable - Unable to connect to OGX backend
+
     """
     span_name = "responses.handle_request"
     if responses_request.stream:
@@ -553,6 +565,7 @@ async def handle_responses_with_tracing(  # pylint: disable=too-many-locals
 
     Returns:
         ResponsesResponse or StreamingResponse depending on ``stream``.
+
     """
     original_request = responses_request  # read-only request
     updated_request = responses_request.model_copy(deep=True)
@@ -761,6 +774,7 @@ def _record_response_inference_result(
         result: Result label such as ``success`` or ``failure``.
         duration: Inference call duration in seconds.
         record_failure: When True, also increment the LLM failure counter.
+
     """
     provider, model = extract_provider_and_model_from_model_id(model_id)
     if record_failure:
@@ -783,6 +797,7 @@ async def handle_streaming_response(
         context: Responses context
     Returns:
         StreamingResponse with SSE-formatted events
+
     """
     root_span = context.root_span
     turn_summary = TurnSummary()
@@ -852,6 +867,7 @@ async def shield_violation_generator(
         context: ResponsesContext
     Yields:
         SSE-formatted strings for streaming events
+
     """
     normalized_conv_id = normalize_conversation_id(api_params.conversation)
     available_quotas = get_available_quotas(
@@ -944,6 +960,7 @@ def _sanitize_response_dict(
         configured_mcp_labels: Set of ``server_label`` values that identify
             server-deployed MCP servers.
         original_request: Original request object
+
     """
     if original_request.instructions is None:
         response_dict["instructions"] = SUBSTITUTED_INSTRUCTIONS_PLACEHOLDER
@@ -980,6 +997,7 @@ def _is_server_mcp_output_item(
 
     Returns:
         True if the item is an MCP call/list/approval from a server-deployed MCP server.
+
     """
     item_type = item.get("type")
     if item_type in ("mcp_call", "mcp_list_tools", "mcp_approval_request"):
@@ -1002,6 +1020,7 @@ def _should_filter_mcp_chunk(
 
     Returns:
         True if the chunk should be filtered out from the client stream.
+
     """
     if chunk.type == "response.output_item.added":
         item_added_chunk = cast("OutputItemAddedChunk", chunk)
@@ -1047,6 +1066,7 @@ def _populate_turn_summary(
         api_params: ResponsesApiParams
         context: Responses context
         turn_summary: TurnSummary to populate
+
     """
     turn_summary.id = response_object.id
     vector_store_ids = extract_vector_store_ids_from_tools(api_params.tools)
@@ -1094,6 +1114,7 @@ async def response_generator(
         inference_span: OpenTelemetry ``llm.inference`` span for this stream.
     Yields:
         SSE-formatted strings for streaming events, ending with [DONE]
+
     """
     logger.debug("Starting streaming response (Responses API) processing")
 
@@ -1269,6 +1290,7 @@ async def generate_response(
         turn_summary: TurnSummary to populate during streaming
     Yields:
         SSE-formatted strings from the generator
+
     """
     root_span = context.root_span
     try:
@@ -1325,6 +1347,7 @@ async def handle_non_streaming_response(
         context: Responses context
     Returns:
         ResponsesResponse with the completed response
+
     """
     root_span = context.root_span
     user_id = context.auth[0]

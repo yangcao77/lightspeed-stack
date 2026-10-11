@@ -27,6 +27,7 @@ def get_rh_identity_context(request: Request) -> tuple[str, str]:
     Returns:
         Tuple of (org_id, system_id). Returns ("auth_disabled", "auth_disabled")
         when RH Identity auth is not configured or data is unavailable.
+
     """
     rh_identity: Optional[RHIdentityData] = getattr(
         request.state, "rh_identity_data", None

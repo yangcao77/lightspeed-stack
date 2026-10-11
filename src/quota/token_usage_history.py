@@ -46,6 +46,7 @@ class TokenUsageHistory:
         ----------
             configuration (QuotaHandlersConfiguration): Configuration
             containing `sqlite` and `postgres` connection settings.
+
         """
         # store the configuration, it will be used
         # by reconnection logic later, if needed
@@ -73,6 +74,7 @@ class TokenUsageHistory:
 
         Raises:
             ValueError: If neither PostgreSQL nor SQLite configuration is provided.
+
         """
         logger.info("Initializing connection to quota usage history database")
         if self.postgres_connection_config is not None:
@@ -115,6 +117,7 @@ class TokenUsageHistory:
         Raises:
         ------
             ValueError: If no database backend configuration (Postgres or SQLite) is available.
+
         """
         logger.info(
             "Token usage for user %s, provider %s and model %s changed by %d, %d tokens",
@@ -162,6 +165,7 @@ class TokenUsageHistory:
         Returns:
             `true` if the database connection is present and responds to a
             simple query, `false` otherwise.
+
         """
         if self.connection is None:
             logger.warning("Not connected, need to reconnect later")

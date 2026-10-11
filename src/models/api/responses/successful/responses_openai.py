@@ -69,6 +69,7 @@ class ResponsesResponse(AbstractSuccessfulResponse):
         available_quotas: Remaining token quotas for the user (LCORE-specific).
         output_text: Aggregated text output from all output_text items in the
             output array.
+
     """
 
     created_at: int

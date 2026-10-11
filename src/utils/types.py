@@ -23,6 +23,7 @@ class Singleton(type):
 
         Returns:
             The singleton instance for this class.
+
         """
         if cls not in Singleton._instances:
             Singleton._instances[cls] = type.__call__(cls, *args, **kwargs)

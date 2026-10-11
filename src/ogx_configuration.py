@@ -45,6 +45,7 @@ def ogx_config_section(lcs_config: dict[str, Any]) -> dict[str, Any]:
 
     Returns:
         The OGX configuration mapping, or an empty dict when absent.
+
     """
     ogx = lcs_config.get("ogx")
     if isinstance(ogx, dict):
@@ -129,6 +130,7 @@ def _resolve_rag_type(brag: dict[str, Any]) -> str:
     Returns:
         str: The fully-qualified OGX provider type
             (e.g. ``"inline::faiss"``, ``"remote::pgvector"``).
+
     """
     backend = brag.get("backend", constants.DEFAULT_RAG_BACKEND)
     return BACKEND_TO_PROVIDER_TYPE.get(backend, f"inline::{backend}")
@@ -149,6 +151,7 @@ class YamlDumper(yaml.Dumper):  # pylint: disable=too-many-ancestors
             to the base implementation.
             indentless (bool): Ignored — this implementation always enforces
             indented block style.
+
         """
         _ = indentless
         return super().increase_indent(flow, False)
@@ -175,6 +178,7 @@ def enrich_azure_entra_id_inference(
 
     Returns:
         None: The configuration is modified in place.
+
     """
     if azure_entra_id is None:
         return
@@ -246,6 +250,7 @@ def construct_storage_backends_section(
     Returns:
     -------
         dict[str, Any]: The storage.backends dict with new backends added.
+
     """
     output: dict[str, Any] = {}
 
@@ -300,6 +305,7 @@ def construct_vector_stores_section(
             - `embedding_model`: registered OGX model id
               (``sentence-transformers/byok_<rag_id>_embedding``), not the load path
             - `embedding_dimension`: embedding vector dimensionality
+
     """
     output = []
 
@@ -361,6 +367,7 @@ def construct_models_section(
     Returns:
     -------
         list[dict[str, Any]]: The models list with embedding models added.
+
     """
     output: list[dict[str, Any]] = []
 
@@ -426,6 +433,7 @@ def _build_vector_io_config(
 
     Raises:
         ValueError: If ``rag_type`` is not present in VECTOR_IO_TEMPLATES.
+
     """
     template = VECTOR_IO_TEMPLATES.get(rag_type)
     if template is None:
@@ -476,6 +484,7 @@ def construct_vector_io_providers_section(
         Each appended entry has `provider_id` set to "byok_<vector_db_id>",
         `provider_type` set from the RAG item, and a `config` with `persistence`
         referencing the corresponding backend.
+
     """
     output: list[dict[str, Any]] = []
 
@@ -526,6 +535,7 @@ def enrich_byok_rag(ogx_config: dict[str, Any], byok_rag: list[dict[str, Any]]) 
     Args:
         ogx_config: OGX configuration dict (modified in place)
         byok_rag: List of BYOK RAG configurations
+
     """
     if len(byok_rag) == 0:
         logger.info("BYOK RAG is not configured: skipping")
@@ -577,6 +587,7 @@ def _vector_store_provider_by_id(
 
     Returns:
         Matching provider dict, or None when unset / not found.
+
     """
     if provider_id is None:
         return None
@@ -608,6 +619,7 @@ def _upsert_vsprov_embedding_model(
         embedding_model: Configured embedding model path or id.
         embedding_dimension: Embedding vector dimensionality (required on
             validated ``vector_store.providers`` entries).
+
     """
     models = ogx_config.setdefault("registered_resources", {}).setdefault("models", [])
     model_id = f"vsprov_{provider_id}_embedding"
@@ -642,6 +654,7 @@ def _vsprov_fields_and_backend(
     Raises:
         ValueError: If ``product_type`` is not a supported vector-store
             provider type.
+
     """
     backend_name = f"vsprov_{provider_id}_storage"
     if product_type == "faiss":
@@ -679,6 +692,7 @@ def _replace_or_append_vector_io(
         vector_io: Mutable providers.vector_io list.
         existing_ids: Set of provider_ids already present (updated on append).
         provider_entry: New provider entry to install.
+
     """
     provider_id = provider_entry["provider_id"]
     if provider_id not in existing_ids:
@@ -705,6 +719,7 @@ def _apply_vector_stores_defaults(
     Parameters:
         ogx_config: OGX configuration modified in place.
         designated: Provider entry selected by ``vector_store.default_provider``.
+
     """
     vector_stores = ogx_config.get("vector_stores")
     if not isinstance(vector_stores, dict):
@@ -736,6 +751,7 @@ def _enrich_one_vector_store_provider(
         vector_io: ``providers.vector_io`` list (modified in place).
         existing_ids: Known ``provider_id`` values already in ``vector_io``.
         ogx_config: Full OGX config (for embedding model registration).
+
     """
     provider_id = str(entry["id"]).strip()
     product_type = entry["type"]
@@ -785,6 +801,7 @@ def enrich_vector_store(
         ogx_config: OGX configuration dictionary (modified in place).
         vector_store: High-level ``vector_store`` section
             (``default_provider`` + ``providers``) as a dict.
+
     """
     vector_store = vector_store or {}
     providers = vector_store.get("providers") or []
@@ -841,6 +858,7 @@ def enrich_solr(  # pylint: disable=too-many-locals,too-many-statements,too-many
         okp_config: OKP configuration dict. Used keys:
             - chunk_filter_query (str): Solr filter query for chunk retrieval
             - rhokp_url (str): OKP/Solr base URL (e.g. from ${env.RH_SERVER_OKP})
+
     """
     inline_ids = rag_config.get("inline") or []
     tool_ids = rag_config.get("tool") or []
@@ -1025,6 +1043,7 @@ def load_default_baseline() -> dict[str, Any]:
     Raises:
         OSError: If the shipped baseline file cannot be read.
         yaml.YAMLError: If the baseline file is not valid YAML.
+
     """
     with open(DEFAULT_BASELINE_RESOURCE, encoding="utf-8") as file:
         return yaml.safe_load(file)
@@ -1045,6 +1064,7 @@ def deep_merge_list_replace(
 
     Returns:
         dict[str, Any]: A new merged mapping.
+
     """
     result = copy.deepcopy(base)
     for key, overlay_value in overlay.items():
@@ -1069,6 +1089,7 @@ def _matchable_provider_id(provider_id: Any) -> Any:
     Returns:
         ``openai`` when ``provider_id`` is the baseline conditional openai
         ref, otherwise ``provider_id`` unchanged.
+
     """
     if provider_id == CONDITIONAL_OPENAI_PROVIDER_ID:
         return "openai"
@@ -1084,6 +1105,7 @@ def _strip_default_openai_inference(ogx_config: dict[str, Any]) -> None:
 
     Returns:
         None: ``ogx_config`` is modified in place.
+
     """
     providers = ogx_config.get("providers")
     if not isinstance(providers, dict):
@@ -1111,6 +1133,7 @@ def _replace_or_append_inference_provider(
     Parameters:
         inference_list: Mutable providers.inference list.
         entry: New provider entry to install.
+
     """
     provider_id = entry["provider_id"]
     for index, existing in enumerate(inference_list):
@@ -1141,6 +1164,7 @@ def _build_inference_entry(
     Returns:
         tuple[dict[str, Any], list[str]]: The provider entry, and its
         ``allowed_models`` (empty list when unset).
+
     """
     entry: dict[str, Any] = {
         "provider_id": emitted_id,
@@ -1187,6 +1211,7 @@ def _register_high_level_models(
 
     Returns:
         New model resource dicts to append; empty when all are already known.
+
     """
     known = {
         (m.get("provider_id"), m.get("model_id"))
@@ -1223,6 +1248,7 @@ def _emitted_provider_id(provider: dict[str, Any]) -> str:
 
     Returns:
         The provider_id to emit.
+
     """
     explicit_id = (provider.get("id") or "").strip()
     return explicit_id or provider["type"].replace("_", "-")
@@ -1268,6 +1294,7 @@ def apply_high_level_inference(
 
     Returns:
         None: ``ogx_config`` is modified in place.
+
     """
     providers = inference.get("providers") or []
     if not providers:
@@ -1346,6 +1373,7 @@ def ensure_mcp_tool_runtime(ogx_config: dict[str, Any]) -> None:
 
     Returns:
         None: ``ogx_config`` is modified in place.
+
     """
     apis = ogx_config.setdefault("apis", [])
     if "tool_runtime" not in apis:
@@ -1386,6 +1414,7 @@ def _resolve_profile_path(profile: str, config_file_dir: Optional[str]) -> Path:
 
     Returns:
         Path: The resolved profile path.
+
     """
     path = Path(profile)
     if not path.is_absolute() and config_file_dir is not None:
@@ -1418,6 +1447,7 @@ def synthesize_configuration(  # pylint: disable=too-many-locals
 
     Returns:
         dict[str, Any]: The synthesized OGX configuration.
+
     """
     unified = ogx_config_section(lcs_config).get("config")
 
@@ -1533,6 +1563,7 @@ def synthesize_to_file(
 
     Returns:
         None.
+
     """
     ogx_config = synthesize_configuration(lcs_config, config_file_dir, default_baseline)
 
@@ -1590,6 +1621,7 @@ def migrate_config_dumb(
         yaml.YAMLError: If an input file is not valid YAML.
         ValueError: If either input file does not parse to a mapping (e.g. an
             empty or comment-only file).
+
     """
     with open(run_yaml_path, encoding="utf-8") as file:
         run_yaml = yaml.safe_load(file)
@@ -1646,6 +1678,7 @@ def generate_configuration(
         input_file: Path to input OGX config
         output_file: Path to write enriched config
         config: Lightspeed config dict (from YAML)
+
     """
     logger.info("Reading OGX configuration from file %s", input_file)
 
@@ -1698,6 +1731,7 @@ def has_synthesis_input(lcs_config: dict[str, Any]) -> bool:
 
     Returns:
         bool: True when any synthesis input is present.
+
     """
     inference = lcs_config.get("inference") or {}
     vector_store = lcs_config.get("vector_store") or {}

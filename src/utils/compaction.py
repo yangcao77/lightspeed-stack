@@ -78,6 +78,7 @@ def format_conversation_for_summary(items: list[Any]) -> str:
     Returns:
         Multi-line string. One line per message in the form
         ``"<role>: <text>"``. Empty when no message items contain text.
+
     """
     lines: list[str] = []
     for item in items:
@@ -136,6 +137,7 @@ def partition_conversation(
         ``(old_items, recent_items)``. ``old_items`` may be empty (no
         compaction needed); ``recent_items`` may be empty (everything
         had to be summarized).
+
     """
     msg_indices = _message_indices(items)
     if not msg_indices:
@@ -183,6 +185,7 @@ def _extract_response_text(response: Any) -> str:
     Returns:
         Concatenated response text, or the empty string when nothing
         could be extracted.
+
     """
     parts: list[str] = []
     output = getattr(response, "output", None) or []
@@ -251,6 +254,7 @@ async def summarize_chunk(
             the resulting summary would be empty. A zero-token summary
             cannot be persisted (PositiveInt) and is also useless as
             context, so propagating an error is the honest behavior.
+
     """
     transcript = format_conversation_for_summary(old_items)
     logger.info(
@@ -357,6 +361,7 @@ async def recursively_resummarize(
         ValueError: When *summaries* has fewer than two entries (no
             fold is needed) or when the LLM call yields no
             extractable text.
+
     """
     if len(summaries) < 2:
         raise ValueError(

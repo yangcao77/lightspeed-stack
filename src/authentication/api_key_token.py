@@ -54,6 +54,7 @@ class APIKeyTokenAuthDependency(
         Args:
             config: The API key token configuration containing the API key.
             virtual_path: The virtual path for the service (default: DEFAULT_VIRTUAL_PATH).
+
         """
         self.virtual_path: str = virtual_path
         self.config: APIKeyTokenConfiguration = config
@@ -72,6 +73,7 @@ class APIKeyTokenAuthDependency(
         Raises:
             HTTPException: If the bearer token is missing or
             doesn't match the configured API key (HTTP 401).
+
         """
         if not request.headers.get("Authorization"):
             if _should_skip_auth(request):

@@ -162,6 +162,7 @@ async def get_vector_store_ids(
     Raises:
         HTTPException: With ServiceUnavailableResponse if connection fails,
             or InternalServerErrorResponse if API returns an error status
+
     """
     if vector_store_ids is not None:
         return vector_store_ids
@@ -192,6 +193,7 @@ async def get_topic_summary(  # pylint: disable=too-many-nested-blocks
 
     Returns:
         The topic summary for the question
+
     """
     try:
         # Normalize Vertex AI model IDs to work around OGX 0.6.x bug
@@ -236,6 +238,7 @@ async def maybe_get_topic_summary(
 
     Returns:
         Generated topic summary, or None when topic summaries are disabled.
+
     """
     if not generate_topic_summary:
         return None
@@ -274,6 +277,7 @@ async def prepare_tools(  # pylint: disable=too-many-arguments,too-many-position
 
     Returns:
         List of tool configurations, or None if no tools available
+
     """
     if no_tools:
         return None
@@ -332,6 +336,7 @@ def _build_provider_data_headers(
     Returns:
         Dict with a single ``X-OGX-Provider-Data`` key, or None when
         no MCP tools carry headers.
+
     """
     if not tools:
         return None
@@ -376,6 +381,7 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
 
     Returns:
         ResponsesApiParams containing all prepared parameters for the API request
+
     """
     request_model = (
         f"{query_request.provider}/{query_request.model}"
@@ -468,6 +474,7 @@ def extract_vector_store_ids_from_tools(
     Returns:
     -------
         List of vector store IDs used in file_search tools, or empty list.
+
     """
     if not tools:
         return []
@@ -490,6 +497,7 @@ def tool_matches_allowed_entry(tool: InputTool, entry: dict[str, str]) -> bool:
     -------
         True if each entry key exists on the tool, the attribute is not None, and
         the value matches (including string coercion).
+
     """
     for key, value in entry.items():
         if not hasattr(tool, key):
@@ -519,6 +527,7 @@ def group_mcp_tools_by_server(
     -------
         Mapping from server_label to None (no name restriction) or to the list
         of allowed tool names on that server.
+
     """
     unrestricted_servers: set[str] = set()
     server_to_names: dict[str, list[str]] = {}
@@ -566,6 +575,7 @@ def mcp_strip_name_from_allowlist_entries(
     Returns:
     -------
         Shallow-copied rows; name is dropped only when type is mcp.
+
     """
     result: list[dict[str, str]] = []
     for entry in allowed_entries:
@@ -592,6 +602,7 @@ def mcp_project_allowed_tools_to_names(
     -------
         List of names in the intersection, or None if names is empty or the
         intersection is empty.
+
     """
     if not names:
         return None
@@ -628,6 +639,7 @@ def filter_tools_by_allowed_entries(
         Sublist of tools matching at least one sanitized row. MCP tools may be
         copied with a tighter allowed_tools list when the allowlist names tools
         per server. Empty allowlist yields an empty list.
+
     """
     if tools is None:
         return None
@@ -686,6 +698,7 @@ def resolve_vector_store_ids(
     Returns:
     -------
         List of OGX vector_db_ids ready for the OGX API.
+
     """
     rag_id_to_vector_db_id = {brag.rag_id: brag.vector_db_id for brag in byok_rags}
     rag_id_to_vector_db_id[constants.OKP_RAG_ID] = (
@@ -708,6 +721,7 @@ def translate_tools_vector_store_ids(
     -------
         New list of tools with file_search vector_store_ids translated; other tools
         unchanged.
+
     """
     result: list[InputTool] = []
     for tool in tools:
@@ -727,6 +741,7 @@ def get_rag_tools(vector_store_ids: list[str]) -> Optional[list[InputToolFileSea
 
     Returns:
         List containing file_search tool configuration, or empty list if no stores available
+
     """
     if vector_store_ids == []:
         return []
@@ -764,6 +779,7 @@ async def get_mcp_tools(
     Raises:
         HTTPException: 401 with WWW-Authenticate header when an MCP server uses OAuth,
             no headers are passed, and the server responds with 401 and WWW-Authenticate.
+
     """
     complete_headers = build_mcp_headers(
         configuration, mcp_headers or {}, request_headers, token
@@ -838,6 +854,7 @@ def apply_mcp_headers_to_explicit_tools(
 
     Returns:
         New tool list with MCP entries updated or omitted.
+
     """
     if not tools:
         return tools
@@ -904,6 +921,7 @@ def _build_okp_doc_url(attributes: dict[str, Any]) -> Optional[str]:
 
     Returns:
         Fully-qualified document URL, or None if no usable path is found.
+
     """
     offline = configuration.okp.offline
     if offline:
@@ -933,6 +951,7 @@ def parse_referenced_documents(  # pylint: disable=too-many-locals
 
     Returns:
         List of referenced documents with doc_url, doc_title, and source
+
     """
     documents: list[ReferencedDocument] = []
     # Use a set to track unique documents by (doc_url, doc_title) tuple
@@ -1002,6 +1021,7 @@ def parse_rag_chunks(
 
     Returns:
         List of RAG chunks derived from tool file search results (not mutated in place).
+
     """
     if response is None or not response.output:
         return []
@@ -1032,6 +1052,7 @@ def extract_token_usage(
 
     Returns:
         TokenCounter with input_tokens and output_tokens
+
     """
     provider_id, model_id = extract_provider_and_model_from_model_id(model)
     if usage is None:
@@ -1072,6 +1093,7 @@ def build_tool_call_summary(  # pylint: disable=too-many-return-statements,too-m
 
     Returns:
         Tuple of (ToolCallSummary, ToolResultSummary), one may be None
+
     """
     item_type = getattr(output_item, "type", None)
 
@@ -1222,6 +1244,7 @@ def build_mcp_tool_call_from_arguments_done(
 
     Returns:
         ToolCallSummary for the MCP call, or None if item info not found
+
     """
     item_info = mcp_call_items.get(output_index)
     if not item_info:
@@ -1249,6 +1272,7 @@ def build_tool_result_from_mcp_output_item_done(
 
     Returns:
         ToolResultSummary for the MCP call
+
     """
     content = output_item.error or (output_item.output or "")
     return ToolResultSummary(
@@ -1279,6 +1303,7 @@ def resolve_source_for_result(
     Returns:
     -------
         The resolved index name, or None if resolution is not possible.
+
     """
     if len(vector_store_ids) == 1:
         store_id = vector_store_ids[0]
@@ -1308,6 +1333,7 @@ def _build_chunk_attributes(result: Any) -> Optional[dict[str, Any]]:
     Returns:
     -------
         Dictionary of metadata attributes, or None if no attributes available.
+
     """
     attributes = getattr(result, "attributes", None)
     if not attributes:
@@ -1331,6 +1357,7 @@ def extract_rag_chunks_from_file_search_item(
 
     Returns:
         List of RAG chunks extracted from the file search tool call item.
+
     """
     if item.results is None:
         return []
@@ -1359,6 +1386,7 @@ def parse_arguments_string(arguments_str: str) -> dict[str, Any]:
 
     Returns:
         Parsed dictionary if successful, otherwise {"args": arguments_str}
+
     """
     # Try parsing as-is first (most common case)
     try:
@@ -1399,6 +1427,7 @@ async def check_model_configured(
 
     Raises:
         HTTPException: If there's a connection error or other API error
+
     """
     try:
         models = parse_model_list_response(await client.openai.list())
@@ -1445,6 +1474,7 @@ async def select_model_for_responses(
 
     Raises:
         HTTPException: If models cannot be fetched or an error occurs, or if no LLM model is found
+
     """
     if request_model:
         return request_model
@@ -1508,6 +1538,7 @@ def is_server_deployed_output(output_item: ResponseOutput) -> bool:
 
     Returns:
         True if the item should be processed by LCS, False for client tools.
+
     """
     item_type = getattr(output_item, "type", None)
 
@@ -1551,6 +1582,7 @@ def build_turn_summary(  # pylint: disable=too-many-arguments,too-many-positiona
         TurnSummary with extracted response text, referenced_documents, rag_chunks,
         tool_calls, and tool_results. All fields are empty/default if response is None
         or has no output.
+
     """
     summary = TurnSummary()
 
@@ -1590,6 +1622,7 @@ def extract_text_from_response_items(
 
     Returns:
         Extracted text content concatenated from all items, or empty string if None.
+
     """
     if response_items is None:
         return ""
@@ -1611,6 +1644,7 @@ def extract_text_from_response_item(response_item: ResponseItem) -> str:
 
     Returns:
         Extracted text content, or empty string if not a message.
+
     """
     if response_item.type != "message":
         return ""
@@ -1631,6 +1665,7 @@ def _extract_text_from_content(
     Returns:
         Extracted text content. Only extracts text from input_text, output_text,
         or refusal types. Other content types (images, files, etc.) are ignored.
+
     """
     if isinstance(content, str):
         return content
@@ -1680,6 +1715,7 @@ async def create_new_conversation(
 
     Returns:
         The new conversation's ID (string), as returned by the API.
+
     """
     try:
         conversation = await client.conversations.create(metadata={})
@@ -1700,6 +1736,7 @@ def get_zero_usage() -> ResponseUsage:
 
     Returns:
         Usage object with zero values for input and output tokens.
+
     """
     return ResponseUsage(
         input_tokens=0,
@@ -1718,6 +1755,7 @@ def extract_attachments_text(response_input: ResponseInput) -> str:
 
     Returns:
         All present file_data values joined by double newline.
+
     """
     if isinstance(response_input, str):
         return ""
@@ -1757,6 +1795,7 @@ def _merge_tools(
 
     Raises:
         HTTPException: 409 if a client tool conflicts with a server-configured tool.
+
     """
     server_mcp_labels: set[str] = {
         t.server_label for t in server_tools if t.type == "mcp"
@@ -1798,6 +1837,7 @@ async def _resolve_client_tools(
 
     Returns:
         Resolved list of tools.
+
     """
     # Per-request override of vector stores (user-facing rag_ids)
     vector_store_ids = extract_vector_store_ids_from_tools(tools) or None
@@ -1837,6 +1877,7 @@ async def _resolve_server_tools(
 
     Returns:
         List of server-configured tools, or None if none are configured.
+
     """
     return await prepare_tools(
         vector_store_ids=None,  # allow all vector stores configured
@@ -1880,6 +1921,7 @@ def apply_reasoning_for_resolved_tools(
         Modified reasoning configuration with effort set to "none" if tools
         are present on a default-on reasoning model, or the original reasoning
         otherwise.
+
     """
     if not tools or not model_reasoning_enabled_by_default(model_id):
         return reasoning
@@ -1922,6 +1964,7 @@ async def resolve_tool_choice(
 
     Returns:
         Prepared tools and resolved tool choice, each possibly None.
+
     """
     # If tool_choice mode is "none", tools are explicitly disallowed
     if isinstance(tool_choice, ToolChoiceMode) and tool_choice == ToolChoiceMode.none:
@@ -1995,6 +2038,7 @@ async def resolve_client_tool_choice(
 
     Returns:
         Prepared tools and resolved tool choice, each possibly None.
+
     """
     # If tool_choice mode is "none", tools are explicitly disallowed
     if isinstance(tool_choice, ToolChoiceMode) and tool_choice == ToolChoiceMode.none:

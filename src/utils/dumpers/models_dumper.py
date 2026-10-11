@@ -173,6 +173,7 @@ def dump_models(filename: str) -> None:
     Raises:
     ------
         IOError: If the file cannot be written.
+
     """
     # construct a list with all models
     models = (
@@ -212,6 +213,7 @@ def get_models_for_group(model_group: str) -> list[type[BaseModel]]:
     Raises:
     ------
         Exception: If model_group is not a recognized group name.
+
     """
     # pylint: disable=too-many-return-statements
     match model_group:
@@ -247,6 +249,7 @@ def dump_models_group(model_group: str, filename: Optional[str] = None) -> None:
     Raises:
     ------
         IOError: If the file cannot be written.
+
     """
     models = get_models_for_group(model_group)
 

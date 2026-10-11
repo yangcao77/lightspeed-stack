@@ -38,6 +38,7 @@ class A2AStorageFactory:
 
         Returns:
             TaskStore implementation (InMemoryTaskStore or DatabaseTaskStore).
+
         """
         if cls._task_store is not None:
             return cls._task_store
@@ -86,6 +87,7 @@ class A2AStorageFactory:
 
         Returns:
             A2AContextStore implementation.
+
         """
         if cls._context_store is not None:
             return cls._context_store
@@ -131,6 +133,7 @@ class A2AStorageFactory:
 
         Returns:
             SQLAlchemy AsyncEngine.
+
         """
         if cls._engine is not None:
             return cls._engine

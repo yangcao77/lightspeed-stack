@@ -35,6 +35,7 @@ def get_attribute_from_file(data: dict[str, str], file_name_key: str) -> Optiona
     -------
         Optional[str]: File contents with trailing whitespace stripped, or None
         if the key is not present or is None.
+
     """
     file_path = data.get(file_name_key)
     if file_path is not None:
@@ -60,6 +61,7 @@ def file_check(path: FilePath, desc: str) -> None:
     ------
         InvalidConfigurationError: If `path` does not point to a file or is not
         readable.
+
     """
     if not os.path.isfile(path):
         raise InvalidConfigurationError(f"{desc} '{path}' is not a file")
@@ -87,6 +89,7 @@ def directory_check(
     ------
         InvalidConfigurationError: If `path` does not point to a directory or
         is not writable when required.
+
     """
     if not os.path.exists(path):
         if must_exists:
@@ -113,6 +116,7 @@ def import_python_module(profile_name: str, profile_path: str) -> Optional[Modul
         Optional[ModuleType]: The loaded module on success; `None` if
         `profile_path` does not end with `.py`, if a module spec or loader
         cannot be created, or if importing/executing the module fails.
+
     """
     if not profile_path.endswith(".py"):
         return None
@@ -146,6 +150,7 @@ def is_valid_profile(profile_module: ModuleType) -> bool:
     Returns:
         True if the module provides a dict `PROFILE_CONFIG` containing a
         `system_prompts` dict, False otherwise.
+
     """
     if not hasattr(profile_module, "PROFILE_CONFIG"):
         return False
@@ -178,6 +183,7 @@ def is_valid_sqlite_period(period: str) -> bool:
     -------
         bool: True if datetime() applied to a fixed timestamp with the period
         as the modifier returns a later time, False otherwise.
+
     """
     # julianday() makes it a comparison of times: as text, the result of the
     # modifier 'subsec' would be greater than the timestamp it does not move

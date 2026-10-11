@@ -15,6 +15,7 @@ class SkillsResponse(AbstractSuccessfulResponse):
 
     Attributes:
         skills: List of loaded skills with metadata (name and description).
+
     """
 
     skills: list[SkillMetadata] = Field(

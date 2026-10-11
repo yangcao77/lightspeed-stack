@@ -29,6 +29,7 @@ async def mcp_headers_dependency(request: Request) -> McpHeaders:
     Returns:
     -------
         The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+
     """
     return extract_mcp_headers(request)
 
@@ -46,6 +47,7 @@ def extract_mcp_headers(request: Request) -> McpHeaders:
     Returns:
     -------
         The mcp headers dictionary, or empty dictionary if not found or on json decoding error
+
     """
     mcp_headers_string = request.headers.get("MCP-HEADERS", "")
     mcp_headers = {}
@@ -82,6 +84,7 @@ def handle_mcp_headers_with_toolgroups(
 
     Returns:
         Dictionary with URLs as keys and their corresponding headers as values
+
     """
     converted_mcp_headers = {}
 
@@ -119,6 +122,7 @@ def extract_propagated_headers(
     Returns:
         Dictionary of header names to values extracted from the request.
         Only headers present in both the allowlist and the request are included.
+
     """
     lower_request_headers = {k.lower(): v for k, v in request_headers.items()}
     propagated: dict[str, str] = {}
@@ -151,6 +155,7 @@ def strip_bearer_prefix(value: str) -> str:
         separating whitespace removed. Values without the scheme, including
         those with a differently-cased scheme (e.g. ``bearer``), are
         returned unchanged.
+
     """
     return value.removeprefix("Bearer ")
 
@@ -169,6 +174,7 @@ def ensure_bearer_prefix(value: str) -> str:
 
     Returns:
         The value guaranteed to start with a single ``Bearer `` prefix.
+
     """
     return f"Bearer {strip_bearer_prefix(value)}"
 
@@ -191,6 +197,7 @@ def find_unresolved_auth_headers(
         List of header names from ``configured`` that could not be resolved, i.e.
         are not present as a key in ``resolved``. An empty list means all headers
         were resolved successfully.
+
     """
     resolved_lower = {k.lower() for k in resolved}
     return [h for h in configured if h.lower() not in resolved_lower]
@@ -222,6 +229,7 @@ def build_server_headers(
 
     Returns:
         Merged headers dictionary for the server. May be empty if no headers apply.
+
     """
     server_headers: dict[str, str] = dict(client_headers)
     existing_lower = {k.lower() for k in server_headers}
@@ -283,6 +291,7 @@ def build_mcp_headers(
     Returns:
         McpHeaders keyed by MCP server name with the complete merged set of headers.
         Servers that end up with no headers are omitted from the result.
+
     """
     if not config.mcp_servers:
         return {}

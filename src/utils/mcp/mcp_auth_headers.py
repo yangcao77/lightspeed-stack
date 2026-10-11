@@ -40,6 +40,7 @@ def resolve_authorization_headers(
         >>> # With client special case (kept as-is)
         >>> resolve_authorization_headers({"Authorization": "client"})
         {"Authorization": "client"}
+
     """
     resolved: dict[str, str] = {}
 

@@ -47,6 +47,7 @@ def map_agent_inference_error(
     Raises:
         RuntimeError: Re-raised when ``exc`` is a non-agent ``RuntimeError`` that is
             not a recognized context-length failure.
+
     """
     match exc:
         case AgentRunError() as agent_exc:
@@ -91,6 +92,7 @@ def map_pydantic_agent_run_error(  # pylint: disable=too-many-return-statements
 
     Returns:
         Structured error response for HTTP or SSE error events.
+
     """
     match exc:
         case ContentFilterError() as filter_exc:

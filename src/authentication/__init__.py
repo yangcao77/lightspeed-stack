@@ -37,6 +37,7 @@ def get_auth_dependency(  # pylint: disable=too-many-return-statements
     Raises:
     ------
         ValueError: If the configured authentication module is not supported.
+
     """
     try:
         module = configuration.authentication_configuration.module

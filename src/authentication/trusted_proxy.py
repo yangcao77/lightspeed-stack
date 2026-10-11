@@ -44,6 +44,7 @@ class TrustedProxyAuthDependency(
                     and optional SA allowlist.
             virtual_path: The request path used for authorization checks;
                           defaults to DEFAULT_VIRTUAL_PATH.
+
         """
         self.config = config
         self.virtual_path = virtual_path
@@ -63,6 +64,7 @@ class TrustedProxyAuthDependency(
         Raises:
         ------
             HTTPException: If authentication fails.
+
         """
         if not request.headers.get("Authorization"):
             if configuration.authentication_configuration.skip_for_health_probes:

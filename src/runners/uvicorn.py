@@ -25,6 +25,7 @@ def start_uvicorn(
             and will be forwarded to uvicorn.run as provided.
         log_config (Optional[dict]): Logging configuration dictionary passed to
             uvicorn.run. When None, defaults to the output of setup_logging().
+
     """
     log_level = resolve_log_level()
     logger.info("Starting Uvicorn with log level %s", logging.getLevelName(log_level))

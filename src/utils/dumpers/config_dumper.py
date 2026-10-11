@@ -18,6 +18,7 @@ def dump_schema(filename: str) -> None:
     Raises:
     ------
         IOError: If the file cannot be written.
+
     """
     models = [Configuration]
     dump_openapi_schema(models, filename)

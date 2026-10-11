@@ -43,6 +43,7 @@ def get_authorization_resolvers() -> tuple[RolesResolver, AccessResolver]:
     Returns:
         tuple[RolesResolver, AccessResolver]: (roles_resolver, access_resolver)
         appropriate for the current configuration.
+
     """
     authorization_cfg = configuration.authorization_configuration
     authentication_config = configuration.authentication_configuration
@@ -123,6 +124,7 @@ async def _perform_authorization_check(
         HTTPException: with 500 Internal Server Error if `auth` is missing from `kwargs`.
         HTTPException: with 403 Forbidden if the resolved roles are not
                        permitted to perform `action`.
+
     """
     role_resolver, access_resolver = get_authorization_resolvers()
 
@@ -174,6 +176,7 @@ def authorize(action: Action) -> Callable:
         Callable: A decorator which, when applied to an endpoint function,
         performs the authorization check for the given action before invoking
         the function.
+
     """
 
     def decorator(func: Callable) -> Callable:
@@ -187,6 +190,7 @@ def authorize(action: Action) -> Callable:
         Returns:
         -------
             Callable: A wrapper that performs authorization then calls `func`.
+
         """
 
         @wraps(func)

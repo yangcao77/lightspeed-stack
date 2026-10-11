@@ -12,6 +12,7 @@ class SavedPromptCreateRequest(BaseModel):
     Attributes:
         name: Display name of the saved prompt.
         content: Prompt body text.
+
     """
 
     name: str = Field(

@@ -42,6 +42,7 @@ def read_provider_data(client: AsyncOgxClient) -> dict[str, Any]:
 
     Returns:
         A mutable copy of the current provider data dict (empty if unset).
+
     """
     if isinstance(client, AsyncOGXAsLibraryClient):
         return dict(client.provider_data or {})
@@ -202,6 +203,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
 
         Raises:
             RuntimeError: If the client has not been initialized; call `load(...)` first.
+
         """
         if not self._lsc:
             raise RuntimeError(
@@ -240,6 +242,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
 
         Raises:
             RuntimeError: If in library mode but the client has not finished initializing.
+
         """
         client = self.get_client()
         if self.is_library_client:
@@ -270,6 +273,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
 
         Returns:
             The reloaded client instance.
+
         """
         if not self._config_path:
             raise RuntimeError("Cannot reload: config path not set")
@@ -311,6 +315,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
         Returns:
             A tuple of (available, reason) where available is True if the
             model was found, and reason describes the outcome.
+
         """
         try:
             client = self.get_client()
@@ -363,6 +368,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
 
         Returns:
             The new client instance assigned to this holder.
+
         """
         updates = AzureEntraIDManager().build_azure_provider_data()
         if not updates:
@@ -408,6 +414,7 @@ class AsyncOgxClientHolder(metaclass=Singleton):
 
         Returns:
             Optional[str]: The Azure base_url if available, otherwise None.
+
         """
         if not self._lsc:
             return None

@@ -71,6 +71,7 @@ class AzureEntraIDManager(metaclass=Singleton):
 
         Returns:
             Provider data dict when a token and base_url are available.
+
         """
         token = self.access_token.get_secret_value()
         if not token or self.azure_base_url is None:
@@ -85,6 +86,7 @@ class AzureEntraIDManager(metaclass=Singleton):
 
         Raises:
             ValueError: If Entra ID configuration has not been set.
+
         """
         if self._entra_id_config is None:
             raise ValueError("Azure Entra ID configuration not set")

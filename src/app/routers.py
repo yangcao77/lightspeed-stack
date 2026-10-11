@@ -47,6 +47,7 @@ def include_routers(app: FastAPI) -> None:
     Parameters:
     ----------
         app (FastAPI): The FastAPI application to which routers will be attached.
+
     """
     app.include_router(root.router)
 

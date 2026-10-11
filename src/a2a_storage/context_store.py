@@ -23,6 +23,7 @@ class A2AContextStore(ABC):
 
         Returns:
             The OGX conversation ID, or None if not found.
+
         """
 
     @abstractmethod
@@ -32,6 +33,7 @@ class A2AContextStore(ABC):
         Args:
             context_id: The A2A context ID.
             conversation_id: The OGX conversation ID.
+
         """
 
     @abstractmethod
@@ -40,6 +42,7 @@ class A2AContextStore(ABC):
 
         Args:
             context_id: The A2A context ID to delete.
+
         """
 
     @abstractmethod
@@ -55,4 +58,5 @@ class A2AContextStore(ABC):
 
         Returns:
             True if the store is initialized and ready, False otherwise.
+
         """

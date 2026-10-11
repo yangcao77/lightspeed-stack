@@ -36,6 +36,7 @@ def _hash_user_id(user_id: str) -> str:
     Returns:
     -------
         str: Hexadecimal SHA-256 digest of the UTF-8 encoded user_id.
+
     """
     return hashlib.sha256(user_id.encode("utf-8")).hexdigest()
 
@@ -58,6 +59,7 @@ def construct_transcripts_path(hashed_user_id: str, conversation_id: str) -> Pat
     -------
         Path: A Path pointing to the directory where transcripts for the
         specified user and conversation should be stored.
+
     """
     # these two normalizations are required by Snyk as it detects
     # this Path sanitization pattern
@@ -81,6 +83,7 @@ def store_transcript(
     Raises:
     ------
         HTTPException: If writing the transcript file to disk fails.
+
     """
     transcripts_path = construct_transcripts_path(
         transcript.metadata.user_id, transcript.metadata.conversation_id
@@ -121,6 +124,7 @@ def create_transcript_metadata(  # pylint: disable=too-many-arguments,too-many-p
     Returns:
     -------
         TranscriptMetadata: A TranscriptMetadata BaseModel instance.
+
     """
     hashed_user_id = _hash_user_id(user_id)
 
@@ -154,6 +158,7 @@ def create_transcript(
     Returns:
     -------
         Transcript: A Transcript BaseModel instance ready to be stored.
+
     """
     return Transcript(
         metadata=metadata,

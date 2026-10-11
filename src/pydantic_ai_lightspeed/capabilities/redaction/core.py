@@ -12,6 +12,7 @@ class RedactionResult(BaseModel):
         content: The text after all redaction rules have been applied.
         redacted: True if at least one rule matched and changed the text.
         redaction_count: Total number of substitutions made across all rules.
+
     """
 
     model_config = ConfigDict(frozen=True)
@@ -38,6 +39,7 @@ def redact_text(
         A RedactionResult with the redacted content, a flag indicating
         whether any substitution occurred, and the total substitution
         count.
+
     """
     result = content
     total_count = 0

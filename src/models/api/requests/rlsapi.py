@@ -28,6 +28,7 @@ class RlsapiV1Attachment(ConfigurationBase):
     Attributes:
         contents: The textual contents of the file read on the client machine.
         mimetype: The MIME type of the file.
+
     """
 
     contents: str = Field(
@@ -48,6 +49,7 @@ class RlsapiV1Terminal(ConfigurationBase):
 
     Attributes:
         output: The textual contents of the terminal read on the client machine.
+
     """
 
     output: str = Field(
@@ -66,6 +68,7 @@ class RlsapiV1SystemInfo(ConfigurationBase):
         version: The version of the operating system.
         arch: The architecture of the client machine.
         system_id: The id of the client machine.
+
     """
 
     os: str = Field(
@@ -103,6 +106,7 @@ class RlsapiV1CLA(ConfigurationBase):
     Attributes:
         nevra: The NEVRA (Name-Epoch-Version-Release-Architecture) of the CLA.
         version: The version of the command line assistant.
+
     """
 
     nevra: str = Field(
@@ -128,6 +132,7 @@ class RlsapiV1Context(ConfigurationBase):
         terminal: Terminal object received by the client.
         systeminfo: System information object received by the client.
         cla: Command Line Assistant information.
+
     """
 
     stdin: str = Field(
@@ -173,6 +178,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
             ),
         )
         ```
+
     """
 
     question: str = Field(
@@ -214,6 +220,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
 
         Raises:
             ValueError: If the question is empty or whitespace-only.
+
         """
         stripped = value.strip()
         if not stripped:
@@ -234,6 +241,7 @@ class RlsapiV1InferRequest(ConfigurationBase):
 
         Returns:
             The combined input string with sources separated by double newlines.
+
         """
         # pylint: disable=no-member  # Pydantic fields are dynamic
         parts = [

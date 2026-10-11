@@ -19,6 +19,7 @@ def run_once_async(func: Callable[..., Any]) -> Callable[..., Any]:
     Returns:
         Any: The result produced by the wrapped coroutine, or the exception it
              raised propagated to callers.
+
     """
     task = None
 
@@ -35,6 +36,7 @@ def run_once_async(func: Callable[..., Any]) -> Callable[..., Any]:
 
         Returns:
             The awaited result of the wrapped coroutine.
+
         """
         nonlocal task
         if task is None:

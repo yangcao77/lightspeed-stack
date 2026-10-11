@@ -51,6 +51,7 @@ def summarize_function_tool_call(part: ToolCallPart) -> ToolCallSummary:
 
     Returns:
         Tool call summary in LCS turn-summary format.
+
     """
     return ToolCallSummary(
         id=part.tool_call_id,
@@ -70,6 +71,7 @@ def summarize_native_tool_call(
 
     Returns:
         Tool call summary in LCS turn-summary format.
+
     """
     call_id = part.tool_call_id
     args = part.args_as_dict()
@@ -127,6 +129,7 @@ def process_function_tool_call(
 
     Returns:
         Tool call summary when recorded, otherwise None if already emitted.
+
     """
     if part.tool_call_id in state.emitted_tool_call_ids:
         return None
@@ -149,6 +152,7 @@ def process_native_tool_call(
 
     Returns:
         Tool call summary when recorded, otherwise None if already emitted.
+
     """
     if part.tool_call_id in state.emitted_tool_call_ids:
         return None
@@ -175,6 +179,7 @@ def process_native_tool_result(
         or the call was denied (e.g. by a TOOL-point guardrail violation):
         the call itself still surfaces via ``process_native_tool_call``, but
         a denied call's result is never recorded.
+
     """
     if part.tool_call_id in state.emitted_tool_result_ids:
         return None
@@ -223,6 +228,7 @@ def process_function_tool_result(
         or the call was denied (e.g. by a TOOL-point guardrail violation):
         the call itself still surfaces via ``process_function_tool_call``,
         but a denied call's result is never recorded.
+
     """
     if part.tool_call_id in state.emitted_tool_result_ids:
         return None
@@ -247,6 +253,7 @@ def summarize_function_tool_result(
 
     Returns:
         Tool result summary in LCS turn-summary format.
+
     """
     return ToolResultSummary(
         id=part.tool_call_id,
@@ -273,6 +280,7 @@ def referenced_documents_from_file_search_results(
 
     Returns:
         Newly discovered referenced documents from these result rows.
+
     """
     documents: list[ReferencedDocument] = []
     for result in results:
@@ -304,6 +312,7 @@ def build_referenced_document(
 
     Returns:
         Referenced document when metadata is present, otherwise None.
+
     """
     attributes = result.attributes or {}
     resolved_source = resolve_source_for_result(
@@ -343,6 +352,7 @@ def _file_search_attribute_str(
 
     Returns:
         Non-empty string value for the key, or None.
+
     """
     return str(value) if (value := attributes.get(key)) else None
 
@@ -357,6 +367,7 @@ def _file_search_attribute_url(
 
     Returns:
         First matching URL value as a string, or None.
+
     """
     for key in _FILE_SEARCH_URL_KEYS:
         if url := _file_search_attribute_str(attributes, key):
@@ -378,6 +389,7 @@ def rag_chunks_from_file_search_results(
 
     Returns:
         RAG chunks extracted from these result rows.
+
     """
     return [
         RAGChunk(
@@ -405,6 +417,7 @@ def summarize_web_search_result(
 
     Returns:
         Tool result summary in LCS turn-summary format.
+
     """
     content = cast("dict[str, Any]", part.content)
     status = str(content.pop("status"))
@@ -429,6 +442,7 @@ def summarize_mcp_list_tools_result(
 
     Returns:
         Tool result summary in LCS turn-summary format.
+
     """
     content = cast("dict[str, Any]", part.content)
     call_id = part.tool_call_id
@@ -468,6 +482,7 @@ def summarize_mcp_call_result(
 
     Returns:
         Tool result summary in LCS turn-summary format.
+
     """
     content = cast("dict[str, Any]", part.content)
     call_id = part.tool_call_id
@@ -505,6 +520,7 @@ def summarize_mcp_tool_result(
 
     Returns:
         Tool result summary in LCS turn-summary format.
+
     """
     content = cast("dict[str, Any]", part.content)
     if "tools" in content:
@@ -530,6 +546,7 @@ def summarize_file_search_result(
 
     Returns:
         Tool result summary, RAG chunks, and referenced documents for this return.
+
     """
     content = cast("dict[str, Any]", part.content)
     tool_result = ToolResultSummary(

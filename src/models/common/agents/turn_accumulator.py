@@ -24,6 +24,7 @@ class AgentTurnAccumulator:  # pylint: disable=too-many-instance-attributes
         emitted_tool_call_ids: Tool call IDs already sent or recorded.
         emitted_tool_result_ids: Tool result IDs already sent or recorded.
         seen_docs: Referenced-document keys already added (deduplication).
+
     """
 
     vector_store_ids: Final[list[str]]
