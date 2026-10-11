@@ -589,7 +589,7 @@ def test_rh_identity_max_header_size_default() -> None:
 
 
 @pytest.mark.parametrize(
-    "max_header_size,expectation",
+    ("max_header_size", "expectation"),
     [
         (4096, nullcontext()),
         (0, pytest.raises(ValidationError)),
