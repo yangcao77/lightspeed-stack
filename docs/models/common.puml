@@ -142,6 +142,9 @@ class "Message" as src.models.common.conversation.Message {
   referenced_documents : Optional[list[ReferencedDocument]]
   type : Literal['user', 'assistant', 'system', 'developer']
 }
+class "PositiveFeedbackCategory" as src.models.common.feedback.PositiveFeedbackCategory {
+  name
+}
 class "ProviderHealthStatus" as src.models.common.health.ProviderHealthStatus {
   message : Optional[str]
   provider_id : str
