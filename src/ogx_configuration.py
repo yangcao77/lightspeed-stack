@@ -1804,7 +1804,7 @@ def main() -> None:
 
     # An empty or comment-only -c file loads as {} rather than None; this
     # applies to both modes (legacy previously raised on config.get()).
-    with open(args.config, "r", encoding="utf-8") as f:
+    with open(args.config, encoding="utf-8") as f:
         config = yaml.safe_load(f) or {}
 
     if args.synthesize or has_synthesis_input(config):
