@@ -210,7 +210,7 @@ def test_extract_text_basic_cases(
 
 
 @pytest.mark.parametrize(
-    "content_parts,expected",
+    ("content_parts", "expected"),
     [
         # Empty list
         ([], ""),
