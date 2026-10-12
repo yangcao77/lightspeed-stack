@@ -259,7 +259,7 @@ SOLR_DEFAULT_VECTOR_STORE_ID: Final[str] = "portal-rag"
 SOLR_DEFAULT_VECTOR_FIELD: Final[str] = "chunk_vector"
 SOLR_DEFAULT_CONTENT_FIELD: Final[str] = "chunk"
 SOLR_DEFAULT_EMBEDDING_MODEL: Final[str] = (
-    "sentence-transformers/ibm-granite/granite-embedding-30m-english"
+    "sentence-transformers/ibm-granite/granite-embedding-small-english-r2"
 )
 SOLR_DEFAULT_EMBEDDING_DIMENSION: Final[int] = 384
 SOLR_EMBEDDING_MODEL_ID: Final[str] = "sentence-transformers/solr_embedding"
