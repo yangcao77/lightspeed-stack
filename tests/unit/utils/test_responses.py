@@ -1315,7 +1315,7 @@ class TestResolveToolChoice:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "choice,expected_choice",
+        ("choice", "expected_choice"),
         [
             (ToolChoiceMode.auto, ToolChoiceMode.auto),
             (None, ToolChoiceMode.auto),
