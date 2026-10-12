@@ -210,7 +210,7 @@ def test_extract_text_basic_cases(
 
 
 @pytest.mark.parametrize(
-    "content_parts,expected",
+    ("content_parts", "expected"),
     [
         # Empty list
         ([], ""),
@@ -1315,7 +1315,7 @@ class TestResolveToolChoice:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "choice,expected_choice",
+        ("choice", "expected_choice"),
         [
             (ToolChoiceMode.auto, ToolChoiceMode.auto),
             (None, ToolChoiceMode.auto),
@@ -2677,7 +2677,7 @@ class TestExtractTokenUsage:
     """Tests for extract_token_usage function."""
 
     @pytest.mark.parametrize(
-        "input_tokens,output_tokens",
+        ("input_tokens", "output_tokens"),
         [(100, 50), (200, 100)],
         ids=["usage_100_50", "usage_200_100"],
     )
