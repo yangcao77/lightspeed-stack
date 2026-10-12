@@ -2677,7 +2677,7 @@ class TestExtractTokenUsage:
     """Tests for extract_token_usage function."""
 
     @pytest.mark.parametrize(
-        "input_tokens,output_tokens",
+        ("input_tokens", "output_tokens"),
         [(100, 50), (200, 100)],
         ids=["usage_100_50", "usage_200_100"],
     )
