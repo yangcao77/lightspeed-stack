@@ -218,7 +218,7 @@ def test_default_baseline_resolves_when_openai_api_key_set(
 
 
 @pytest.mark.parametrize(
-    "base,overlay,expected",
+    ("base", "overlay", "expected"),
     [
         # scalars replace
         ({"a": 1}, {"a": 2}, {"a": 2}),
