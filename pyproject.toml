@@ -178,7 +178,7 @@ ogxlibdev = [
     "emoji>=2.1.0",
     "nltk>=3.8.1",
     # API inference: inline::sentence-transformers
-    "sentence-transformers>=5.0.0",
+    "sentence-transformers>=5.6.0",
     # API vector_io: inline::faiss, inline::sqlite-vec, remote::pgvector
     "faiss-cpu>=1.11.0",
     "chardet>=5.2.0",

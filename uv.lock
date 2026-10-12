@@ -1873,8 +1873,8 @@ name = "httpcore2"
 version = "2.13.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "h11", marker = "sys_platform != 'emscripten'" },
-    { name = "truststore", marker = "sys_platform != 'emscripten'" },
+    { name = "h11" },
+    { name = "truststore" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/cb/f3/1db7aa2bc2524062192bb0e0323969492d1883152a232fe36eea65f4e35c/httpcore2-2.13.1.tar.gz", hash = "sha256:e0aa977abe17e69a3b820a24542a6fa88702676d83880b8d194dcd18408e5103", size = 68071, upload-time = "2026-09-23T07:47:22.372Z" }
 wheels = [
@@ -2594,7 +2594,7 @@ ogxlibdev = [
     { name = "pypdf", specifier = ">=6.10.2" },
     { name = "pythainlp", specifier = ">=3.0.10" },
     { name = "requests", specifier = ">=2.33.0" },
-    { name = "sentence-transformers", specifier = ">=5.0.0" },
+    { name = "sentence-transformers", specifier = ">=5.6.0" },
     { name = "torch", specifier = "==2.11.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "lightspeed-stack", group = "ogxlibdev" } },
     { name = "transformers", specifier = ">=4.34.0" },
     { name = "tree-sitter", specifier = ">=0.24.0" },
@@ -2621,20 +2621,20 @@ resolution-markers = [
     "python_full_version >= '3.14' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "aiohttp", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "boto3", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "click", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "fastuuid", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "httpx", extra = ["http2"], marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "importlib-metadata", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "jinja2", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "jsonschema", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "openai", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "pydantic", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "pydantic-settings", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "python-dotenv", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "tiktoken", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "tokenizers", marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
+    { name = "aiohttp" },
+    { name = "boto3" },
+    { name = "click" },
+    { name = "fastuuid" },
+    { name = "httpx", extra = ["http2"] },
+    { name = "importlib-metadata" },
+    { name = "jinja2" },
+    { name = "jsonschema" },
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "tiktoken" },
+    { name = "tokenizers" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/12/d7/267d97612ee3970933738cf17a05a6c69a502771e7bb662ba389fc56672d/litellm-1.103.4.tar.gz", hash = "sha256:5c93520155c093298a6241d21f4473baaed389f26b27ec36036a87d3e88673a9", size = 18955718, upload-time = "2026-10-07T19:25:22.065Z" }
 wheels = [
@@ -2661,24 +2661,24 @@ resolution-markers = [
     "python_full_version < '3.13' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "aiohttp", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "boto3", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "click", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "fastuuid", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "httpx", extra = ["http2"], marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "huggingface-hub", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "importlib-metadata", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "jinja2", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "jsonschema", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "openai", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "packaging", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "pydantic", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "pydantic-settings", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "python-dotenv", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "pyyaml", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "tiktoken", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
-    { name = "tokenizers", marker = "python_full_version < '3.14' or sys_platform == 'darwin'" },
+    { name = "aiohttp" },
+    { name = "boto3" },
+    { name = "click" },
+    { name = "fastuuid" },
+    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" } },
+    { name = "httpx", extra = ["http2"] },
+    { name = "huggingface-hub" },
+    { name = "importlib-metadata" },
+    { name = "jinja2" },
+    { name = "jsonschema" },
+    { name = "openai" },
+    { name = "packaging" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "tiktoken" },
+    { name = "tokenizers" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/3e/35/f326093937d03fbca3e25c42f42708854b9321af841db29ce28235f6237a/litellm-1.105.0.tar.gz", hash = "sha256:f4af675e480ba7cf1f43c2bf5e480564b547e0e58d31e88f724daa0a0967b065", size = 20320691, upload-time = "2026-10-11T09:48:15.603Z" }
 wheels = [
@@ -5226,8 +5226,8 @@ name = "secretstorage"
 version = "3.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "cryptography", marker = "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
-    { name = "jeepney", marker = "sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'" },
+    { name = "cryptography" },
+    { name = "jeepney" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/03/e834bcd866f2f8a49a85eaff47340affa3bfa391ee9912a952a1faa68c7b/secretstorage-3.5.0.tar.gz", hash = "sha256:f04b8e4689cbce351744d5537bf6b1329c6fc68f91fa666f60a380edddcd11be", size = 19884, upload-time = "2025-11-23T19:02:53.191Z" }
 wheels = [
@@ -5586,13 +5586,13 @@ resolution-markers = [
     "python_full_version < '3.13' and sys_platform == 'darwin'",
 ]
 dependencies = [
-    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" }, marker = "sys_platform == 'darwin'" },
-    { name = "fsspec", marker = "sys_platform == 'darwin'" },
-    { name = "jinja2", marker = "sys_platform == 'darwin'" },
-    { name = "networkx", marker = "sys_platform == 'darwin'" },
-    { name = "setuptools", marker = "sys_platform == 'darwin'" },
-    { name = "sympy", marker = "sys_platform == 'darwin'" },
-    { name = "typing-extensions", marker = "sys_platform == 'darwin'" },
+    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" } },
+    { name = "fsspec" },
+    { name = "jinja2" },
+    { name = "networkx" },
+    { name = "setuptools" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.11.0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:43b35116802c85fb88d99f4a396b8bd4472bfca1dd82e69499e5a4f9b8b4e252", upload-time = "2026-03-23T15:16:58Z" },
@@ -5618,14 +5618,14 @@ resolution-markers = [
     "python_full_version < '3.13' and sys_platform != 'darwin' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 dependencies = [
-    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14' and sys_platform != 'darwin'" },
-    { name = "filelock", version = "4.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14' and sys_platform != 'darwin'" },
-    { name = "fsspec", marker = "sys_platform != 'darwin'" },
-    { name = "jinja2", marker = "sys_platform != 'darwin'" },
-    { name = "networkx", marker = "sys_platform != 'darwin'" },
-    { name = "setuptools", marker = "sys_platform != 'darwin'" },
-    { name = "sympy", marker = "sys_platform != 'darwin'" },
-    { name = "typing-extensions", marker = "sys_platform != 'darwin'" },
+    { name = "filelock", version = "3.32.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.14'" },
+    { name = "filelock", version = "4.1.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.14'" },
+    { name = "fsspec" },
+    { name = "jinja2" },
+    { name = "networkx" },
+    { name = "setuptools" },
+    { name = "sympy" },
+    { name = "typing-extensions" },
 ]
 wheels = [
     { url = "https://download-r2.pytorch.org/whl/cpu/torch-2.11.0%2Bcpu-cp312-cp312-linux_s390x.whl", hash = "sha256:2db3ae5404e32cb42b5fcbd94f13607761eaec0cf1687fde95095289d1e26cfb", upload-time = "2026-04-28T00:06:06Z" },
