@@ -207,7 +207,7 @@ ogxlibdev = [
     "google-cloud-aiplatform>=1.130.0",
     # API inference: remote::watsonx
     # LCORE-1565
-    "litellm>=1.83.7",
+    "litellm>=1.88.6",
     # Other
     "autoevals>=0.0.129",
     "fire>=0.7.0",
