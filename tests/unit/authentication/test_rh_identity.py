@@ -473,7 +473,7 @@ class TestRHIdentityAuthDependency:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "fixture_name,expected_user_id",
+        ("fixture_name", "expected_user_id"),
         [
             ("user_identity_data", "abc123"),
             ("system_identity_data", "c87dcb4c-8af1-40dd-878e-60c744edddd0"),
