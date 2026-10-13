@@ -1004,15 +1004,8 @@ cmd_check_okp_solr_from_llama() {
     local pod="llama-stack-service"
     local ctr="llama-stack-container"
     local url="http://okp-solr-service-svc:8080/solr/portal-rag/select?q=*:*&rows=0"
-    local okp_pod="okp-solr-service"
 
     echo "Checking OKP Solr from OGX pod at ${url}..."
-
-    # Log OKP image info for debugging
-    local image_id
-    image_id=$(oc get pod "$okp_pod" -n "$NAMESPACE" -o jsonpath='{.status.containerStatuses[0].imageID}' 2>/dev/null || echo "unknown")
-    echo "[DEBUG] OKP Solr imageID: $image_id"
-
     if oc exec -n "$NAMESPACE" "$pod" -c "$ctr" -- \
         curl -sf --max-time 10 -o /dev/null "$url" 2>/dev/null; then
         echo "✓ OGX pod can reach OKP Solr"
@@ -1025,8 +1018,6 @@ cmd_check_okp_solr_from_llama() {
         return 0
     fi
     echo "ERROR: OGX pod cannot reach OKP Solr at $url"
-    echo "[DEBUG] OKP pod status:"
-    oc get pod "$okp_pod" -n "$NAMESPACE" -o wide 2>/dev/null || echo "OKP pod not found"
     return 1
 }
 
