@@ -41,6 +41,21 @@ class InferenceProvider(ABC, Generic[EntryT, ProviderT]):  # noqa: UP046
         self._models: list[CatalogModel] = []
         self._entry: EntryT = entry
 
+    @property
+    def _get_provider(self) -> ProviderT:
+        """Return the initialized PAI provider.
+
+        Raises:
+            RuntimeError: If the provider has not been initialized or does not
+                use a PAI provider instance.
+
+        """
+        if self._provider is None:
+            raise RuntimeError(
+                f"Provider {self.provider_id!r} has not been initialized"
+            )
+        return self._provider
+
     async def initialize(self) -> None:
         """Build the PydanticAI provider and load the model catalog.
 
