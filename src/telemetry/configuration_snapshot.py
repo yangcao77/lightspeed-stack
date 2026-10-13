@@ -125,7 +125,9 @@ LIGHTSPEED_STACK_FIELDS: tuple[FieldSpec | ListFieldSpec, ...] = (
             FieldSpec("type", MaskingType.PASSTHROUGH),
             FieldSpec("id", MaskingType.PASSTHROUGH),
             FieldSpec("api_key_env", MaskingType.SENSITIVE),
+            FieldSpec("skip_model_discovery", MaskingType.PASSTHROUGH),
             FieldSpec("allowed_models", MaskingType.PASSTHROUGH),
+            FieldSpec("config", MaskingType.SENSITIVE),
         ),
     ),
     # Authentication & Authorization
