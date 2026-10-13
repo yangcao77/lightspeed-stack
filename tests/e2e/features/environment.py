@@ -605,7 +605,9 @@ def after_feature(context: Context, feature: Feature) -> None:
         print(f"[e2e feature timing] {elapsed_s:.2f}s  {label}", flush=True)
 
 
-# Behave captures hook stdout by default; output is only shown in some failure paths.
-# Disable capture so feature timing and failure diagnostics appear in the main CI log.
+# Behave captures hook stdout by default and drops it on success. Disable capture
+# so feature timing and deploy-okp-solr's image logging reach the CI log.
+# before_scenario stays captured to avoid noisy per-scenario restart diagnostics.
+before_feature.capture = False  # type: ignore[attr-defined]
 after_feature.capture = False  # type: ignore[attr-defined]
 after_scenario.capture = False  # type: ignore[attr-defined]
