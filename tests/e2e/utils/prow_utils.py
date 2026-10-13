@@ -7,6 +7,7 @@ and are only used when running tests in the Prow CI environment.
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from typing import Optional
 
@@ -387,13 +388,14 @@ def ensure_okp_solr_ready() -> None:
     """
     # 300 wait_for_pod attempts × 3s = 900s, plus oc apply. 1080s leaves margin.
     result = run_e2e_ops("deploy-okp-solr", timeout=1080)
-    print(result.stdout, end="")
+    # Print to the real stdout: before_feature's hook output is captured and
+    # dropped on success, which would otherwise hide this every run.
+    print(result.stdout, end="", file=sys.__stdout__, flush=True)
     if result.returncode != 0:
         print(result.stderr, end="")
         raise subprocess.CalledProcessError(
             result.returncode, "deploy-okp-solr", result.stderr
         )
-    print("✓ OKP Solr is ready")
 
 
 def disrupt_okp_solr_pod() -> bool:
