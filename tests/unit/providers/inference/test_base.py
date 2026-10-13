@@ -4,40 +4,17 @@ from typing import Any
 
 import pytest
 
-from models.config import InferenceProviderEntryBase
-from providers.inference.catalog import CatalogModel
 from providers.inference.types import ModelType
-from tests.unit.providers.inference._helpers import FakeInferenceProvider
+from tests.unit.providers.inference._helpers import (
+    FakeInferenceProvider,
+    make_fake_provider,
+)
 
 
 @pytest.fixture(name="provider")
 def provider_fixture() -> FakeInferenceProvider:
-    """Create a provider with a small preloaded catalog."""
-    entry = InferenceProviderEntryBase(
-        id="test-provider"
-    )  # pyright: ignore[reportCallIssue]
-    provider = FakeInferenceProvider(entry)
-    provider._models = [  # pylint: disable=protected-access
-        CatalogModel(
-            name="chat-model",
-            provider_resource_id="provider-chat-model",
-            model_type="llm",
-            metadata={"tags": ["chat"]},
-        ),
-        CatalogModel(
-            name="embedding-model",
-            provider_resource_id="provider-embedding-model",
-            model_type="embedding",
-            metadata={},
-        ),
-        CatalogModel(
-            name="rerank-model",
-            provider_resource_id="provider-rerank-model",
-            model_type="rerank",
-            metadata={},
-        ),
-    ]
-    return provider
+    """Create a provider with a preloaded catalog."""
+    return make_fake_provider()
 
 
 def test_list_catalog_models_returns_all_models(
@@ -88,12 +65,12 @@ def test_get_model_instance_dispatches_to_typed_creator(
 ) -> None:
     """get_model_instance looks up by type and calls the matching creator."""
     sentinel = object()
-    mocker.patch.object(provider, creator, return_value=sentinel)
+    mock = mocker.patch.object(provider, creator, return_value=sentinel)
 
     instance = provider.get_model_instance(name, model_type)
 
     assert instance is sentinel
-    getattr(provider, creator).assert_called_once()
+    mock.assert_called_once()
 
 
 def test_list_catalog_models_returns_deep_copies(

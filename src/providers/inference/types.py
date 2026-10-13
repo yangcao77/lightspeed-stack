@@ -1,6 +1,6 @@
 """Shared literals and aliases for the inference provider registry."""
 
-from typing import Any, Final, Literal
+from typing import Literal
 
 ProviderType = Literal[
     "openai",
@@ -15,5 +15,3 @@ ProviderType = Literal[
 ModelType = Literal["llm", "embedding", "rerank"]
 
 type ProviderId = str
-
-PROVIDER_CLASSES: Final[dict[ProviderType, Any]] = {}

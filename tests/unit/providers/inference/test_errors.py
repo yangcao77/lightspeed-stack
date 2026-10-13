@@ -3,7 +3,11 @@
 import pytest
 
 from models.config import InferenceProviderEntryBase
-from providers.inference.errors import ModelNotAvailableError
+from providers.inference.errors import (
+    ModelNotAvailableError,
+    ModelTypeNotSupportedError,
+    ProviderNotFoundError,
+)
 from providers.inference.types import ModelType
 from tests.unit.providers.inference._helpers import FakeInferenceProvider
 
@@ -18,6 +22,23 @@ def test_model_not_available_error_message_and_attributes() -> None:
     assert str(error) == (
         "Model 'chat' of type 'llm' is not available for provider 'fake-openai'"
     )
+
+
+def test_model_type_not_supported_error_message_and_attributes() -> None:
+    """Error message and attributes identify the unsupported model type."""
+    error = ModelTypeNotSupportedError("rerank", "openai")
+
+    assert error.model_type == "rerank"
+    assert error.provider_id == "openai"
+    assert str(error) == ("Model type 'rerank' is not supported by provider 'openai'")
+
+
+def test_unknown_provider_type_error_message_and_attributes() -> None:
+    """Error message and attributes identify the unknown provider type."""
+    error = ProviderNotFoundError("fake-openai")
+
+    assert error.provider_id == "fake-openai"
+    assert str(error) == "Inference provider 'fake-openai' is not registered"
 
 
 @pytest.mark.parametrize("model_type", ["llm", "embedding", "rerank"])
