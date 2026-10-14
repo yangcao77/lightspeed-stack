@@ -380,6 +380,7 @@ def ensure_okp_solr_ready() -> None:
     """Deploy OKP Solr on Konflux if it is not already Ready.
 
     Idempotent. First image pull can take ~10-15 minutes (7GB).
+    Setup output is emitted on both successful deployment and failure.
 
     Raises:
         subprocess.CalledProcessError: If deploy-okp-solr fails.
