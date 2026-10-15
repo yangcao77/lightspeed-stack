@@ -93,6 +93,23 @@ Note: this is not a real model, just an enumeration of all action names.
 
 
 
+## AllowedModel
+
+
+Configuration for an allowed inference model.
+
+Accepts string IDs or dictionaries. String IDs populate both `name` and
+`provider_model_id`; dictionary inputs default `name` to `provider_model_id`.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| name | string |  |
+| provider_model_id | string |  |
+| model_type | string | Optional capability override (llm, embedding, or rerank). |
+| metadata | object | Optional catalog metadata |
+
+
 ## AllowedToolsFilter
 
 
@@ -201,6 +218,69 @@ Microsoft Entra ID authentication attributes for Azure.
 | client_id | string |  |
 | client_secret | string |  |
 | scope | string | Azure Cognitive Services scope for token requests. Override only if using a different Azure service. |
+
+
+## AzureInferenceProviderConfig
+
+
+Connection settings for an Azure OpenAI inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| base_url | string |  |
+| api_key | string |  |
+| api_version | string |  |
+| entra_id |  | Preferred Entra ID auth for this provider. Takes precedence over the legacy top-level Azure Entra ID settings. |
+
+
+## AzureInferenceProviderEntry
+
+
+Azure OpenAI inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | Azure OpenAI remote inference provider. |
+| config |  | Endpoint, API key or Entra ID, and API version. |
+
+
+## BedrockInferenceProviderConfig
+
+
+Connection settings for an AWS Bedrock inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| region | string |  |
+| profile_name | string |  |
+| api_key | string | Optional Bedrock bearer token (alternative to SigV4). |
+
+
+## BedrockInferenceProviderEntry
+
+
+AWS Bedrock inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | AWS Bedrock remote inference provider. |
+| config |  | AWS region, optional profile, and optional bearer token. |
 
 
 ## ByokConfiguration
@@ -779,7 +859,7 @@ Inference configuration.
 | default_model | string | Identification of default model used when no other model is specified. |
 | default_provider | string | Identification of default provider used when no other model is specified. |
 | context_windows | object | Map of fully-qualified model identifier (e.g., "openai/gpt-4o-mini") to context window size in tokens. Used by the conversation compaction trigger to decide when older turns must be summarized before the input exceeds the window. Models absent from this map have no registered window — callers fall back to their own default or skip the token-based trigger. |
-| providers | array | Unified-mode synthesis input (Decision S5): a high-level, backend-agnostic list of inference providers the synthesizer expands into OGX provider entries. Lives at the configuration root so it survives a future backend change. A non-empty list signals unified mode. Empty (the default) leaves legacy/remote modes unaffected. The sibling default_model / default_provider keep their query-time routing meaning and are independent of this list. |
+| providers | array | Discriminated list of inference providers. Empty by default. The sibling default_model / default_provider keep their query-time routing meaning and are independent of this list. |
 | max_infer_iters | integer | Server-side default for the maximum number of inference iterations a model can perform in a single request. Prevents small models from looping indefinitely on tool calls. Per-request values take precedence over this default. Set to None to disable the limit. |
 | max_tool_calls | integer | Server-side default for the maximum number of tool calls allowed in a single response. Prevents small models from exhausting the context window with repeated tool calls. Per-request values take precedence over this default. Set to None to disable the limit. |
 
@@ -1124,6 +1204,36 @@ or ``rag.retrieval.tool.sources``.
 | chunk_filter_query | string | Additional OKP filter query applied to every OKP search request. Use Solr boolean syntax, e.g. 'product:ansible AND product:*openshift*'. |
 | search_mode | string | Default Solr search mode for OKP queries. 'keyword' uses BM25 text search (no embedding model needed). 'hybrid' combines vector + keyword search. 'semantic' uses pure vector search. When unset, falls back to the global default ('hybrid'). |
 | max_chunks | integer | Maximum number of chunks fetched from OKP. |
+
+
+## OpenAIInferenceProviderConfig
+
+
+Connection settings for an OpenAI inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| api_key | string |  |
+| base_url | string |  |
+
+
+## OpenAIInferenceProviderEntry
+
+
+OpenAI inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | OpenAI remote inference provider. |
+| config |  | API key and optional base URL. |
 
 
 ## OpenAIResponseAnnotationCitation
@@ -2658,6 +2768,36 @@ Examples:
 | model | string | Model identifier for neural reranker |
 
 
+## SentenceTransformersInferenceProviderConfig
+
+
+Settings for the local sentence-transformers inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| device | string |  |
+| cache_dir | string |  |
+
+
+## SentenceTransformersInferenceProviderEntry
+
+
+Local sentence-transformers inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | Local sentence-transformers embedding and rerank provider. |
+| config |  | Optional device and Hugging Face cache directory. |
+
+
 ## ServiceConfiguration
 
 
@@ -2904,44 +3044,6 @@ A Kubernetes ServiceAccount identity for trusted-proxy allowlist.
 | name | string | Name of the Kubernetes ServiceAccount. |
 
 
-## UnifiedInferenceProviderEntry
-
-
-A high-level inference provider entry for unified-mode synthesis.
-
-Operators describe inference providers at this high level (backend-agnostic
-vocabulary) instead of authoring raw OGX provider blocks. The
-synthesizer (`apply_high_level_inference`) expands each entry into an OGX
-`providers.inference` entry, mapping `type` to a `provider_type` and
-emitting `${env.<VAR>}` references for secrets (never literal values).
-
-Attributes:
-    type: Canonical provider identifier. Vendor-neutral so it survives a
-        future backend change; each backend-specific synthesizer maps it to
-        its own provider vocabulary.
-    id: Optional identifier emitted as the OGX provider_id. When
-        omitted, synthesized as type with underscores hyphenated. If set,
-        must be non-empty after stripping whitespace and may contain only
-        lowercase letters, digits, underscores, and hyphens.
-    api_key_env: Name of the environment variable holding the provider API
-        key. Emitted verbatim as `${env.<name>}` so the secret never lands
-        on disk resolved.
-    allowed_models: Optional allow-list of model identifiers passed through
-        to the synthesized provider config.
-    extra: Additional provider-config keys merged verbatim into the
-        synthesized provider's `config` block — an escape hatch for
-        provider-specific knobs not modeled here.
-
-
-| Field | Type | Description |
-|-------|------|-------------|
-| type | string | Canonical, backend-agnostic provider identifier mapped to an OGX provider_type by the synthesizer. |
-| id | string | Optional identifier emitted as the OGX provider_id. When omitted, synthesized as type with underscores hyphenated. If set, must be non-empty after stripping whitespace and may contain only lowercase letters, digits, underscores, and hyphens. |
-| api_key_env | string | Name of the environment variable holding the provider API key. Emitted as a ${env.<name>} reference so the secret is never written to disk in resolved form. |
-| allowed_models | array | Optional allow-list of model identifiers for this provider. |
-| extra | object | Additional provider-config keys merged verbatim into the synthesized provider's config block. |
-
-
 ## UnifiedOgxConfig
 
 
@@ -3121,6 +3223,101 @@ Attributes:
 |-------|------|-------------|
 | data | array | List of vector stores |
 | object | string | Object type |
+
+
+## VertexAIInferenceProviderConfig
+
+
+Connection settings for a Vertex AI inference provider.
+
+Authentication uses Google Application Default Credentials. Set
+GOOGLE_APPLICATION_CREDENTIALS in the environment when a credentials file
+is required; there is no credentials path field in config.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| project | string |  |
+| location | string |  |
+
+
+## VertexAIInferenceProviderEntry
+
+
+Vertex AI inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | Google Vertex AI remote inference provider. |
+| config |  | GCP project and location. |
+
+
+## VllmInferenceProviderConfig
+
+
+Connection settings for a vLLM inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| base_url | string |  |
+| api_key | string |  |
+
+
+## VllmInferenceProviderEntry
+
+
+vLLM inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | vLLM OpenAI-compatible remote inference provider. |
+| config |  | Base URL and optional API key. |
+
+
+## WatsonxInferenceProviderConfig
+
+
+Connection settings for a WatsonX inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| api_key | string |  |
+| project_id | string |  |
+| base_url | string |  |
+
+
+## WatsonxInferenceProviderEntry
+
+
+WatsonX inference provider.
+
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string |  |
+| skip_model_discovery | boolean |  |
+| allowed_models | array |  |
+| model_profiles_path | string |  |
+| api_key_env | string | Deprecated: prefer config.api_key with ${env.VAR}. |
+| extra | object | Deprecated escape hatch for unmodeled provider knobs. |
+| type | string | IBM WatsonX remote inference provider. |
+| config |  | API key, project ID, and base URL. |
 
 
 ## WebSearchActionFind
