@@ -809,7 +809,7 @@ class TestRHIdentityFieldValidation:  # pylint: disable=too-many-public-methods
     """Test suite for RHIdentityData string field validation."""
 
     @pytest.mark.parametrize(
-        "field_path,bad_value",
+        ("field_path", "bad_value"),
         [
             (("user", "user_id"), None),
             (("user", "user_id"), 12345),
