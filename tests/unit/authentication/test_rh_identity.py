@@ -543,7 +543,7 @@ class TestRHIdentityAuthDependency:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "required_entitlements,should_raise,expected_error",
+        ("required_entitlements", "should_raise", "expected_error"),
         [
             (["rhel"], False, None),  # Single valid
             (["rhel", "ansible"], False, None),  # Multiple valid
