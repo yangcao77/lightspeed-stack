@@ -777,7 +777,7 @@ class TestRHIdentityHeaderSizeLimit:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "header_size,max_size",
+        ("header_size", "max_size"),
         [
             (9000, 8192),  # Well over default limit
             (101, 100),  # One byte over custom limit
