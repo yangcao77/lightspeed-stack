@@ -184,7 +184,7 @@ ogxlibdev = [
     "chardet>=5.2.0",
     "psycopg2-binary>=2.9.10",
     "pgvector>=0.3.6",
-    "pypdf>=6.10.2",
+    "pypdf>=6.19.0",
     # API scoring: inline::basic
     "requests>=2.33.0",
     # API datasetio: inline::localfs
