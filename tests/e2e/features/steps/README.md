@@ -6,7 +6,7 @@ Implementation of end-to-end tests steps.
 
 ## [a2a.py](a2a.py)
 
-Behave steps for A2A protocol e2e flows (agent card, message/send, message/stream).
+Behave steps for A2A protocol e2e flows.
 
 ## [auth.py](auth.py)
 
