@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, Generic, Optional, TypeVar
+from typing import Any, Generic, Literal, Optional, TypeVar, overload
 
 from pydantic_ai.embeddings import EmbeddingModel
 from pydantic_ai.models import Model
@@ -167,65 +167,47 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
         )
         return None if model is None else model.model_copy(deep=True)
 
-    def get_llm(self, name: str) -> Model:
-        """Get an LLM by its local catalog name.
+    @overload
+    def get_model_instance(self, name: str, model_type: Literal["llm"]) -> Model: ...
+
+    @overload
+    def get_model_instance(
+        self, name: str, model_type: Literal["embedding"]
+    ) -> EmbeddingModel: ...
+
+    @overload
+    def get_model_instance(
+        self, name: str, model_type: Literal["rerank"]
+    ) -> CrossEncoder: ...
+
+    def get_model_instance(
+        self, name: str, model_type: ModelType
+    ) -> Model | EmbeddingModel | CrossEncoder:
+        """Get a model instance by local catalog name and type.
 
         Args:
-            name: Local catalog name of the LLM.
+            name: Local catalog name of the model.
+            model_type: Required model capability.
 
         Returns:
-            The instantiated LLM.
+            The instantiated model for the requested type.
 
         Raises:
-            ModelNotAvailableError: If the requested LLM is absent from the
-                provider's catalog.
+            ModelNotAvailableError: If no catalog entry matches both the
+                specified name and type.
 
         """
-        model = self.get_catalog_model(name, "llm")
+        model = self.get_catalog_model(name, model_type)
         if model is None:
-            raise ModelNotAvailableError(name, "llm", self.provider_id)
+            raise ModelNotAvailableError(name, model_type, self.provider_id)
 
-        return self._create_llm(model)
-
-    def get_embedding(self, name: str) -> EmbeddingModel:
-        """Get an embedding model by its local catalog name.
-
-        Args:
-            name: Local catalog name of the embedding model.
-
-        Returns:
-            The instantiated embedding model.
-
-        Raises:
-            ModelNotAvailableError: If the requested embedding model is absent
-                from the provider's catalog.
-
-        """
-        model = self.get_catalog_model(name, "embedding")
-        if model is None:
-            raise ModelNotAvailableError(name, "embedding", self.provider_id)
-
-        return self._create_embedding(model)
-
-    def get_rerank(self, name: str) -> CrossEncoder:
-        """Get a reranker by its local catalog name.
-
-        Args:
-            name: Local catalog name of the reranker.
-
-        Returns:
-            The instantiated reranker.
-
-        Raises:
-            ModelNotAvailableError: If the requested reranker is absent from
-                the provider's catalog.
-
-        """
-        model = self.get_catalog_model(name, "rerank")
-        if model is None:
-            raise ModelNotAvailableError(name, "rerank", self.provider_id)
-
-        return self._create_rerank(model)
+        match model_type:
+            case "llm":
+                return self._create_llm(model)
+            case "embedding":
+                return self._create_embedding(model)
+            case _:  # rerank
+                return self._create_rerank(model)
 
     async def _load_catalog(self) -> list[CatalogModel]:
         """Load the catalog and apply the configured model allow-list.

@@ -1,9 +1,12 @@
 """Unit tests for the inference provider base class."""
 
+from typing import Any
+
 import pytest
 
 from models.config import InferenceProviderEntryBase
 from providers.inference.catalog import CatalogModel
+from providers.inference.types import ModelType
 from tests.unit.providers.inference._helpers import FakeInferenceProvider
 
 
@@ -27,6 +30,12 @@ def provider_fixture() -> FakeInferenceProvider:
             model_type="embedding",
             metadata={},
         ),
+        CatalogModel(
+            name="rerank-model",
+            provider_resource_id="provider-rerank-model",
+            model_type="rerank",
+            metadata={},
+        ),
     ]
     return provider
 
@@ -40,6 +49,7 @@ def test_list_catalog_models_returns_all_models(
     assert [model.name for model in models] == [
         "chat-model",
         "embedding-model",
+        "rerank-model",
     ]
 
 
@@ -58,7 +68,32 @@ def test_list_catalog_models_returns_copy(
     """list_catalog_models returns a copy, not the live catalog list."""
     provider.list_catalog_models().clear()
 
-    assert len(provider.list_catalog_models()) == 2
+    assert len(provider.list_catalog_models()) == 3
+
+
+@pytest.mark.parametrize(
+    ("name", "model_type", "creator"),
+    [
+        ("chat-model", "llm", "_create_llm"),
+        ("embedding-model", "embedding", "_create_embedding"),
+        ("rerank-model", "rerank", "_create_rerank"),
+    ],
+)
+def test_get_model_instance_dispatches_to_typed_creator(
+    provider: FakeInferenceProvider,
+    mocker: Any,
+    name: str,
+    model_type: ModelType,
+    creator: str,
+) -> None:
+    """get_model_instance looks up by type and calls the matching creator."""
+    sentinel = object()
+    mocker.patch.object(provider, creator, return_value=sentinel)
+
+    instance = provider.get_model_instance(name, model_type)
+
+    assert instance is sentinel
+    getattr(provider, creator).assert_called_once()
 
 
 def test_list_catalog_models_returns_deep_copies(

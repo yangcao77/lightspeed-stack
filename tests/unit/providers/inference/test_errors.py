@@ -20,26 +20,18 @@ def test_model_not_available_error_message_and_attributes() -> None:
     )
 
 
-@pytest.mark.parametrize(
-    ("getter", "model_type"),
-    [
-        ("get_llm", "llm"),
-        ("get_embedding", "embedding"),
-        ("get_rerank", "rerank"),
-    ],
-)
-def test_get_model_raises_model_not_available_error(
-    getter: str,
+@pytest.mark.parametrize("model_type", ["llm", "embedding", "rerank"])
+def test_get_model_instance_raises_model_not_available_error(
     model_type: ModelType,
 ) -> None:
-    """Typed getters raise an error when the model is absent."""
+    """get_model_instance raises an error when the model is absent."""
     entry = InferenceProviderEntryBase(
         id="fake-openai"
     )  # pyright: ignore[reportCallIssue]
     provider = FakeInferenceProvider(entry)
 
     with pytest.raises(ModelNotAvailableError) as exc_info:
-        getattr(provider, getter)("missing")
+        provider.get_model_instance("missing", model_type)
 
     assert exc_info.value.name == "missing"
     assert exc_info.value.model_type == model_type
