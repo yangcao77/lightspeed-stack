@@ -2480,7 +2480,7 @@ def test_dump_models(tmpdir: Path) -> None:
                         "providers": {
                             "description": "Unified-mode synthesis input (Decision S5): a high-level, backend-agnostic list of inference providers the synthesizer expands into OGX provider entries. Lives at the configuration root so it survives a future backend change. A non-empty list signals unified mode. Empty (the default) leaves legacy/remote modes unaffected. The sibling default_model / default_provider keep their query-time routing meaning and are independent of this list.",
                             "items": {
-                                "$ref": "`#/components/schemas/`UnifiedInferenceProvider"
+                                "$ref": "`#/components/schemas/`UnifiedInferenceProviderEntry"
                             },
                             "title": "High-level inference providers",
                             "type": "array"
@@ -9228,7 +9228,7 @@ def test_dump_models(tmpdir: Path) -> None:
                     "title": "UnauthorizedResponse",
                     "type": "object"
                 },
-                "UnifiedInferenceProvider": {
+                "UnifiedInferenceProviderEntry": {
                     "additionalProperties": false,
                     "description": "A high-level inference provider entry for unified-mode synthesis.\n\nOperators describe inference providers at this high level (backend-agnostic\nvocabulary) instead of authoring raw OGX provider blocks. The\nsynthesizer (`apply_high_level_inference`) expands each entry into a Llama\nStack `providers.inference` entry, mapping `type` to a `provider_type` and\nemitting `${env.<VAR>}` references for secrets (never literal values).\n\nAttributes:\n    type: Canonical provider identifier. Vendor-neutral so it survives a\n        future backend change; each backend-specific synthesizer maps it to\n        its own provider vocabulary.\n    id: Optional identifier emitted as the OGX provider_id. When\n        omitted, synthesized as type with underscores hyphenated. If set,\n        must be non-empty after stripping whitespace and may contain only\n        lowercase letters, digits, underscores, and hyphens.\n    api_key_env: Name of the environment variable holding the provider API\n        key. Emitted verbatim as `${env.<name>}` so the secret never lands\n        on disk resolved.\n    allowed_models: Optional allow-list of model identifiers passed through\n        to the synthesized provider config.\n    extra: Additional provider-config keys merged verbatim into the\n        synthesized provider's `config` block \u2014 an escape hatch for\n        provider-specific knobs not modeled here.",
                     "properties": {
@@ -9279,7 +9279,7 @@ def test_dump_models(tmpdir: Path) -> None:
                     "required": [
                         "type"
                     ],
-                    "title": "UnifiedInferenceProvider",
+                    "title": "UnifiedInferenceProviderEntry",
                     "type": "object"
                 },
                 "UnifiedOgxConfig": {
@@ -10259,7 +10259,21 @@ def test_dump_models(tmpdir: Path) -> None:
             "TurnCompleteStreamPayload",
             "TurnSummary",
             "UnauthorizedResponse",
-            "UnifiedInferenceProvider",
+            "AllowedModel",
+            "AzureInferenceProviderEntry",
+            "AzureInferenceProviderConfig",
+            "BedrockInferenceProviderEntry",
+            "BedrockInferenceProviderConfig",
+            "OpenAIInferenceProviderEntry",
+            "OpenAIInferenceProviderConfig",
+            "SentenceTransformersInferenceProviderEntry",
+            "SentenceTransformersInferenceProviderConfig",
+            "VertexAIInferenceProviderEntry",
+            "VertexAIInferenceProviderConfig",
+            "VllmInferenceProviderEntry",
+            "VllmInferenceProviderConfig",
+            "WatsonxInferenceProviderEntry",
+            "WatsonxInferenceProviderConfig",
             "UnifiedOgxConfig",
             "UnprocessableEntityResponse",
             "UserDataCollection",

@@ -1,0 +1,1 @@
+"""Azure inference provider package."""

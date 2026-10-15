@@ -311,8 +311,6 @@ pydantic-settings==2.14.2 \
     --hash=sha256:0398c90f6e52de6fc403d1aa3dfd53c7be8e011759e7fcd7b317fffb0649f726
 pygments==2.20.0 \
     --hash=sha256:14c06510dc5a2dbf9d83a85463d229907d0456e167a3752d361e6cd1cbfd1152
-pypdf==6.14.2 \
-    --hash=sha256:ae2086b5b853f5343b1659f4561069c8fedc4b93d9212daffdd0983f47bed48a
 pyperclip==1.11.0 \
     --hash=sha256:0d85f6843d6eb6ec5cc49f85f63d3cba92cc46ef87c27667205e03decdd9d285
 python-dateutil==2.9.0.post0 \

@@ -35,6 +35,8 @@ from models.config import (
     ModelContextProtocolServer,
     OgxConfiguration,
     OkpConfiguration,
+    OpenAIInferenceProviderConfig,
+    OpenAIInferenceProviderEntry,
     PgvectorVectorStoreProvider,
     PgvectorVectorStoreProviderConfig,
     PostgreSQLDatabaseConfiguration,
@@ -58,7 +60,6 @@ from models.config import (
     TLSConfiguration,
     TrustedProxyConfiguration,
     TrustedProxyServiceAccount,
-    UnifiedInferenceProvider,
     UnifiedOgxConfig,
     UserDataCollection,
     VectorStoreConfiguration,
@@ -359,12 +360,17 @@ def build_fully_populated_config() -> Configuration:
             max_infer_iters=10,
             max_tool_calls=30,
             providers=[
-                UnifiedInferenceProvider.model_construct(
+                OpenAIInferenceProviderEntry.model_construct(
                     type="openai",
                     id="openai-provider",
                     api_key_env=PII_PROVIDER_API_KEY_ENV,
                     allowed_models=["gpt-4o-mini", "gpt-4o"],
                     extra={},
+                    skip_model_discovery=False,
+                    config=OpenAIInferenceProviderConfig.model_construct(
+                        api_key=SecretStr("sk-openai-secret-key"),
+                        base_url="https://api.openai.com/v1",
+                    ),
                 ),
             ],
         ),

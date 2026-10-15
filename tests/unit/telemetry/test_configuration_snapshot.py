@@ -622,6 +622,8 @@ class TestBuildLightspeedStackSnapshot:
         assert providers[0]["id"] == "openai-provider"
         assert providers[0]["api_key_env"] == CONFIGURED
         assert providers[0]["allowed_models"] == ["gpt-4o-mini", "gpt-4o"]
+        assert providers[0]["skip_model_discovery"] is False
+        assert providers[0]["config"] == CONFIGURED
 
     def test_inference_providers_empty(self) -> None:
         """Test inference providers when empty."""

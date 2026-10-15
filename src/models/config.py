@@ -702,112 +702,326 @@ class ModelContextProtocolServer(ConfigurationBase):
         return self
 
 
-class UnifiedInferenceProvider(ConfigurationBase):
-    """A high-level inference provider entry for unified-mode synthesis.
+class AllowedModel(ConfigurationBase):
+    """Configuration for an allowed inference model.
 
-    Operators describe inference providers at this high level (backend-agnostic
-    vocabulary) instead of authoring raw OGX provider blocks. The
-    synthesizer (`apply_high_level_inference`) expands each entry into an OGX
-    `providers.inference` entry, mapping `type` to a `provider_type` and
-    emitting `${env.<VAR>}` references for secrets (never literal values).
-
-    Attributes:
-        type: Canonical provider identifier. Vendor-neutral so it survives a
-            future backend change; each backend-specific synthesizer maps it to
-            its own provider vocabulary.
-        id: Optional identifier emitted as the OGX provider_id. When
-            omitted, synthesized as type with underscores hyphenated. If set,
-            must be non-empty after stripping whitespace and may contain only
-            lowercase letters, digits, underscores, and hyphens.
-        api_key_env: Name of the environment variable holding the provider API
-            key. Emitted verbatim as `${env.<name>}` so the secret never lands
-            on disk resolved.
-        allowed_models: Optional allow-list of model identifiers passed through
-            to the synthesized provider config.
-        extra: Additional provider-config keys merged verbatim into the
-            synthesized provider's `config` block — an escape hatch for
-            provider-specific knobs not modeled here.
-
+    Accepts string IDs or dictionaries. String IDs populate both `name` and
+    `provider_model_id`; dictionary inputs default `name` to `provider_model_id`.
     """
 
-    type: Literal[
-        "openai",
-        "ollama",
-        "vllm",
-        "sentence_transformers",
-        "azure",
-        "vertexai",
-        "watsonx",
-        "vllm_rhaiis",
-        "vllm_rhel_ai",
-    ] = Field(
-        ...,
-        title="Provider type",
-        description="Canonical, backend-agnostic provider identifier mapped to "
-        "an OGX provider_type by the synthesizer.",
-    )
-
-    id: Optional[str] = Field(
+    name: str = Field(..., min_length=1, title="Local model name")
+    provider_model_id: str = Field(..., min_length=1, title="Backend model id")
+    model_type: Optional[Literal["llm", "embedding", "rerank"]] = Field(
         None,
-        title="Provider ID",
-        description="Optional identifier emitted as the OGX provider_id. When omitted, "
-        "synthesized as type with underscores hyphenated. If set, must "
-        "be non-empty after stripping whitespace and may contain only "
-        "lowercase letters, digits, underscores, and hyphens.",
+        title="Model type",
+        description="Optional capability override (llm, embedding, or rerank).",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        title="Model metadata",
+        description="Optional catalog metadata",
     )
 
+    @model_validator(mode="before")
+    @classmethod
+    def normalize_input(cls, data: Any) -> Any:
+        """Normalize string and dictionary inputs."""
+        if isinstance(data, str):
+            return {"name": data, "provider_model_id": data}
+
+        if isinstance(data, dict):
+            normalized = dict(data)
+            provider_model_id = normalized.get("provider_model_id")
+            if not provider_model_id:
+                raise ValueError("provider_model_id must be provided and non-empty")
+            normalized.setdefault("name", provider_model_id)
+            return normalized
+
+        return data
+
+    @field_validator("name", "provider_model_id")
+    @classmethod
+    def strip_nonempty(cls, value: str) -> str:
+        """Strip whitespace and reject empty identifiers."""
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("must be non-empty after stripping whitespace")
+        return stripped
+
+    @field_validator("metadata")
+    @classmethod
+    def validate_metadata(cls, value: dict[str, Any]) -> dict[str, Any]:
+        """Validate metadata values."""
+        context_window = value.get("context_window")
+        if context_window is not None and (
+            not isinstance(context_window, int)
+            or isinstance(context_window, bool)
+            or context_window <= 0
+        ):
+            raise ValueError("metadata.context_window must be a positive int")
+        return value
+
+
+class AzureEntraIdConfiguration(ConfigurationBase):
+    """Microsoft Entra ID authentication attributes for Azure."""
+
+    tenant_id: SecretStr = Field(..., title="Tenant ID")
+    client_id: SecretStr = Field(..., title="Client ID")
+    client_secret: SecretStr = Field(..., title="Client secret")
+    scope: str = Field(
+        "https://cognitiveservices.azure.com/.default",
+        title="Token scope",
+        description="Azure Cognitive Services scope for token requests. "
+        "Override only if using a different Azure service.",
+    )
+
+
+class OpenAIInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for an OpenAI inference provider."""
+
+    api_key: Optional[SecretStr] = Field(default=None, title="API key")
+    base_url: Optional[str] = Field(default=None, title="Base URL")
+
+
+class AzureInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for an Azure OpenAI inference provider."""
+
+    base_url: Optional[str] = Field(default=None, title="Azure OpenAI endpoint")
+    api_key: Optional[SecretStr] = Field(default=None, title="API key")
+    api_version: Optional[str] = Field(default=None, title="API version")
+    entra_id: Optional[AzureEntraIdConfiguration] = Field(
+        default=None,
+        title="Entra ID",
+        description="Preferred Entra ID auth for this provider. Takes "
+        "precedence over the legacy top-level Azure Entra ID settings.",
+    )
+
+
+class VertexAIInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for a Vertex AI inference provider.
+
+    Authentication uses Google Application Default Credentials. Set
+    GOOGLE_APPLICATION_CREDENTIALS in the environment when a credentials file
+    is required; there is no credentials path field in config.
+    """
+
+    project: Optional[str] = Field(default=None, title="GCP project")
+    location: Optional[str] = Field(default=None, title="GCP location")
+
+
+class BedrockInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for an AWS Bedrock inference provider."""
+
+    region: Optional[str] = Field(default=None, title="AWS region")
+    profile_name: Optional[str] = Field(default=None, title="AWS profile")
+    api_key: Optional[SecretStr] = Field(
+        default=None,
+        title="Bearer token",
+        description="Optional Bedrock bearer token (alternative to SigV4).",
+    )
+
+
+class VllmInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for a vLLM inference provider."""
+
+    base_url: Optional[str] = Field(default=None, title="Base URL")
+    api_key: Optional[SecretStr] = Field(default=None, title="API key")
+
+
+class WatsonxInferenceProviderConfig(ConfigurationBase):
+    """Connection settings for a WatsonX inference provider."""
+
+    api_key: Optional[SecretStr] = Field(default=None, title="API key")
+    project_id: Optional[str] = Field(default=None, title="Project ID")
+    base_url: Optional[str] = Field(default=None, title="Base URL")
+
+
+class SentenceTransformersInferenceProviderConfig(ConfigurationBase):
+    """Settings for the local sentence-transformers inference provider."""
+
+    device: Optional[str] = Field(default=None, title="Device")
+    cache_dir: Optional[str] = Field(default=None, title="Hugging Face cache directory")
+
+
+class InferenceProviderEntryBase(ConfigurationBase):
+    """Shared fields for inference provider entries."""
+
+    id: str = Field(..., title="Provider ID")
+    skip_model_discovery: bool = Field(False, title="Skip model discovery")
+    allowed_models: list[AllowedModel] = Field(
+        default_factory=list, title="Allowed models"
+    )
+    model_profiles_path: Optional[FilePath] = Field(None, title="Model profiles path")
     api_key_env: Optional[str] = Field(
         None,
         title="API key environment variable",
-        description="Name of the environment variable holding the provider API "
-        "key. Emitted as a ${env.<name>} reference so the secret is never "
-        "written to disk in resolved form.",
+        description="Deprecated: prefer config.api_key with ${env.VAR}.",
     )
-
-    allowed_models: Optional[list[str]] = Field(
+    extra: Optional[dict[str, object]] = Field(
         None,
-        title="Allowed models",
-        description="Optional allow-list of model identifiers for this provider.",
+        title="Extra provider config",
+        description="Deprecated escape hatch for unmodeled provider knobs.",
     )
 
-    extra: dict[str, object] = Field(
-        default_factory=dict,
-        title="Extra provider config",
-        description="Additional provider-config keys merged verbatim into the "
-        "synthesized provider's config block.",
-    )
+    @model_validator(mode="before")
+    @classmethod
+    def default_id_from_type(cls, data: Any) -> Any:
+        """Set provider ID from type when omitted."""
+        if isinstance(data, dict) and data.get("id") is None:
+            normalized = dict(data)
+            normalized["id"] = normalized.get("type", cls.model_fields["type"].default)
+            return normalized
+        return data
 
     @field_validator("id")
     @classmethod
-    def validate_id(cls, value: Optional[str]) -> Optional[str]:
-        """Strip and validate an optional high-level provider id.
-
-        Parameters:
-            value: The configured id, or None when omitted.
-
-        Returns:
-            The stripped id, or None when the field is omitted.
-
-        Raises:
-            ValueError: If the value is empty after stripping or contains
-                characters other than lowercase letters, digits, underscores,
-                and hyphens.
-
-        """
-        if value is None:
-            return None
-        stripped = value.strip()
-        if not stripped:
+    def validate_id(cls, value: str) -> str:
+        """Validate the provider ID."""
+        value = value.strip()
+        if not value or not re.fullmatch(r"[a-z0-9_-]+", value):
             raise ValueError(
-                "id must be non-empty after stripping whitespace; "
-                "omit the field to use the type-derived default"
-            )
-        if not re.fullmatch(r"[a-z0-9_-]+", stripped):
-            raise ValueError(
-                "id may contain only lowercase letters, digits, "
+                "id must contain only lowercase letters, digits, "
                 "underscores, and hyphens"
             )
-        return stripped
+        return value
+
+    @model_validator(mode="after")
+    def validate_allowed_models(self) -> Self:
+        """Require unique names; nonempty allow-list when skipping discovery."""
+        names = [model.name for model in self.allowed_models]
+        if len(names) != len(set(names)):
+            raise ValueError("allowed model names must be unique")
+        if self.skip_model_discovery and not self.allowed_models:
+            raise ValueError(
+                "allowed_models must be non-empty when skip_model_discovery is true"
+            )
+        return self
+
+
+class OpenAIInferenceProviderEntry(InferenceProviderEntryBase):
+    """OpenAI inference provider."""
+
+    type: Literal["openai"] = Field(
+        "openai",
+        title="Provider type",
+        description="OpenAI remote inference provider.",
+    )
+    config: OpenAIInferenceProviderConfig = Field(
+        default_factory=OpenAIInferenceProviderConfig,
+        title="Connection settings",
+        description="API key and optional base URL.",
+    )
+
+
+class AzureInferenceProviderEntry(InferenceProviderEntryBase):
+    """Azure OpenAI inference provider."""
+
+    type: Literal["azure"] = Field(
+        "azure",
+        title="Provider type",
+        description="Azure OpenAI remote inference provider.",
+    )
+    config: AzureInferenceProviderConfig = Field(
+        default_factory=AzureInferenceProviderConfig,
+        title="Connection settings",
+        description="Endpoint, API key or Entra ID, and API version.",
+    )
+
+
+class VertexAIInferenceProviderEntry(InferenceProviderEntryBase):
+    """Vertex AI inference provider."""
+
+    type: Literal["vertexai"] = Field(
+        "vertexai",
+        title="Provider type",
+        description="Google Vertex AI remote inference provider.",
+    )
+    config: VertexAIInferenceProviderConfig = Field(
+        default_factory=VertexAIInferenceProviderConfig,
+        title="Connection settings",
+        description="GCP project and location.",
+    )
+
+
+class BedrockInferenceProviderEntry(InferenceProviderEntryBase):
+    """AWS Bedrock inference provider."""
+
+    type: Literal["bedrock"] = Field(
+        "bedrock",
+        title="Provider type",
+        description="AWS Bedrock remote inference provider.",
+    )
+    config: BedrockInferenceProviderConfig = Field(
+        default_factory=BedrockInferenceProviderConfig,
+        title="Connection settings",
+        description="AWS region, optional profile, and optional bearer token.",
+    )
+
+
+class VllmInferenceProviderEntry(InferenceProviderEntryBase):
+    """vLLM inference provider."""
+
+    type: Literal["vllm"] = Field(
+        "vllm",
+        title="Provider type",
+        description="vLLM OpenAI-compatible remote inference provider.",
+    )
+    config: VllmInferenceProviderConfig = Field(
+        default_factory=VllmInferenceProviderConfig,
+        title="Connection settings",
+        description="Base URL and optional API key.",
+    )
+
+
+class WatsonxInferenceProviderEntry(InferenceProviderEntryBase):
+    """WatsonX inference provider."""
+
+    type: Literal["watsonx"] = Field(
+        "watsonx",
+        title="Provider type",
+        description="IBM WatsonX remote inference provider.",
+    )
+    config: WatsonxInferenceProviderConfig = Field(
+        default_factory=WatsonxInferenceProviderConfig,
+        title="Connection settings",
+        description="API key, project ID, and base URL.",
+    )
+
+
+class SentenceTransformersInferenceProviderEntry(InferenceProviderEntryBase):
+    """Local sentence-transformers inference provider."""
+
+    type: Literal["sentence_transformers"] = Field(
+        "sentence_transformers",
+        title="Provider type",
+        description="Local sentence-transformers embedding and rerank provider.",
+    )
+    config: SentenceTransformersInferenceProviderConfig = Field(
+        default_factory=SentenceTransformersInferenceProviderConfig,
+        title="Connection settings",
+        description="Optional device and Hugging Face cache directory.",
+    )
+
+    @model_validator(mode="after")
+    def require_allowed_models(self) -> Self:
+        """Require explicitly configured models."""
+        if not self.allowed_models:
+            raise ValueError(
+                "allowed_models must be non-empty for sentence_transformers"
+            )
+        return self
+
+
+UnifiedInferenceProviderEntry = Annotated[
+    OpenAIInferenceProviderEntry
+    | AzureInferenceProviderEntry
+    | VertexAIInferenceProviderEntry
+    | BedrockInferenceProviderEntry
+    | VllmInferenceProviderEntry
+    | WatsonxInferenceProviderEntry
+    | SentenceTransformersInferenceProviderEntry,
+    Field(discriminator="type"),
+]
 
 
 class UnifiedOgxConfig(ConfigurationBase):
@@ -1846,18 +2060,13 @@ class InferenceConfiguration(ConfigurationBase):
         "back to their own default or skip the token-based trigger.",
     )
 
-    providers: list[UnifiedInferenceProvider] = Field(
+    providers: list[UnifiedInferenceProviderEntry] = Field(
         default_factory=list,
-        title="High-level inference providers",
+        title="Inference providers",
         description=(
-            "Unified-mode synthesis input (Decision S5): a high-level, backend-agnostic "
-            "list of inference providers the synthesizer expands into "
-            "OGX provider entries. Lives at the configuration root "
-            "so it survives a future backend change. A "
-            "non-empty list signals unified mode. Empty (the default) "
-            "leaves legacy/remote modes unaffected. The sibling default_model / "
-            "default_provider keep their query-time routing meaning and are "
-            "independent of this list."
+            "Discriminated list of inference providers. Empty by default. "
+            "The sibling default_model / default_provider keep their "
+            "query-time routing meaning and are independent of this list."
         ),
     )
 
@@ -1903,35 +2112,22 @@ class InferenceConfiguration(ConfigurationBase):
             )
         return self
 
-    @model_validator(mode="after")
-    def check_unique_provider_ids(self) -> Self:
-        """Reject two high-level providers that resolve to the same provider_id.
-
-        The synthesizer emits each provider under its explicit ``id`` when set,
-        otherwise the ``type`` with underscores hyphenated. Two entries
-        resolving to the same emitted id would collide in the synthesized
-        ``providers.inference`` list (the later one silently overwriting the
-        earlier), so reject the ambiguity here rather than resolving it as
-        last-wins at synthesis time.
-
-        Raises:
-            ValueError: If two providers resolve to the same emitted id.
-
-        Returns:
-            self (Self): The validated configuration instance.
-
-        """
+    @field_validator("providers")
+    @classmethod
+    def validate_unique_provider_ids(
+        cls, providers: list[UnifiedInferenceProviderEntry]
+    ) -> list[UnifiedInferenceProviderEntry]:
+        """Reject two providers that share the same local provider id."""
         seen: set[str] = set()
-        for provider in self.providers:
-            emitted_id = provider.id or provider.type.replace("_", "-")
-            if emitted_id in seen:
+        for provider in providers:
+            if provider.id in seen:
                 raise ValueError(
-                    f"duplicate inference provider id {emitted_id!r}: two "
+                    f"duplicate inference provider id {provider.id!r}: two "
                     "inference.providers entries resolve to the same "
                     "provider_id; set a distinct 'id' on one of them"
                 )
-            seen.add(emitted_id)
-        return self
+            seen.add(provider.id)
+        return providers
 
 
 class CompactionConfiguration(ConfigurationBase):
@@ -2889,20 +3085,6 @@ class RagConfiguration(ConfigurationBase):
             reranker.enabled = True
 
         return self
-
-
-class AzureEntraIdConfiguration(ConfigurationBase):
-    """Microsoft Entra ID authentication attributes for Azure."""
-
-    tenant_id: SecretStr
-    client_id: SecretStr
-    client_secret: SecretStr
-    scope: str = Field(
-        "https://cognitiveservices.azure.com/.default",
-        title="Token scope",
-        description="Azure Cognitive Services scope for token requests. "
-        "Override only if using a different Azure service.",
-    )
 
 
 class SkillsConfiguration(ConfigurationBase):

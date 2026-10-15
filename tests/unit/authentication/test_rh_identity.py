@@ -543,7 +543,7 @@ class TestRHIdentityAuthDependency:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "required_entitlements,should_raise,expected_error",
+        ("required_entitlements", "should_raise", "expected_error"),
         [
             (["rhel"], False, None),  # Single valid
             (["rhel", "ansible"], False, None),  # Multiple valid
@@ -777,7 +777,7 @@ class TestRHIdentityHeaderSizeLimit:
 
     @pytest.mark.asyncio
     @pytest.mark.parametrize(
-        "header_size,max_size",
+        ("header_size", "max_size"),
         [
             (9000, 8192),  # Well over default limit
             (101, 100),  # One byte over custom limit
@@ -809,7 +809,7 @@ class TestRHIdentityFieldValidation:  # pylint: disable=too-many-public-methods
     """Test suite for RHIdentityData string field validation."""
 
     @pytest.mark.parametrize(
-        "field_path,bad_value",
+        ("field_path", "bad_value"),
         [
             (("user", "user_id"), None),
             (("user", "user_id"), 12345),

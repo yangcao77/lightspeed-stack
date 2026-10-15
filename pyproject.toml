@@ -184,7 +184,7 @@ ogxlibdev = [
     "chardet>=5.2.0",
     "psycopg2-binary>=2.9.10",
     "pgvector>=0.3.6",
-    "pypdf>=6.10.2",
+    "pypdf>=6.19.0",
     # API scoring: inline::basic
     "requests>=2.33.0",
     # API datasetio: inline::localfs
@@ -207,7 +207,7 @@ ogxlibdev = [
     "google-cloud-aiplatform>=1.130.0",
     # API inference: remote::watsonx
     # LCORE-1565
-    "litellm>=1.83.7",
+    "litellm>=1.88.6",
     # Other
     "autoevals>=0.0.129",
     "fire>=0.7.0",
