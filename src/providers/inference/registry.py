@@ -11,7 +11,7 @@ from providers.inference.errors import ProviderNotFoundError
 from providers.inference.types import ModelType, ProviderId, ProviderType
 from utils.types import Singleton
 
-PROVIDER_CLASSES: Final[dict[ProviderType, type[InferenceProvider[Any]]]] = {}
+PROVIDER_CLASSES: Final[dict[ProviderType, type[InferenceProvider[Any, Any]]]] = {}
 
 
 class ProviderRegistry(metaclass=Singleton):
@@ -19,7 +19,7 @@ class ProviderRegistry(metaclass=Singleton):
 
     def __init__(self) -> None:
         """Initialize an empty registry."""
-        self._providers: dict[ProviderId, InferenceProvider[Any]] = {}
+        self._providers: dict[ProviderId, InferenceProvider[Any, Any]] = {}
 
     async def initialize(self, inference: InferenceConfiguration) -> None:
         """Register and initialize providers from configuration.
@@ -36,7 +36,7 @@ class ProviderRegistry(metaclass=Singleton):
 
     def find_provider(
         self, provider_id: ProviderId
-    ) -> Optional[InferenceProvider[Any]]:
+    ) -> Optional[InferenceProvider[Any, Any]]:
         """Find a provider by ID when absence is acceptable.
 
         Args:
@@ -48,7 +48,7 @@ class ProviderRegistry(metaclass=Singleton):
         """
         return self._providers.get(provider_id)
 
-    def get_provider(self, provider_id: ProviderId) -> InferenceProvider[Any]:
+    def get_provider(self, provider_id: ProviderId) -> InferenceProvider[Any, Any]:
         """Get a provider by ID when absence is an error.
 
         Args:
@@ -65,7 +65,7 @@ class ProviderRegistry(metaclass=Singleton):
             raise ProviderNotFoundError(provider_id)
         return provider
 
-    def list_providers(self) -> list[InferenceProvider[Any]]:
+    def list_providers(self) -> list[InferenceProvider[Any, Any]]:
         """List initialized providers in registration order."""
         return list(self._providers.values())
 
