@@ -15,16 +15,17 @@ from models.config import (
     AllowedModel,
     InferenceProviderEntryBase,
 )
-from providers.inference.catalog import CatalogModel
+from providers.inference.catalog import CatalogModel, DiscoveredModel
 from providers.inference.errors import ModelNotAvailableError
 from providers.inference.types import ModelType, ProviderId
 
 logger = get_logger(__name__)
 
 EntryT = TypeVar("EntryT", bound=InferenceProviderEntryBase)
+ProviderT = TypeVar("ProviderT", bound=Provider[Any])
 
 
-class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
+class InferenceProvider(ABC, Generic[EntryT, ProviderT]):  # noqa: UP046
     """Runtime inference provider with a cached model catalog."""
 
     def __init__(self, entry: EntryT) -> None:
@@ -36,7 +37,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
 
         """
         self.provider_id: ProviderId = entry.id
-        self._provider: Optional[Provider[Any]] = None
+        self._provider: Optional[ProviderT] = None
         self._models: list[CatalogModel] = []
         self._entry: EntryT = entry
 
@@ -49,7 +50,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
         self._models = await self._load_catalog()
 
     @abstractmethod
-    def _build_provider(self) -> Optional[Provider[Any]]:
+    def _build_provider(self) -> Optional[ProviderT]:
         """Build the PydanticAI provider.
 
         Returns:
@@ -59,7 +60,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
         """
 
     @abstractmethod
-    async def _discover_models(self) -> list[CatalogModel]:
+    async def _discover_models(self) -> list[DiscoveredModel]:
         """Discover models available from the provider.
 
         Returns:
@@ -226,7 +227,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
             return [
                 CatalogModel(
                     name=allowed.name,
-                    provider_resource_id=allowed.provider_model_id,
+                    provider_model_id=allowed.provider_model_id,
                     model_type=allowed.model_type
                     or self._infer_model_type(allowed.provider_model_id),
                     metadata=dict(allowed.metadata),
@@ -239,7 +240,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
 
     def _filter_discovered(
         self,
-        discovered: list[CatalogModel],
+        discovered: list[DiscoveredModel],
         allowed_models: list[AllowedModel],
     ) -> list[CatalogModel]:
         """Filter discovered models using the configured allow-list.
@@ -259,20 +260,28 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
 
         """
         if not allowed_models:
-            return list(discovered)
+            return [
+                CatalogModel(
+                    name=model.provider_model_id,
+                    provider_model_id=model.provider_model_id,
+                    model_type=model.model_type,
+                    metadata=model.metadata,
+                )
+                for model in discovered
+            ]
 
-        discovered_by_resource_id = {
-            model.provider_resource_id: model for model in discovered
+        discovered_by_model_id = {
+            model.provider_model_id: model for model in discovered
         }
 
         filtered: list[CatalogModel] = []
 
         for allowed in allowed_models:
-            model = discovered_by_resource_id.get(allowed.provider_model_id)
+            model = discovered_by_model_id.get(allowed.provider_model_id)
 
             if model is None:
                 logger.warning(
-                    "Configured model %r with provider resource ID %r "
+                    "Configured model %r with provider model ID %r "
                     "was not discovered for provider %r",
                     allowed.name,
                     allowed.provider_model_id,
@@ -283,7 +292,7 @@ class InferenceProvider(ABC, Generic[EntryT]):  # noqa: UP046
             filtered.append(
                 CatalogModel(
                     name=allowed.name,
-                    provider_resource_id=allowed.provider_model_id,
+                    provider_model_id=allowed.provider_model_id,
                     model_type=allowed.model_type or model.model_type,
                     metadata={**model.metadata, **allowed.metadata},
                 )

@@ -10,18 +10,20 @@ from sentence_transformers import CrossEncoder
 
 from models.config import InferenceProviderEntryBase
 from providers.inference.base import InferenceProvider
-from providers.inference.catalog import CatalogModel
+from providers.inference.catalog import CatalogModel, DiscoveredModel
 from providers.inference.types import ModelType
 
 
-class FakeInferenceProvider(InferenceProvider[InferenceProviderEntryBase]):
+class FakeInferenceProvider(
+    InferenceProvider[InferenceProviderEntryBase, Provider[Any]]
+):
     """Minimal concrete provider for testing shared behavior."""
 
     def _build_provider(self) -> Optional[Provider[Any]]:
         """No PydanticAI provider is required for unit tests."""
         return None
 
-    async def _discover_models(self) -> list[CatalogModel]:
+    async def _discover_models(self) -> list[DiscoveredModel]:
         """Return no discovered models; tests use skip_model_discovery."""
         return []
 
@@ -51,19 +53,19 @@ def make_catalog_models() -> list[CatalogModel]:
     return [
         CatalogModel(
             name="chat-model",
-            provider_resource_id="provider-chat-model",
+            provider_model_id="provider-chat-model",
             model_type="llm",
             metadata={"tags": ["chat"]},
         ),
         CatalogModel(
             name="embedding-model",
-            provider_resource_id="provider-embedding-model",
+            provider_model_id="provider-embedding-model",
             model_type="embedding",
             metadata={},
         ),
         CatalogModel(
             name="rerank-model",
-            provider_resource_id="provider-rerank-model",
+            provider_model_id="provider-rerank-model",
             model_type="rerank",
             metadata={},
         ),
