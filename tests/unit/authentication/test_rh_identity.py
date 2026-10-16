@@ -865,7 +865,7 @@ class TestRHIdentityFieldValidation:  # pylint: disable=too-many-public-methods
         assert exc_info.value.status_code == 400
 
     @pytest.mark.parametrize(
-        "field_path,bad_value",
+        ("field_path", "bad_value"),
         [
             (("service_account", "client_id"), None),
             (("service_account", "client_id"), 12345),
