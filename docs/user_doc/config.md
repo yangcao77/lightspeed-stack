@@ -1134,7 +1134,7 @@ A Kubernetes ServiceAccount identity for trusted-proxy allowlist.
 | name      | string | Name of the Kubernetes ServiceAccount.      |
 
 
-## UnifiedInferenceProvider
+## UnifiedInferenceProviderEntry
 
 
 A high-level inference provider entry for unified-mode synthesis.

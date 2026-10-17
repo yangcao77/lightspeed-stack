@@ -56,6 +56,10 @@ Unit tests for InMemoryCache model.
 
 Unit tests for InferenceConfiguration model.
 
+## [test_inference_provider_entries.py](test_inference_provider_entries.py)
+
+Unit tests for discriminated inference.providers[] config entries.
+
 ## [test_jwt_role_rule.py](test_jwt_role_rule.py)
 
 Unit tests for JwtRoleRule model.

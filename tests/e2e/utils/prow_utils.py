@@ -7,6 +7,7 @@ and are only used when running tests in the Prow CI environment.
 import os
 import re
 import subprocess
+import sys
 import tempfile
 from typing import Optional
 
@@ -379,6 +380,7 @@ def ensure_okp_solr_ready() -> None:
     """Deploy OKP Solr on Konflux if it is not already Ready.
 
     Idempotent. First image pull can take ~10-15 minutes (7GB).
+    Setup output is emitted on both successful deployment and failure.
 
     Raises:
         subprocess.CalledProcessError: If deploy-okp-solr fails.
@@ -386,14 +388,21 @@ def ensure_okp_solr_ready() -> None:
 
     """
     # 300 wait_for_pod attempts × 3s = 900s, plus oc apply. 1080s leaves margin.
-    result = run_e2e_ops("deploy-okp-solr", timeout=1080)
-    print(result.stdout, end="")
-    if result.returncode != 0:
-        print(result.stderr, end="")
-        raise subprocess.CalledProcessError(
-            result.returncode, "deploy-okp-solr", result.stderr
-        )
-    print("✓ OKP Solr is ready")
+    try:
+        result = run_e2e_ops("deploy-okp-solr", timeout=1080)
+        # Print to the real stdout: before_feature's hook output is captured and
+        # dropped on success, which would otherwise hide this every run.
+        print(result.stdout, end="", file=sys.__stdout__, flush=True)
+        if result.returncode != 0:
+            print(result.stderr, end="")
+            raise subprocess.CalledProcessError(
+                result.returncode, "deploy-okp-solr", result.stderr
+            )
+    except subprocess.TimeoutExpired as exc:
+        # Forward captured output before re-raising
+        print(exc.stdout or "", end="", file=sys.__stdout__, flush=True)
+        print(exc.stderr or "", end="", file=sys.__stdout__, flush=True)
+        raise
 
 
 def disrupt_okp_solr_pod() -> bool:

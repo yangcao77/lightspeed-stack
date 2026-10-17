@@ -475,12 +475,14 @@ def _ensure_okp_solr_for_feature() -> None:
 
     Classic Prow and local Docker are no-ops. GitHub Actions / Prow skip the
     feature via ``@konflux-only`` before scenarios run.
+
+    ``ensure_okp_solr_ready`` prints the pulled image identity itself
+    (bypassing hook capture), so this wrapper stays silent on success and
+    only surfaces output when the deploy actually fails.
     """
     if not is_konflux_environment():
         return
-    print("[okp_rag.feature] Konflux: ensuring OKP Solr is deployed...")
     ensure_okp_solr_ready()
-    print("[okp_rag.feature] OKP Solr ready", flush=True)
 
 
 def before_feature(context: Context, feature: Feature) -> None:

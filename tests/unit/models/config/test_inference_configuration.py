@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from models.config import InferenceConfiguration, UnifiedInferenceProvider
+from models.config import InferenceConfiguration, VllmInferenceProviderEntry
 
 
 def test_inference_constructor() -> None:
@@ -161,25 +161,9 @@ def test_max_tool_calls_accepts_none() -> None:
     assert config.max_tool_calls is None
 
 
-def test_unified_inference_provider_id_optional() -> None:
-    """Omitting id leaves it None (type-derived default at synthesis)."""
-    provider = UnifiedInferenceProvider(type="vllm")
-    assert provider.id is None
-
-
-@pytest.mark.parametrize(
-    "provider_id",
-    ["vllm-prod", "vllm_staging", "openai", "a", "vllm-prod-2"],
-)
-def test_unified_inference_provider_id_accepts_valid(provider_id: str) -> None:
-    """Accept lowercase letters, digits, underscores, and hyphens."""
-    provider = UnifiedInferenceProvider(type="vllm", id=provider_id)
-    assert provider.id == provider_id
-
-
-def test_unified_inference_provider_id_strips_whitespace() -> None:
+def test_inference_provider_id_strips_whitespace() -> None:
     """Leading and trailing whitespace are stripped from id."""
-    provider = UnifiedInferenceProvider(type="vllm", id="  vllm-prod  ")
+    provider = VllmInferenceProviderEntry(type="vllm", id="  vllm-prod  ")
     assert provider.id == "vllm-prod"
 
 
@@ -187,7 +171,7 @@ def test_unified_inference_provider_id_strips_whitespace() -> None:
     "provider_id",
     ["", "   ", "VLLM", "vllm prod", "vllm.prod", "vllm/prod", "Vllm-prod"],
 )
-def test_unified_inference_provider_id_rejects_invalid(provider_id: str) -> None:
+def test_inference_provider_id_rejects_invalid(provider_id: str) -> None:
     """Reject empty, whitespace-only, uppercase, spaces, and other punctuation."""
     with pytest.raises(ValidationError):
-        UnifiedInferenceProvider(type="vllm", id=provider_id)
+        VllmInferenceProviderEntry(type="vllm", id=provider_id)

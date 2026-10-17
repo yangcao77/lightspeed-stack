@@ -13,17 +13,16 @@ import os
 import stat
 import sys
 from pathlib import Path
-from typing import Any, Optional, get_args
+from typing import Any, Optional
 
 import pytest
 import yaml
 from ogx.core.stack import replace_env_vars
 from pydantic import ValidationError
 
-from models.config import InferenceConfiguration, UnifiedInferenceProvider
+from models.config import InferenceConfiguration, VllmInferenceProviderEntry
 from ogx_configuration import (
     CONDITIONAL_OPENAI_PROVIDER_ID,
-    PROVIDER_TYPE_MAP,
     apply_high_level_inference,
     deep_merge_list_replace,
     ensure_mcp_tool_runtime,
@@ -531,12 +530,11 @@ def test_apply_high_level_inference_extra_cannot_override_api_key_env() -> None:
     assert entry["config"]["api_token"] == "${env.VLLM_API_KEY}"
 
 
-def test_unified_inference_provider_accepts_ollama_and_vllm() -> None:
-    """Pydantic model accepts the new ollama and vllm Literal values."""
-    ollama = UnifiedInferenceProvider(type="ollama")
-    assert ollama.type == "ollama"
-    vllm = UnifiedInferenceProvider(type="vllm")
+def test_inference_provider_accepts_vllm() -> None:
+    """Pydantic model accepts the vllm provider type."""
+    vllm = VllmInferenceProviderEntry(type="vllm")
     assert vllm.type == "vllm"
+    assert vllm.id == "vllm"
 
 
 def test_apply_high_level_inference_empty_is_noop() -> None:
@@ -711,18 +709,6 @@ def test_inference_config_allows_distinct_provider_ids() -> None:
         ]
     )
     assert len(config.providers) == 2
-
-
-def test_provider_type_map_covers_every_literal_value() -> None:
-    """Every UnifiedInferenceProvider.type value has a PROVIDER_TYPE_MAP entry."""
-    literal_values = set(
-        get_args(
-            UnifiedInferenceProvider.model_fields[  # pylint: disable=unsubscriptable-object
-                "type"
-            ].annotation
-        )
-    )
-    assert literal_values == set(PROVIDER_TYPE_MAP)
 
 
 # ---------------------------------------------------------------------------

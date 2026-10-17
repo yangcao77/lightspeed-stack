@@ -1064,6 +1064,17 @@ cmd_deploy_okp_solr() {
         return 1
     fi
     echo "✓ OKP Solr service deployed and ready"
+
+    # Log which image was actually pulled for debugging
+    echo "=========================================="
+    echo "OKP Solr image details"
+    echo "=========================================="
+    local image_spec image_id
+    image_spec=$(oc get pod "$pod_name" -n "$NAMESPACE" -o jsonpath='{.spec.containers[0].image}' 2>/dev/null || echo "unknown")
+    image_id=$(oc get pod "$pod_name" -n "$NAMESPACE" -o jsonpath='{.status.containerStatuses[0].imageID}' 2>/dev/null || echo "unknown")
+    echo "Image in manifest: $image_spec"
+    echo "Actual imageID pulled: $image_id"
+    echo "=========================================="
 }
 
 cmd_delete_okp_solr() {
