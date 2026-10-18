@@ -1,0 +1,103 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam wrapWidth 220
+skinparam defaultTextAlignment center
+
+actor "End User / Client" as user
+actor "LLM Provider\n(OpenAI / Azure / VertexAI /\nWatsonX / Bedrock / vLLM)" as llm
+actor "MCP Server(s)" as mcp
+actor "RAG / Vector Store" as rag
+actor "Dataverse Exporter" as export
+
+package "Client App / Browser" {
+  [Web UI / API Client] as client
+}
+
+package "Lightspeed Core Stack" {
+  [FastAPI App\n(Uvicorn)] as api
+  [REST API\n/v1/query\n/v1/streaming-query\n/v1/models\n/v1/skills] as rest
+  [Auth Layer] as auth
+  [Conversation Cache\n(SQLite)] as cache
+  [User Data Collection] as udc
+  [Prompt / Profile Loader] as profile
+  [Agent Orchestration] as agent
+  [MCP Tool Manager] as mcpmgr
+  [RAG Retriever] as retriever
+  [Safety Shields / Validation] as safety
+}
+
+package "OGX" {
+  [OGX Client Library\n(in library mode)] as ogxlib
+  [OGX Service\n(separate server mode)] as ogxsvc
+  [Inference Providers\n& Model Routing] as infer
+  [Tool Runtime\n(MCP / external tools)] as toolrt
+  [Vector / RAG Backends] as ogxrag
+}
+
+package "Supporting Runtime" {
+  [lightspeed-stack.yaml] as lcsconf
+  [run.yaml\n(OGX config)] as ogxconf
+  [system prompt / profile files] as prompts
+  [embedded / external config files] as cfgfiles
+}
+
+user --> client
+client --> api
+
+api --> rest
+rest --> auth
+rest --> cache
+rest --> udc
+rest --> profile
+rest --> agent
+rest --> safety
+
+agent --> retriever
+agent --> mcpmgr
+agent --> ogxlib
+agent --> ogxsvc
+
+retriever --> rag
+ogxlib --> infer
+ogxsvc --> infer
+ogxsvc --> toolrt
+infer --> llm
+toolrt --> mcp
+ogxlib --> ogxrag
+ogxsvc --> ogxrag
+
+profile --> prompts
+api --> lcsconf
+ogxlib --> ogxconf
+ogxsvc --> ogxconf
+cfgfiles --> profile
+cfgfiles --> lcsconf
+cfgfiles --> ogxconf
+
+udc --> export
+
+note right of api
+Main service runs on port 8080.
+Health endpoints:
+- /liveness
+- /readiness
+- /health
+end note
+
+note bottom of ogxsvc
+Two modes:
+1) Separate OGX server at localhost:8321
+2) Library mode embedded in Lightspeed Core
+end note
+
+note right of mcpmgr
+MCP servers may be configured with:
+- static file tokens
+- Kubernetes tokens
+- client-provided tokens
+- OAuth
+- header propagation
+end note
+
+@enduml
