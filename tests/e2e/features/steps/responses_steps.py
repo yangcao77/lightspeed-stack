@@ -15,7 +15,8 @@ def _successful_responses_result_object(context: Context) -> dict[str, Any]:
     assert context.response is not None
     assert context.response.status_code == 200, context.response.text
     data = http_response_json_or_responses_sse_terminal(context.response)
-    assert "id" in data and "conversation" in data, data
+    assert "id" in data, data
+    assert "conversation" in data, data
     return data
 
 
