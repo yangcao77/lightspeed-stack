@@ -72,8 +72,11 @@ def access_feedback_put_endpoint(context: Context, payload: dict) -> None:
 @when("I submit the following feedback for the conversation created before")  # type: ignore
 def submit_feedback_valid_conversation(context: Context) -> None:
     """Submit feedback for previousl created conversation."""
+    assert hasattr(
+        context, "conversation_id"
+    ), "Conversation for feedback submission is not created"
     assert (
-        hasattr(context, "conversation_id") and context.conversation_id is not None
+        context.conversation_id is not None
     ), "Conversation for feedback submission is not created"
     access_feedback_post_endpoint(context, context.conversation_id)
 
