@@ -72,6 +72,10 @@ product questions using backend LLM services, agents, and RAG databases.
 
 [Quota scheduler](https://lightspeed-core.github.io/lightspeed-stack/devel_doc/quota_scheduler.html)
 
+[Actors](https://lightspeed-core.github.io/lightspeed-stack/devel_doc/actors.svg)
+
+[Orchestration](https://lightspeed-core.github.io/lightspeed-stack/devel_doc/orchestration.svg)
+
 ### API
 
 [OpenAPI specification](https://lightspeed-core.github.io/lightspeed-stack/devel_doc/openapi.html)
