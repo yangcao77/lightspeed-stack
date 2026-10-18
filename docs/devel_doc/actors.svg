@@ -1,0 +1,546 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentStyleType="text/css" height="1169px" preserveAspectRatio="none" style="width:2914px;height:1169px;background:#FFFFFF;" version="1.1" viewBox="0 0 2914 1169" width="2914px" zoomAndPan="magnify">
+  <defs/>
+  <g>
+    <!--cluster Client App / Browser-->
+    <g id="cluster_Client App / Browser">
+      <path d="M1115.9,106.57 L1259.045,106.57 A3.75,3.75 0 0 1 1261.545,109.07 L1268.545,131.6379 L1286.9,131.6379 A2.5,2.5 0 0 1 1289.4,134.1379 L1289.4,197.14 A2.5,2.5 0 0 1 1286.9,199.64 L1115.9,199.64 A2.5,2.5 0 0 1 1113.4,197.14 L1113.4,109.07 A2.5,2.5 0 0 1 1115.9,106.57 " fill="none" style="stroke:#000000;stroke-width:1.5;"/>
+      <line style="stroke:#000000;stroke-width:1.5;" x1="1113.4" x2="1268.545" y1="131.6379" y2="131.6379"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="142.145" x="1117.4" y="123.5359">Client App / Browser</text>
+    </g>
+    <!--cluster Lightspeed Core Stack-->
+    <g id="cluster_Lightspeed Core Stack">
+      <path d="M150.9,225.84 L306.2599,225.84 A3.75,3.75 0 0 1 308.7599,228.34 L315.7599,250.9079 L1265.9,250.9079 A2.5,2.5 0 0 1 1268.4,253.4079 L1268.4,795.65 A2.5,2.5 0 0 1 1265.9,798.15 L150.9,798.15 A2.5,2.5 0 0 1 148.4,795.65 L148.4,228.34 A2.5,2.5 0 0 1 150.9,225.84 " fill="none" style="stroke:#000000;stroke-width:1.5;"/>
+      <line style="stroke:#000000;stroke-width:1.5;" x1="148.4" x2="315.7599" y1="250.9079" y2="250.9079"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="154.3599" x="152.4" y="242.8059">Lightspeed Core Stack</text>
+    </g>
+    <!--cluster OGX-->
+    <g id="cluster_OGX">
+      <path d="M1294.9,695.55 L1326.5424,695.55 A3.75,3.75 0 0 1 1329.0424,698.05 L1336.0424,720.6179 L1871.9,720.6179 A2.5,2.5 0 0 1 1874.4,723.1179 L1874.4,981.42 A2.5,2.5 0 0 1 1871.9,983.92 L1294.9,983.92 A2.5,2.5 0 0 1 1292.4,981.42 L1292.4,698.05 A2.5,2.5 0 0 1 1294.9,695.55 " fill="none" style="stroke:#000000;stroke-width:1.5;"/>
+      <line style="stroke:#000000;stroke-width:1.5;" x1="1292.4" x2="1336.0424" y1="720.6179" y2="720.6179"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="30.6424" x="1296.4" y="712.5159">OGX</text>
+    </g>
+    <!--cluster Supporting Runtime-->
+    <g id="cluster_Supporting Runtime">
+      <path d="M2112.9,705.08 L2254.379,705.08 A3.75,3.75 0 0 1 2256.879,707.58 L2263.879,730.1479 L2612.9,730.1479 A2.5,2.5 0 0 1 2615.4,732.6479 L2615.4,981.42 A2.5,2.5 0 0 1 2612.9,983.92 L2112.9,983.92 A2.5,2.5 0 0 1 2110.4,981.42 L2110.4,707.58 A2.5,2.5 0 0 1 2112.9,705.08 " fill="none" style="stroke:#000000;stroke-width:1.5;"/>
+      <line style="stroke:#000000;stroke-width:1.5;" x1="2110.4" x2="2263.879" y1="730.1479" y2="730.1479"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" font-weight="bold" lengthAdjust="spacing" textLength="140.479" x="2114.4" y="722.0459">Supporting Runtime</text>
+    </g>
+    <!--entity client-->
+    <g id="elem_client">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="144.1095" x="1129.34" y="144.57"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="29.5259" x="1139.34" y="169.5359">Web</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1168.8659" y="169.5359">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="14.9799" x="1172.5059" y="169.5359">UI</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1187.4858" y="169.5359">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1191.1258" y="169.5359">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1196.3338" y="169.5359">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="22.1619" x="1199.9738" y="169.5359">API</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1222.1357" y="169.5359">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.6738" x="1225.7757" y="169.5359">Client</text>
+    </g>
+    <!--entity api-->
+    <g id="elem_api">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="98.8477" x="1151.97" y="263.84"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="49.0418" x="1161.97" y="288.8059">FastAPI</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1211.0118" y="288.8059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="26.1659" x="1214.6518" y="288.8059">App</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="58.9818" x="1171.903" y="307.8739">(Uvicorn)</text>
+    </g>
+    <!--entity rest-->
+    <g id="elem_rest">
+      <rect fill="#F1F1F1" height="115.3396" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="155.3795" x="768.71" y="402.17"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="31.9619" x="817.5178" y="427.1359">REST</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="849.4797" y="427.1359">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="22.1619" x="853.1197" y="427.1359">API</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="63.6157" x="814.5919" y="446.2039">/v1/query</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="135.3795" x="778.71" y="465.2718">/v1/streaming-query</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="73.9197" x="809.4399" y="484.3397">/v1/models</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.2598" x="817.7699" y="503.4076">/v1/skills</text>
+    </g>
+    <!--entity auth-->
+    <g id="elem_auth">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="90.9517" x="975.92" y="587.04"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="31.3039" x="985.92" y="612.0059">Auth</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1017.2239" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="36.0079" x="1020.8639" y="612.0059">Layer</text>
+    </g>
+    <!--entity cache-->
+    <g id="elem_cache">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="150.7175" x="1102.04" y="577.51"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="87.1077" x="1112.04" y="602.4759">Conversation</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1199.1477" y="602.4759">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="39.9698" x="1202.7877" y="602.4759">Cache</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="50.9178" x="1151.9398" y="621.5439">(SQLite)</text>
+    </g>
+    <!--entity udc-->
+    <g id="elem_udc">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="153.8255" x="164.49" y="587.04"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30.6179" x="174.49" y="612.0059">User</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="205.1079" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30.9819" x="208.7479" y="612.0059">Data</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="239.7298" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="64.9457" x="243.3697" y="612.0059">Collection</text>
+    </g>
+    <!--entity profile-->
+    <g id="elem_profile">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="174.2094" x="542.29" y="587.04"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="49.4758" x="552.29" y="612.0059">Prompt</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="601.7658" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="605.4058" y="612.0059">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="610.6138" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.6578" x="614.2538" y="612.0059">Profile</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="656.9116" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="45.9478" x="660.5516" y="612.0059">Loader</text>
+    </g>
+    <!--entity agent-->
+    <g id="elem_agent">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="153.9655" x="353.42" y="587.04"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="39.1579" x="363.42" y="612.0059">Agent</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="402.5779" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="91.1677" x="406.2178" y="612.0059">Orchestration</text>
+    </g>
+    <!--entity mcpmgr-->
+    <g id="elem_mcpmgr">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="144.9775" x="357.91" y="743.08"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30.0159" x="367.91" y="768.0459">MCP</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="397.9259" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="28.3359" x="401.5659" y="768.0459">Tool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="429.9018" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="59.3458" x="433.5417" y="768.0459">Manager</text>
+    </g>
+    <!--entity retriever-->
+    <g id="elem_retriever">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="111.2236" x="537.79" y="743.08"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="27.8459" x="547.79" y="768.0459">RAG</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="575.6359" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="59.7378" x="579.2759" y="768.0459">Retriever</text>
+    </g>
+    <!--entity safety-->
+    <g id="elem_safety">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="189.0773" x="751.86" y="587.04"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40.4458" x="761.86" y="612.0059">Safety</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="802.3058" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.7738" x="805.9458" y="612.0059">Shields</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="852.7196" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="856.3596" y="612.0059">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="861.5676" y="612.0059">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="65.7298" x="865.2076" y="612.0059">Validation</text>
+    </g>
+    <!--entity ogxlib-->
+    <g id="elem_ogxlib">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="140.3995" x="1370.2" y="733.55"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="29.3299" x="1380.2" y="758.5159">OGX</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1409.5299" y="758.5159">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.6738" x="1413.1699" y="758.5159">Client</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1450.8437" y="758.5159">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.1158" x="1454.4837" y="758.5159">Library</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="16.4639" x="1386.199" y="777.5839">(in</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1402.6629" y="777.5839">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.3918" x="1406.3029" y="777.5839">library</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1448.6947" y="777.5839">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.2658" x="1452.3347" y="777.5839">mode)</text>
+    </g>
+    <!--entity ogxsvc-->
+    <g id="elem_ogxsvc">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="172.5714" x="1593.11" y="733.55"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="29.3299" x="1639.5589" y="758.5159">OGX</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1668.8888" y="758.5159">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.7038" x="1672.5287" y="758.5159">Service</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="61.8518" x="1603.11" y="777.5839">(separate</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1664.9618" y="777.5839">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="41.1738" x="1668.6018" y="777.5839">server</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1709.7756" y="777.5839">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.2658" x="1713.4156" y="777.5839">mode)</text>
+    </g>
+    <!--entity infer-->
+    <g id="elem_infer">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="149.1355" x="1512.83" y="909.78"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="63.0557" x="1522.83" y="934.7459">Inference</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1585.8857" y="934.7459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="62.4398" x="1589.5257" y="934.7459">Providers</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="10.248" x="1532.112" y="953.8139">&amp;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1542.3599" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="41.2858" x="1545.9999" y="953.8139">Model</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1587.2857" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="51.7578" x="1590.9257" y="953.8139">Routing</text>
+    </g>
+    <!--entity toolrt-->
+    <g id="elem_toolrt">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="161.0075" x="1696.9" y="909.78"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="28.3359" x="1733.5839" y="934.7459">Tool</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1761.9198" y="934.7459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="55.6638" x="1765.5598" y="934.7459">Runtime</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="34.2159" x="1706.9" y="953.8139">(MCP</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1741.1159" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1744.7559" y="953.8139">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1749.9638" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="54.1518" x="1753.6038" y="953.8139">external</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1807.7556" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="36.5119" x="1811.3956" y="953.8139">tools)</text>
+    </g>
+    <!--entity ogxrag-->
+    <g id="elem_ogxrag">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="169.3094" x="1308.74" y="919.32"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.3218" x="1318.74" y="944.2859">Vector</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1361.0618" y="944.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1364.7018" y="944.2859">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1369.9098" y="944.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="27.8459" x="1373.5498" y="944.2859">RAG</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1401.3957" y="944.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="63.0137" x="1405.0357" y="944.2859">Backends</text>
+    </g>
+    <!--entity lcsconf-->
+    <g id="elem_lcsconf">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="163.0235" x="2418.89" y="919.32"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="143.0235" x="2428.89" y="944.2859">lightspeed-stack.yaml</text>
+    </g>
+    <!--entity ogxconf-->
+    <g id="elem_ogxconf">
+      <rect fill="#F1F1F1" height="58.1358" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="102.2497" x="2129.27" y="909.78"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="58.5338" x="2151.1279" y="934.7459">run.yaml</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="33.5299" x="2139.27" y="953.8139">(OGX</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2172.7999" y="953.8139">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="45.0798" x="2176.4398" y="953.8139">config)</text>
+    </g>
+    <!--entity prompts-->
+    <g id="elem_prompts">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="205.4153" x="2126.69" y="743.08"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="46.5918" x="2136.69" y="768.0459">system</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2183.2818" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="49.6158" x="2186.9218" y="768.0459">prompt</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2236.5376" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="2240.1776" y="768.0459">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2245.3856" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.7978" x="2249.0256" y="768.0459">profile</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2291.8234" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="26.6419" x="2295.4634" y="768.0459">files</text>
+    </g>
+    <!--entity cfgfiles-->
+    <g id="elem_cfgfiles">
+      <rect fill="#F1F1F1" height="39.0679" rx="2.5" ry="2.5" style="stroke:#181818;stroke-width:0.5;" width="232.6592" x="2367.07" y="743.08"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="71.2177" x="2377.07" y="768.0459">embedded</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2448.2877" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="2451.9277" y="768.0459">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2457.1357" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="54.1518" x="2460.7757" y="768.0459">external</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2514.9275" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="40.8798" x="2518.5675" y="768.0459">config</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="2559.4473" y="768.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="26.6419" x="2563.0873" y="768.0459">files</text>
+    </g>
+    <!--entity user-->
+    <g id="elem_user">
+      <ellipse cx="1201.4028" cy="14" fill="#F1F1F1" rx="8" ry="8" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1201.4028,22 L1201.4028,49 M1188.4028,30 L1214.4028,30 M1201.4028,49 L1188.4028,64 M1201.4028,49 L1214.4028,64 " fill="none" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="25.0459" x="1146.67" y="80.4659">End</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1171.7159" y="80.4659">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30.6179" x="1175.3559" y="80.4659">User</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1205.9738" y="80.4659">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1209.6138" y="80.4659">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1214.8217" y="80.4659">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.6738" x="1218.4617" y="80.4659">Client</text>
+    </g>
+    <!--entity llm-->
+    <g id="elem_llm">
+      <ellipse cx="1587.3946" cy="1056.62" fill="#F1F1F1" rx="8" ry="8" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1587.3946,1064.62 L1587.3946,1091.62 M1574.3946,1072.62 L1600.3946,1072.62 M1587.3946,1091.62 L1574.3946,1106.62 M1587.3946,1091.62 L1600.3946,1106.62 " fill="none" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="27.3699" x="1544.0228" y="1123.0859">LLM</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1571.3927" y="1123.0859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="55.7338" x="1575.0327" y="1123.0859">Provider</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="53.9838" x="1496.5" y="1142.1539">(OpenAI</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1550.4838" y="1142.1539">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1554.1238" y="1142.1539">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1559.3318" y="1142.1539">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="37.8559" x="1562.9717" y="1142.1539">Azure</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1600.8276" y="1142.1539">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1604.4676" y="1142.1539">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1609.6756" y="1142.1539">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="56.1258" x="1613.3155" y="1142.1539">VertexAI</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1669.4413" y="1142.1539">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1673.0813" y="1142.1539">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.9598" x="1499.559" y="1161.2218">WatsonX</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1557.5188" y="1161.2218">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1561.1588" y="1161.2218">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1566.3667" y="1161.2218">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="54.0538" x="1570.0067" y="1161.2218">Bedrock</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1624.0605" y="1161.2218">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="1627.7005" y="1161.2218">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1632.9085" y="1161.2218">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="38.6818" x="1636.5485" y="1161.2218">vLLM)</text>
+    </g>
+    <!--entity mcp-->
+    <g id="elem_mcp">
+      <ellipse cx="1777.3978" cy="1075.68" fill="#F1F1F1" rx="8" ry="8" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1777.3978,1083.68 L1777.3978,1110.68 M1764.3978,1091.68 L1790.3978,1091.68 M1777.3978,1110.68 L1764.3978,1125.68 M1777.3978,1110.68 L1790.3978,1125.68 " fill="none" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="30.0159" x="1731.94" y="1142.1459">MCP</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="1761.9559" y="1142.1459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="57.2598" x="1765.5959" y="1142.1459">Server(s)</text>
+    </g>
+    <!--entity rag-->
+    <g id="elem_rag">
+      <ellipse cx="593.4018" cy="907.82" fill="#F1F1F1" rx="8" ry="8" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M593.4018,915.82 L593.4018,942.82 M580.4018,923.82 L606.4018,923.82 M593.4018,942.82 L580.4018,957.82 M593.4018,942.82 L606.4018,957.82 " fill="none" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="27.8459" x="532.81" y="974.2859">RAG</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="560.6559" y="974.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="5.208" x="564.2959" y="974.2859">/</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="569.5038" y="974.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="42.3218" x="573.1438" y="974.2859">Vector</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="615.4657" y="974.2859">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="34.8879" x="619.1057" y="974.2859">Store</text>
+    </g>
+    <!--entity export-->
+    <g id="elem_export">
+      <ellipse cx="69.3988" cy="731.58" fill="#F1F1F1" rx="8" ry="8" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M69.3988,739.58 L69.3988,766.58 M56.3988,747.58 L82.3988,747.58 M69.3988,766.58 L56.3988,781.58 M69.3988,766.58 L82.3988,781.58 " fill="none" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="66.3737" x="6" y="798.0459">Dataverse</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="3.64" x="72.3737" y="798.0459">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="14" lengthAdjust="spacing" textLength="56.7838" x="76.0137" y="798.0459">Exporter</text>
+    </g>
+    <g id="elem_GMN60">
+      <path d="M1285.63,243.64 L1285.63,288.9 L1251.01,292.9 L1285.63,296.9 L1285.63,342.1701 A0,0 0 0 0 1285.63,342.1701 L1499.1732,342.1701 A0,0 0 0 0 1499.1732,342.1701 L1499.1732,253.64 L1489.1732,243.64 L1285.63,243.64 A0,0 0 0 0 1285.63,243.64 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M1489.1732,243.64 L1489.1732,253.64 L1499.1732,253.64 L1489.1732,243.64 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="30.472" x="1291.63" y="262.537">Main</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1322.102" y="262.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="42.458" x="1325.482" y="262.537">service</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1367.9401" y="262.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="27.664" x="1371.3201" y="262.537">runs</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1398.9841" y="262.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="15.899" x="1402.3641" y="262.537">on</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1418.2631" y="262.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="25.922" x="1421.6431" y="262.537">port</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1447.5652" y="262.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="33.228" x="1450.9452" y="262.537">8080.</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="40.339" x="1333.5355" y="280.243">Health</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1373.8746" y="280.243">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="65.0131" x="1377.2546" y="280.243">endpoints:</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="1357.4686" y="297.949">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1361.6546" y="297.949">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="53.3" x="1365.0346" y="297.949">/liveness</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="1352.1191" y="315.6551">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1356.3051" y="315.6551">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="63.999" x="1359.6851" y="315.6551">/readiness</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="1362.3306" y="333.3611">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1366.5166" y="333.3611">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="43.576" x="1369.8966" y="333.3611">/health</text>
+    </g>
+    <g id="elem_GMN63">
+      <path d="M1892.63,889.59 L1892.63,988.1201 A0,0 0 0 0 1892.63,988.1201 L2094.1742,988.1201 A0,0 0 0 0 2094.1742,988.1201 L2094.1742,899.59 L2084.1742,889.59 L1909.75,889.59 L1730.55,792 L1901.75,889.59 L1892.63,889.59 A0,0 0 0 0 1892.63,889.59 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M2084.1742,889.59 L2084.1742,899.59 L2094.1742,899.59 L2084.1742,889.59 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="25.311" x="1952.0276" y="908.487">Two</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1977.3386" y="908.487">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="45.058" x="1980.7186" y="908.487">modes:</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="11.336" x="1910.525" y="926.193">1)</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1921.861" y="926.193">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="54.444" x="1925.241" y="926.193">Separate</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1979.6851" y="926.193">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="27.235" x="1983.0651" y="926.193">OGX</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2010.3001" y="926.193">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="38.233" x="2013.6801" y="926.193">server</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2051.9131" y="926.193">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="11.986" x="2055.2931" y="926.193">at</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="88.1531" x="1944.8255" y="943.899">localhost:8321</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="11.336" x="1898.63" y="961.6051">2)</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1909.966" y="961.6051">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="42.822" x="1913.346" y="961.6051">Library</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1956.1681" y="961.6051">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="35.347" x="1959.5481" y="961.6051">mode</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="1994.8951" y="961.6051">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="66.1311" x="1998.2751" y="961.6051">embedded</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2064.4062" y="961.6051">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="11.388" x="2067.7862" y="961.6051">in</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="67.7691" x="1938.9365" y="979.3111">Lightspeed</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2006.7056" y="979.3111">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="28.782" x="2010.0856" y="979.3111">Core</text>
+    </g>
+    <g id="elem_GMN66">
+      <path d="M2634.93,695.64 L2634.93,829.5821 L2849.8772,829.5821 L2849.8772,705.64 L2839.8772,695.64 L2634.93,695.64 " fill="#FEFFDD" style="stroke:#181818;stroke-width:0.5;"/>
+      <path d="M2839.8772,695.64 L2839.8772,705.64 L2849.8772,705.64 L2839.8772,695.64 " fill="#FEFFDD" style="stroke:#181818;stroke-width:1.0;"/>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="27.872" x="2640.93" y="714.537">MCP</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2668.802" y="714.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="44.46" x="2672.182" y="714.537">servers</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2716.6421" y="714.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="26.078" x="2720.0221" y="714.537">may</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2746.1001" y="714.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="15.327" x="2749.4801" y="714.537">be</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2764.8071" y="714.537">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="66.6901" x="2768.1871" y="714.537">configured</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="29.783" x="2723.0121" y="732.243">with:</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="2684.688" y="749.949">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2688.874" y="749.949">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="32.5" x="2692.254" y="749.949">static</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2724.7541" y="749.949">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="18.512" x="2728.1341" y="749.949">file</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2746.6461" y="749.949">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="41.093" x="2750.0261" y="749.949">tokens</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="2676.6865" y="767.6551">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2680.8725" y="767.6551">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="70.3951" x="2684.2525" y="767.6551">Kubernetes</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2754.6476" y="767.6551">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="41.093" x="2758.0276" y="767.6551">tokens</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="2666.033" y="785.3611">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2670.219" y="785.3611">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="91.7021" x="2673.599" y="785.3611">client-provided</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2765.3011" y="785.3611">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="41.093" x="2768.6811" y="785.3611">tokens</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="2714.51" y="803.0671">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2718.6961" y="803.0671">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="39.2211" x="2722.0761" y="803.0671">OAuth</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="4.186" x="2672.8775" y="820.7731">-</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2677.0635" y="820.7731">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="43.355" x="2680.4435" y="820.7731">header</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="3.38" x="2723.7986" y="820.7731">&#xA0;</text>
+      <text fill="#000000" font-family="sans-serif" font-size="13" lengthAdjust="spacing" textLength="75.7511" x="2727.1786" y="820.7731">propagation</text>
+    </g>
+    <!--link user to client-->
+    <g id="link_user_client">
+      <path d="M1201.4,85.02 C1201.4,104.97 1201.4,122.35 1201.4,138.29 " fill="none" id="user-to-client" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1201.4,144.29,1205.4,135.29,1201.4,139.29,1197.4,135.29,1201.4,144.29" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link client to api-->
+    <g id="link_client_api">
+      <path d="M1201.4,184.09 C1201.4,205.09 1201.4,233.16 1201.4,257.38 " fill="none" id="client-to-api" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1201.4,263.38,1205.4,254.38,1201.4,258.38,1197.4,254.38,1201.4,263.38" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link api to rest-->
+    <g id="link_api_rest">
+      <path d="M1151.66,317.01 C1092.7,344.41 999.1614,387.8619 929.9414,420.0219 " fill="none" id="api-to-rest" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="924.5,422.55,934.3475,422.3854,929.0345,420.4433,930.9767,415.1303,924.5,422.55" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to auth-->
+    <g id="link_rest_auth">
+      <path d="M915.31,517.83 C944.96,542.36 972.976,565.5266 994.116,583.0066 " fill="none" id="rest-to-auth" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="998.74,586.83,994.353,578.0122,994.8867,583.6438,989.255,584.1775,998.74,586.83" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to cache-->
+    <g id="link_rest_cache">
+      <path d="M924.42,494.96 C981.57,519.95 1052.753,551.0652 1106.653,574.6452 " fill="none" id="rest-to-cache" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1112.15,577.05,1105.5077,569.7781,1107.5692,575.046,1102.3013,577.1075,1112.15,577.05" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to udc-->
+    <g id="link_rest_udc">
+      <path d="M768.27,477.13 C667.87,498.42 488.41,537.71 336.4,577.51 C325.75,580.3 320.2527,581.7693 309.3527,584.9293 " fill="none" id="rest-to-udc" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="303.59,586.6,313.3478,587.9358,308.3923,585.2078,311.1203,580.2522,303.59,586.6" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to profile-->
+    <g id="link_rest_profile">
+      <path d="M768.36,512.89 C729.85,538.58 690.7415,564.6606 662.7515,583.3306 " fill="none" id="rest-to-profile" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="657.76,586.66,667.4668,584.9935,661.9196,583.8855,663.0276,578.3382,657.76,586.66" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to agent-->
+    <g id="link_rest_agent">
+      <path d="M768.64,487.89 C685.98,516.65 563.0668,559.4185 490.5768,584.6385 " fill="none" id="rest-to-agent" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="484.91,586.61,494.7246,587.4306,489.6324,584.967,492.0959,579.8748,484.91,586.61" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link rest to safety-->
+    <g id="link_rest_safety">
+      <path d="M846.4,517.63 C846.4,542.18 846.4,563.24 846.4,580.77 " fill="none" id="rest-to-safety" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="846.4,586.77,850.4,577.77,846.4,581.77,842.4,577.77,846.4,586.77" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link agent to retriever-->
+    <g id="link_agent_retriever">
+      <path d="M452.59,626.57 C471.03,642.53 497.81,666.1 520.4,687.55 C539.64,705.82 556.7052,723.2013 571.2752,738.3813 " fill="none" id="agent-to-retriever" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="575.43,742.71,572.0837,733.4471,571.9677,739.1027,566.312,738.9868,575.43,742.71" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link agent to mcpmgr-->
+    <g id="link_agent_mcpmgr">
+      <path d="M430.4,626.46 C430.4,656.19 430.4,707.53 430.4,737.05 " fill="none" id="agent-to-mcpmgr" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="430.4,743.05,434.4,734.05,430.4,738.05,426.4,734.05,430.4,743.05" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link agent to ogxlib-->
+    <g id="link_agent_ogxlib">
+      <path d="M486.57,626.54 C498.91,630.09 512,633.39 524.4,635.64 C850.52,694.96 946.28,609.36 1268.4,687.55 C1309.79,697.59 1348.4763,714.1012 1381.6463,730.4212 " fill="none" id="agent-to-ogxlib" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1387.03,733.07,1380.7204,725.5077,1382.5436,730.8627,1377.1886,732.6859,1387.03,733.07" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link agent to ogxsvc-->
+    <g id="link_agent_ogxsvc">
+      <path d="M486.04,626.57 C498.53,630.16 511.81,633.47 524.4,635.64 C964.71,711.64 1095.9,575.34 1528.4,687.55 C1565.71,697.23 1599.4754,713.6523 1628.4854,730.1623 " fill="none" id="agent-to-ogxsvc" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1633.7,733.13,1627.8565,725.202,1629.3545,730.6569,1623.8995,732.1548,1633.7,733.13" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link retriever to rag-->
+    <g id="link_retriever_rag">
+      <path d="M593.4,782.59 C593.4,810.38 593.4,856.74 593.4,892.92 " fill="none" id="retriever-to-rag" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="593.4,898.92,597.4,889.92,593.4,893.92,589.4,889.92,593.4,898.92" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxlib to infer-->
+    <g id="link_ogxlib_infer">
+      <path d="M1464.34,792 C1491.68,824.4 1532.2607,872.5043 1559.5907,904.8943 " fill="none" id="ogxlib-to-infer" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1563.46,909.48,1560.7132,900.0219,1560.2356,905.6586,1554.5989,905.181,1563.46,909.48" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxsvc to infer-->
+    <g id="link_ogxsvc_infer">
+      <path d="M1664.41,792 C1647.3,824.4 1622.2812,871.784 1605.1812,904.174 " fill="none" id="ogxsvc-to-infer" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1602.38,909.48,1610.1191,903.3886,1604.7144,905.0584,1603.0445,899.6536,1602.38,909.48" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxsvc to toolrt-->
+    <g id="link_ogxsvc_toolrt">
+      <path d="M1695.36,792 C1713.59,824.4 1740.2784,871.8606 1758.4984,904.2506 " fill="none" id="ogxsvc-to-toolrt" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1761.44,909.48,1760.5138,899.6748,1758.9886,905.1222,1753.5413,903.597,1761.44,909.48" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link infer to llm-->
+    <g id="link_infer_llm">
+      <path d="M1587.4,968.36 C1587.4,990.13 1587.4,1014.85 1587.4,1041.72 " fill="none" id="infer-to-llm" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1587.4,1047.72,1591.4,1038.72,1587.4,1042.72,1583.4,1038.72,1587.4,1047.72" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link toolrt to mcp-->
+    <g id="link_toolrt_mcp">
+      <path d="M1777.4,968.36 C1777.4,995.5 1777.4,1030.56 1777.4,1060.72 " fill="none" id="toolrt-to-mcp" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1777.4,1066.72,1781.4,1057.72,1777.4,1061.72,1773.4,1057.72,1777.4,1066.72" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxlib to ogxrag-->
+    <g id="link_ogxlib_ogxrag">
+      <path d="M1432.74,792 C1423.07,827.87 1408.243,882.8171 1400.003,913.3571 " fill="none" id="ogxlib-to-ogxrag" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1398.44,919.15,1404.6464,911.5027,1399.7425,914.3226,1396.9226,909.4187,1398.44,919.15" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxsvc to ogxrag-->
+    <g id="link_ogxsvc_ogxrag">
+      <path d="M1632.81,792 C1574.09,827.77 1479.8837,885.1579 1429.6337,915.7779 " fill="none" id="ogxsvc-to-ogxrag" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="1424.51,918.9,1434.277,917.6326,1428.7797,916.2982,1430.1141,910.801,1424.51,918.9" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link profile to prompts-->
+    <g id="link_profile_prompts">
+      <path d="M691.67,626.59 C705.61,630.18 720.41,633.48 734.4,635.64 C1235.64,713.12 1371.2,624.01 1874.4,687.55 C1972.62,699.95 2078.293,723.6296 2149.703,741.1596 " fill="none" id="profile-to-prompts" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2155.53,742.59,2147.7431,736.5597,2150.6742,741.398,2145.8359,744.329,2155.53,742.59" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link api to lcsconf-->
+    <g id="link_api_lcsconf">
+      <path d="M1235.2,322.36 C1245.35,329.74 1256.87,337.04 1268.4,342.17 C1932.71,637.64 2410.78,121.77 2867.4,687.55 C2907.05,736.67 2905.2,779.03 2867.4,829.59 C2833.24,875.28 2685.6421,907.3667 2588.2921,924.2167 " fill="none" id="api-to-lcsconf" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2582.38,925.24,2591.9303,927.6464,2587.3067,924.3872,2590.5659,919.7636,2582.38,925.24" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxlib to ogxconf-->
+    <g id="link_ogxlib_ogxconf">
+      <path d="M1488.46,792.12 C1513.54,805.68 1545.22,820.81 1575.4,829.59 C1805.57,896.52 1887.13,804.93 2111.4,889.59 C2123.84,894.28 2131.2798,898.2496 2141.9898,905.9096 " fill="none" id="ogxlib-to-ogxconf" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2146.87,909.4,2141.8766,900.9108,2142.8031,906.4913,2137.2227,907.4178,2146.87,909.4" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link ogxsvc to ogxconf-->
+    <g id="link_ogxsvc_ogxconf">
+      <path d="M1766.03,780.14 C1855.48,799.18 1997.63,835.04 2111.4,889.59 C2122.74,895.02 2129.3262,898.807 2139.6162,906.017 " fill="none" id="ogxsvc-to-ogxconf" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2144.53,909.46,2139.4546,901.0196,2140.4351,906.5908,2134.8639,907.5714,2144.53,909.46" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link cfgfiles to profile-->
+    <g id="link_cfgfiles_profile">
+      <path d="M2457.81,742.6 C2431.97,724.62 2390.15,698.76 2349.4,687.55 C2003.19,592.28 1089.62,688.12 734.4,635.64 C720.21,633.55 710.9995,631.7198 696.8995,628.0798 " fill="none" id="cfgfiles-to-profile" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="691.09,626.58,698.8045,632.7027,695.9313,627.8298,700.8041,624.9566,691.09,626.58" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link cfgfiles to lcsconf-->
+    <g id="link_cfgfiles_lcsconf">
+      <path d="M2485.25,782.59 C2488.52,816.11 2494.6971,879.4284 2497.9671,912.9284 " fill="none" id="cfgfiles-to-lcsconf" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2498.55,918.9,2501.6567,909.554,2498.0642,913.9237,2493.6946,910.3312,2498.55,918.9" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link cfgfiles to ogxconf-->
+    <g id="link_cfgfiles_ogxconf">
+      <path d="M2450.4,782.59 C2397.17,813.2 2297.2813,870.639 2235.0613,906.419 " fill="none" id="cfgfiles-to-ogxconf" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="2229.86,909.41,2239.656,908.391,2234.1944,906.9175,2235.6679,901.4559,2229.86,909.41" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link udc to export-->
+    <g id="link_udc_export">
+      <path d="M218.99,626.38 C200.01,642.42 172.16,666.21 148.4,687.55 C135.81,698.85 126.6848,707.2537 114.4648,718.7237 " fill="none" id="udc-to-export" style="stroke:#181818;stroke-width:1.0;"/>
+      <polygon fill="#181818" points="110.09,722.83,119.3897,719.5871,113.7356,719.4081,113.9146,713.7541,110.09,722.83" style="stroke:#181818;stroke-width:1.0;"/>
+    </g>
+    <!--link mcpmgr to GMN66-->
+    <g id="link_mcpmgr_GMN66">
+      <path d="M443.98,742.79 C462.1,718.31 496.71,677.91 537.9,661.6 C591.1,640.52 2543.32,644.41 2597.9,661.6 C2621.11,668.9 2643.84,681.42 2664.15,695.19 " fill="none" id="mcpmgr-GMN66" style="stroke:#181818;stroke-width:1.0;stroke-dasharray:7.0,7.0;"/>
+    </g>
+    <!--SRC=[RLN1RYCt3BtFLn0v5Cd1woIz17ieu4tJRL07IUraiy2c1tc67WlHI5D9uyHRzDzBKjBONlGo5XyfKYGVwV2gRQ-ywg1sNUyishYCEuFWiOxAjWQhC9g4ZMhScxOjh9K9Xveth_fdtSGDN5wU7-0DhjLWuYE-nvdHhUt8FzJqGLzLgexEmycDRU0fe8SfN1jDkXDG0GP2YiLyVWSFtcrrW_x5djxtQ6UtP3xxFdYato_e8xupz6AVLGpEVYNq4pRUrQzqsfA3C_5gJ5UStbq_m1Bz5lrfICgkxejoCViiVaLQqWV5mgksMFogegAx0U7clNSKtui5Yb1LlQfVLOjmabA2MT_paxnx2spvJmNmxHbNy2HvFDpcrFzY7xKSgtyFlCnrkucXHspWcXv3Jo9DTlER2f4zK0WgpjDMryxRC_6aUiqMYvlb8mTviTFjnVJl0Vqk7KFqg3fgwEG0x5o39cI3LsrC45yUGsHdiu6wF5Sxz2a4YGnVEylbK54x2zUgtY0zPlddN4TCRwaPOqlfDPUFKZ66Iamtn69eQjPJfxi-KbdeiDP4nRbJJOxM9qZUqN9TxprvfJJKw4KnpWRSu4Vd3DmfIs1oG3tkMYz5eHOlC7gDswppHMBrKgqnxc2vqMYQm6HGHZVxC47qHqsw__mrjuHEkQ4mroklkBIdse990d29KrLS-qvWkSDyr3LNBY0FK4G8Gj7Z6s4hXRgrQ_HeQno7Wxhs4znn_s3XXaYDbIkQ3Vc6b6CnsAWx3i8LcX9bYRnM6OYa3Ia87xrKCS_05BXUdoXLj4qe3-5vEAp0SkYP_hmXSfHS43FoTnAOkXzsgZFYnTIXTdRDHdwmWlE8Kp4OrksOTB4Akn2nOoOabcHA07z28Gcf0XjZjyAceQavI3FvFR2lrwq8d0gl7PXCVYb3c7u4uM6gw2E2J0D_aeg7O9GIqqUHQJqAXS3xgqBNKSoqgWJEaGehzrXcyHx8D3e2c2NLU3lvedubKn4JBvBf_mEP1u8Bm0iqWUKXXmup9GuSPAGgNSeraFwKMXOA73igq84dWKgtZifv11P_Hs2vNb4x12YRsZgQCi_y1BUM9jyf6jMGHX68b4G_2smCL-TNvn-gtr4Pse4q2BtJDeQFrGIcHc_HOWXyfgNQw29inBeYQ-1GEU3AnUWwZfWxzVZcPCZ9syKPBO8y_Zm8UGMe2CRLocnSY1-lVhwyg2xFodgHgp2odTx_mp_6Z_77X3ELU1MaEBGZrGvMcEU4_c4RUDDnmrdIx4PTo-WGDMWLS8P_32iQB8mOzbWQcqcVzbApLzpptmVzKbLeNt7_UjNALjs_y3y0]-->
+  </g>
+</svg>

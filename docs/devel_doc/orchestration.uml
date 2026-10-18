@@ -1,0 +1,165 @@
+@startuml
+skinparam componentStyle rectangle
+skinparam shadowing false
+skinparam wrapWidth 240
+skinparam defaultTextAlignment center
+skinparam linetype ortho
+
+actor "User" as user
+actor "External Client\n(Web / SDK / CLI)" as client
+actor "MCP Servers" as mcp
+actor "LLM Providers\n(OpenAI / Azure OpenAI /\nVertex AI / WatsonX /\nBedrock / vLLM / Others)" as llm
+actor "RAG / Search Backends" as backends
+actor "Dataverse Exporter" as dv
+
+package "Lightspeed Stack" {
+
+  package "API Layer" {
+    [FastAPI App] as fastapi
+    [Uvicorn Server] as uvicorn
+    [REST Endpoints\n- /v1/query\n- /v1/streaming-query\n- /v1/models\n- /v1/skills\n- /v1/chat\n- /liveness\n- /readiness\n- /health] as endpoints
+    [CORS / Middleware] as middleware
+    [Auth / Request Validation] as auth
+  }
+
+  package "Conversation & State" {
+    [Conversation Cache\n(SQLite)] as sqlite
+    [Session / Chat State] as session
+    [User Data Collection] as udc
+    [Prompt / Profile Management] as profiles
+    [Prompt Templates\n& System Prompts] as prompts
+  }
+
+  package "Orchestration" {
+    [Query Router] as router
+    [Agent Orchestrator] as orchestrator
+    [Safety Shields\n- input checks\n- output checks\n- policy gates] as shields
+    [Tool Planner] as planner
+    [Context Builder] as context
+  }
+
+  package "Retrieval / Knowledge" {
+    [RAG Retriever] as retriever
+    [Vector / Knowledge Store Adapter] as ragadapter
+    [Embeddings / Retrieval Config] as embedding
+  }
+
+  package "Tooling" {
+    [MCP Tool Manager] as mcpmgr
+    [Tool Registry] as registry
+    [Token / Header Propagation] as tokens
+    [OAuth Support] as oauth
+    [Static / Kubernetes\nToken Sources] as tokenSources
+  }
+
+  package "OGX Integration" {
+    [OGX Client Library\n(embedded mode)] as ogxlib
+    [OGX Server\n(separate service)] as ogxserver
+    [OGX Config Loader\n(run.yaml)] as ogxconfig
+    [Inference Routing] as routing
+    [Tool Runtime] as toolruntime
+    [OGX RAG / Backends] as ogxrag
+  }
+
+  package "Config / Runtime" {
+    [lightspeed-stack.yaml] as stackyaml
+    [run.yaml] as runyaml
+    [Environment Variables] as env
+    [Local Config Files] as localcfg
+  }
+}
+
+user --> client
+client --> uvicorn
+uvicorn --> fastapi
+fastapi --> middleware
+middleware --> endpoints
+endpoints --> auth
+auth --> router
+
+router --> sqlite
+router --> session
+router --> udc
+router --> profiles
+router --> orchestrator
+
+profiles --> prompts
+profiles --> stackyaml
+profiles --> localcfg
+
+orchestrator --> shields
+orchestrator --> planner
+orchestrator --> context
+orchestrator --> retriever
+orchestrator --> mcpmgr
+orchestrator --> ogxlib
+orchestrator --> ogxserver
+
+retriever --> ragadapter
+ragadapter --> backends
+embedding --> retriever
+
+mcpmgr --> registry
+mcpmgr --> tokens
+tokens --> oauth
+tokens --> tokenSources
+mcpmgr --> mcp
+
+ogxlib --> ogxconfig
+ogxserver --> ogxconfig
+ogxconfig --> runyaml
+ogxconfig --> env
+
+ogxlib --> routing
+ogxserver --> routing
+routing --> llm
+
+ogxlib --> toolruntime
+ogxserver --> toolruntime
+toolruntime --> mcp
+
+ogxlib --> ogxrag
+ogxserver --> ogxrag
+ogxrag --> backends
+
+sqlite --> dv
+
+note right of fastapi
+Primary service entrypoint.
+Exposes sync and streaming query APIs.
+end note
+
+note right of orchestrator
+Coordinates:
+- prompt assembly
+- retrieval
+- tool use
+- safety checks
+- model invocation
+end note
+
+note bottom of ogxserver
+OGX can run as:
+- embedded library in Lightspeed Core
+- standalone server on localhost:8321
+end note
+
+note bottom of mcpmgr
+Supports MCP servers with:
+- static file tokens
+- Kubernetes tokens
+- client-supplied tokens
+- OAuth
+- request header propagation
+end note
+
+note right of stackyaml
+Main stack config controls:
+- services
+- ports
+- profiles
+- integrations
+- runtime mode
+end note
+
+@enduml
