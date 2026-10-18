@@ -20,6 +20,8 @@ DIRS_TO_SKIP = {
     "tests/e2e/skills/echo/references",
     "tests/e2e/skills/summarize",
     "tests/e2e/skills/summarize/references",
+    "tests/e2e/mock_guardian_server",
+    "tests/e2e/mock_otel_collector",
 }
 
 
