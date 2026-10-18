@@ -156,7 +156,8 @@ def _assert_field_not_empty(
     assert items, f"No {item_type} to check"
     for i, item in enumerate(items):
         value = _get_nested_field(item, field_path)
-        assert value is not None and value != "", (
+        assert value is not None, f"{field_path} should be set"
+        assert value != "", (
             f"Expected non-empty {field_path} in {item_type}[{i}], "
             f"but found {value!r}"
         )
