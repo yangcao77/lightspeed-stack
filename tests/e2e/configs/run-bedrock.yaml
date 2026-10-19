@@ -97,10 +97,10 @@ storage:
       backend: sql_default
 registered_resources:
   models:
-  - model_id: deepseek.v3-v1:0
+  - model_id: google.gemma-4-31b
     model_type: llm
     provider_id: aws-bedrock
-    provider_model_id: deepseek.v3-v1:0
+    provider_model_id: google.gemma-4-31b
   - model_id: all-mpnet-base-v2
     model_type: embedding
     provider_id: sentence-transformers
