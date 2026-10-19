@@ -249,9 +249,9 @@ __Note__: Support for individual models is dependent on the specific inference p
 | RHEL AI (RHAIIS/vLLM) | meta-llama/Llama-3.1-8B-Instruct                                      | Yes           | remote::vllm     | [1](tests/e2e/configs/run-rhelai.yaml) [2](tests/e2e/configs/run-rhaiis.yaml) |
 | Azure          | gpt-5, gpt-5-mini, gpt-5-nano, gpt-5.6-luna, o3-mini, o4-mini, o1             | Yes           | remote::azure    | [1](examples/azure-run.yaml)                                               |
 | Azure          | gpt-5-chat, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano,  o1-mini                    | No or limited | remote::azure    |                                                                            |
-| VertexAI       | google/gemini-2.0-flash, google/gemini-2.5-flash, google/gemini-2.5-pro [^1] | Yes           | remote::vertexai | [1](examples/vertexai-run.yaml)                                            |
-| WatsonX        | meta-llama/llama-3-3-70b-instruct                                            | Yes           | remote::watsonx  | [1](examples/watsonx-run.yaml)                                             |
-| AWS Bedrock    | deepseek.v3-v1                                                               | Yes           | remote::bedrock  | [1](examples/bedrock-run.yaml)                                             |
+| VertexAI       | google/gemini-3.5-flash-lite [^1]                                            | Yes           | remote::vertexai | [1](examples/vertexai-run.yaml)                                            |
+| WatsonX        | openai/gpt-oss-120b                                                          | Yes           | remote::watsonx  | [1](examples/watsonx-run.yaml)                                             |
+| AWS Bedrock    | google.gemma-4-31b                                                           | Yes           | remote::bedrock  | [1](examples/bedrock-run.yaml)                                             |
 
 [^1]: List of models is limited by design in OGX, future versions will probably allow to use more models (see [here](https://github.com/ogx-ai/ogx/blob/main/ogx/providers/remote/inference/vertexai/vertexai.py#L54))
 

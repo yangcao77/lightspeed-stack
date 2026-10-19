@@ -101,7 +101,7 @@ registered_resources:
   - model_id: custom-watsonx-model
     provider_id: watsonx
     model_type: llm
-    provider_model_id: watsonx/meta-llama/llama-3-3-70b-instruct
+    provider_model_id: openai/gpt-oss-120b
   - model_id: all-mpnet-base-v2
     model_type: embedding
     provider_id: sentence-transformers

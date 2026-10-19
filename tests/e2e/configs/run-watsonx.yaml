@@ -99,6 +99,10 @@ storage:
       backend: sql_default
 registered_resources:
   models:
+  - model_id: openai/gpt-oss-120b
+    provider_id: watsonx
+    model_type: llm
+    provider_model_id: openai/gpt-oss-120b
   - model_id: all-mpnet-base-v2
     model_type: embedding
     provider_id: sentence-transformers
