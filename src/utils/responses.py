@@ -113,7 +113,7 @@ from models.common.turn_summary import (
     ToolResultSummary,
     TurnSummary,
 )
-from models.config import RagStore
+from models.config import RagStore, SkillsConfiguration
 from models.database.conversations import UserConversation
 from utils.mcp.mcp_headers import (
     McpHeaders,
@@ -445,7 +445,12 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
     normalized_model = normalize_vertex_ai_model_id(model)
 
     # Known LLS bug: https://redhat.atlassian.net/browse/LCORE-1583
-    reasoning = apply_reasoning_for_resolved_tools(None, tools, normalized_model)
+    reasoning = apply_reasoning_for_resolved_tools(
+        None,
+        tools,
+        normalized_model,
+        configuration.skills,
+    )
 
     return ResponsesApiParams(
         input=input_text,
@@ -1905,6 +1910,7 @@ def apply_reasoning_for_resolved_tools(
     reasoning: Optional[OpenAIResponseReasoning],
     tools: Optional[list[InputTool]],
     model_id: str,
+    skills_configuration: Optional[SkillsConfiguration],
 ) -> Optional[OpenAIResponseReasoning]:
     """Set reasoning effort to ``none`` when resolved tools are present.
 
@@ -1916,14 +1922,16 @@ def apply_reasoning_for_resolved_tools(
         reasoning: Optional reasoning configuration to modify.
         tools: Optional list of tools that have been resolved.
         model_id: Resolved model identifier in ``provider/model`` form.
-
+        skills_configuration: Optional skills configuration.
     Returns:
         Modified reasoning configuration with effort set to "none" if tools
         are present on a default-on reasoning model, or the original reasoning
         otherwise.
 
     """
-    if not tools or not model_reasoning_enabled_by_default(model_id):
+    if (
+        not tools and not skills_configuration
+    ) or not model_reasoning_enabled_by_default(model_id):
         return reasoning
 
     base = reasoning or OpenAIResponseReasoning()
