@@ -45,7 +45,7 @@ class ConversationResponse(AbstractSuccessfulResponse):
                 "tool_calls": [],
                 "tool_results": [],
                 "provider": "openai",
-                "model": "gpt-4o-mini",
+                "model": "gpt-5.6-luna",
                 "started_at": "2024-01-01T00:01:00Z",
                 "completed_at": "2024-01-01T00:01:05Z",
             }
@@ -67,7 +67,7 @@ class ConversationResponse(AbstractSuccessfulResponse):
                             "tool_calls": [],
                             "tool_results": [],
                             "provider": "openai",
-                            "model": "gpt-4o-mini",
+                            "model": "gpt-5.6-luna",
                             "started_at": "2024-01-01T00:01:00Z",
                             "completed_at": "2024-01-01T00:01:05Z",
                         }
