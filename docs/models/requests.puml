@@ -94,7 +94,7 @@ class "ResponsesRequest" as src.models.api.requests.responses_openai.ResponsesRe
   tools : Optional[list[InputTool]]
   check_previous_response_id(value: Optional[str]) -> Optional[str]
   check_suid(value: Optional[str]) -> Optional[str]
-  validate_body_size(values: Any) -> Any
+  validate_body_size(values: Any, info: ValidationInfo) -> Any
   validate_conversation_and_previous_response_id_mutually_exclusive() -> Self
 }
 class "RlsapiV1Attachment" as src.models.api.requests.rlsapi.RlsapiV1Attachment {
