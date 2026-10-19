@@ -8,10 +8,13 @@ from models.config import InferenceConfiguration
 from providers.inference.base import InferenceProvider
 from providers.inference.catalog import CatalogModel
 from providers.inference.errors import ProviderNotFoundError
+from providers.inference.openai.provider import OpenAIInferenceProvider
 from providers.inference.types import ModelType, ProviderId, ProviderType
 from utils.types import Singleton
 
-PROVIDER_CLASSES: Final[dict[ProviderType, type[InferenceProvider[Any, Any]]]] = {}
+PROVIDER_CLASSES: Final[dict[ProviderType, type[InferenceProvider[Any, Any]]]] = {
+    "openai": OpenAIInferenceProvider,
+}
 
 
 class ProviderRegistry(metaclass=Singleton):
