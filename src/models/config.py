@@ -1967,7 +1967,7 @@ class Customization(ConfigurationBase):
         default=constants.RESPONSES_REQUEST_MAX_SIZE,
         title="Maximum character length for the serialized responses request body",
         description="Maximum character length for the serialized /v1/response responses "
-        + "request body",
+         "request body",
     )
 
     @model_validator(mode="after")
