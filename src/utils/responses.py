@@ -445,7 +445,12 @@ async def prepare_responses_params(  # pylint: disable=too-many-arguments,too-ma
     normalized_model = normalize_vertex_ai_model_id(model)
 
     # Known LLS bug: https://redhat.atlassian.net/browse/LCORE-1583
-    reasoning = apply_reasoning_for_resolved_tools(None, tools, normalized_model)
+    reasoning = apply_reasoning_for_resolved_tools(
+        None,
+        tools,
+        normalized_model,
+        configuration.skills,
+    )
 
     return ResponsesApiParams(
         input=input_text,
@@ -1924,7 +1929,9 @@ def apply_reasoning_for_resolved_tools(
         otherwise.
 
     """
-    if (not tools and not skills_configuration) or not model_reasoning_enabled_by_default(model_id):
+    if (
+        not tools and not skills_configuration
+    ) or not model_reasoning_enabled_by_default(model_id):
         return reasoning
 
     base = reasoning or OpenAIResponseReasoning()
