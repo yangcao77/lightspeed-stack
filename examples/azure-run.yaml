@@ -18,7 +18,7 @@ providers:
     provider_type: remote::azure
     config: 
       base_url: https://ols-test.openai.azure.com/openai/v1
-      api_version: 2024-02-15-preview
+      api_version: preview
       model_validation: false
   - provider_id: openai
     provider_type: remote::openai

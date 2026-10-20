@@ -251,7 +251,7 @@ __Note__: Support for individual models is dependent on the specific inference p
 | Azure          | gpt-5-chat, gpt-4.1, gpt-4.1-mini, gpt-4.1-nano,  o1-mini                    | No or limited | remote::azure    |                                                                            |
 | VertexAI       | google/gemini-3.5-flash-lite [^1]                                            | Yes           | remote::vertexai | [1](examples/vertexai-run.yaml)                                            |
 | WatsonX        | openai/gpt-oss-120b                                                          | Yes           | remote::watsonx  | [1](examples/watsonx-run.yaml)                                             |
-| AWS Bedrock    | google.gemma-4-31b                                                           | Yes           | remote::bedrock  | [1](examples/bedrock-run.yaml)                                             |
+| AWS Bedrock    | google.gemma-4-31b (Mantle via `remote::openai` + `base_url`)                | Yes           | remote::openai   | [1](examples/bedrock-run.yaml)                                             |
 
 [^1]: List of models is limited by design in OGX, future versions will probably allow to use more models (see [here](https://github.com/ogx-ai/ogx/blob/main/ogx/providers/remote/inference/vertexai/vertexai.py#L54))
 

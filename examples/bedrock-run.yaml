@@ -16,9 +16,10 @@ providers:
   inference:
   - config:
       api_key: ${env.AWS_BEARER_TOKEN_BEDROCK}
-      region_name: us-east-2
+      base_url: ${env.BEDROCK_MANTLE_BASE_URL:=https://bedrock-mantle.us-east-2.api.aws/openai/v1}
+      allowed_models: ["google.gemma-4-31b"]
     provider_id: aws-bedrock
-    provider_type: remote::bedrock
+    provider_type: remote::openai
   - provider_id: openai
     provider_type: remote::openai
     config:

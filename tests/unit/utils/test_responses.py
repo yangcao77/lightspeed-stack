@@ -1202,6 +1202,12 @@ class TestModelReasoningEnabledByDefault:
         """gpt-5.6-luna reasons by default when reasoning is omitted."""
         assert model_reasoning_enabled_by_default("openai/gpt-5.6-luna") is True
 
+    def test_watsonx_nested_openai_model_id_not_reasoning_default(self) -> None:
+        """WatsonX catalog ids must not prefix-match unrelated OpenAI profiles."""
+        assert (
+            model_reasoning_enabled_by_default("watsonx/openai/gpt-oss-120b") is False
+        )
+
 
 class TestApplyReasoningForResolvedTools:
     """Tests for apply_reasoning_for_resolved_tools."""
@@ -1239,6 +1245,18 @@ class TestApplyReasoningForResolvedTools:
         assert (
             apply_reasoning_for_resolved_tools(
                 None, self._sample_tools(), self._NON_REASONING_MODEL, None
+            )
+            is None
+        )
+
+    def test_skips_reasoning_for_watsonx_gpt_oss_with_tools(self) -> None:
+        """Harmony on WatsonX does not accept reasoning_effort none with tools."""
+        assert (
+            apply_reasoning_for_resolved_tools(
+                None,
+                self._sample_tools(),
+                "watsonx/openai/gpt-oss-120b",
+                None,
             )
             is None
         )

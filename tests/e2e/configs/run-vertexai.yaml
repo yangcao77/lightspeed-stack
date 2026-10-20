@@ -18,8 +18,11 @@ providers:
     provider_type: remote::vertexai
     config:
       project: ${env.VERTEX_AI_PROJECT}
-      location: ${env.VERTEX_AI_LOCATION}
+      location: ${env.VERTEX_AI_LOCATION:=global}
       allowed_models: ["publishers/google/models/gemini-3.5-flash-lite"]
+      thought_signature_store:
+        backend: kv_default
+        namespace: vertexai_thought_signatures
   - provider_id: openai
     provider_type: remote::openai
     config:

@@ -1893,6 +1893,20 @@ async def _resolve_server_tools(
     )
 
 
+def _openai_profile_model_name(model_id: str) -> str:
+    """Return the model name segment used for pydantic-ai OpenAI profile lookup.
+
+    Nested catalog ids (for example ``watsonx/openai/gpt-oss-120b``) leave a
+    model suffix like ``openai/gpt-oss-120b``. Passing that whole string to
+    ``openai_model_profile`` prefix-matches the wrong profile and can enable
+    reasoning overrides the backend does not support.
+    """
+    _, model_name = extract_provider_and_model_from_model_id(model_id)
+    if "/" in model_name:
+        model_name = model_name.rsplit("/", 1)[-1]
+    return model_name
+
+
 def model_reasoning_enabled_by_default(model_id: str) -> bool:
     """Return whether the model applies non-``none`` reasoning when omitted.
 
@@ -1901,8 +1915,7 @@ def model_reasoning_enabled_by_default(model_id: str) -> bool:
     present on the OGX chat-completions path — e.g. gpt-5.6-terra, not gpt-4o-mini
     or opt-in gpt-5.4.
     """
-    _, model_name = extract_provider_and_model_from_model_id(model_id)
-    profile = openai_model_profile(model_name)
+    profile = openai_model_profile(_openai_profile_model_name(model_id))
     return bool(profile.get("openai_reasoning_enabled_by_default", False))
 
 
@@ -1929,9 +1942,13 @@ def apply_reasoning_for_resolved_tools(
         otherwise.
 
     """
-    if (
-        not tools and not skills_configuration
-    ) or not model_reasoning_enabled_by_default(model_id):
+    if not tools and not skills_configuration:
+        return reasoning
+
+    profile = openai_model_profile(_openai_profile_model_name(model_id))
+    if not profile.get("openai_reasoning_enabled_by_default", False):
+        return reasoning
+    if not profile.get("openai_supports_reasoning_effort_none", False):
         return reasoning
 
     base = reasoning or OpenAIResponseReasoning()

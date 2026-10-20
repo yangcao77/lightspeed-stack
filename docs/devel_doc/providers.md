@@ -102,7 +102,7 @@ inference:
     config:
       # api_key: ${env.AZURE_API_KEY}  # Can be omitted when Entra ID configured in LCORE
       base_url: ${env.AZURE_API_BASE}
-      api_version: 2025-01-01-preview
+      api_version: preview  # use with base_url .../openai/v1 (v1 preview inference API)
       model_validation: false  # added automatically by Lightspeed enrichment
 ```
 
@@ -166,6 +166,41 @@ make run CONFIG=examples/lightspeed-stack-azure-entraid-service.yaml
 **Note:** The `make run-ogx-local` command accepts two variables:
 - `CONFIG` - Lightspeed configuration file (default: `lightspeed-stack.yaml`)
 - `OGX_CONFIG` - OGX configuration file to enrich and run (default: `run.yaml`)
+
+### Vertex AI (`remote::vertexai`)
+
+OGX field name is **`thought_signature_store`** (not `thought_signature_storage`): a KV store reference for Gemini `thought_signature` values during tool loops. Use the same `kv_default` backend as the rest of the run config unless you run multi-replica production (then use a shared KV backend).
+
+```yaml
+  - provider_id: google-vertex
+    provider_type: remote::vertexai
+    config:
+      project: ${env.VERTEX_AI_PROJECT}
+      location: ${env.VERTEX_AI_LOCATION:=global}
+      allowed_models: ["publishers/google/models/gemini-3.5-flash-lite"]
+      thought_signature_store:
+        backend: kv_default
+        namespace: vertexai_thought_signatures
+```
+
+### AWS Bedrock Mantle (Gemma 4)
+
+`remote::bedrock` in OGX always uses `https://bedrock-runtime.{region}.amazonaws.com/openai/v1`. **Gemma 4** models (`google.gemma-4-31b`, etc.) are served only on **Bedrock Mantle**:
+
+`https://bedrock-mantle.{region}.api.aws/openai/v1`
+
+OGX `remote::bedrock` does not expose a `base_url` field (unlike `remote::azure`). For Mantle, register the provider as **`remote::openai`** with a Mantle `base_url` and a Bedrock short-term API key as `api_key` (same bearer token as `AWS_BEARER_TOKEN_BEDROCK`). Keep `provider_id: aws-bedrock` if that is your logical provider name in LCS.
+
+```yaml
+  - provider_id: aws-bedrock
+    provider_type: remote::openai
+    config:
+      api_key: ${env.AWS_BEARER_TOKEN_BEDROCK}
+      base_url: ${env.BEDROCK_MANTLE_BASE_URL:=https://bedrock-mantle.us-east-2.api.aws/openai/v1}
+      allowed_models: ["google.gemma-4-31b"]
+```
+
+Classic runtime models (e.g. `deepseek.v3-v1:0`) can continue to use `remote::bedrock` with `region_name`.
 
 ---
 
