@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, Final, Optional
 
 from models.config import InferenceConfiguration
+from providers.inference.azure.provider import AzureInferenceProvider
 from providers.inference.base import InferenceProvider
 from providers.inference.catalog import CatalogModel
 from providers.inference.errors import ProviderNotFoundError
@@ -14,6 +15,7 @@ from utils.types import Singleton
 
 PROVIDER_CLASSES: Final[dict[ProviderType, type[InferenceProvider[Any, Any]]]] = {
     "openai": OpenAIInferenceProvider,
+    "azure": AzureInferenceProvider,
 }
 
 

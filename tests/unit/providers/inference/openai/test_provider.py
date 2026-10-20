@@ -44,7 +44,7 @@ def test_build_provider_uses_config(provider: OpenAIInferenceProvider) -> None:
 @pytest.mark.parametrize(
     ("model_id", "expected_type"),
     [
-        ("gpt-4o-mini", "llm"),
+        ("gpt-5.6-luna", "llm"),
         ("text-embedding-3-small", "embedding"),
         ("custom-model", "llm"),
     ],
@@ -81,13 +81,13 @@ def test_create_llm_uses_openai_responses_model(
     model = provider._create_llm(
         CatalogModel(
             name="chat",
-            provider_model_id="gpt-4o-mini",
+            provider_model_id="gpt-5.6-luna",
             model_type="llm",
         )
     )
 
     assert isinstance(model, OpenAIResponsesModel)
-    assert model.model_name == "gpt-4o-mini"
+    assert model.model_name == "gpt-5.6-luna"
     assert model.provider is pai_provider
 
 
