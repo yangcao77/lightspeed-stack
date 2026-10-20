@@ -144,7 +144,8 @@ def _check_server_section_present(spec: dict[str, Any]) -> None:
 
     """
     servers = spec.get("servers")
-    assert isinstance(servers, list) and servers, "servers must be a non-empty list"
+    assert isinstance(servers, list), "servers should be represented as a list"
+    assert servers, "servers must be a non-empty list"
 
 
 def _check_paths_and_responses_exist(
