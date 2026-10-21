@@ -7,3 +7,4 @@ Azure inference provider package.
 ## [provider.py](provider.py)
 
 Azure OpenAI runtime inference provider backed by Pydantic AI.
+
