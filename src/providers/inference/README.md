@@ -16,6 +16,10 @@ Internal inference catalog models.
 
 Exceptions raised by inference providers.
 
+## [model_type_inference.py](model_type_inference.py)
+
+Helpers for inferring catalog model types from known model ids.
+
 ## [registry.py](registry.py)
 
 Singleton registry of initialized inference providers.

@@ -4,3 +4,7 @@
 
 OpenAI inference provider package.
 
+## [provider.py](provider.py)
+
+OpenAI runtime inference provider backed by Pydantic AI.
+

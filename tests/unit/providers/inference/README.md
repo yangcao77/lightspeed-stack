@@ -20,6 +20,10 @@ Unit tests for internal inference catalog models.
 
 Unit tests for inference provider errors.
 
+## [test_model_type_inference.py](test_model_type_inference.py)
+
+Unit tests for model type inference helpers.
+
 ## [test_registry.py](test_registry.py)
 
 Unit tests for the ProviderRegistry singleton.
