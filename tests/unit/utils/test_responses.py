@@ -1400,7 +1400,8 @@ class TestResolveToolChoice:
             choice,
             "token",
         )
-        assert prepared is not None and prepared[0].type == "file_search"
+        assert prepared is not None
+        assert prepared[0].type == "file_search"
         assert resolved_choice == expected_choice
 
     @pytest.mark.asyncio
