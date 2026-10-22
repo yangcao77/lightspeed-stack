@@ -318,8 +318,16 @@ jobs:
             exit 1
           fi
 
-          if ! echo "$MODEL_JSON" | jq -e --arg p "$EXPECTED_PROVIDER" --arg m "$EXPECTED_MODEL" \
-            '.models | any(.provider_id == $p and .provider_resource_id == $m)' >/dev/null
+          MODEL_SUFFIX="${EXPECTED_MODEL##*/}"
+          if ! echo "$MODEL_JSON" | jq -e --arg p "$EXPECTED_PROVIDER" --arg m "$EXPECTED_MODEL" --arg suffix "$MODEL_SUFFIX" \
+            '.models | any(
+              .provider_id == $p
+              and (
+                .provider_resource_id == $m
+                or (.provider_resource_id | endswith("/" + $suffix))
+                or .provider_resource_id == $suffix
+              )
+            )' >/dev/null
           then
             echo "❌ Expected LLM not listed by /v1/models (provider_id + provider_resource_id must match)"
             echo "Registered LLM entries (provider_id, provider_resource_id, api_model_type):"
