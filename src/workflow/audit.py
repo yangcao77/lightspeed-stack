@@ -95,6 +95,7 @@ class AuditReason(str, Enum):
     IMAGE_NOT_ALLOWED = "image_not_allowed"
     SPAWN_MODE_NOT_ALLOWED = "spawn_mode_not_allowed"
     LIMIT_EXCEEDED = "limit_exceeded"
+    TOOLS_NOT_ENFORCEABLE = "tools_not_enforceable"
     POLICY_DENIED = "policy_denied"
     SERVICE_ACCOUNT_CONFLICT = "service_account_conflict"
     EXECUTOR_VALIDATION_FAILED = "executor_validation_failed"

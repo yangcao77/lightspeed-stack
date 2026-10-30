@@ -9,7 +9,7 @@ The request goes through the real ``@authorize`` decorator: the example's
 access rules decide ``workflow_start`` and admin, and the decorator itself sets
 ``request.state.user_roles`` from the case's ``as`` roles. Only the roles
 resolver is replaced (verify.py covers the JWT role mapping). The driver lives
-in ``contract_util.run_real_case`` so verify.py runs the same code.
+in ``contract_util.run_real_case_detail`` so verify.py runs the same code.
 
 Only the HTTP status is compared here: the reference gate's ``reason`` strings
 are specific to the reference implementation.
@@ -34,7 +34,7 @@ from contract_util import (  # IMPLEMENTED_PHASE = 2: phases 0-2 run for real
     engine_config,
     load,
     patch,
-    run_real_case,
+    run_real_case_detail,
 )
 
 from models.config import Configuration
@@ -71,11 +71,13 @@ def _expected(case: dict[str, Any]) -> int:
 @pytest.mark.asyncio
 async def test_workflow_case(case: dict[str, Any]) -> None:
     """The real POST /v1/workflows/run handler gives the contract's status."""
-    status, started = await run_real_case(
+    status, started, denied = await run_real_case_detail(
         case, STACK, DEFINITIONS, CASES["defaults"], PENDING_ENGINE_KEYS
     )
     assert status == _expected(case)
     assert started == (status == 202)
+    if "denied_contains" in case:
+        assert any(case["denied_contains"] in message for message in denied), denied
 
 
 @pytest.mark.parametrize("case", _params("config_cases"))
@@ -106,10 +108,26 @@ def test_example_policy_block_loads() -> None:
     cfg = engine_config(STACK, PENDING_ENGINE_KEYS)
     assert cfg.policy is not None
     roles = {rule.role for rule in cfg.policy.rules}
-    assert roles == {"*", "agent-user", "agent-support", "agent-admin"}
+    assert roles == {
+        "*",
+        "agent-user",
+        "agent-support",
+        "agent-restricted",
+        "agent-admin",
+    }
     # The admin rule inherits both flows' grants.
     admin = cfg.policy.rules_for({"agent-admin"})
-    assert {r.role for r in admin} == roles - {"*"}
+    assert {r.role for r in admin} == roles - {"*", "agent-restricted"}
+
+
+def test_example_ephemeral_roles_grant_wildcard_and_restricted_is_finite() -> None:
+    """Roles that run ephemeral flows grant ["*"]; agent-restricted stays finite."""
+    cfg = engine_config(STACK, PENDING_ENGINE_KEYS)
+    assert cfg.policy is not None
+    by_role = {rule.role: rule for rule in cfg.policy.rules}
+    for role in ("agent-user", "agent-support"):
+        assert by_role[role].tools == ["*"]
+    assert by_role["agent-restricted"].tools == ["github.read"]
 
 
 def test_example_policy_rejects_unknown_fields() -> None:
@@ -153,3 +171,29 @@ def test_readme_states_which_limits_are_enforced() -> None:
         assert declared in text, declared
     assert "declared budgets" in text
     assert "not security boundaries" in text
+
+
+def test_readme_states_tools_enforcement_wording_and_consumer_evidence() -> None:
+    """The README says what a wildcard tools grant means and why, with evidence."""
+    text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
+    for needle in (
+        "tools_not_enforceable",
+        "explicit wildcard",
+        "does not promise",
+        "not enforced",
+        "upstream assumption",
+        "step_runner.py:399-402",
+        "activities.py:619-622",
+        "routes/models.py",
+        "routes/query.py:163",
+        "providers/claude.py:95-97",
+        "bypassPermissions",
+        "DEFAULT_ALLOWED_TOOLS",
+        "floating tag",
+        "negative execution tests",
+        "disallowed_tools",
+        "fail closed",
+    ):
+        assert needle in text, needle
+    assert "does not enforce `permissions.allowed_tools`" in text
+    assert "`denied_tools`" in text

@@ -216,11 +216,60 @@ this". The policy requires governed mode (a `providers` catalog), and a policy
 that grants anything to a role other than `*` requires `jwk-token` auth with
 `role_rules` and `access_rules`.
 
-`tools` governs both a step's `tools` and `permissions.allowed_tools` (the
-list the executor sends to ephemeral sandboxes); `denied_tools` only
-restricts and needs no grant. The executor gives advisory sandboxes read
-access to all of `/skills` regardless of `allowed_skills`, so granting
-`advisory` effectively grants every skill.
+`tools` governs a step's `tools` and `permissions.allowed_tools`;
+`denied_tools` only restricts and needs no grant. The executor gives advisory
+sandboxes read access to all of `/skills` regardless of `allowed_skills`, so
+granting `advisory` effectively grants every skill.
+
+#### Tools on ephemeral steps (`tools_not_enforceable`)
+
+A finite `tools` grant would be a promise nobody keeps today, so in policy mode
+every ephemeral agent step needs an explicit wildcard `tools` grant (`["*"]`
+after the union and inherit closure). A missing, null, `[]` or finite grant is
+a 403 with reason `tools_not_enforceable`, pointing at the step's `permissions`
+object (the spec-level one when inherited, the step itself when permissions
+are defaulted). It does not matter what `allowed_tools` the request declares
+or omits, and a finite operator grant is never promoted to a wildcard.
+
+The wildcard authorizes the sandbox's default, unrestricted tool access. It
+does not promise that a caller-supplied finite `allowed_tools` list is
+enforced: that list is not enforced (see the evidence below).
+
+| Spawn mode | `tools` grant check | Notes |
+|---|---|---|
+| `ephemeral` | explicit `["*"]` required, else `tools_not_enforceable` | wildcard passes whatever `allowed_tools` says |
+| `none`, `local` | `step.tools` and `allowed_tools` names checked against the grant | admin only; the direct runner never reads `permissions.allowed_tools` and omitted `step.tools` means no tools; this README does not claim `allowed_tools` or `denied_tools` is enforced there |
+| no policy | not checked | unchanged |
+
+Consumer evidence (read from the code; the deployed image
+`quay.io/jameswong/lightspeed-agentic-sandbox:latest` is a floating tag whose
+build could not be verified, so treat this as the source at HEAD `619fb0c`):
+
+- Producer: the installed cloud-agents sends `allowedTools` / `deniedTools`
+  only when the list is truthy (`cloud_agents/workflow/core/step_runner.py:399-402`,
+  `executor/temporal/activities.py:619-622`), so omitted, null and `[]` are
+  identical on the wire: nothing is sent. `tests/unit/cloud_agents/test_workflow_producer_seam.py`
+  runs that code and pins it. It documents the producer only.
+- Consumer (`lightspeed-agentic-sandbox`, `src/lightspeed_agentic/`):
+  `RunRequest` in `routes/models.py` has no `allowedTools` / `deniedTools`
+  fields; `routes/query.py:163` (with `tools.py:5`) always passes
+  `DEFAULT_ALLOWED_TOOLS` = Bash, Read, Glob, Grep, Skill; the Claude provider
+  runs with `permission_mode=bypassPermissions` (`providers/claude.py:95-97`),
+  and the SDK treats `allowed_tools` as an auto-approve list, not a restriction.
+
+So today the sandbox does not enforce `permissions.allowed_tools` or
+`denied_tools` for ephemeral steps. A captured `allowedTools` field is not
+proof of enforcement. Sandbox-side enforcement is an upstream assumption that
+is not met, which is why the policy fails closed instead of trusting a finite
+grant.
+
+Restricting ephemeral steps to a finite tool list needs a separately reviewed
+cross-repo capability: the sandbox accepts `allowedTools` / `deniedTools` and
+enforces them (`tools=` / `disallowed_tools=`), the producer sends `[]` as
+deny-all instead of dropping it, negative execution tests are bound to every
+effective image digest and provider, and unknown images and providers fail
+closed. Until then the wildcard grant is the only way to authorize ephemeral
+execution.
 
 Limits: each is `min(max over the caller's rules, hard cap)`, and an absent
 limit grants 0. Hard caps: step timeout 3600s, workflow 86400s, 5 retries,
@@ -230,13 +279,16 @@ unlimited, every agent step must declare one.
 This example's roles:
 
 - `*`: spawn mode `ephemeral`.
-- `agent-user` (triage flow): `claude-prod`, skill `triage`, tool
-  `github.read`, service account `workflow-runner`, namespace
+- `agent-user` (triage flow): `claude-prod`, skill `triage`, tools `["*"]`,
+  service account `workflow-runner`, namespace
   `sandbox-workloads`, limits (900s per step, 3600s workflow, 2 retries,
   200k tokens).
-- `agent-support` (KB flow): `openai-team-b`, skill `kb-search`, tool
-  `kb.search`, service account `kb-runner`, same namespace, limits (1200s,
+- `agent-support` (KB flow): `openai-team-b`, skill `kb-search`, tools
+  `["*"]`, service account `kb-runner`, same namespace, limits (1200s,
   3600s, 1 retry, 200k tokens).
+- `agent-restricted`: the triage grants with a finite `tools` list
+  (`github.read`). Ephemeral submissions are a 403 `tools_not_enforceable`;
+  it is here as the worked rejection case.
 - `agent-admin`: inherits both, plus `azure-eu`, `local`/`none` spawn (these
   also require admin, even if granted to someone else) and `advisory`. The
   legacy admin image override is gone in policy mode: admins need an `images`

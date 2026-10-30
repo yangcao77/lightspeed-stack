@@ -150,14 +150,17 @@ class _FakeExecutor:
         return "wf-contract"
 
 
-async def run_real_case(
+async def run_real_case_detail(
     case: dict,
     stack: dict,
     definitions: dict,
     defaults: dict,
     pending: frozenset[str] | set[str] = frozenset(),
-) -> tuple[int, bool]:
-    """POST the case to the real handler; return (status, executor.start called).
+) -> tuple[int, bool, list[str]]:
+    """POST the case to the real handler.
+
+    Returns:
+        ``(status, executor.start called, caller-facing denial messages)``.
 
     The request goes through the real ``@authorize`` decorator and access
     rules, so ``request.state.user_roles`` and ``is_admin`` come from the
@@ -206,6 +209,7 @@ async def run_real_case(
         request = Request(
             {"type": "http", "headers": [], "method": "POST", "path": "/"}
         )
+        denied: list[str] = []
         try:
             await wf_mod.start_workflow_handler(
                 request=request, body=body, auth=("uid", "user", False, "token")
@@ -213,7 +217,9 @@ async def run_real_case(
             status = 202
         except HTTPException as exc:
             status = exc.status_code
-    return status, executor.started
+            if isinstance(exc.detail, dict):
+                denied = [str(m) for m in exc.detail.get("denied", [])]
+    return status, executor.started, denied
 
 
 def current_schema_stack(stack: dict, files_dir: str) -> dict:

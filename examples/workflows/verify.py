@@ -42,7 +42,7 @@ from contract_util import (
     load,
     load_all,
     patch,
-    run_real_case,
+    run_real_case_detail,
 )
 
 failures: list[str] = []
@@ -116,10 +116,12 @@ for case in cases["workflow_cases"]:
     if case["phase"] <= IMPLEMENTED_PHASE:
         want = case["expect"]
         want = want["pre269"] if isinstance(want, dict) else want
-        status, started = asyncio.run(
-            run_real_case(case, stack, definitions, cases["defaults"])
+        status, started, denied = asyncio.run(
+            run_real_case_detail(case, stack, definitions, cases["defaults"])
         )
         ok = status == want and started == (status == 202)
+        if ok and "denied_contains" in case:
+            ok = any(case["denied_contains"] in message for message in denied)
         check(ok, f"[real] {case['name']} -> {want}" + ("" if ok else f" (got {status})"))
         continue
     for stage, cfg in stacks.items():

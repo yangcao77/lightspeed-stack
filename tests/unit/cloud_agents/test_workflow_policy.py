@@ -40,9 +40,15 @@ FULL_LIMITS = PolicyLimits(
 
 
 def _rule(role: str = "*", **grants: Any) -> PolicyRule:
-    """Build a rule granting the provider, ephemeral spawn and full limits."""
+    """Build a rule granting provider, ephemeral spawn, wildcard tools, limits.
+
+    Ephemeral steps need an explicit wildcard ``tools`` grant (the sandbox
+    does not enforce finite lists), so the baseline carries one. Pass
+    ``tools=None`` to drop it.
+    """
     base: dict[str, Any] = {
         "providers": [PROVIDER],
+        "tools": ["*"],
         "spawn_modes": ["ephemeral"],
         "limits": FULL_LIMITS,
     }
@@ -117,6 +123,11 @@ def _authorize(  # pylint: disable=too-many-arguments
         advisory=advisory,
         definition_skills_image=definition_skills_image,
     )
+
+
+def _not_enforceable(path: str) -> tuple[AuditReason, str]:
+    """The (reason, path) pair of a tools_not_enforceable denial."""
+    return (AuditReason.TOOLS_NOT_ENFORCEABLE, path)
 
 
 def _pairs(decision: PolicyDecision) -> set[tuple[AuditReason, str]]:
@@ -464,10 +475,17 @@ def test_policy_list_grants(step_key: str, grant_key: str, value: str) -> None:
         expected = {(AuditReason.POLICY_DENIED, f"{STEPS}/0/{step_key}/0")}
         if grant == ["ok"]:
             expected = set()
+        if grant_key == "tools":
+            expected.add(_not_enforceable(f"{STEPS}/0/permissions"))
         assert _pairs(decision) == expected | {(AuditReason.POLICY_DENIED, path)}
     for grant in (["*"], ["ok", value]):
         grants = {grant_key: grant}
-        assert _allowed(_authorize(plan, USER, _policy(_rule(**grants))))
+        decision = _authorize(plan, USER, _policy(_rule(**grants)))
+        if grant_key == "tools" and grant != ["*"]:
+            # Named tools cover the names, not the missing enforcement.
+            assert _pairs(decision) == {_not_enforceable(f"{STEPS}/0/permissions")}
+        else:
+            assert _allowed(decision)
 
 
 def _tool_step(allowed: list[str], **extra: Any) -> dict[str, Any]:
@@ -488,14 +506,17 @@ def test_policy_allowed_tools_without_grant_denied() -> None:
             expected.add(
                 (AuditReason.POLICY_DENIED, f"{STEPS}/0/permissions/allowed_tools/0")
             )
+        expected.add(_not_enforceable(f"{STEPS}/0/permissions"))
         assert _pairs(decision) == expected
 
 
 def test_policy_allowed_tools_granted_and_wildcard_allowed() -> None:
     """A named or wildcard tools grant allows allowed_tools."""
     plan = _plan([_tool_step(["Bash", "Write"])])
-    for grant in (["Bash", "Write"], ["*"]):
-        assert _allowed(_authorize(plan, USER, _policy(_rule(tools=grant))))
+    assert _allowed(_authorize(plan, USER, _policy(_rule(tools=["*"]))))
+    # A finite grant covers the names but not the missing enforcement.
+    decision = _authorize(plan, USER, _policy(_rule(tools=["Bash", "Write"])))
+    assert _pairs(decision) == {_not_enforceable(f"{STEPS}/0/permissions")}
 
 
 def test_policy_allowed_tools_empty_needs_no_grant() -> None:
@@ -508,7 +529,10 @@ def test_policy_step_tools_still_checked_alongside_allowed_tools() -> None:
     """step.tools and permissions.allowed_tools are both checked."""
     plan = _plan([_tool_step(["Bash"], tools=["tool-a"])])
     decision = _authorize(plan, USER, _policy(_rule(tools=["Bash"])))
-    assert _pairs(decision) == {(AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0")}
+    assert _pairs(decision) == {
+        (AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0"),
+        _not_enforceable(f"{STEPS}/0/permissions"),
+    }
 
 
 def test_policy_allowed_tools_whole_object_permissions_replace_spec() -> None:
@@ -517,9 +541,11 @@ def test_policy_allowed_tools_whole_object_permissions_replace_spec() -> None:
         [_step(permissions={"max_tokens": 100}), _step(1, permissions=None)],
         permissions={"max_tokens": 100, "allowed_tools": ["Bash"]},
     )
-    decision = _authorize(plan, USER, _policy())
+    decision = _authorize(plan, USER, _policy(_rule(tools=None)))
     assert _pairs(decision) == {
-        (AuditReason.POLICY_DENIED, "/definition/spec/permissions/allowed_tools/0")
+        (AuditReason.POLICY_DENIED, "/definition/spec/permissions/allowed_tools/0"),
+        _not_enforceable(f"{STEPS}/0/permissions"),
+        _not_enforceable("/definition/spec/permissions"),
     }
 
 
@@ -594,6 +620,165 @@ def test_policy_configured_default_service_account_is_implicit() -> None:
 
 
 # --------------------------------------------------------------------------
+# Policy mode: tools are not enforceable on ephemeral steps
+#
+# The sandbox consumer has no allowedTools/deniedTools fields, always passes
+# its default tool list and runs with bypassPermissions, so a finite tools
+# grant cannot be honoured. Only an explicit wildcard grant authorizes
+# ephemeral execution (see examples/workflows/README.md).
+# --------------------------------------------------------------------------
+
+REQUESTED: dict[str, Any] = {
+    "omitted": {"max_tokens": 1000},
+    "null": {"max_tokens": 1000, "allowed_tools": None},
+    "empty": {"max_tokens": 1000, "allowed_tools": []},
+    "named": {"max_tokens": 1000, "allowed_tools": ["Bash"]},
+}
+GRANTS: dict[str, Any] = {
+    "missing": None,
+    "empty": [],
+    "finite": ["Bash"],
+    "wildcard": ["*"],
+}
+
+
+@pytest.mark.parametrize("grant_id", list(GRANTS))
+@pytest.mark.parametrize("requested_id", list(REQUESTED))
+def test_ephemeral_tools_matrix(requested_id: str, grant_id: str) -> None:
+    """Ephemeral steps pass only on a wildcard grant, whatever is requested."""
+    plan = _plan([_step(permissions=REQUESTED[requested_id])])
+    policy = _policy(_rule(tools=GRANTS[grant_id]))
+    decision = _authorize(plan, USER, policy)
+    if grant_id == "wildcard":
+        assert _allowed(decision)
+        return
+    expected = {_not_enforceable(f"{STEPS}/0/permissions")}
+    if requested_id == "named" and grant_id != "finite":
+        expected.add(
+            (AuditReason.POLICY_DENIED, f"{STEPS}/0/permissions/allowed_tools/0")
+        )
+    assert _pairs(decision) == expected
+    message = next(
+        d.message
+        for d in decision.denials
+        if d.reason is AuditReason.TOOLS_NOT_ENFORCEABLE
+    )
+    assert "wildcard" in message and "does not promise" in message
+
+
+def test_ephemeral_finite_grant_is_never_promoted_to_wildcard() -> None:
+    """A finite grant that covers every requested name is still denied."""
+    plan = _plan([_step(tools=["a"], permissions=REQUESTED["named"])])
+    decision = _authorize(plan, USER, _policy(_rule(tools=["a", "Bash"])))
+    assert not _allowed(decision)
+    assert _pairs(decision) == {_not_enforceable(f"{STEPS}/0/permissions")}
+    # An unrelated name stays denied, so the grant did not become '*'.
+    other = _plan([_step(tools=["zzz"], permissions=REQUESTED["named"])])
+    assert (
+        AuditReason.POLICY_DENIED,
+        f"{STEPS}/0/tools/0",
+    ) in _pairs(_authorize(other, USER, _policy(_rule(tools=["a", "Bash"]))))
+
+
+def test_ephemeral_tools_denial_points_at_step_when_permissions_defaulted() -> None:
+    """With no permissions object anywhere the denial points at the step."""
+    plan = _plan([_step(permissions=None)])
+    decision = _authorize(plan, USER, _policy(_rule(tools=None)))
+    assert _not_enforceable(f"{STEPS}/0") in _pairs(decision)
+
+
+def test_ephemeral_tools_denial_points_at_spec_permissions_when_inherited() -> None:
+    """Spec-level permissions are taken whole, so the denial names them."""
+    plan = _plan([_step(permissions=None)], permissions={"max_tokens": 1000})
+    decision = _authorize(plan, USER, _policy(_rule(tools=["Bash"])))
+    assert _pairs(decision) == {_not_enforceable("/definition/spec/permissions")}
+
+
+def test_ephemeral_tools_denial_reported_once_per_step_with_others() -> None:
+    """Two steps each get a denial and other violations are returned too."""
+    plan = _plan(
+        [_step(0), _step(1, permissions={"max_tokens": 1000, "allowed_tools": ["x"]})],
+        provider=PROVIDER,
+    )
+    policy = _policy(_rule(tools=None, providers=["other"]))
+    decision = _authorize(plan, USER, policy, advisory=True)
+    pairs = _pairs(decision)
+    assert _not_enforceable(f"{STEPS}/0/permissions") in pairs
+    assert _not_enforceable(f"{STEPS}/1/permissions") in pairs
+    assert (AuditReason.POLICY_DENIED, "/provider") in pairs
+    assert (AuditReason.POLICY_DENIED, WORKFLOW_ADVISORY_POINTER) in pairs
+    assert (
+        AuditReason.POLICY_DENIED,
+        f"{STEPS}/1/permissions/allowed_tools/0",
+    ) in pairs
+
+
+def test_ephemeral_tools_denial_for_admin_too() -> None:
+    """Admins get no exemption: there is no enforcement to rely on."""
+    plan = _plan()
+    decision = _authorize(plan, ADMIN, _policy(_rule(tools=["Bash"])))
+    assert _pairs(decision) == {_not_enforceable(f"{STEPS}/0/permissions")}
+
+
+def test_ephemeral_wildcard_covers_finite_requests_without_promising_them() -> None:
+    """Wildcard passes even a finite allowed_tools (it is not enforced)."""
+    plan = _plan([_step(permissions={"max_tokens": 1, "allowed_tools": ["Bash"]})])
+    assert _allowed(_authorize(plan, USER, _policy(_rule(tools=["*"]))))
+
+
+def test_wildcard_from_any_unioned_rule_authorizes() -> None:
+    """The union closure decides: a wildcard in an inherited rule is enough."""
+    policy = _policy(
+        _rule(tools=None),
+        PolicyRule(role="dev", inherit=["ops"]),
+        PolicyRule(role="ops", tools=["*"]),
+    )
+    dev = Principal(user_id="d", is_admin=False, roles=frozenset({"dev"}))
+    assert _allowed(_authorize(_plan(), dev, policy))
+    assert not _allowed(_authorize(_plan(), USER, policy))
+
+
+@pytest.mark.parametrize("mode", ["none", "local"])
+@pytest.mark.parametrize("grant_id", ["missing", "finite", "wildcard"])
+def test_non_ephemeral_steps_keep_the_step_tools_checks(
+    mode: str, grant_id: str
+) -> None:
+    """spawn none/local never gets the new denial; step.tools is checked."""
+    plan = _plan([_step(spawn=mode, tools=["tool-a"])])
+    policy = _policy(_rule(tools=GRANTS[grant_id], spawn_modes=[mode]))
+    decision = _authorize(plan, ADMIN, policy)
+    assert AuditReason.TOOLS_NOT_ENFORCEABLE not in decision.reasons
+    expected = (
+        set()
+        if grant_id == "wildcard"
+        else {(AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0")}
+    )
+    assert _pairs(decision) == expected
+
+
+def test_non_ephemeral_without_any_tools_grant_is_allowed() -> None:
+    """Omitted step.tools on none/local means no tools: nothing to grant."""
+    plan = _plan([_step(spawn="local")])
+    policy = _policy(_rule(tools=None, spawn_modes=["local"]))
+    assert _allowed(_authorize(plan, ADMIN, policy))
+
+
+def test_mixed_spawn_modes_only_ephemeral_steps_are_denied() -> None:
+    """Only the ephemeral step of a mixed workflow gets the denial."""
+    plan = _plan([_step(0, spawn="local"), _step(1)])
+    policy = _policy(_rule(tools=None, spawn_modes=["local", "ephemeral"]))
+    decision = _authorize(plan, ADMIN, policy)
+    assert _pairs(decision) == {_not_enforceable(f"{STEPS}/1/permissions")}
+
+
+@pytest.mark.parametrize("principal", [ADMIN, USER])
+def test_no_policy_never_adds_tools_not_enforceable(principal: Principal) -> None:
+    """No-policy mode is unchanged: tools are not checked at all."""
+    plan = _plan([_step(tools=["x"], permissions=REQUESTED["named"])])
+    assert _allowed(_authorize(plan, principal, None))
+
+
+# --------------------------------------------------------------------------
 # Policy mode: grant union, inherit closure, user isolation
 # --------------------------------------------------------------------------
 
@@ -620,14 +805,15 @@ def test_policy_inherit_closure() -> None:
     policy = _policy(
         PolicyRule(role="base", providers=[PROVIDER], spawn_modes=["ephemeral"]),
         PolicyRule(role="mid", inherit=["base"], limits=FULL_LIMITS),
-        PolicyRule(role="top", inherit=["mid"], tools=["tool-a"]),
+        PolicyRule(role="top", inherit=["mid"], tools=["*"]),
     )
     top = Principal(user_id="t", is_admin=False, roles=frozenset({"top"}))
     mid = Principal(user_id="m", is_admin=False, roles=frozenset({"mid"}))
     plan = _plan([_step(tools=["tool-a"])])
     assert _allowed(_authorize(plan, top, policy))
     assert _pairs(_authorize(plan, mid, policy)) == {
-        (AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0")
+        (AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0"),
+        _not_enforceable(f"{STEPS}/0/permissions"),
     }
 
 

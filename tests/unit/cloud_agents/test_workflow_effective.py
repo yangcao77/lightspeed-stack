@@ -145,8 +145,9 @@ def _assert_matches_executor(
         assert step_plan.max_tokens.value == (scope.max_tokens if scope else None)
         assert step_plan.max_retries.value == normalized.max_retries
         assert step_plan.tools.value == tuple(normalized.tools)
-        assert step_plan.allowed_tools.value == tuple(
-            (scope.allowed_tools or []) if scope else []
+        expected_allowed = scope.allowed_tools if scope else None
+        assert step_plan.allowed_tools.value == (
+            None if expected_allowed is None else tuple(expected_allowed)
         )
         expected_skills = normalized.allowed_skills
         assert step_plan.allowed_skills.value == (
@@ -462,13 +463,35 @@ def test_allowed_tools_whole_object_semantics_and_paths() -> None:
     )
     plan = _plan(definition)
     first, second, third, fourth = plan.steps
-    assert first.allowed_tools.value == ()
+    assert first.allowed_tools.value is None
     assert first.allowed_tools.path is None
     assert second.allowed_tools.value == ("Read",)
     assert second.allowed_tools.path == "/definition/spec/permissions/allowed_tools"
     assert third.allowed_tools.value == ("Bash", "Write")
     assert third.allowed_tools.path == f"{STEPS}/2/permissions/allowed_tools"
     assert fourth.allowed_tools.value == ()
+    _assert_matches_executor(definition, plan, SPAWNER_IMAGE)
+
+
+def test_allowed_tools_none_stays_distinct_from_empty() -> None:
+    """Omitted and null allowed_tools stay None; only an explicit [] is ().
+
+    The producer sends nothing for either, but the plan keeps what the
+    caller wrote so policy and audit can tell them apart.
+    """
+    definition = _definition(
+        [
+            _step("a", permissions=None),
+            _step("b", permissions={"max_tokens": 1}),
+            _step("c", permissions={"max_tokens": 1, "allowed_tools": None}),
+            _step("d", permissions={"max_tokens": 1, "allowed_tools": []}),
+            _step("e", permissions={"max_tokens": 1, "allowed_tools": ["Bash"]}),
+        ]
+    )
+    plan = _plan(definition)
+    values = [step.allowed_tools.value for step in plan.steps]
+    assert values == [None, None, None, (), ("Bash",)]
+    assert values[2] is None and values[3] is not None
     _assert_matches_executor(definition, plan, SPAWNER_IMAGE)
 
 

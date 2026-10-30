@@ -573,6 +573,7 @@ POLICY = {
             "role": "*",
             "providers": ["claude-prod"],
             "spawn_modes": ["ephemeral"],
+            "tools": ["*"],
             "limits": LIMITS,
         },
         {"role": "team-a", "images": ["team-a/sandbox:v2"], "skills": ["triage"]},
@@ -650,6 +651,86 @@ async def test_policy_mcp_denied_for_everyone(
         assert _reasons(outcome) == ["mcp_not_allowed"]
         assert _one(outcome)["paths"] == ["/definition/spec/steps/0/mcp_servers/0"]
     policy_env.executor.start.assert_not_called()
+
+
+NO_TOOLS_POLICY = {
+    "rules": [
+        {
+            "role": "*",
+            "providers": ["claude-prod"],
+            "spawn_modes": ["ephemeral"],
+            "limits": LIMITS,
+        }
+    ]
+}
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "allowed_tools",
+    [
+        pytest.param({}, id="omitted"),
+        pytest.param({"allowed_tools": None}, id="null"),
+        pytest.param({"allowed_tools": []}, id="empty"),
+    ],
+)
+@pytest.mark.parametrize("roles", [(), (ADMIN_ROLE,)], ids=["user", "admin"])
+async def test_policy_ephemeral_without_tools_grant_is_403(
+    env: Env, allowed_tools: dict[str, Any], roles: tuple[str, ...]
+) -> None:
+    """A policy granting provider, ephemeral and budgets but no tools is 403.
+
+    This is the reviewer's repro: omitted, null and [] allowed_tools all send
+    nothing to the sandbox, which then runs with its default tools, so the
+    grant must be an explicit wildcard.
+    """
+    env.cfg.workflow_engine_configuration = _governed(NO_TOOLS_POLICY)
+    step = _step(timeout_seconds=120, permissions={"max_tokens": 1000, **allowed_tools})
+    outcome = await env.run(_body(_definition(step)), roles=roles)
+    assert outcome.status == 403
+    assert _reasons(outcome) == ["tools_not_enforceable"]
+    assert _one(outcome)["paths"] == ["/definition/spec/steps/0/permissions"]
+    assert any("wildcard" in m for m in outcome.detail["denied"])
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_policy_ephemeral_tools_denial_points_at_step_without_permissions(
+    env: Env,
+) -> None:
+    """With permissions defaulted the denial points at the step."""
+    env.cfg.workflow_engine_configuration = _governed(NO_TOOLS_POLICY)
+    outcome = await env.run(_body(_definition(_step(timeout_seconds=120))))
+    assert outcome.status == 403
+    assert "tools_not_enforceable" in _reasons(outcome)
+    assert "/definition/spec/steps/0" in _one(outcome)["paths"]
+
+
+@pytest.mark.asyncio
+async def test_policy_finite_tools_grant_is_still_403(env: Env) -> None:
+    """A finite grant covering the requested tools is not enough."""
+    policy = {"rules": [{**NO_TOOLS_POLICY["rules"][0], "tools": ["Bash"]}]}
+    env.cfg.workflow_engine_configuration = _governed(policy)
+    step = _step(
+        timeout_seconds=120,
+        permissions={"max_tokens": 1000, "allowed_tools": ["Bash"]},
+    )
+    outcome = await env.run(_body(_definition(step)))
+    assert outcome.status == 403
+    assert _reasons(outcome) == ["tools_not_enforceable"]
+
+
+@pytest.mark.asyncio
+async def test_policy_wildcard_tools_grant_is_202(env: Env) -> None:
+    """A wildcard grant accepts ephemeral steps, even with a finite request."""
+    policy = {"rules": [{**NO_TOOLS_POLICY["rules"][0], "tools": ["*"]}]}
+    env.cfg.workflow_engine_configuration = _governed(policy)
+    step = _step(
+        timeout_seconds=120,
+        permissions={"max_tokens": 1000, "allowed_tools": ["Bash"]},
+    )
+    outcome = await env.run(_body(_definition(step)))
+    assert outcome.status == 202
 
 
 @pytest.mark.asyncio

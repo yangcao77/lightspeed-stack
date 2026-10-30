@@ -18,6 +18,14 @@ mode matrix of the Phase 2 plan:
   image override is intentionally gone); the spawner's default image and
   default service account are the only implicit grants. Named and inline MCP
   are denied for everyone until Phase 3.
+* **Tools on ephemeral steps:** the sandbox does not enforce finite tool
+  lists (it has no ``allowedTools``/``deniedTools`` request fields, always
+  passes its default tools and runs with permissions bypassed), so a finite
+  grant would be a promise nobody keeps. Every ephemeral agent step needs an
+  explicit ``["*"]`` ``tools`` grant, else ``tools_not_enforceable``. The
+  wildcard authorizes the sandbox's default, unrestricted tool access; it is
+  not a promise that a caller-supplied ``allowed_tools`` is enforced. Spawn
+  ``none``/``local`` steps keep the plain ``step.tools`` grant checks.
 
 Grant semantics: a list grant that is missing, null or ``[]`` grants nothing;
 ``["*"]`` grants any value; a principal's grant is the union over the rules
@@ -540,6 +548,42 @@ def _step_name_denials(step: StepPlan, grants: _Grants) -> list[PolicyDenial]:
     return denials
 
 
+TOOLS_NOT_ENFORCEABLE_MESSAGE: Final[str] = (
+    "ephemeral steps need an explicit wildcard ('*') tools grant: the sandbox "
+    "does not enforce finite tool lists, so a wildcard authorizes its "
+    "default, unrestricted tool access and does not promise that "
+    "permissions.allowed_tools or denied_tools is enforced"
+)
+
+
+def _step_tools_enforceable_denials(
+    step: StepPlan, grants: _Grants
+) -> list[PolicyDenial]:
+    """Require a wildcard tools grant for ephemeral steps.
+
+    The check ignores what the request declares or omits for
+    ``permissions.allowed_tools``: omitted, null and ``[]`` are all sent as
+    nothing, and a finite list is not enforced by the sandbox either. A
+    finite grant is never promoted to a wildcard.
+
+    Parameters:
+        step: The step plan.
+        grants: The principal's grants.
+
+    Returns:
+        A ``tools_not_enforceable`` denial, or an empty list.
+    """
+    if step.spawn.value != DEFAULT_SPAWN_MODE or grants.tools.any_value:
+        return []
+    return [
+        PolicyDenial(
+            AuditReason.TOOLS_NOT_ENFORCEABLE,
+            step.permissions_path or step.path,
+            TOOLS_NOT_ENFORCEABLE_MESSAGE,
+        )
+    ]
+
+
 def _step_service_account_denials(
     step: StepPlan, grants: _Grants, default_service_account: Optional[str]
 ) -> list[PolicyDenial]:
@@ -680,6 +724,7 @@ def _policy_denials(  # pylint: disable=too-many-arguments
         denials += _step_spawn_denials(step, grants, principal.is_admin)
         denials += _step_service_account_denials(step, grants, default_service_account)
         denials += _step_name_denials(step, grants)
+        denials += _step_tools_enforceable_denials(step, grants)
         denials += [
             PolicyDenial(
                 AuditReason.MCP_NOT_ALLOWED,

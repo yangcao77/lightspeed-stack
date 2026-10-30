@@ -75,6 +75,10 @@ authentication:
           operator: contains
           value: lightspeed-agent-admin
           roles: [agent-admin]
+        - jsonpath: "$.realm_access.roles[*]"
+          operator: contains
+          value: lightspeed-agent-restricted
+          roles: [agent-restricted]
 
 # Coarse RBAC: "may submit / view / approve / cancel at all".
 # An access rule with the `admin` action cannot list other actions (config
@@ -87,6 +91,8 @@ authorization:
       actions: [workflow_start, workflow_view, workflow_cancel]
     - role: agent-support
       actions: [workflow_start, workflow_view, workflow_approve, workflow_cancel]
+    - role: agent-restricted
+      actions: [workflow_start, workflow_view]
     - role: agent-admin
       actions: [admin]
 
@@ -170,6 +176,11 @@ workflow_engine:
   # example MCP servers above are not granted here yet.
   # Timeouts, max_tokens and the workflow total are declared budgets checked
   # at submission, not runtime limits (see README.md).
+  # Ephemeral steps need an explicit tools: ["*"] grant. The sandbox does not
+  # enforce finite tool lists, so a finite grant is rejected with
+  # tools_not_enforceable (agent-restricted below shows it). The wildcard
+  # authorizes the sandbox's default tool access; it does not promise that a
+  # step's permissions.allowed_tools is enforced (see README.md).
   policy:
     rules:
       # "*" applies to every caller.
@@ -179,7 +190,7 @@ workflow_engine:
       - role: agent-user
         providers: [claude-prod]
         skills: [triage]
-        tools: [github.read]
+        tools: ["*"]
         service_accounts: [workflow-runner]
         namespaces: [sandbox-workloads]
         limits:
@@ -191,13 +202,27 @@ workflow_engine:
       - role: agent-support
         providers: [openai-team-b]
         skills: [kb-search]
-        tools: [kb.search]
+        tools: ["*"]
         service_accounts: [kb-runner]
         namespaces: [sandbox-workloads]
         limits:
           max_step_timeout_seconds: 1200
           max_workflow_seconds: 3600
           max_retries: 1
+          max_tokens: 200000
+      # Same triage grants as agent-user but a finite tools list: ephemeral
+      # submissions are rejected (403 tools_not_enforceable) until the sandbox
+      # can enforce tool lists. Kept as the worked rejection example.
+      - role: agent-restricted
+        providers: [claude-prod]
+        skills: [triage]
+        tools: [github.read]
+        service_accounts: [workflow-runner]
+        namespaces: [sandbox-workloads]
+        limits:
+          max_step_timeout_seconds: 900
+          max_workflow_seconds: 3600
+          max_retries: 2
           max_tokens: 200000
       # Admins get both flows plus the admin-only provider, advisory mode and
       # the spawn modes that run outside a sandbox (which also need admin).

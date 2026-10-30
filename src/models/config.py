@@ -3436,8 +3436,9 @@ class PolicyRule(ConfigurationBase):
         inherit: Other roles whose rules also apply.
         providers: Granted catalog provider names.
         skills: Granted skills.
-        tools: Granted tools; governs both step ``tools`` and
-            ``permissions.allowed_tools``.
+        tools: Granted tools; governs step ``tools`` and
+            ``permissions.allowed_tools``. Ephemeral steps need an explicit
+            ``["*"]``; a finite list is rejected as ``tools_not_enforceable``.
         images: Granted sandbox images.
         service_accounts: Granted service accounts.
         namespaces: Granted namespaces.
@@ -3463,8 +3464,13 @@ class PolicyRule(ConfigurationBase):
         default=None,
         title="Tools",
         description=(
-            "Granted tools; governs both step 'tools' and "
-            "'permissions.allowed_tools'."
+            "Granted tools; governs step 'tools' and "
+            "'permissions.allowed_tools'. Ephemeral steps require an "
+            "explicit wildcard ('*'): the sandbox does not enforce finite "
+            "tool lists, so a finite or missing grant is rejected with "
+            "'tools_not_enforceable'. The wildcard authorizes the sandbox's "
+            "default, unrestricted tool access; it does not promise that a "
+            "caller-supplied allowed_tools list is enforced."
         ),
     )
     images: Optional[list[str]] = Field(default=None, title="Images")

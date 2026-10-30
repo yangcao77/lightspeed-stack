@@ -12,6 +12,8 @@
 #   as:        roles of the caller (default per workflow below)
 #   expect:    HTTP status, or {pre269: N, post269: N} when the stages differ
 #   reason:    substring that must appear in the returned reasons
+#   denied_contains: substring that must appear in a caller-facing denial
+#              message of the real endpoint (real-phase cases only)
 #   spawner:   false = stack has no spawner_configuration
 # phase:    stack#51 phase that makes the case real; tests/unit/cloud_agents/
 #           test_workflow_contract.py runs cases up to the implemented phase
@@ -186,12 +188,33 @@ workflow_cases:
     set: {spec.steps.triage.allowed_skills: [kb-search]}
     expect: 403
     reason: skill
-  - name: tool not granted
+  # Ephemeral steps need an explicit tools: ["*"] grant (the sandbox does not
+  # enforce finite tool lists). agent-restricted has the triage grants with
+  # tools: [github.read]; the wildcard roles pass whatever allowed_tools says.
+  - name: finite tools grant is rejected for ephemeral steps
     phase: 2
     workflow: triage-github-issue
-    set: {spec.steps.triage.tools: [github.write]}
+    as: [agent-restricted]
     expect: 403
-    reason: tool
+    reason: tools_not_enforceable
+    denied_contains: wildcard
+  - name: finite tools grant is rejected even when the requested tool is granted
+    phase: 2
+    workflow: triage-github-issue
+    as: [agent-restricted]
+    set: {spec.steps.triage.tools: [github.read], spec.steps.triage.permissions.allowed_tools: [github.read]}
+    expect: 403
+    reason: tools_not_enforceable
+  - name: wildcard tools grant passes with a finite allowed_tools request
+    phase: 2
+    workflow: triage-github-issue
+    set: {spec.steps.triage.permissions.allowed_tools: [github.read]}
+    expect: 202
+  - name: wildcard tools grant passes with allowed_tools null
+    phase: 2
+    workflow: triage-github-issue
+    set: {spec.steps.triage.permissions.allowed_tools: null}
+    expect: 202
   - name: service account not granted
     phase: 2
     workflow: triage-github-issue

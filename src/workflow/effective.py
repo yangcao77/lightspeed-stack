@@ -148,7 +148,9 @@ class StepPlan:  # pylint: disable=too-many-instance-attributes
         tools: Tool names (step only; omitted or null means ``()``).
         allowed_tools: ``permissions.allowed_tools`` from the permissions
             object in effect (whole-object semantics); the executor sends it
-            to ephemeral sandboxes. Unset or null means ``()``.
+            to ephemeral sandboxes only when non-empty. None is unset or
+            null and ``()`` is an explicit empty list; they are kept
+            distinct here although the producer sends nothing for either.
         target_namespaces: Namespaces (step only); None is unset, ``()`` is
             an explicit empty list.
         mcp_servers: MCP server entries (step, else spec), or None.
@@ -170,7 +172,7 @@ class StepPlan:  # pylint: disable=too-many-instance-attributes
     max_retries: PlanValue[int]
     allowed_skills: PlanValue[Optional[tuple[str, ...]]]
     tools: PlanValue[tuple[str, ...]]
-    allowed_tools: PlanValue[tuple[str, ...]]
+    allowed_tools: PlanValue[Optional[tuple[str, ...]]]
     target_namespaces: PlanValue[Optional[tuple[str, ...]]]
     mcp_servers: PlanValue[Optional[tuple[Any, ...]]]
     declared_budget_seconds: int
@@ -519,7 +521,11 @@ def _build_step_plan(  # pylint: disable=too-many-locals,too-many-arguments,too-
     )
     perm_timeout = scope.timeout_seconds if scope is not None else None
     max_tokens = scope.max_tokens if scope is not None else None
-    allowed_tools = tuple(scope.allowed_tools or ()) if scope is not None else ()
+    allowed_tools = (
+        tuple(scope.allowed_tools)
+        if scope is not None and scope.allowed_tools is not None
+        else None
+    )
 
     raw_namespaces = step.get("target_namespaces")
     namespaces_path = (
