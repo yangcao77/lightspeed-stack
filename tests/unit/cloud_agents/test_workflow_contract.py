@@ -294,6 +294,43 @@ def test_readme_states_phase_3_scope_and_trust() -> None:
         assert needle in text, needle
 
 
+def test_readme_states_ephemeral_mcp_provider_caveat() -> None:
+    """The README says where catalog MCP is verified and where it is not."""
+    text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
+    for needle in (
+        "live evidence only for `spawn: none`",
+        "real subprocess MCP server",
+        "has not been executed, and has no live LLM evidence",
+        "(`step_runner.py:265`)",
+        "providers/openai.py:206-224",
+        "providers/claude.py:90-100",
+        "providers/gemini.py:92",
+        "619fb0c",
+        "deployed sandbox image build was not verified",
+        "silently runs without the granted MCP servers",
+        "do not assume granted MCP servers are available on ephemeral claude or gemini",
+        "mcp.py:26",
+        "issues/51#issuecomment-6521787867",
+        "this is not a network-access restriction",
+        "no explicit error is returned",
+    ):
+        assert needle in text, needle
+    assert "spawn mode does not affect named servers" not in text
+    # Missing MCP wiring is not a network restriction: do not call it fail-closed.
+    assert "fails closed (no server is reachable)" not in text
+    # `spawn: local` has no live evidence, so the README must not claim it.
+    assert "`spawn: none` and `spawn: local`: a real subprocess" not in text
+
+
+def test_workflow_enabled_description_has_no_general_ephemeral_claim() -> None:
+    """The config field description points at the ephemeral caveat."""
+    from models.config import ModelContextProtocolServer
+
+    schema = ModelContextProtocolServer.model_json_schema()
+    description = schema["properties"]["workflow_enabled"]["description"]
+    assert "ephemeral" in description
+
+
 def test_readme_lists_the_deferred_secret_work() -> None:
     """Each deferred item is named with its reason, so none reads as done."""
     text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())

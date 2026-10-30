@@ -604,7 +604,9 @@ class ModelContextProtocolServer(ConfigurationBase):
             "digits and hyphens (it becomes a mount path) that is unique in "
             "the whole mcp_servers list. The URL is trusted operator input "
             "and is not SSRF-confined; do not put credentials in the URL or "
-            "query string. A policy 'mcp' grant gives every tool on the server."
+            "query string. A policy 'mcp' grant gives every tool on the server. "
+            "On spawn 'ephemeral' the step only gets the server if the sandbox "
+            "provider wires MCP (see examples/workflows/README.md)."
         ),
     )
 
