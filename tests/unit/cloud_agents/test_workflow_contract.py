@@ -5,6 +5,12 @@ phase that makes it real; cases for later phases are skipped, so raising
 ``IMPLEMENTED_PHASE`` (and removing the matching part of the example's
 ``reference_gate.py``) is how a phase is declared done.
 
+The request goes through the real ``@authorize`` decorator: the example's
+access rules decide ``workflow_start`` and admin, and the decorator itself sets
+``request.state.user_roles`` from the case's ``as`` roles. Only the roles
+resolver is replaced (verify.py covers the JWT role mapping). The driver lives
+in ``contract_util.run_real_case`` so verify.py runs the same code.
+
 Only the HTTP status is compared here: the reference gate's ``reason`` strings
 are specific to the reference implementation.
 """
@@ -14,27 +20,27 @@ are specific to the reference implementation.
 
 import sys
 from pathlib import Path
-from types import SimpleNamespace
 from typing import Any
 
 import pytest
-from fastapi import HTTPException
 from pydantic import ValidationError
-from pytest_mock import MockerFixture
 
 EXAMPLES = Path(__file__).resolve().parents[3] / "examples" / "workflows"
 sys.path.insert(0, str(EXAMPLES))
 
-from contract_util import case_body, load, patch
+from contract_util import (  # IMPLEMENTED_PHASE = 2: phases 0-2 run for real
+    IMPLEMENTED_PHASE,
+    current_schema_stack,
+    engine_config,
+    load,
+    patch,
+    run_real_case,
+)
 
-from app.endpoints.workflows import start_workflow_handler
-from models.config import WorkflowEngineConfiguration
-
-# Highest #51 phase implemented in src/. Phase 0 is the Phase 0a hardening.
-IMPLEMENTED_PHASE = 1
+from models.config import Configuration
 
 # workflow_engine keys of the example config whose phase is not built yet.
-PENDING_ENGINE_KEYS = {"policy"}
+PENDING_ENGINE_KEYS: set[str] = set()
 
 CASES = load("cases.yaml")
 STACK = load("lightspeed-stack.yaml")
@@ -42,16 +48,6 @@ DEFINITIONS = {
     name: load(f"{name}.yaml")
     for name in ("triage-github-issue", "kb-answer-with-approval", "admin-inline-mcp")
 }
-
-
-def _engine(stack: dict[str, Any]) -> WorkflowEngineConfiguration:
-    """Build the real engine configuration from an example stack config."""
-    engine = {
-        k: v
-        for k, v in stack["workflow_engine"].items()
-        if k not in PENDING_ENGINE_KEYS
-    }
-    return WorkflowEngineConfiguration.model_validate(engine)
 
 
 def _params(section: str) -> list[Any]:
@@ -73,42 +69,13 @@ def _expected(case: dict[str, Any]) -> int:
 
 @pytest.mark.parametrize("case", _params("workflow_cases"))
 @pytest.mark.asyncio
-async def test_workflow_case(case: dict[str, Any], mocker: MockerFixture) -> None:
+async def test_workflow_case(case: dict[str, Any]) -> None:
     """The real POST /v1/workflows/run handler gives the contract's status."""
-    import app.endpoints.workflows as wf_mod
-
-    roles = set(case.get("as", CASES["defaults"][case["workflow"]]["as"]))
-    cfg = mocker.patch("app.endpoints.workflows.configuration")
-    cfg.workflow_engine_configuration = _engine(STACK)
-    cfg.inference = SimpleNamespace(default_provider=None, default_model=None)
-    cfg.spawner_configuration = (
-        SimpleNamespace(sandbox_image=STACK["spawner"]["sandbox_image"])
-        if case.get("spawner", True)
-        else None
+    status, started = await run_real_case(
+        case, STACK, DEFINITIONS, CASES["defaults"], PENDING_ENGINE_KEYS
     )
-    mocker.patch("app.endpoints.workflows.check_configuration_loaded")
-    mocker.patch(
-        "app.endpoints.workflows.is_admin", return_value="agent-admin" in roles
-    )
-    executor = mocker.AsyncMock()
-    executor.start.return_value = "wf-contract"
-    wf_mod._executor = executor  # pylint: disable=protected-access
-    body = case_body(case, DEFINITIONS, CASES["defaults"])
-    from models.api.requests.agents import RunWorkflowRequest
-
-    try:
-        request = RunWorkflowRequest(**body)
-        await start_workflow_handler.__wrapped__(
-            mocker.MagicMock(), request, ("uid", "user", False, "token")
-        )
-        status = 202
-    except HTTPException as exc:
-        status = exc.status_code
-    finally:
-        wf_mod._executor = None  # pylint: disable=protected-access
-
     assert status == _expected(case)
-    assert executor.start.called == (status == 202)
+    assert started == (status == 202)
 
 
 @pytest.mark.parametrize("case", _params("config_cases"))
@@ -116,7 +83,7 @@ def test_config_case(case: dict[str, Any]) -> None:
     """The real WorkflowEngineConfiguration fails to load as the contract says."""
     stack = patch(STACK, case["set"])
     with pytest.raises(ValidationError) as exc_info:
-        _engine(stack)
+        engine_config(stack, PENDING_ENGINE_KEYS)
     assert case["error"].lower() in str(exc_info.value).lower()
 
 
@@ -129,6 +96,60 @@ def test_phase_tags_are_valid() -> None:
 
 def test_example_config_loads_without_pending_blocks() -> None:
     """The example's implemented blocks load as a real WorkflowEngineConfiguration."""
-    cfg = _engine(STACK)
+    cfg = engine_config(STACK, PENDING_ENGINE_KEYS)
     assert cfg.governed
     assert cfg.default_provider == "claude-prod"
+
+
+def test_example_policy_block_loads() -> None:
+    """The example policy is valid under the real schema (fails on schema drift)."""
+    cfg = engine_config(STACK, PENDING_ENGINE_KEYS)
+    assert cfg.policy is not None
+    roles = {rule.role for rule in cfg.policy.rules}
+    assert roles == {"*", "agent-user", "agent-support", "agent-admin"}
+    # The admin rule inherits both flows' grants.
+    admin = cfg.policy.rules_for({"agent-admin"})
+    assert {r.role for r in admin} == roles - {"*"}
+
+
+def test_example_policy_rejects_unknown_fields() -> None:
+    """A misspelt or retired policy key fails the load instead of being ignored."""
+    stack = patch(STACK, {"workflow_engine.policy.rules.1.roles": ["agent-user"]})
+    with pytest.raises(ValidationError):
+        engine_config(stack)
+    stack = patch(STACK, {"workflow_engine.policy.rules.1.limits.max_timeout": 1})
+    with pytest.raises(ValidationError):
+        engine_config(stack)
+
+
+def test_example_config_validates_as_configuration(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The example (minus Phase 3 MCP blocks) loads as a full Configuration.
+
+    This runs the cross-field checks too: with a policy that grants to
+    non-wildcard roles, auth must be jwk-token with role and access rules.
+    """
+    monkeypatch.setenv("POSTGRES_PASSWORD", "test-only")
+    stack = current_schema_stack(STACK, str(tmp_path))
+    config = Configuration.model_validate(stack)
+    assert config.workflow_engine.policy is not None
+
+    stack["authentication"] = {"module": "noop"}
+    with pytest.raises(ValidationError):
+        Configuration.model_validate(stack)
+
+
+def test_readme_states_which_limits_are_enforced() -> None:
+    """The policy docs say what is enforced at runtime and what is declared only."""
+    text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
+    assert "max_retries" in text and "enforced at runtime" in text
+    for declared in (
+        "step `timeout_seconds` for `none` and `ephemeral`",
+        "`permissions.timeout_seconds`",
+        "`permissions.max_tokens`",
+        "workflow seconds",
+    ):
+        assert declared in text, declared
+    assert "declared budgets" in text
+    assert "not security boundaries" in text

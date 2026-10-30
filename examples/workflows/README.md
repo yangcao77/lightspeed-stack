@@ -7,15 +7,19 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 > **Status: target state, being built (feature-level TDD).** This folder
 > defines where issue #51 and cloud-agents#269 end up. Landed so far:
 > Phase 0a (caller `credentials_secret` -> 400; custom images, `advisory`
-> and `spawn: none/local` need admin -> 403; size and count caps) and
-> Phase 1 (the provider catalog, secret registry and defaults load, and
+> and `spawn: none/local` need admin -> 403; size and count caps), Phase 1
+> (the provider catalog, secret registry and defaults load, and
 > `/v1/workflows/run` resolves providers through them: the stack builds the
 > credential reference, the same-entry rule holds, overrides are rewritten to
-> executor types). Blocks marked `PLAN(stack#51)` that belong to later
-> phases (`policy`, MCP `secret_headers` / `workflow_enabled`) do not load
-> yet. `tests/unit/cloud_agents/test_workflow_contract.py` runs `cases.yaml`
-> against the real handler and config for the implemented phases and skips
-> the rest; `verify.py` runs all of it against the reference model.
+> executor types) and Phase 2 (`workflow_engine.policy`: per-role grants and
+> limits checked on every submission, with a structured audit event per
+> request). MCP `secret_headers` / `workflow_enabled` (Phase 3) do not load
+> yet, and until then named and inline MCP servers are denied for every
+> caller once a policy is configured.
+> `tests/unit/cloud_agents/test_workflow_contract.py` runs the Phase 0-2 cases
+> of `cases.yaml` against the real handler (through `@authorize`) and config,
+> and skips the rest. `verify.py` runs the same cases for real and the later
+> ones against the reference model in `reference_gate.py`.
 
 > **Auth prerequisite.** Role-based policy and the admin gates need an auth
 > module that resolves roles: `jwk-token` with `role_rules` (used here) or
@@ -37,8 +41,9 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 | `post-269-overrides.yaml` | Operator | What changes after cloud-agents#269 (K8s-bound inference credentials, leases) |
 | `k8s-deployment.yaml` | Operator | Hardened Deployment, least-privilege RBAC, NetworkPolicy |
 | `external-secrets.yaml` | Operator | Production source of the Secrets (External Secrets Operator + Vault) |
-| `cases.yaml` | Contract | 63 request/config cases with the expected status, per stage |
-| `reference_gate.py` | Contract | Reference model of the gate; replaced by the real endpoint as phases land |
+| `cases.yaml` | Contract | 66 request/config cases with the expected status, per stage |
+| `reference_gate.py` | Contract | Reference model of the MCP checks (Phase 3+) only; deleted when those land |
+| `contract_util.py` | Contract | Case patching and the real-endpoint driver shared by `verify.py` and the unit test |
 | `verify.py` | Contract | Runs everything above plus deployment cross-checks |
 
 Assumed deployment: namespace `lightspeed`, stack Deployment + ConfigMap,
@@ -198,23 +203,62 @@ filesystem read in the sandbox) needs an explicit grant.
 
 ### Step 5. Write policy rules per role
 
-`workflow_engine.policy.rules` (`PLAN(stack#51)`): each rule grants to a set
-of roles; a principal's grant is the union of matching rules; nothing is
-granted by default. Coarse RBAC (`WORKFLOW_START` etc. in `authorization`)
-still gates "may submit at all"; policy gates "may use this".
+`workflow_engine.policy.rules`: each rule names a `role` (`"*"` matches every
+caller) and grants lists (`providers`, `skills`, `tools`, `images`,
+`service_accounts`, `namespaces`, `spawn_modes`), an `advisory` flag and
+numeric `limits`. A principal's grant is the union of the rules for its roles
+and everything they `inherit`; a missing or empty list grants nothing and
+`["*"]` grants any value. Nothing is granted by default except the spawner's
+default image and default service account. Coarse RBAC (`WORKFLOW_START` etc.
+in `authorization`) still gates "may submit at all"; policy gates "may use
+this". The policy requires governed mode (a `providers` catalog), and a policy
+that grants anything to a role other than `*` requires `jwk-token` auth with
+`role_rules` and `access_rules`.
 
-This example's three roles:
+Limits: each is `min(max over the caller's rules, hard cap)`, and an absent
+limit grants 0. Hard caps: step timeout 3600s, workflow 86400s, 5 retries,
+1,000,000 tokens. Because an omitted `permissions.max_tokens` counts as
+unlimited, every agent step must declare one.
 
-- `agent-user` (triage flow): `claude-prod`, `github-readonly` +
-  `mcp/github-readonly`, skill `triage`, tool `github.read`, spawn
-  `ephemeral`, the pinned sandbox image, service account `workflow-runner`,
-  namespace `sandbox-workloads`, limits (900s / 200k tokens / 2 retries).
-- `agent-support` (KB flow): `openai-team-b`, `kb-search` +
-  `mcp/kb-search`, skill `kb-search`, tool `kb.search`, spawn `ephemeral`,
-  same image, service account `kb-runner`, same namespace, limits
-  (1200s / 200k tokens / 1 retry).
-- `agent-admin`: inherits both, plus both providers, `local`/`none` spawn,
-  `inline_mcp` (+ allowed hosts, https-only, SSRF-checked), `advisory`.
+This example's roles:
+
+- `*`: spawn mode `ephemeral`.
+- `agent-user` (triage flow): `claude-prod`, skill `triage`, tool
+  `github.read`, service account `workflow-runner`, namespace
+  `sandbox-workloads`, limits (900s per step, 3600s workflow, 2 retries,
+  200k tokens).
+- `agent-support` (KB flow): `openai-team-b`, skill `kb-search`, tool
+  `kb.search`, service account `kb-runner`, same namespace, limits (1200s,
+  3600s, 1 retry, 200k tokens).
+- `agent-admin`: inherits both, plus `azure-eu`, `local`/`none` spawn (these
+  also require admin, even if granted to someone else) and `advisory`. The
+  legacy admin image override is gone in policy mode: admins need an `images`
+  grant like everyone else.
+
+The MCP grants (`mcp`, `mcp_secrets`, `inline_mcp`, `inline_mcp_hosts`) and
+`ssrf` are reserved: they fail config load until Phase 3, so the example does
+not carry them.
+
+#### What the limits mean at runtime
+
+Only `max_retries` is enforced at runtime by the upstream executor (transient
+failures only). The rest are declared budgets: the policy checks what a
+submission declares, once, at submission. Nothing re-checks them while the run
+executes.
+
+| Limit | What the runtime does | Status |
+|---|---|---|
+| `max_retries` | enforced by the executor | enforced at runtime |
+| step `timeout_seconds` for `none` and `ephemeral` | `none`: a per-LLM-request timeout; `ephemeral`: never read | declared budget |
+| step `timeout_seconds` for `local` | hard kill of the subprocess | enforced upstream |
+| `permissions.timeout_seconds` | per-operation HTTP timeout on the sandbox call, not a wall-clock ceiling | declared budget |
+| `permissions.max_tokens` | no consumer | declared budget |
+| workflow seconds (`max_workflow_seconds`) | no workflow deadline exists; the checked value is the sum over agent steps of `step_timeout x (max_retries + 1)`, excluding approval waits and overhead | declared budget |
+
+The declared budgets are checked at submission only and are not security
+boundaries: a run that declares a small budget is not stopped from exceeding
+it. If the upstream executor starts enforcing one of them, the same declared
+value becomes the limit.
 
 ### Step 6. Configure the spawner (OpenShell gateway on K8s)
 
@@ -443,35 +487,44 @@ project venv:
 uv run python examples/workflows/verify.py
 ```
 
-What it checks (~164 assertions):
+What it checks (~124 assertions):
 
 - Every file parses; all three definitions pass the real cloud-agents
   `WorkflowDefinition` shape check.
-- `lightspeed-stack.yaml` passes the plan's load-time checks in both stages
-  (unknown `executor_type`, `allowed_models: []`, unbound refs, bad defaults,
-  request-bound/propagated MCP headers, undefined
-  policy names), and each of those failures is also pinned as a negative case.
-- `cases.yaml`: accepted requests plus every denial (400 / 403 / 413 / 422)
-  for credentials, catalog, policy, spawn, images, advisory, inline MCP,
-  and limits, in `pre269` and `post269`.
-- The non-`PLAN` subset validates against the current `Configuration` schema.
+- `lightspeed-stack.yaml` loads through the real `WorkflowEngineConfiguration`
+  (catalog, defaults, policy) and passes the remaining load-time checks in
+  both stages (request-bound/propagated MCP headers, MCP secret bindings), and
+  each load failure is also pinned as a negative case.
+- `cases.yaml`: cases up to `IMPLEMENTED_PHASE` (credentials, catalog, policy,
+  spawn, images, advisory, limits) run against the real handler and config.
+  Later cases (named and inline MCP) run in `pre269` and `post269` against the
+  reference model.
+- The example minus the Phase 3 MCP blocks, policy included, validates against
+  the current `Configuration` schema.
 - The real `JwtRolesResolver` / `GenericAccessResolver` give the roles and
   admin semantics the policy assumes.
 - Deployment cross-checks: env injection and `MCP_ALLOWED_SECRETS` match the
   registry, RBAC `resourceNames` match the K8s-bound Secrets, pod hardening,
   digest-pinned images, and the dev and External Secrets sources agree.
 
-`reference_gate.py` is a model of the design, not the implementation. Each case
-in `cases.yaml` carries a `phase`. The unit test
+Each case in `cases.yaml` carries a `phase`. The unit test
 `tests/unit/cloud_agents/test_workflow_contract.py` runs the cases up to
-`IMPLEMENTED_PHASE` against the real handler and `WorkflowEngineConfiguration`
-(status only; `reason` strings belong to the reference) and skips later ones.
-Finishing a phase means raising `IMPLEMENTED_PHASE`, dropping the matching
-`PENDING_ENGINE_KEYS`, and deleting that part of the reference.
+`IMPLEMENTED_PHASE` (in `contract_util.py`, currently 2) against the real
+handler, including `@authorize` with the example's access rules and the case's
+`as` roles, and `WorkflowEngineConfiguration`. It compares status only and
+skips later cases. `reference_gate.py` is a model of the design for Phase 3
+(MCP), not the implementation. Finishing a phase means raising
+`IMPLEMENTED_PHASE`, dropping the matching `PENDING_ENGINE_KEYS`, and deleting
+that part of the reference.
+
+Cases for phases before 3 run with the workflow-level named MCP servers
+removed from the definitions, because named MCP is denied in policy mode until
+Phase 3 and every case would otherwise be a 403 for that reason alone. The
+Phase 3 cases keep the definitions as written.
 
 ## Production checklist
 
-- Images pinned by digest (stack, sandbox, policy `sandbox_images`).
+- Images pinned by digest (stack, sandbox, policy `images`).
 - Values only in the secret manager; K8s Secrets synced, never committed.
 - Role-resolving auth (`jwk-token` or `rh-identity`), not `k8s`/`noop`.
 - `ssl_mode: verify-full` to Postgres; mTLS to the OpenShell gateway.

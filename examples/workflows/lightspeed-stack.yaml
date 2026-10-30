@@ -161,40 +161,50 @@ workflow_engine:
       secret_name: mcp-incidents-token
       key: token
 
-  # PLAN(stack#51): per-role grants. Union of matching rules; default deny.
+  # Per-role grants (workflow_engine.policy). A caller gets the union of the
+  # rules for its roles and everything they inherit; no rule means no access.
+  # Limits are capped by the stack (step timeout 3600s, workflow 86400s,
+  # retries 5, tokens 1,000,000). Agent steps must declare
+  # permissions.max_tokens, because an omitted value counts as unlimited.
+  # Named and inline MCP are denied for every caller until Phase 3, so the
+  # example MCP servers above are not granted here yet.
+  # Timeouts, max_tokens and the workflow total are declared budgets checked
+  # at submission, not runtime limits (see README.md).
   policy:
     rules:
+      # "*" applies to every caller.
+      - role: "*"
+        spawn_modes: [ephemeral]
       # Triage flow (triage-github-issue.yaml)
-      - roles: [agent-user]
+      - role: agent-user
         providers: [claude-prod]
-        mcp_servers: [github-readonly]
-        mcp_secrets: [mcp/github-readonly]
-        spawn: [ephemeral]
-        sandbox_images: [quay.io/example/lightspeed-agentic-sandbox@sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4]
         skills: [triage]
         tools: [github.read]
         service_accounts: [workflow-runner]
         namespaces: [sandbox-workloads]
-        limits: {max_timeout_seconds: 900, max_tokens: 200000, max_retries: 2}
+        limits:
+          max_step_timeout_seconds: 900
+          max_workflow_seconds: 3600
+          max_retries: 2
+          max_tokens: 200000
       # KB answer flow (kb-answer-with-approval.yaml)
-      - roles: [agent-support]
+      - role: agent-support
         providers: [openai-team-b]
-        mcp_servers: [kb-search]
-        mcp_secrets: [mcp/kb-search]
-        spawn: [ephemeral]
-        sandbox_images: [quay.io/example/lightspeed-agentic-sandbox@sha256:a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4a1b2c3d4]
         skills: [kb-search]
         tools: [kb.search]
         service_accounts: [kb-runner]
         namespaces: [sandbox-workloads]
-        limits: {max_timeout_seconds: 1200, max_tokens: 200000, max_retries: 1}
-      - roles: [agent-admin]
+        limits:
+          max_step_timeout_seconds: 1200
+          max_workflow_seconds: 3600
+          max_retries: 1
+          max_tokens: 200000
+      # Admins get both flows plus the admin-only provider, advisory mode and
+      # the spawn modes that run outside a sandbox (which also need admin).
+      - role: agent-admin
         inherit: [agent-user, agent-support]
-        providers: [claude-prod, openai-team-b, azure-eu]
-        spawn: [ephemeral, local, none]
-        inline_mcp: true
-        mcp_secrets: [mcp/incidents]
-        inline_mcp_hosts: [mcp.internal.example.com]
+        providers: [azure-eu]
+        spawn_modes: [local, none]
         advisory: true
 
 # ---------------------------------------------------------------------------
