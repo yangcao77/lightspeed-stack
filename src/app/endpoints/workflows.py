@@ -5,6 +5,7 @@
 import copy
 import re
 import uuid
+from dataclasses import dataclass
 from typing import Annotated, Any, Final, Optional
 
 from cloud_agents.workflow.core.definition import WorkflowDefinition
@@ -46,11 +47,19 @@ from workflow.effective import (
     EffectivePlanError,
     build_effective_plan,
 )
+from workflow.mcp import (
+    McpAuditSummary,
+    build_workflow_mcp_servers,
+    effective_mcp_servers,
+    mcp_audit_summary,
+    validate_mcp_references,
+)
 from workflow.policy import Principal, authorize_workflow_submission
 from workflow.spawner_factory import build_spawner
 from workflow.submission_guard import (
     SubmissionRejected,
     reject_forbidden_caller_fields,
+    reject_forbidden_mcp_fields,
     reject_over_count_caps,
     reject_oversized_definition,
 )
@@ -299,36 +308,36 @@ def _validate_with_executor(
         )
 
 
-def _prepare_submission(
-    body: RunWorkflowRequest,
-    *,
-    principal: Principal,
-    default_sandbox_image: str,
-    spawner_configured: bool,
-) -> tuple[ResolvedProvider, dict[str, Any], Optional[str]]:
-    """Run the submission pipeline and return what the workflow will run with.
+@dataclass(frozen=True)
+class PreparedSubmission:
+    """What an accepted submission will be started with.
 
-    Order (issue #51 Phase 2): 1. 413 byte cap; 2. 400 forbidden caller
-    fields on the raw dict; 3. 422 count caps; 4. 422 typed parse of a
-    throwaway copy; 5. 400 catalog resolution and normalization; 5b. 422
-    effective plan (service-account conflict, executor-rejected values);
-    6. 403 policy, every denial at once; 7. 422 executor validation, logged
-    as drift. Nothing has been persisted when this raises.
+    Attributes:
+        resolved: The resolved run-level provider.
+        definition: The normalized definition (exactly what
+            ``executor.start`` receives).
+        audit_provider: Provider name that is safe to audit: the catalog
+            name when governed, else None.
+        mcp_servers: ``workflow_input["mcp_servers"]``: ``{name, url}`` of
+            each catalog server some agent step references.
+        mcp_audit: Catalog names and inline count for audit records.
+    """
+
+    resolved: ResolvedProvider
+    definition: dict[str, Any]
+    audit_provider: Optional[str]
+    mcp_servers: list[dict[str, str]]
+    mcp_audit: McpAuditSummary
+
+
+def _check_raw_request(body: RunWorkflowRequest) -> None:
+    """Run the raw-request steps 1 to 4 of the pipeline.
 
     Parameters:
         body: Request body as sent by the caller.
-        principal: The caller.
-        default_sandbox_image: The spawner's configured sandbox image.
-        spawner_configured: Whether a spawner_configuration exists.
-
-    Returns:
-        The resolved run-level provider, the normalized definition (exactly
-        what ``executor.start`` receives) and the provider name that is safe
-        to audit: the catalog name when governed, else None.
 
     Raises:
-        SubmissionRejected: 413, 400, 422 or 403 with audit reasons and
-            pointers; ``provider`` is set once it is safe to audit.
+        SubmissionRejected: 413, 400 or 422.
     """
     engine = configuration.workflow_engine_configuration
     reject_oversized_definition(body.definition)
@@ -341,21 +350,67 @@ def _prepare_submission(
             else None
         ),
     )
+    reject_forbidden_mcp_fields(
+        body.definition,
+        run_mcp_servers_sent="mcp_servers" in body.model_fields_set,
+    )
     reject_over_count_caps(body.definition)
     _check_definition_shape(body.definition)
+
+
+def _prepare_submission(
+    body: RunWorkflowRequest,
+    *,
+    principal: Principal,
+    default_sandbox_image: str,
+    spawner_configured: bool,
+) -> PreparedSubmission:
+    """Run the submission pipeline and return what the workflow will run with.
+
+    Order (issue #51 Phases 2 and 3): 1. 413 byte cap; 2. 400 forbidden
+    caller fields on the raw dict (credentials, a run-level
+    ``mcp_servers``, raw physical Secret refs in MCP header values); 3. 422
+    count caps; 4. 422 typed parse of a throwaway copy; 5. 400 catalog
+    resolution and normalization, then MCP references against the operator
+    catalog (``mcp_unknown``, ``mcp_name_conflict``); 5b. 422 effective plan
+    (service-account conflict, executor-rejected values); 6. 403 policy,
+    every denial at once; 7. 422 executor validation, logged as drift.
+    Nothing has been persisted when this raises.
+
+    Parameters:
+        body: Request body as sent by the caller.
+        principal: The caller.
+        default_sandbox_image: The spawner's configured sandbox image.
+        spawner_configured: Whether a spawner_configuration exists.
+
+    Returns:
+        The prepared submission.
+
+    Raises:
+        SubmissionRejected: 413, 400, 422 or 403 with audit reasons and
+            pointers; ``provider`` is set once it is safe to audit and the
+            MCP audit facts once the effective plan exists.
+    """
+    engine = configuration.workflow_engine_configuration
+    _check_raw_request(body)
     resolved = resolve_run_provider(engine, configuration.inference, body.provider)
     definition = normalize_definition(engine, body.definition, resolved)
 
     # In legacy mode the provider name is caller-chosen until the executor
     # has accepted it, so it is only audited once a catalog resolved it.
     audit_provider = resolved.catalog_name if engine.governed else None
+    catalog = configuration.mcp_servers
+    mcp_audit: Optional[McpAuditSummary] = None
     try:
+        validate_mcp_references(definition, catalog)
         plan = _build_plan(
             definition,
             resolved,
             run_sandbox_image=body.sandbox_image,
             default_sandbox_image=default_sandbox_image,
         )
+        mcp_steps = effective_mcp_servers(plan)
+        mcp_audit = mcp_audit_summary(mcp_steps, catalog)
         _authorize_plan(
             plan,
             definition,
@@ -364,6 +419,7 @@ def _prepare_submission(
             spawner_configured=spawner_configured,
         )
         _validate_with_executor(definition, resolved.provider)
+        mcp_servers = build_workflow_mcp_servers(mcp_steps, catalog)
     except SubmissionRejected as exc:
         raise SubmissionRejected(
             exc.status_code,
@@ -371,8 +427,16 @@ def _prepare_submission(
             reasons=exc.reasons,
             paths=exc.paths,
             provider=audit_provider,
+            mcp_servers=mcp_audit.catalog_names if mcp_audit else None,
+            mcp_inline_count=mcp_audit.inline_count if mcp_audit else None,
         ) from None
-    return resolved, definition, audit_provider
+    return PreparedSubmission(
+        resolved=resolved,
+        definition=definition,
+        audit_provider=audit_provider,
+        mcp_servers=mcp_servers,
+        mcp_audit=mcp_audit,
+    )
 
 
 def _request_id(request: Request) -> str:
@@ -411,21 +475,23 @@ async def _start_audited(
     *,
     user_id: str,
     request_id: str,
-    provider: Optional[str],
+    prepared: PreparedSubmission,
 ) -> str:
     """Start the workflow and write its single audit record.
 
     ``workflow_authorized`` is recorded only after ``start`` returned. When
     ``start`` raises, ``workflow_start_failed`` is recorded and a generic 500
     is raised; the exception text may echo the definition, so it is neither
-    logged, chained nor returned.
+    logged, chained nor returned. Both records carry the audit-safe provider
+    name (catalog name when governed, else None) and the catalog MCP names
+    plus inline count, never inline MCP names, URLs or header names.
 
     Parameters:
         executor: The workflow executor.
         workflow_input: Input handed to ``executor.start``.
         user_id: Identifier from the auth layer.
         request_id: Audit-safe request identifier.
-        provider: Audit-safe provider name (catalog name when governed, else None).
+        prepared: The prepared submission (audit-safe provider and MCP facts).
 
     Returns:
         The workflow identifier.
@@ -433,10 +499,18 @@ async def _start_audited(
     Raises:
         HTTPException: Generic 500 when ``executor.start`` raises.
     """
+    provider = prepared.audit_provider
+    mcp_audit = prepared.mcp_audit
     try:
         workflow_id = str(await executor.start(workflow_input))
     except Exception:  # pylint: disable=broad-exception-caught
-        record_start_failed(user_id=user_id, request_id=request_id, provider=provider)
+        record_start_failed(
+            user_id=user_id,
+            request_id=request_id,
+            provider=provider,
+            mcp_servers=mcp_audit.catalog_names,
+            mcp_inline_count=mcp_audit.inline_count,
+        )
         logger.error(
             "Workflow start failed: user=%s, request_id=%s", user_id, request_id
         )
@@ -449,6 +523,8 @@ async def _start_audited(
         status=status.HTTP_202_ACCEPTED,
         workflow_id=workflow_id,
         provider=provider,
+        mcp_servers=mcp_audit.catalog_names,
+        mcp_inline_count=mcp_audit.inline_count,
     )
     return workflow_id
 
@@ -493,7 +569,7 @@ async def start_workflow_handler(
     # start raises, workflow_authorized only after start returned.
     request_id = _request_id(request)
     try:
-        resolved, definition, audit_provider = _prepare_submission(
+        prepared = _prepare_submission(
             body,
             principal=Principal(
                 user_id=user_id, is_admin=is_admin(request), roles=_user_roles(request)
@@ -509,21 +585,28 @@ async def start_workflow_handler(
             reasons=exc.reasons,
             paths=exc.paths,
             provider=exc.provider,
+            mcp_servers=exc.mcp_servers,
+            mcp_inline_count=exc.mcp_inline_count,
         )
         raise
 
+    resolved = prepared.resolved
     workflow_input = {
-        "definition": definition,
+        "definition": prepared.definition,
         "provider": resolved.provider,
         "sandbox_image": body.sandbox_image or default_sandbox_image,
         "approval_policy": body.approval_policy,
         "session_id": body.session_id,
         "user_id": user_id,
+        # Only {name, url} of referenced catalog servers (issue #51 Phase 3);
+        # the stack never forwards a caller-sent run-level list.
+        "mcp_servers": prepared.mcp_servers,
         "authz_context": {
             "user_id": user_id,
             "username": username,
             "provider": resolved.catalog_name,
             "credential_ref": resolved.credential_ref,
+            "mcp_servers": list(prepared.mcp_audit.catalog_names),
         },
     }
     workflow_id = await _start_audited(
@@ -531,7 +614,7 @@ async def start_workflow_handler(
         workflow_input,
         user_id=user_id,
         request_id=request_id,
-        provider=audit_provider,
+        prepared=prepared,
     )
 
     logger.info(

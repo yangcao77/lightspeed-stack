@@ -24,6 +24,7 @@ from workflow.limits import (
 from workflow.submission_guard import (
     SubmissionRejected,
     reject_forbidden_caller_fields,
+    reject_forbidden_mcp_fields,
     reject_over_count_caps,
     reject_oversized_definition,
 )
@@ -258,3 +259,135 @@ def test_guard_does_not_mutate_inputs() -> None:
     reject_forbidden_caller_fields(definition, {}, logical_credentials=None)
     reject_over_count_caps(definition)
     assert definition == before
+
+
+# --------------------------------------------------------------------------
+# Forbidden MCP fields (issue #51 Phase 3)
+# --------------------------------------------------------------------------
+
+
+def _mcp_forbidden(
+    definition: dict[str, Any], run_level: bool = False
+) -> Optional[SubmissionRejected]:
+    """Run the forbidden MCP field check."""
+    return _rejection(
+        lambda: reject_forbidden_mcp_fields(definition, run_mcp_servers_sent=run_level)
+    )
+
+
+def _inline(**extra: Any) -> dict[str, Any]:
+    """An inline MCP entry."""
+    return {"name": "srv", "url": "https://m.example.com", **extra}
+
+
+_RAW = {"h": {"secret_name": "s", "key": "k"}}
+
+
+class TestForbiddenMcpFields:
+    """Run-level mcp_servers and raw physical secret refs are 400."""
+
+    def test_run_level_mcp_servers_is_400(self) -> None:
+        """A caller-sent run-level mcp_servers is forbidden."""
+        exc = _mcp_forbidden(_definition(), run_level=True)
+        assert exc is not None and exc.status_code == 400
+        assert exc.reasons == (AuditReason.FORBIDDEN_FIELD,)
+        assert exc.paths == ("/mcp_servers",)
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            {"secret_name": CANARY, "key": CANARY},
+            {"secret_name": CANARY},
+            {"key": CANARY},
+            {"secret_name": CANARY, "key": CANARY, "extra": 1},
+        ],
+        ids=["full", "secret-name-only", "key-only", "with-extra"],
+    )
+    @pytest.mark.parametrize("field", ["secret_headers", "headers"])
+    def test_raw_physical_ref_is_400(self, value: Any, field: str) -> None:
+        """Any header value naming a physical Secret or key is forbidden."""
+        server = _inline(**{field: {CANARY: value}})
+        exc = _mcp_forbidden(_definition([_step(mcp_servers=[server])]))
+        assert exc is not None and exc.status_code == 400
+        assert exc.reasons == (AuditReason.FORBIDDEN_FIELD,)
+        assert exc.paths == (f"/definition/spec/steps/0/mcp_servers/0/{field}",)
+        assert CANARY not in str(exc.detail)
+
+    def test_raw_ref_in_spec_list_and_approval_step_is_400(self) -> None:
+        """Every mcp_servers list is scanned, including spec and approval steps."""
+        server = _inline(secret_headers=_RAW)
+        approval = {"name": "gate", "type": "human-approval", "mcp_servers": [server]}
+        definition = _definition(
+            [_step(), approval], spec={"mcp_servers": ["kb", server]}
+        )
+        exc = _mcp_forbidden(definition)
+        assert exc is not None
+        assert exc.paths == (
+            "/definition/spec/mcp_servers/1/secret_headers",
+            "/definition/spec/steps/1/mcp_servers/0/secret_headers",
+        )
+
+    def test_run_level_and_raw_ref_reported_together(self) -> None:
+        """Both forbidden MCP fields are listed in one 400."""
+        server = _inline(secret_headers=_RAW)
+        exc = _mcp_forbidden(_definition([_step(mcp_servers=[server])]), True)
+        assert exc is not None
+        assert exc.paths == (
+            "/mcp_servers",
+            "/definition/spec/steps/0/mcp_servers/0/secret_headers",
+        )
+
+    @pytest.mark.parametrize(
+        "secret_headers",
+        [
+            None,
+            {},
+            {"h": {"name": "ref"}},
+            {"h": "ref"},
+            {"h": ["a"]},
+            {"h": {"foo": "bar"}},
+            {"h": {}},
+            "ref",
+            ["ref"],
+        ],
+        ids=[
+            "null",
+            "empty",
+            "logical",
+            "string",
+            "list",
+            "other-dict",
+            "empty-value",
+            "headers-string",
+            "headers-list",
+        ],
+    )
+    def test_other_shapes_left_to_typed_parse(self, secret_headers: Any) -> None:
+        """Only raw physical refs are 400 here; the typed parse answers the rest."""
+        server = _inline(secret_headers=secret_headers)
+        assert _mcp_forbidden(_definition([_step(mcp_servers=[server])])) is None
+
+    def test_malformed_containers_skipped(self) -> None:
+        """Malformed lists are left to the typed parse."""
+        for definition in (
+            {"spec": "x"},
+            {"spec": {"steps": "x", "mcp_servers": "x"}},
+            {"spec": {"steps": ["x", {"mcp_servers": ["kb", 1, None]}]}},
+        ):
+            assert _mcp_forbidden(definition) is None
+
+    def test_paths_survive_json_pointer(self) -> None:
+        """Pointers are made of fixed keys and indices."""
+        server = _inline(secret_headers=_RAW)
+        exc = _mcp_forbidden(_definition([_step(mcp_servers=[server])]), True)
+        assert exc is not None
+        for path in exc.paths:
+            parts = [int(p) if p.isdigit() else p for p in path.split("/")[1:]]
+            assert json_pointer(*parts) == path
+
+    def test_pure(self) -> None:
+        """The check does not mutate its input."""
+        definition = _definition([_step(mcp_servers=[_inline(secret_headers=_RAW)])])
+        before = copy.deepcopy(definition)
+        _mcp_forbidden(definition, True)
+        assert definition == before

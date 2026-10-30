@@ -197,6 +197,9 @@ async def run_real_case_detail(
                 if case.get("spawner", True)
                 else None
             ),
+            # Cases below NAMED_MCP_PHASE run without named MCP, so an empty
+            # operator catalog is enough until the Phase 3 cases are wired.
+            mcp_servers=[],
         )
         mp.setattr(wf_mod, "configuration", cfg)
         mp.setattr(wf_mod, "check_configuration_loaded", lambda _cfg: None)

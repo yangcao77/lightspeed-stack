@@ -9,6 +9,7 @@ agent invocation is submitted as a one-step workflow definition (see the
 from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, Field, field_validator
+from pydantic.json_schema import SkipJsonSchema
 
 
 class RunWorkflowRequest(BaseModel):
@@ -54,6 +55,14 @@ class RunWorkflowRequest(BaseModel):
         None,
         description="Caller-provided ID grouping related workflow runs.",
     )
+
+    # Not part of the API (so not in the docstring, which becomes the schema
+    # description). Captured only so the handler can answer a caller-sent
+    # run-level field with a 400 (issue #51 Phase 3) instead of pydantic
+    # silently dropping it: the field name in model_fields_set means the
+    # caller sent it. SkipJsonSchema keeps it out of OpenAPI and exclude
+    # keeps the value out of every dump; the handler never reads the value.
+    mcp_servers: SkipJsonSchema[Any] = Field(default=None, exclude=True)
 
     @field_validator("session_id")
     @classmethod

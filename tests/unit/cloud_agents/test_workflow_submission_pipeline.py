@@ -24,6 +24,8 @@ from cloud_agents.workflow.core.execution import (
     normalize_workflow_step,
     workflow_defaults_from_definition,
 )
+from cloud_agents.workflow.core.mcp_resolver import resolve_mcp_servers
+from cloud_agents.workflow.core.models import MCPServerConfig
 from fastapi import HTTPException
 from pytest_mock import MockerFixture
 from starlette.requests import Request
@@ -32,7 +34,12 @@ import app.endpoints.workflows as wf_mod
 from app.endpoints.workflows import start_workflow_handler
 from authorization.resolvers import GenericAccessResolver
 from models.api.requests.agents import RunWorkflowRequest
-from models.config import AccessRule, Action, WorkflowEngineConfiguration
+from models.config import (
+    AccessRule,
+    Action,
+    ModelContextProtocolServer,
+    WorkflowEngineConfiguration,
+)
 from workflow.catalog import normalize_definition, resolve_run_provider
 from workflow.limits import MAX_DEFINITION_BYTES, MAX_WORKFLOW_STEPS
 
@@ -100,6 +107,7 @@ def env_fixture(
     cfg.workflow_engine_configuration = WorkflowEngineConfiguration(enabled=True)
     cfg.inference = SimpleNamespace(default_provider="openai", default_model="gpt-4o")
     cfg.spawner_configuration = SimpleNamespace(sandbox_image=DEFAULT_IMAGE)
+    cfg.mcp_servers = []
     mocker.patch("app.endpoints.workflows.check_configuration_loaded")
     executor = mocker.AsyncMock()
     executor.start.return_value = "wf-1"
@@ -186,6 +194,22 @@ def _governed(policy: Optional[dict[str, Any]] = None) -> WorkflowEngineConfigur
     if policy is not None:
         data["policy"] = policy
     return WorkflowEngineConfiguration.model_validate(data)
+
+
+KB_URL = "http://kb.internal:8080/mcp"
+PODS_URL = "https://pods.internal/mcp"
+
+
+def _catalog() -> list[ModelContextProtocolServer]:
+    """Operator catalog: three workflow-enabled entries and a disabled one."""
+    return [
+        ModelContextProtocolServer(name="kb", url=KB_URL, workflow_enabled=True),
+        ModelContextProtocolServer(name="pods", url=PODS_URL, workflow_enabled=True),
+        ModelContextProtocolServer(
+            name="unused", url="https://unused.internal/mcp", workflow_enabled=True
+        ),
+        ModelContextProtocolServer(name="off", url="https://off.internal/mcp"),
+    ]
 
 
 def _one(outcome: Outcome) -> dict[str, Any]:
@@ -515,8 +539,13 @@ async def test_no_policy_privileged_options_need_admin(
 async def test_no_policy_named_mcp_and_default_image_fine_for_non_admin(
     env: Env,
 ) -> None:
-    """Named MCP is unchanged and the spawner image is implicit."""
-    definition = _definition(_step(mcp_servers=["catalog-entry"]))
+    """A workflow-enabled catalog name needs no grant; the spawner image is implicit.
+
+    Phase 3: the name must be a workflow-enabled catalog entry (an unknown
+    name used to be dropped by the executor and is now a 400).
+    """
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(_step(mcp_servers=["kb"]))
     outcome = await env.run(_body(definition, sandbox_image=DEFAULT_IMAGE))
     assert outcome.status == 202
 
@@ -567,15 +596,17 @@ LIMITS = {
     "max_tokens": 10_000,
 }
 
+POLICY_BASE_RULE: dict[str, Any] = {
+    "role": "*",
+    "providers": ["claude-prod"],
+    "spawn_modes": ["ephemeral"],
+    "tools": ["*"],
+    "limits": LIMITS,
+}
+
 POLICY = {
     "rules": [
-        {
-            "role": "*",
-            "providers": ["claude-prod"],
-            "spawn_modes": ["ephemeral"],
-            "tools": ["*"],
-            "limits": LIMITS,
-        },
+        POLICY_BASE_RULE,
         {"role": "team-a", "images": ["team-a/sandbox:v2"], "skills": ["triage"]},
     ]
 }
@@ -638,7 +669,7 @@ async def test_policy_admin_is_deny_by_default(policy_env: Env) -> None:
 @pytest.mark.parametrize(
     ("servers", "reason"),
     [
-        (["catalog-entry"], "mcp_not_granted"),
+        (["kb"], "mcp_not_granted"),
         ([{"name": "x", "url": "https://mcp.example.com"}], "mcp_not_allowed"),
     ],
     ids=["named", "inline"],
@@ -649,8 +680,10 @@ async def test_policy_mcp_denied_for_everyone(
     """Without an mcp grant, named and inline MCP are 403, admins included.
 
     A named server is denied as not granted (the policy has no ``mcp``
-    grant); inline entries stay denied in policy mode.
+    grant); inline entries stay denied in policy mode. Phase 3: the named
+    server is a real workflow-enabled catalog entry (an unknown name is 400).
     """
+    policy_env.cfg.mcp_servers = _catalog()
     definition = _definition(_policy_step(mcp_servers=servers))
     for roles in ((), (ADMIN_ROLE,)):
         outcome = await policy_env.run(_body(definition), roles=roles)
@@ -857,21 +890,27 @@ async def test_exactly_one_denied_record(
 # --------------------------------------------------------------------------
 
 
+def _canary_inline() -> dict[str, Any]:
+    """An inline MCP entry with the canary in its name, URL and a header name."""
+    return {
+        "name": CANARY,
+        "url": f"https://mcp.example.com/{CANARY}",
+        "headers": {CANARY: "v"},
+    }
+
+
 def _canary_step(**extra: Any) -> dict[str, Any]:
-    """A step carrying the canary in its name, prompt and secret_headers."""
+    """A step carrying the canary in its name, prompt and inline MCP entry.
+
+    Phase 3: raw ``secret_headers`` refs are now a 400 for everyone, so the
+    canary moved to the inline name, URL and header name; the secret_headers
+    shapes have their own canary cases below.
+    """
     step = _step(
         CANARY,
         prompt=f"Summarize {CANARY}",
         output_key="out",
-        mcp_servers=[
-            {
-                "name": "srv",
-                "url": "https://mcp.example.com",
-                "secret_headers": {
-                    "Authorization": {"secret_name": CANARY, "key": CANARY}
-                },
-            }
-        ],
+        mcp_servers=[_canary_inline()],
     )
     step.update(extra)
     return step
@@ -980,3 +1019,659 @@ async def test_canary_request_id_header_is_not_audited(
     assert len(records) == 1
     assert CANARY not in json.dumps(records)
     assert records[0]["request_id"]
+
+
+# ==========================================================================
+# Phase 3: secretless operator-catalog MCP through the real pipeline
+# ==========================================================================
+
+MCP_POLICY: dict[str, Any] = {
+    "rules": [
+        copy.deepcopy(POLICY_BASE_RULE),
+        {"role": "team-a", "mcp": ["kb"]},
+        {"role": "team-all", "mcp": ["*"]},
+    ]
+}
+
+# (id, policy, roles) for the four submission modes.
+MODES: list[tuple[str, Optional[dict[str, Any]], tuple[str, ...]]] = [
+    ("no-policy-admin", None, (ADMIN_ROLE,)),
+    ("no-policy-user", None, ()),
+    ("policy-admin", MCP_POLICY, (ADMIN_ROLE,)),
+    ("policy-user", MCP_POLICY, ()),
+]
+MODE_PARAMS = [pytest.param(policy, roles, id=mode) for mode, policy, roles in MODES]
+
+
+def _use_mode(env: Env, policy: Optional[dict[str, Any]]) -> None:
+    """Install the catalog and, in policy mode, the governed policy."""
+    env.cfg.mcp_servers = _catalog()
+    if policy is not None:
+        env.cfg.workflow_engine_configuration = _governed(policy)
+
+
+def _inline(**extra: Any) -> dict[str, Any]:
+    """An inline MCP entry (no secrets)."""
+    return {"name": "inline-srv", "url": "https://mcp.example.com", **extra}
+
+
+def _started_input(env: Env) -> dict[str, Any]:
+    """The single workflow_input handed to executor.start."""
+    env.executor.start.assert_called_once()
+    return env.executor.start.call_args[0][0]
+
+
+# --------------------------------------------------------------------------
+# Order
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_run_level_mcp_servers_400_beats_extra_key_422(env: Env) -> None:
+    """The run-level field is a 400 before the typed parse can answer 422."""
+    definition = _definition()
+    definition["unexpected"] = 1
+    outcome = await env.run(
+        _body(definition, mcp_servers=[{"name": "x", "url": "https://x"}]),
+        roles=(ADMIN_ROLE,),
+    )
+    assert outcome.status == 400
+    assert _reasons(outcome) == ["forbidden_field"]
+    assert _one(outcome)["paths"] == ["/mcp_servers"]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("policy", "roles"), MODE_PARAMS)
+@pytest.mark.parametrize(
+    "value",
+    [None, [], ["kb"], [{"name": "kb", "url": KB_URL}], "kb"],
+    ids=["null", "empty", "named", "inline", "string"],
+)
+async def test_run_level_mcp_servers_any_value_is_400(
+    env: Env, policy: Optional[dict[str, Any]], roles: tuple[str, ...], value: Any
+) -> None:
+    """Sending the field at all is a 400 in every mode, admins included."""
+    _use_mode(env, policy)
+    outcome = await env.run(
+        _body(_definition(_policy_step()), mcp_servers=value), roles=roles
+    )
+    assert outcome.status == 400
+    assert _reasons(outcome) == ["forbidden_field"]
+    assert "catalog" in str(outcome.detail)
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_raw_ref_400_beats_typed_parse_422(env: Env) -> None:
+    """A raw physical ref is a 400 even when the step would fail the typed parse."""
+    server = _inline(secret_headers={"h": {"secret_name": "s", "key": "k"}})
+    definition = _definition(_step(mcp_servers=[server], unexpected=1))
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 400
+    assert _reasons(outcome) == ["forbidden_field"]
+    assert _one(outcome)["paths"] == [
+        "/definition/spec/steps/0/mcp_servers/0/secret_headers"
+    ]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_shape_422_beats_mcp_unknown_400(env: Env) -> None:
+    """A malformed definition is a 422 even when it names an unknown server."""
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(_step(mcp_servers=["nope"], unexpected=1))
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 422
+    assert _reasons(outcome) == ["shape_invalid"]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("roles", [(), (ADMIN_ROLE,)], ids=["user", "admin"])
+async def test_mcp_unknown_400_beats_mcp_403(env: Env, roles: tuple[str, ...]) -> None:
+    """An unknown name is 400 before the policy could deny the granted-less kb."""
+    _use_mode(env, MCP_POLICY)
+    definition = _definition(_policy_step(mcp_servers=["kb", "nope"]))
+    outcome = await env.run(_body(definition), roles=roles)
+    assert outcome.status == 400
+    assert _reasons(outcome) == ["mcp_unknown"]
+    record = _one(outcome)
+    assert record["paths"] == ["/definition/spec/steps/0/mcp_servers/1"]
+    assert record["provider"] == "claude-prod"
+    assert "mcp_servers" not in record
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_mcp_403_beats_executor_422(env: Env) -> None:
+    """An ungranted server is 403 before the executor's own validation.
+
+    Duplicate step names pass the typed parse and the effective plan but are
+    rejected by ``validate_definition``; with the grant the same body reaches
+    that 422, without it the 403 wins.
+    """
+    _use_mode(env, MCP_POLICY)
+    definition = _definition(
+        _policy_step(name="a", mcp_servers=["kb"]),
+        _policy_step(name="a", output_key="other"),
+    )
+    granted = await env.run(_body(definition), roles=("team-a",))
+    assert granted.status == 422
+    assert _reasons(granted) == ["executor_validation_failed"]
+
+    outcome = await env.run(_body(definition))
+    assert outcome.status == 403
+    assert _reasons(outcome) == ["mcp_not_granted"]
+    env.executor.start.assert_not_called()
+
+
+# --------------------------------------------------------------------------
+# Inline secret_headers: every nonempty shape fails before start, every mode
+# --------------------------------------------------------------------------
+
+# (id, field, value, status, reason). Raw physical refs (any value naming
+# secret_name or key) are a 400 on the raw dict; every other nonempty shape
+# is rejected by the executor's own model (SecretHeaderRef requires both
+# secret_name and key, extra="forbid"; headers is dict[str, str]), so the
+# typed parse answers 422.
+SECRET_HEADER_SHAPES: list[tuple[str, str, Any, int, str]] = [
+    (
+        "raw-full",
+        "secret_headers",
+        {"Authorization": {"secret_name": CANARY, "key": CANARY}},
+        400,
+        "forbidden_field",
+    ),
+    (
+        "raw-secret-name",
+        "secret_headers",
+        {"h": {"secret_name": CANARY}},
+        400,
+        "forbidden_field",
+    ),
+    ("raw-key", "secret_headers", {"h": {"key": CANARY}}, 400, "forbidden_field"),
+    (
+        "raw-extra-key",
+        "secret_headers",
+        {"h": {"secret_name": CANARY, "key": CANARY, "version": "1"}},
+        400,
+        "forbidden_field",
+    ),
+    (
+        "raw-in-headers",
+        "headers",
+        {"h": {"secret_name": CANARY, "key": CANARY}},
+        400,
+        "forbidden_field",
+    ),
+    ("logical-ref", "secret_headers", {"h": {"name": CANARY}}, 422, "shape_invalid"),
+    ("string-value", "secret_headers", {"h": CANARY}, 422, "shape_invalid"),
+    ("list-value", "secret_headers", {"h": [CANARY]}, 422, "shape_invalid"),
+    ("other-dict", "secret_headers", {"h": {"ref": CANARY}}, 422, "shape_invalid"),
+    ("empty-ref", "secret_headers", {"h": {}}, 422, "shape_invalid"),
+    ("whole-string", "secret_headers", CANARY, 422, "shape_invalid"),
+    ("whole-list", "secret_headers", [CANARY], 422, "shape_invalid"),
+    ("whole-int", "secret_headers", 1, 422, "shape_invalid"),
+]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("policy", "roles"), MODE_PARAMS)
+@pytest.mark.parametrize(
+    ("field", "value", "status", "reason"),
+    [pytest.param(*s[1:], id=s[0]) for s in SECRET_HEADER_SHAPES],
+)
+async def test_inline_secret_headers_matrix(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    env: Env,
+    policy: Optional[dict[str, Any]],
+    roles: tuple[str, ...],
+    field: str,
+    value: Any,
+    status: int,
+    reason: str,
+) -> None:
+    """No nonempty inline secret_headers shape reaches start, in any mode."""
+    _use_mode(env, policy)
+    server = _inline(**{field: value})
+    outcome = await env.run(
+        _body(_definition(_policy_step(mcp_servers=[server]))), roles=roles
+    )
+    assert outcome.status == status
+    assert _reasons(outcome) == [reason]
+    assert CANARY not in json.dumps(outcome.audits)
+    assert CANARY not in outcome.log_text
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("policy", "roles"), MODE_PARAMS)
+async def test_raw_ref_in_spec_list_is_400(
+    env: Env, policy: Optional[dict[str, Any]], roles: tuple[str, ...]
+) -> None:
+    """A raw ref in the spec-level default list is a 400 too."""
+    _use_mode(env, policy)
+    server = _inline(secret_headers={"h": {"secret_name": "s", "key": "k"}})
+    definition = _definition(_policy_step(), spec={"mcp_servers": [server]})
+    outcome = await env.run(_body(definition), roles=roles)
+    assert outcome.status == 400
+    assert _one(outcome)["paths"] == ["/definition/spec/mcp_servers/0/secret_headers"]
+    env.executor.start.assert_not_called()
+
+
+# --------------------------------------------------------------------------
+# Named references end to end
+# --------------------------------------------------------------------------
+
+
+def _resolved_per_step(workflow_input: dict[str, Any]) -> list[list[str]]:
+    """Resolve each started agent step's servers with the real executor code."""
+    definition = workflow_input["definition"]
+    defaults = workflow_defaults_from_definition(definition)
+    steps = definition["spec"]["steps"]
+    names: list[list[str]] = []
+    for step in steps:
+        if step.get("type") != "agent":
+            continue
+        normalized, _ = normalize_workflow_step(step, defaults, len(steps))
+        resolved = resolve_mcp_servers(
+            normalized.mcp_servers, workflow_input["mcp_servers"]
+        )
+        for server in resolved or []:
+            MCPServerConfig.model_validate(server)
+        names.append([s["name"] for s in resolved or []])
+    return names
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "roles", [(), (ADMIN_ROLE,)], ids=["user-no-grant-needed", "admin"]
+)
+async def test_named_references_inject_only_referenced_catalog_servers(
+    env: Env, roles: tuple[str, ...]
+) -> None:
+    """start receives exactly {name, url} for the referenced servers only.
+
+    No policy: named servers need no grant. ``unused`` and the disabled
+    ``off`` are never injected; steps keep their own scope (spec default,
+    own list, explicit ``[]``).
+    """
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(
+        _step("s0"),
+        _step("s1", mcp_servers=["pods", "kb"]),
+        _step("s2", mcp_servers=[]),
+        {"name": "gate", "type": "human-approval", "output_key": "approval"},
+        spec={"mcp_servers": ["kb"]},
+    )
+    outcome = await env.run(_body(definition), roles=roles)
+    assert outcome.status == 202, outcome.detail
+    started = _started_input(env)
+    assert started["mcp_servers"] == [
+        {"name": "kb", "url": KB_URL},
+        {"name": "pods", "url": PODS_URL},
+    ]
+    assert started["authz_context"]["mcp_servers"] == ["kb", "pods"]
+    assert _resolved_per_step(started) == [["kb"], ["pods", "kb"], []]
+    record = _one(outcome)
+    assert record["mcp_servers"] == ["kb", "pods"]
+    assert record["mcp_inline_count"] == 0
+
+
+@pytest.mark.asyncio
+async def test_spec_list_overridden_by_empty_injects_nothing(env: Env) -> None:
+    """A spec default every step overrides with [] puts nothing in start."""
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(_step(mcp_servers=[]), spec={"mcp_servers": ["kb"]})
+    outcome = await env.run(_body(definition))
+    assert outcome.status == 202
+    started = _started_input(env)
+    assert started["mcp_servers"] == []
+    assert started["authz_context"]["mcp_servers"] == []
+    assert _resolved_per_step(started) == [[]]
+    assert _one(outcome)["mcp_servers"] == []
+
+
+@pytest.mark.asyncio
+async def test_no_mcp_at_all_injects_empty_list(env: Env) -> None:
+    """A definition without MCP still gets an explicit empty run-level list."""
+    outcome = await env.run(_body(), roles=(ADMIN_ROLE,))
+    assert outcome.status == 202
+    started = _started_input(env)
+    assert started["mcp_servers"] == []
+    assert _one(outcome)["mcp_inline_count"] == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(("policy", "roles"), MODE_PARAMS)
+async def test_unknown_and_disabled_give_identical_400(
+    env: Env, policy: Optional[dict[str, Any]], roles: tuple[str, ...]
+) -> None:
+    """An unknown and a disabled name are indistinguishable 400s.
+
+    Named references that matched nothing used to be dropped silently by
+    the executor; they are now a 400 in every mode.
+    """
+    _use_mode(env, policy)
+    bodies = []
+    for name in ("nope", "off"):
+        outcome = await env.run(
+            _body(_definition(_policy_step(mcp_servers=[name]))), roles=roles
+        )
+        assert outcome.status == 400
+        assert _reasons(outcome) == ["mcp_unknown"]
+        assert name not in json.dumps(outcome.detail)
+        bodies.append(json.dumps(outcome.detail, sort_keys=True))
+    assert bodies[0] == bodies[1]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_inline_named_like_catalog_entry_is_400(env: Env) -> None:
+    """An inline entry may not shadow a catalog name."""
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(_step(mcp_servers=[_inline(name="kb")]))
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 400
+    assert _reasons(outcome) == ["mcp_name_conflict"]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_admin_inline_and_named_mixed_no_policy(env: Env) -> None:
+    """Admins keep inline MCP without a policy; only catalog servers are injected."""
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(_step(mcp_servers=["kb", _inline()]))
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 202
+    started = _started_input(env)
+    assert started["mcp_servers"] == [{"name": "kb", "url": KB_URL}]
+    assert started["authz_context"]["mcp_servers"] == ["kb"]
+    record = _one(outcome)
+    assert record["mcp_servers"] == ["kb"]
+    assert record["mcp_inline_count"] == 1
+    assert "inline-srv" not in json.dumps(record)
+    assert "mcp.example.com" not in json.dumps(record)
+
+
+# --------------------------------------------------------------------------
+# Policy mcp grant through the endpoint
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_policy_mcp_grant_by_role(env: Env) -> None:
+    """kb needs team-a (or the wildcard); admins get no override."""
+    _use_mode(env, MCP_POLICY)
+    body = _body(_definition(_policy_step(mcp_servers=["kb"])))
+    for roles in ((), (ADMIN_ROLE,)):
+        denied = await env.run(body, roles=roles)
+        assert denied.status == 403
+        assert _reasons(denied) == ["mcp_not_granted"]
+        assert any("kb" in m for m in denied.detail["denied"])
+        record = _one(denied)
+        assert record["mcp_servers"] == ["kb"]
+        assert record["mcp_inline_count"] == 0
+    env.executor.start.assert_not_called()
+
+    granted = await env.run(body, roles=("team-a",))
+    assert granted.status == 202
+    assert _started_input(env)["mcp_servers"] == [{"name": "kb", "url": KB_URL}]
+    assert _one(granted)["mcp_servers"] == ["kb"]
+
+
+@pytest.mark.asyncio
+async def test_policy_mcp_finite_grant_does_not_cover_other_servers(env: Env) -> None:
+    """team-a's kb grant does not cover pods; the wildcard covers both."""
+    _use_mode(env, MCP_POLICY)
+    body = _body(_definition(_policy_step(mcp_servers=["kb", "pods"])))
+    denied = await env.run(body, roles=("team-a",))
+    assert denied.status == 403
+    assert _one(denied)["paths"] == ["/definition/spec/steps/0/mcp_servers/1"]
+
+    granted = await env.run(body, roles=("team-all",))
+    assert granted.status == 202
+    assert [s["name"] for s in _started_input(env)["mcp_servers"]] == ["kb", "pods"]
+
+
+@pytest.mark.asyncio
+async def test_policy_inline_still_denied_and_counted(env: Env) -> None:
+    """Inline MCP stays 403 in policy mode; the record counts it without names."""
+    _use_mode(env, MCP_POLICY)
+    definition = _definition(_policy_step(mcp_servers=["kb", _canary_inline()]))
+    outcome = await env.run(_body(definition), roles=("team-all", ADMIN_ROLE))
+    assert outcome.status == 403
+    assert _reasons(outcome) == ["mcp_not_allowed"]
+    record = _one(outcome)
+    assert record["mcp_servers"] == ["kb"]
+    assert record["mcp_inline_count"] == 1
+    assert CANARY not in json.dumps(record)
+    assert CANARY not in outcome.log_text
+
+
+# --------------------------------------------------------------------------
+# One audit record per outcome, with MCP facts where they exist
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_start_failed_record_carries_mcp_facts(env: Env) -> None:
+    """start raising records the catalog names and inline count."""
+    env.cfg.mcp_servers = _catalog()
+    env.executor.start.side_effect = RuntimeError("boom")
+    definition = _definition(_step(mcp_servers=["pods", _inline()]))
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 500
+    record = _one(outcome)
+    assert record["event"] == "workflow_start_failed"
+    assert record["mcp_servers"] == ["pods"]
+    assert record["mcp_inline_count"] == 1
+
+
+@pytest.mark.asyncio
+async def test_executor_422_record_carries_mcp_facts(env: Env) -> None:
+    """A drift 422 happens after the plan, so it carries the MCP facts."""
+    env.cfg.mcp_servers = _catalog()
+    definition = _definition(
+        _step("a", mcp_servers=["kb"]), _step("a", output_key="other")
+    )
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 422
+    record = _one(outcome)
+    assert record["mcp_servers"] == ["kb"]
+    assert record["mcp_inline_count"] == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "body",
+    [
+        lambda: _body(mcp_servers=["kb"]),
+        lambda: _body(_definition(_step(mcp_servers=["nope"]))),
+        lambda: _body(_definition(_step(mcp_servers=["kb"], bogus=1))),
+    ],
+    ids=["400-run-level", "400-unknown", "422-shape"],
+)
+async def test_denials_before_the_plan_carry_no_mcp_facts(
+    env: Env, body: Callable[[], dict[str, Any]]
+) -> None:
+    """Records emitted before the effective plan exists carry no MCP fields."""
+    env.cfg.mcp_servers = _catalog()
+    outcome = await env.run(body(), roles=(ADMIN_ROLE,))
+    assert outcome.status in (400, 422)
+    record = _one(outcome)
+    assert "mcp_servers" not in record
+    assert "mcp_inline_count" not in record
+
+
+# --------------------------------------------------------------------------
+# MCP canaries: caller strings never reach logs or audit records
+# --------------------------------------------------------------------------
+
+
+def _mcp_canary_definition(*servers: Any, **step: Any) -> dict[str, Any]:
+    """A policy-passing definition whose only MCP entries are ``servers``."""
+    return _definition(_policy_step(mcp_servers=list(servers), **step))
+
+
+# (id, body factory, policy, roles, status)
+MCP_CANARY_CASES: list[
+    tuple[
+        str,
+        Callable[[], dict[str, Any]],
+        Optional[dict[str, Any]],
+        tuple[str, ...],
+        int,
+    ]
+] = [
+    (
+        "400-run-level",
+        lambda: _body(_mcp_canary_definition(), mcp_servers=[CANARY, _canary_inline()]),
+        None,
+        (ADMIN_ROLE,),
+        400,
+    ),
+    (
+        "400-unknown-name",
+        lambda: _body(_mcp_canary_definition(CANARY)),
+        None,
+        (ADMIN_ROLE,),
+        400,
+    ),
+    (
+        "400-unknown-name-policy",
+        lambda: _body(_mcp_canary_definition(CANARY)),
+        MCP_POLICY,
+        (),
+        400,
+    ),
+    (
+        "400-raw-ref",
+        lambda: _body(
+            _mcp_canary_definition(
+                {
+                    **_canary_inline(),
+                    "secret_headers": {CANARY: {"secret_name": CANARY, "key": CANARY}},
+                }
+            )
+        ),
+        None,
+        (ADMIN_ROLE,),
+        400,
+    ),
+    (
+        "400-name-conflict",
+        lambda: _body(_mcp_canary_definition(_canary_inline(), _canary_inline())),
+        None,
+        (ADMIN_ROLE,),
+        400,
+    ),
+    (
+        "422-logical-ref",
+        lambda: _body(
+            _mcp_canary_definition(
+                {**_canary_inline(), "secret_headers": {CANARY: {"name": CANARY}}}
+            )
+        ),
+        None,
+        (ADMIN_ROLE,),
+        422,
+    ),
+    (
+        "422-shape-unknown-name",
+        lambda: _body(_mcp_canary_definition(CANARY, bogus=CANARY)),
+        None,
+        (ADMIN_ROLE,),
+        422,
+    ),
+    (
+        "403-no-policy-inline",
+        lambda: _body(_mcp_canary_definition("kb", _canary_inline())),
+        None,
+        (),
+        403,
+    ),
+    (
+        "403-policy-inline",
+        lambda: _body(_mcp_canary_definition("kb", _canary_inline())),
+        MCP_POLICY,
+        ("team-all",),
+        403,
+    ),
+    (
+        "422-executor",
+        lambda: _body(
+            _mcp_canary_definition(
+                "kb", {"name": CANARY, "url": f"https://u:{CANARY}@mcp.example"}
+            )
+        ),
+        None,
+        (ADMIN_ROLE,),
+        422,
+    ),
+    (
+        "500",
+        lambda: _body(_mcp_canary_definition("kb", _canary_inline())),
+        None,
+        (ADMIN_ROLE,),
+        500,
+    ),
+    (
+        "202",
+        lambda: _body(_mcp_canary_definition("kb", _canary_inline())),
+        None,
+        (ADMIN_ROLE,),
+        202,
+    ),
+]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("body", "policy", "roles", "status"),
+    [pytest.param(*c[1:], id=c[0]) for c in MCP_CANARY_CASES],
+)
+async def test_mcp_canary_never_logged_or_audited(  # pylint: disable=too-many-arguments
+    env: Env,
+    body: Callable[[], dict[str, Any]],
+    policy: Optional[dict[str, Any]],
+    roles: tuple[str, ...],
+    status: int,
+) -> None:
+    """A canary in MCP names, URLs, header names and refs is never logged.
+
+    This covers every stack-controlled record, including the authorized and
+    start_failed records written after ``start`` returned or raised. 4xx
+    bodies may name the caller's own values only in denial messages.
+    """
+    _use_mode(env, policy)
+    if status == 500:
+        env.executor.start.side_effect = RuntimeError(CANARY)
+    outcome = await env.run(body(), roles=roles)
+    assert outcome.status == status, outcome.detail
+    assert len(outcome.audits) == 1
+    assert CANARY not in json.dumps(outcome.audits)
+    assert CANARY not in outcome.log_text
+    if status in (400, 500):
+        assert CANARY not in json.dumps(outcome.detail)
+    if status in (202, 500):
+        record = outcome.audits[0]
+        assert record["mcp_servers"] == ["kb"]
+        assert record["mcp_inline_count"] == 1
+        started = _started_input(env)
+        assert started["mcp_servers"] == [{"name": "kb", "url": KB_URL}]
+        assert CANARY not in json.dumps(started["authz_context"])
+        assert CANARY not in json.dumps(started["mcp_servers"])
+    else:
+        env.executor.start.assert_not_called()
+
+
+def test_request_schema_has_no_run_level_mcp_servers() -> None:
+    """The hidden run-level field never appears in the request schema."""
+    schema = RunWorkflowRequest.model_json_schema()
+    assert "mcp_servers" not in json.dumps(schema)
+    assert "mcp_servers" not in RunWorkflowRequest(**_body()).model_dump()
+    assert (
+        "mcp_servers"
+        not in RunWorkflowRequest(**_body(mcp_servers=["kb"])).model_dump()
+    )
