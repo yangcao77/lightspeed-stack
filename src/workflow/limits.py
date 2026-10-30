@@ -9,3 +9,10 @@ MAX_DEFINITION_BYTES: Final[int] = 262_144
 MAX_WORKFLOW_STEPS: Final[int] = 64
 MAX_MCP_SERVERS_PER_STEP: Final[int] = 16
 MAX_SECRET_HEADERS_PER_SERVER: Final[int] = 32
+
+# Operator policy hard caps: a configured policy limit above these is rejected
+# at config load, and the effective limit is never above them.
+MAX_POLICY_STEP_TIMEOUT_SECONDS: Final[int] = 3600
+MAX_POLICY_WORKFLOW_SECONDS: Final[int] = 86400
+MAX_POLICY_RETRIES: Final[int] = 5
+MAX_POLICY_TOKENS: Final[int] = 1_000_000
