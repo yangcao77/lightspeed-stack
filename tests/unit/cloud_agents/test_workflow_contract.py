@@ -11,8 +11,10 @@ access rules decide ``workflow_start`` and admin, and the decorator itself sets
 resolver is replaced (verify.py covers the JWT role mapping). The driver lives
 in ``contract_util.run_real_case_detail`` so verify.py runs the same code.
 
-Only the HTTP status is compared here: the reference gate's ``reason`` strings
-are specific to the reference implementation.
+The HTTP status is compared, plus ``denied_contains`` (a substring that must
+appear in a caller-facing denial message) when a case sets it. The reference
+gate's ``reason`` strings are specific to the reference implementation, so they
+are not compared here.
 """
 
 # pyright: reportMissingImports=false

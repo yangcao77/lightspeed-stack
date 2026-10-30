@@ -205,6 +205,7 @@ workflow_cases:
     set: {spec.steps.triage.tools: [github.read], spec.steps.triage.permissions.allowed_tools: [github.read]}
     expect: 403
     reason: tools_not_enforceable
+    denied_contains: wildcard
   - name: wildcard tools grant passes with a finite allowed_tools request
     phase: 2
     workflow: triage-github-issue

@@ -721,6 +721,49 @@ async def test_policy_finite_tools_grant_is_still_403(env: Env) -> None:
 
 
 @pytest.mark.asyncio
+async def test_policy_tools_gate_follows_spec_spawn_inherited_by_step(
+    env: Env,
+) -> None:
+    """A step inheriting ``spec.spawn: local`` is not an ephemeral step.
+
+    The only grant is ``local`` with no tools, so the tools rule is the one
+    thing that could deny this, and it must not fire for a local step.
+    """
+    policy = {"rules": [{**NO_TOOLS_POLICY["rules"][0], "spawn_modes": ["local"]}]}
+    env.cfg.workflow_engine_configuration = _governed(policy)
+    definition = _definition(_policy_step(), spec={"spawn": "local"})
+    outcome = await env.run(_body(definition), roles=(ADMIN_ROLE,))
+    assert outcome.status == 202, outcome.detail
+    assert "tools_not_enforceable" not in str(outcome.audits)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "tools",
+    [None, ["Bash"]],
+    ids=["no-grant", "finite-grant"],
+)
+async def test_policy_step_ephemeral_overrides_spec_local_for_tools_gate(
+    env: Env, tools: Optional[list[str]]
+) -> None:
+    """``step.spawn: ephemeral`` wins over ``spec.spawn: local``.
+
+    Only ``ephemeral`` is granted (and needs no admin), so the tools rule is
+    the single denial and points at the step.
+    """
+    rule = {**NO_TOOLS_POLICY["rules"][0]}
+    if tools is not None:
+        rule["tools"] = tools
+    env.cfg.workflow_engine_configuration = _governed({"rules": [rule]})
+    definition = _definition(_policy_step(spawn="ephemeral"), spec={"spawn": "local"})
+    outcome = await env.run(_body(definition))
+    assert outcome.status == 403
+    assert _reasons(outcome) == ["tools_not_enforceable"]
+    assert _one(outcome)["paths"] == ["/definition/spec/steps/0/permissions"]
+    env.executor.start.assert_not_called()
+
+
+@pytest.mark.asyncio
 async def test_policy_wildcard_tools_grant_is_202(env: Env) -> None:
     """A wildcard grant accepts ephemeral steps, even with a finite request."""
     policy = {"rules": [{**NO_TOOLS_POLICY["rules"][0], "tools": ["*"]}]}
