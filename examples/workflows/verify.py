@@ -6,37 +6,43 @@ Run from anywhere with the project venv:
 
 1. Every file parses; the three workflow definitions pass the real
    cloud-agents ``WorkflowDefinition`` shape check.
-2. ``lightspeed-stack.yaml`` passes the plan's load-time checks, before and
-   after cloud-agents#269 (``post-269-overrides.yaml`` merged on top).
-3. ``cases.yaml``: every request/config case returns the expected status in
-   each stage, via ``reference_gate.py`` (later: the real endpoint).
-4. The non-PLAN subset validates against the CURRENT ``Configuration``.
+2. ``lightspeed-stack.yaml`` passes the real config load (Phases 0-2) and the
+   remaining load-time checks in ``reference_gate.py``, before and after
+   cloud-agents#269 (``post-269-overrides.yaml`` merged on top).
+3. ``cases.yaml``: cases up to ``IMPLEMENTED_PHASE`` run against the real
+   endpoint and config (pre-269, the stage the code implements); later cases
+   run in each stage via ``reference_gate.py``.
+4. The example, minus the Phase 3 MCP blocks, validates against the CURRENT
+   ``Configuration`` (policy included).
 5. Auth: real role and access resolvers behave as the policy assumes.
 6. Deployment: Deployment, RBAC and Secrets agree with the stack config.
 """
 
 import asyncio
 import base64
-import copy
 import json
 import os
 import sys
 import tempfile
 from pathlib import Path
 
-import yaml
+from pydantic import ValidationError
 
 WF_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(WF_DIR.parent.parent / "src"))
 sys.path.insert(0, str(WF_DIR))
 
-import reference_gate as gate  # noqa: E402
-from contract_util import (  # noqa: E402
+import reference_gate as gate
+from contract_util import (
+    IMPLEMENTED_PHASE,
     case_body,
+    current_schema_stack,
     deep_merge,
+    engine_config,
     load,
     load_all,
     patch,
+    run_real_case_detail,
 )
 
 failures: list[str] = []
@@ -62,22 +68,26 @@ for doc in ("k8s-secrets.yaml", "external-secrets.yaml", "k8s-deployment.yaml"):
     load_all(doc)
 check(True, "all YAML files parse")
 
-from cloud_agents.workflow.core.definition import WorkflowDefinition  # noqa: E402
+from cloud_agents.workflow.core.definition import WorkflowDefinition
 
 for name, raw in definitions.items():
     WorkflowDefinition.model_validate(gate._shape_copy(raw))  # pylint: disable=W0212
     check(True, f"{name}: WorkflowDefinition shape valid")
 
-from cloud_agents.workflow.core.validation import validate_definition  # noqa: E402
+from cloud_agents.workflow.core.validation import validate_definition
 
 for name, raw in definitions.items():
     problems = validate_definition(gate.executor_form(stacks["pre269"], raw))
     check(problems == [], f"{name}: passes cloud-agents validate_definition {problems}")
 
 # ------------------------------------------------------------ 2. load checks
+# The real engine configuration is the pre-269 implementation (env-bound
+# inference credentials), so it loads the pre269 stack only.
+engine = engine_config(stack)
+check(engine.governed and engine.policy is not None, "real WorkflowEngineConfiguration loads the example (policy included)")
 for stage, cfg in stacks.items():
     errors = gate.load_errors(cfg, stage)
-    check(errors == [], f"{stage}: config passes load-time checks {errors}")
+    check(errors == [], f"{stage}: config passes the remaining load-time checks {errors}")
 
 
 # ------------------------------------------------------------------ 3. cases
@@ -103,19 +113,34 @@ def assert_case(label, stage, got, reasons, case):
 
 for case in cases["workflow_cases"]:
     dflt = cases["defaults"][case["workflow"]]
+    if case["phase"] <= IMPLEMENTED_PHASE:
+        want = case["expect"]
+        want = want["pre269"] if isinstance(want, dict) else want
+        status, started, denied = asyncio.run(
+            run_real_case_detail(case, stack, definitions, cases["defaults"])
+        )
+        ok = status == want and started == (status == 202)
+        if ok and "denied_contains" in case:
+            ok = any(case["denied_contains"] in message for message in denied)
+        check(ok, f"[real] {case['name']} -> {want}" + ("" if ok else f" (got {status})"))
+        continue
     for stage, cfg in stacks.items():
         body = case_body(case, definitions, cases["defaults"])
-        status, reasons = run(
-            gate.submit,
-            cfg,
-            body,
-            set(case.get("as", dflt["as"])),
-            stage,
-            case.get("spawner", True),
-        )
+        status, reasons = run(gate.submit, cfg, body, set(case.get("as", dflt["as"])), stage)
         assert_case(case["name"], stage, status, reasons, case)
 
 for case in cases["config_cases"]:
+    if case["phase"] <= IMPLEMENTED_PHASE:
+        if case.get("stage", "pre269") != "pre269":
+            continue
+        try:
+            engine_config(patch(stack, case["set"]))
+            msg = ""
+        except ValidationError as exc:
+            msg = str(exc)
+        ok = case["error"].lower() in msg.lower()
+        check(ok, f"[real] config: {case['name']} -> load fails")
+        continue
     for stage, cfg in stacks.items():
         if case.get("stage", stage) != stage:
             continue
@@ -125,30 +150,18 @@ for case in cases["config_cases"]:
         check(ok, f"[{stage}] config: {case['name']} -> load fails{extra}")
 
 # ------------------------------------------------------ 4. current schema
-stripped = copy.deepcopy(stack)
-for key in ("providers", "secrets", "default_provider", "default_model", "policy"):
-    stripped["workflow_engine"].pop(key, None)
-for server in stripped["mcp_servers"]:
-    server.pop("secret_headers", None)
-    server.pop("workflow_enabled", None)
 os.environ.setdefault("POSTGRES_PASSWORD", "test-only")
-# FilePath fields point at mounted Secrets in-cluster; stand in dummy files.
-for section, keys in (
-    (stripped["spawner"], ("openshell_tls_ca", "openshell_tls_cert", "openshell_tls_key")),
-    (stripped["database"]["postgres"], ("ca_cert_path",)),
-):
-    for key in keys:
-        fd, path = tempfile.mkstemp()
-        os.close(fd)
-        section[key] = path
+from models.config import AccessRule, Action, Configuration, JwtRoleRule
 
-from models.config import AccessRule, Action, Configuration, JwtRoleRule  # noqa: E402
-
-Configuration.model_validate(stripped)
-check(True, "non-PLAN subset validates against CURRENT Configuration schema")
+with tempfile.TemporaryDirectory() as tmp:
+    Configuration.model_validate(current_schema_stack(stack, tmp))
+check(True, "example minus Phase 3 MCP blocks validates against CURRENT Configuration schema")
 
 # --------------------------------------------------------------- 5. auth
-from authorization.resolvers import GenericAccessResolver, JwtRolesResolver  # noqa: E402
+from authorization.resolvers import (
+    GenericAccessResolver,
+    JwtRolesResolver,
+)
 
 jwt_cfg = stack["authentication"]["jwk_config"]["jwt_configuration"]
 roles_resolver = JwtRolesResolver([JwtRoleRule(**r) for r in jwt_cfg["role_rules"]])
@@ -243,9 +256,8 @@ check(spawner["openshell_tls_ca"].startswith(mounts["gw-tls"]), "gateway TLS pat
 check(stack["database"]["postgres"]["ca_cert_path"].startswith(mounts["pg-tls"]), "Postgres CA path matches the mount")
 check(stack["database"]["postgres"]["ssl_mode"] == "verify-full", "Postgres uses verify-full TLS")
 check(all("@sha256:" in i for i in (ctr["image"], spawner["sandbox_image"])), "stack and sandbox images pinned by digest")
-images = {i for r in stack["workflow_engine"]["policy"]["rules"] for i in r.get("sandbox_images", [])}
-check(all("@sha256:" in i for i in images), "policy sandbox_images pinned by digest")
-check(spawner["sandbox_image"] in images, "spawner default image is granted by policy")
+policy_images = {i for r in stack["workflow_engine"]["policy"]["rules"] for i in r.get("images", [])}
+check(all("@sha256:" in i for i in policy_images), "policy images pinned by digest")
 
 # Secrets: dev manifest and External Secrets define the same names and keys,
 # and cover every Secret/key the stack references in either stage.

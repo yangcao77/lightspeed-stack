@@ -1,33 +1,51 @@
-"""Reference model of the #51 submission gate and load-time checks.
+"""Reference model of the MCP part of the #51 submission gate (Phases 3-5).
 
-This is an executable spec, not the implementation: it encodes the design in
-https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-5911977694
-so ``cases.yaml`` can pin the expected behaviour before the stack implements
-it. Later phases should run the same cases against the real endpoint
-(``run_cases.py`` style) and then delete the matching part of this file.
+This is an executable spec, not the implementation. Phases 0-2 (caller
+credentials, provider catalog, run-level policy, spawn/image/advisory gates,
+limits, audit) are real code now and ``cases.yaml`` runs them against the real
+endpoint. What is left here is what the stack does not implement yet: named and
+inline MCP servers, MCP secret refs, ``MCP_ALLOWED_SECRETS`` generation and the
+post-cloud-agents#269 stage. When Phase 3 lands, run those cases against the
+real endpoint too and delete this file.
+
+The MCP grants the policy will carry in Phase 3 (``mcp``, ``mcp_secrets``,
+``inline_mcp``, ``inline_mcp_hosts``) are reserved in the real schema and fail
+config load, so they live in ``PHASE3_GRANTS`` instead of the example config.
 
 Stages: ``pre269`` (names only, env-bound inference credentials) and
 ``post269`` (credential leases, any backend).
 """
 
+# pylint: disable=too-many-locals,too-many-branches,import-error
+
 import json
-import re
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import urlsplit
 
 from cloud_agents.workflow.core.definition import WorkflowDefinition
-from cloud_agents.workflow.core.execution import APPROVED_INFERENCE_PROVIDERS
 from pydantic import ValidationError
 
-from workflow.limits import (
-    MAX_DEFINITION_BYTES,
-    MAX_MCP_SERVERS_PER_STEP,
-    MAX_SECRET_HEADERS_PER_SERVER,
-    MAX_WORKFLOW_STEPS,
-)
+from workflow.limits import MAX_SECRET_HEADERS_PER_SERVER
 
 REQUEST_BOUND = {"client", "oauth", "kubernetes"}
-NAME_RE = re.compile(r"^[a-z0-9][a-z0-9/_.-]{0,127}$")
+
+# Phase 3 policy grants per role (reserved fields of the real policy schema).
+PHASE3_GRANTS: dict[str, dict[str, Any]] = {
+    "agent-user": {
+        "mcp_servers": ["github-readonly"],
+        "mcp_secrets": ["mcp/github-readonly"],
+    },
+    "agent-support": {
+        "mcp_servers": ["kb-search"],
+        "mcp_secrets": ["mcp/kb-search"],
+    },
+    "agent-admin": {
+        "inherit": ["agent-user", "agent-support"],
+        "inline_mcp": True,
+        "mcp_secrets": ["mcp/incidents"],
+        "inline_mcp_hosts": ["mcp.internal.example.com"],
+    },
+}
 
 
 class Denied(Exception):
@@ -40,10 +58,19 @@ class Denied(Exception):
 
 
 # ----------------------------------------------------------------- load time
+def _phase3_refs(roles: list[str] | None = None) -> set[str]:
+    """MCP secret refs the Phase 3 policy grants (all roles by default)."""
+    return {
+        ref
+        for role, rule in PHASE3_GRANTS.items()
+        if roles is None or role in roles
+        for ref in rule.get("mcp_secrets", [])
+    }
+
+
 def generated_mcp_allowed_secrets(stack: dict) -> str:
     """Value the stack writes to MCP_ALLOWED_SECRETS at startup."""
     secrets = {s["name"]: s for s in stack["workflow_engine"]["secrets"]}
-    names = set()
     refs = {
         ref["name"]
         for server in stack["mcp_servers"]
@@ -52,46 +79,32 @@ def generated_mcp_allowed_secrets(stack: dict) -> str:
     }
     # Inline MCP refs granted by policy are mounted too, so the runtime
     # guardrail must allow them as well.
-    for rule in stack["workflow_engine"].get("policy", {}).get("rules", []):
-        refs |= set(rule.get("mcp_secrets", []))
-    for ref in refs:
-        binding = secrets.get(ref, {})
-        if binding.get("backend") == "k8s":
-            names.add(binding["secret_name"])
+    refs |= _phase3_refs()
+    names = {
+        secrets[ref]["secret_name"]
+        for ref in refs
+        if secrets.get(ref, {}).get("backend") == "k8s"
+    }
     return ",".join(sorted(names))
 
 
 def load_errors(stack: dict, stage: str = "pre269") -> list[str]:
-    """Return the config-load failures the plan requires."""
+    """Return the Phase 3 and post-#269 config-load failures the plan requires.
+
+    Earlier checks (catalog, defaults, policy) are the real
+    ``WorkflowEngineConfiguration``'s job and are covered by the unit test.
+    """
     we = stack["workflow_engine"]
-    providers = we.get("providers") or []
     secrets = {s["name"]: s for s in we.get("secrets", [])}
-    mcp = {m["name"]: m for m in stack.get("mcp_servers", [])}
     errors: list[str] = []
-    seen = set()
-    for p in providers:
-        if p["name"] in seen:
-            errors.append(f"duplicate provider {p['name']}")
-        seen.add(p["name"])
-        if p["executor_type"] not in APPROVED_INFERENCE_PROVIDERS:
-            errors.append(f"{p['name']}: executor_type not approved")
-        ref = (p.get("credential") or {}).get("name")
-        if ref is not None and ref not in secrets:
-            errors.append(f"{p['name']}: credential {ref} has no secrets binding")
-        binding = secrets.get(ref or "", {})
-        if ref and stage == "pre269" and binding.get("backend") != "env":
-            errors.append(f"{p['name']}: pre-269 inference credential must be env")
-        if p.get("allowed_models") == []:
-            errors.append(f"{p['name']}: allowed_models [] is rejected")
-    by_name = {p["name"]: p for p in providers}
-    dp = we.get("default_provider")
-    if providers and dp not in by_name:
-        errors.append("default_provider not in catalog")
-    elif dp:
-        allowed = by_name[dp].get("allowed_models")
-        if allowed is not None and we.get("default_model") not in allowed:
-            errors.append("default_model not allowed by default_provider")
-    for name, server in mcp.items():
+    if stage == "post269":
+        # The real config only knows the pre-269 rule (env-bound credentials).
+        for p in we.get("providers") or []:
+            ref = (p.get("credential") or {}).get("name")
+            if ref is not None and ref not in secrets:
+                errors.append(f"{p['name']}: credential {ref} has no secrets binding")
+    for server in stack.get("mcp_servers", []):
+        name = server["name"]
         for ref in (server.get("secret_headers") or {}).values():
             if ref["name"] not in secrets:
                 errors.append(f"mcp {name}: ref {ref['name']} has no secrets binding")
@@ -101,98 +114,36 @@ def load_errors(stack: dict, stage: str = "pre269") -> list[str]:
                 errors.append(f"mcp {name}: workflow_enabled with {sorted(bad)}")
             if server.get("headers"):
                 errors.append(f"mcp {name}: workflow_enabled with propagated headers")
-    for ref in secrets:
-        if not NAME_RE.match(ref):
-            errors.append(f"secret name {ref} invalid")
-    for rule in (we.get("policy") or {}).get("rules", []):
-        for key, known in (("providers", by_name), ("mcp_servers", mcp), ("mcp_secrets", secrets)):
-            for item in rule.get(key, []):
-                if item not in known:
-                    errors.append(f"policy {rule['roles']}: unknown {key[:-1]} {item}")
+    for ref in sorted(_phase3_refs() - set(secrets)):
+        errors.append(f"policy: unknown mcp_secret {ref}")
     return errors
 
 
 # -------------------------------------------------------------------- grants
-def grants(stack: dict, roles: set[str]) -> dict[str, Any]:
-    """Union of every policy rule matching the roles (inherit resolved)."""
-    rules = (stack["workflow_engine"].get("policy") or {}).get("rules", [])
-    by_role = {r: rule for rule in rules for r in rule["roles"]}
+def grants(roles: set[str]) -> dict[str, Any]:
+    """Union of the Phase 3 grants of the roles (inherit resolved)."""
     out: dict[str, Any] = {}
 
-    def add(rule: dict, depth: int = 0) -> None:
-        if depth > 8:
-            raise ValueError("policy inherit cycle")
+    def add(role: str) -> None:
+        rule = PHASE3_GRANTS.get(role, {})
         for parent in rule.get("inherit", []):
-            add(by_role[parent], depth + 1)
+            add(parent)
         for key, value in rule.items():
-            if key in ("roles", "inherit"):
+            if key == "inherit":
                 continue
             if isinstance(value, list):
                 out[key] = sorted(set(out.get(key, [])) | set(value))
-            elif isinstance(value, dict):
-                merged = dict(out.get(key, {}))
-                for k, v in value.items():
-                    merged[k] = max(merged.get(k, v), v)
-                out[key] = merged
             else:
                 out[key] = out.get(key, False) or value
 
     for role in roles:
-        if role in by_role:
-            add(by_role[role])
+        add(role)
     return out
 
 
-def actions(stack: dict, roles: set[str]) -> set[str]:
-    """Coarse RBAC actions for the roles (admin implies all)."""
-    acts: set[str] = set()
-    for rule in stack.get("authorization", {}).get("access_rules", []):
-        if rule["role"] in roles:
-            acts |= set(rule["actions"])
-    return acts | ({"*admin*"} if "admin" in acts else set())
-
-
-def _can(stack: dict, roles: set[str], action: str) -> bool:
-    acts = actions(stack, roles)
-    return "*admin*" in acts or action in acts
-
-
 # ---------------------------------------------------------------- submission
-def _steps(definition: dict) -> list[dict]:
-    return definition["spec"]["steps"]
-
-
 def _agent_steps(definition: dict) -> list[dict]:
-    return [s for s in _steps(definition) if s.get("type", "agent") == "agent"]
-
-
-def _resolve(stack: dict, name: str, model: Optional[str]) -> tuple[dict, str]:
-    we = stack["workflow_engine"]
-    catalog = {p["name"]: p for p in we["providers"]}
-    if name not in catalog:
-        raise Denied(400, f"unknown provider '{name}'")
-    entry = catalog[name]
-    model = model or we.get("default_model")
-    allowed = entry.get("allowed_models")
-    if allowed is not None and model not in allowed:
-        raise Denied(400, f"model '{model}' not allowed for '{name}'")
-    return entry, model
-
-
-def _count_errors(definition: dict) -> list[str]:
-    errors = []
-    spec = definition["spec"]
-    if len(spec["steps"]) > MAX_WORKFLOW_STEPS:
-        errors.append("too many steps")
-    for scope in [spec, *spec["steps"]]:
-        servers = scope.get("mcp_servers") or []
-        if len(servers) > MAX_MCP_SERVERS_PER_STEP:
-            errors.append("too many mcp_servers")
-        for srv in servers:
-            if isinstance(srv, dict):
-                if len(srv.get("secret_headers") or {}) > MAX_SECRET_HEADERS_PER_SERVER:
-                    errors.append("too many secret_headers")
-    return errors
+    return [s for s in definition["spec"]["steps"] if s.get("type", "agent") == "agent"]
 
 
 def _shape_copy(definition: dict) -> dict:
@@ -200,8 +151,8 @@ def _shape_copy(definition: dict) -> dict:
 
     cloud-agents' MCPServerConfig only accepts ``{secret_name, key}``, so a
     registry ref ``{name: ...}`` would fail the typed parse. The stack
-    validates registry refs itself (step 4), then rewrites them to the
-    executor form; this models that rewrite for the step-3 shape check.
+    validates registry refs itself, then rewrites them to the executor form;
+    this models that rewrite for the shape check.
     """
     shaped = json.loads(json.dumps(definition))
     spec = shaped.get("spec", {})
@@ -219,7 +170,7 @@ def executor_form(stack: dict, definition: dict) -> dict:
     """Definition as cloud-agents' own validator sees it after the stack's rewrite.
 
     Logical provider names become executor types and inline registry refs the
-    executor's ``{secret_name, key}`` form (pipeline steps 4 and 6).
+    executor's ``{secret_name, key}`` form.
     """
     out = _shape_copy(definition)
     catalog = {p["name"]: p["executor_type"] for p in stack["workflow_engine"]["providers"]}
@@ -236,88 +187,49 @@ def submit(
     body: dict,
     roles: set[str],
     stage: str = "pre269",
-    spawner: bool = True,
-) -> list[str]:
-    """Run POST /v1/workflows/run steps 1-5; return [] when it would be 202.
+) -> None:
+    """Model the MCP checks of POST /v1/workflows/run; return when it would be 202.
 
-    Raises Denied(status, reasons) otherwise.
+    Raises Denied(status, reasons) otherwise. Everything that is not about MCP
+    is the real endpoint's job and is not modelled.
     """
-    we = stack["workflow_engine"]
     definition = body["definition"]
-    if not _can(stack, roles, "workflow_start"):  # step 1
-        raise Denied(403, "workflow_start not granted")
-    if len(json.dumps(definition).encode()) > MAX_DEFINITION_BYTES:  # step 2
-        raise Denied(413, "definition too large")
-    try:  # step 3
+    spec = definition["spec"]
+    try:
         WorkflowDefinition.model_validate(_shape_copy(definition))
     except ValidationError as exc:
         raise Denied(422, f"shape: {exc.error_count()} errors") from exc
-    if errs := _count_errors(definition):
-        raise Denied(422, *errs)
-    run = body.get("provider") or {}
-    def_provider = definition.get("provider") or {}
-    if "credentials_secret" in run or "credentials_secret" in def_provider:
-        raise Denied(400, "credentials_secret cannot be set by callers")
-    extra = set(run) - {"name", "model", "credential_ref"}
-    if extra:
-        raise Denied(400, f"unknown provider keys {sorted(extra)}")
+    for scope in [spec, *_agent_steps(definition)]:
+        for srv in scope.get("mcp_servers") or []:
+            if isinstance(srv, dict) and (
+                len(srv.get("secret_headers") or {}) > MAX_SECRET_HEADERS_PER_SERVER
+            ):
+                raise Denied(422, "too many secret_headers")
 
-    # step 4: catalog (400)
-    name = run.get("name") or we["default_provider"]
-    entry, model = _resolve(stack, name, run.get("model"))
-    if set(run.get("credential_ref") or {}) - {"name"}:
-        raise Denied(400, "credential_ref key and version are not supported")
-    cref = (run.get("credential_ref") or {}).get("name")
-    if cref is not None and cref != entry["credential"]["name"]:
-        raise Denied(400, "credential_ref does not match the provider's credential")
-    overrides = [def_provider] + [
-        s.get("inference_provider") or {} for s in _agent_steps(definition)
-    ]
-    for ov in overrides:
-        if ov.get("name"):
-            ov_entry, _ = _resolve(stack, ov["name"], ov.get("model"))
-            if ov_entry["name"] != entry["name"]:
-                raise Denied(400, "override must use the same catalog entry as the run provider")
+    # 400: unknown to the deployment.
     mcp = {m["name"]: m for m in stack["mcp_servers"]}
-    refs = {s["name"] for s in we["secrets"]}
-    inline: list[dict] = []
-    for scope in [definition["spec"], *_agent_steps(definition)]:
+    refs = {s["name"] for s in stack["workflow_engine"]["secrets"]}
+    for scope in [spec, *_agent_steps(definition)]:
         for srv in scope.get("mcp_servers") or []:
             if isinstance(srv, str):
                 if srv not in mcp or not mcp[srv].get("workflow_enabled"):
                     raise Denied(400, f"unknown MCP server '{srv}'")
-            else:
-                inline.append(srv)
-                for ref in (srv.get("secret_headers") or {}).values():
-                    if not isinstance(ref, dict) or ref.get("name") not in refs:
-                        raise Denied(400, "inline secret_headers must be registry refs")
+                continue
+            for ref in (srv.get("secret_headers") or {}).values():
+                if not isinstance(ref, dict) or ref.get("name") not in refs:
+                    raise Denied(400, "inline secret_headers must be registry refs")
 
-    # step 5: policy (403)
-    g = grants(stack, roles)
+    # 403: exists, not for this caller.
+    g = grants(roles)
     why: list[str] = []
-    if entry["name"] not in g.get("providers", []):
-        why.append(f"provider '{entry['name']}' not granted")
-    spec = definition["spec"]
-    default_image = stack["spawner"]["sandbox_image"]
-    images = {body.get("sandbox_image"), (spec.get("spawn_config") or {}).get("sandbox_image"),
-              (definition.get("skills") or {}).get("image")}
-    for step in _agent_steps(definition):
-        images.add((step.get("spawn_config") or {}).get("sandbox_image"))
-    for img in images - {None}:
-        if img not in g.get("sandbox_images", []):
-            why.append(f"image '{img}' not granted")
-    if default_image not in g.get("sandbox_images", []):
-        why.append("spawner default image not granted")
-    if definition.get("advisory") and not g.get("advisory"):
-        why.append("advisory not granted")
     for step in _agent_steps(definition):
         s = step["name"]
         spawn = step.get("spawn") or spec.get("spawn") or "ephemeral"
-        if spawn not in g.get("spawn", []):
-            why.append(f"{s}: spawn '{spawn}' not granted")
-        if spawn == "ephemeral" and not spawner:
-            why.append(f"{s}: ephemeral needs spawner_configuration")
-        servers = step["mcp_servers"] if step.get("mcp_servers") is not None else spec.get("mcp_servers") or []
+        servers = (
+            step["mcp_servers"]
+            if step.get("mcp_servers") is not None
+            else spec.get("mcp_servers") or []
+        )
         for srv in servers:
             if isinstance(srv, str):
                 if srv not in g.get("mcp_servers", []):
@@ -328,43 +240,18 @@ def submit(
                         why.append(f"{s}: MCP secret '{ref['name']}' not granted for '{srv}'")
                 if secret_headers and spawn != "ephemeral" and stage == "pre269":
                     why.append(f"{s}: secret_headers need ephemeral before cloud-agents#269")
-            else:
-                if not g.get("inline_mcp"):
-                    why.append(f"{s}: inline MCP not granted")
-                parts = urlsplit(srv.get("url", ""))
-                if parts.scheme != "https" or parts.username or parts.password:
-                    why.append(f"{s}: inline MCP must be https without userinfo")
-                if srv.get("headers"):
-                    why.append(f"{s}: inline MCP literal header values are not allowed")
-                if parts.hostname not in g.get("inline_mcp_hosts", []):
-                    why.append(f"{s}: inline MCP host '{parts.hostname}' not allowed")
-                for ref in (srv.get("secret_headers") or {}).values():
-                    if ref["name"] not in g.get("mcp_secrets", []):
-                        why.append(f"{s}: inline MCP secret '{ref['name']}' not granted")
-        skills = step["allowed_skills"] if step.get("allowed_skills") is not None else spec.get("allowed_skills") or []
-        for sk in skills:
-            if sk not in g.get("skills", []):
-                why.append(f"{s}: skill '{sk}' not granted")
-        perms = step.get("permissions") or spec.get("permissions") or {}
-        for tool in [*step.get("tools", []), *(perms.get("allowed_tools") or [])]:
-            if tool not in g.get("tools", []):
-                why.append(f"{s}: tool '{tool}' not granted")
-        sa = step.get("service_account") or perms.get("service_account") or spec.get("service_account")
-        if sa and sa not in g.get("service_accounts", []):
-            why.append(f"{s}: service account '{sa}' not granted")
-        for ns in step.get("target_namespaces") or []:
-            if ns not in g.get("namespaces", []):
-                why.append(f"{s}: namespace '{ns}' not granted")
-        lim = g.get("limits", {})
-        if (step.get("timeout_seconds") or 0) > lim.get("max_timeout_seconds", 0):
-            why.append(f"{s}: timeout over limit")
-        if (perms.get("max_tokens") or 0) > lim.get("max_tokens", 0):
-            why.append(f"{s}: max_tokens over limit")
-        if step.get("max_retries", 0) > lim.get("max_retries", 0):
-            why.append(f"{s}: max_retries over limit")
-    if (spec.get("timeout_seconds") or 0) > g.get("limits", {}).get("max_timeout_seconds", 0):
-        why.append("workflow timeout over limit")
+                continue
+            if not g.get("inline_mcp"):
+                why.append(f"{s}: inline MCP not granted")
+            parts = urlsplit(srv.get("url", ""))
+            if parts.scheme != "https" or parts.username or parts.password:
+                why.append(f"{s}: inline MCP must be https without userinfo")
+            if srv.get("headers"):
+                why.append(f"{s}: inline MCP literal header values are not allowed")
+            if parts.hostname not in g.get("inline_mcp_hosts", []):
+                why.append(f"{s}: inline MCP host '{parts.hostname}' not allowed")
+            for ref in (srv.get("secret_headers") or {}).values():
+                if ref["name"] not in g.get("mcp_secrets", []):
+                    why.append(f"{s}: inline MCP secret '{ref['name']}' not granted")
     if why:
         raise Denied(403, *why)
-    return []
-

@@ -17,6 +17,7 @@ from workflow.catalog import (
     normalize_definition,
     resolve_run_provider,
 )
+from workflow.submission_guard import SubmissionRejected
 
 INFERENCE = SimpleNamespace(default_provider="openai", default_model="gpt-4o-mini")
 
@@ -421,3 +422,105 @@ def test_deprecation_headers_are_rfc_shaped() -> None:
     """Deprecation is an RFC 9745 @timestamp; Sunset is an HTTP date (RFC 8594)."""
     assert LEGACY_DEPRECATION.startswith("@") and LEGACY_DEPRECATION[1:].isdigit()
     assert LEGACY_SUNSET.endswith("GMT")
+
+
+def _rejection(call: Any) -> SubmissionRejected:
+    """Return the SubmissionRejected a call raises (failing if it returns)."""
+    with pytest.raises(SubmissionRejected) as exc_info:
+        call()
+    return exc_info.value
+
+
+@pytest.mark.parametrize(
+    ("requested", "reason", "path"),
+    [
+        ({"name": "gpt-everything", "model": "m"}, "provider_unknown", "/provider"),
+        ({"name": "claude-prod", "model": "opus"}, "model_not_allowed", "/provider"),
+        ({"name": "claude-prod", "model": ""}, "model_not_allowed", "/provider"),
+        ({"name": "openai-team-b"}, "model_not_allowed", "/provider"),
+        (
+            {"name": "claude-prod", "credential_ref": {"name": "inference/other"}},
+            "credential_not_allowed",
+            "/provider/credential_ref",
+        ),
+        (
+            {"name": "claude-prod", "credential_ref": {"name": "x", "key": "k"}},
+            "credential_not_allowed",
+            "/provider/credential_ref",
+        ),
+        (
+            {"name": "claude-prod", "credentials_secret": "ANTHROPIC_API_KEY"},
+            "credential_not_allowed",
+            "/provider/credentials_secret",
+        ),
+        ({"name": "claude-prod", "bogus": 1}, "forbidden_field", "/provider"),
+    ],
+)
+def test_resolve_rejections_carry_reason_and_pointer(
+    requested: dict[str, Any], reason: str, path: str
+) -> None:
+    """Catalog 400s carry an audit reason and a pointer, never caller values."""
+    exc = _rejection(lambda: resolve_run_provider(_governed(), INFERENCE, requested))
+    assert exc.status_code == 400
+    assert [r.value for r in exc.reasons] == [reason]
+    assert exc.paths == (path,)
+
+
+def test_legacy_credential_rejection_carries_reason() -> None:
+    """Legacy mode refuses credential fields with the credential reason."""
+    exc = _rejection(
+        lambda: resolve_run_provider(
+            LEGACY, INFERENCE, {"name": "openai", "credential_ref": {"name": "x"}}
+        )
+    )
+    assert [r.value for r in exc.reasons] == ["credential_not_allowed"]
+
+
+@pytest.mark.parametrize(
+    ("definition", "reason", "path"),
+    [
+        (
+            _definition(provider={"name": "nope", "model": "m"}),
+            "provider_unknown",
+            "/definition/provider",
+        ),
+        (
+            _definition(provider={"name": "openai-team-b", "model": "gpt-4o"}),
+            "credential_not_allowed",
+            "/definition/provider",
+        ),
+        (
+            _definition(provider={"name": "claude-prod", "model": "opus"}),
+            "model_not_allowed",
+            "/definition/provider",
+        ),
+        (
+            _definition(provider="gpt-evil"),
+            "provider_unknown",
+            "/definition/provider",
+        ),
+        (
+            _definition(
+                steps=[
+                    {"name": "a", "type": "agent", "output_key": "x"},
+                    {
+                        "name": "b",
+                        "type": "agent",
+                        "output_key": "y",
+                        "inference_provider": {"name": "nope", "model": "m"},
+                    },
+                ]
+            ),
+            "provider_unknown",
+            "/definition/spec/steps/1/inference_provider",
+        ),
+    ],
+)
+def test_normalize_rejections_carry_reason_and_pointer(
+    definition: dict[str, Any], reason: str, path: str
+) -> None:
+    """Override 400s point at the override that failed."""
+    exc = _rejection(lambda: normalize_definition(_governed(), definition, _resolved()))
+    assert exc.status_code == 400
+    assert [r.value for r in exc.reasons] == [reason]
+    assert exc.paths == (path,)

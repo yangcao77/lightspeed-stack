@@ -2,7 +2,10 @@
 
 # pylint: disable=import-outside-toplevel,global-statement,invalid-name
 
-from typing import Annotated, Any
+import copy
+import re
+import uuid
+from typing import Annotated, Any, Final, Optional
 
 from cloud_agents.workflow.core.definition import WorkflowDefinition
 from cloud_agents.workflow.core.execution import (
@@ -20,8 +23,16 @@ from authorization.middleware import authorize, is_admin
 from configuration import configuration
 from log import get_logger
 from models.api.requests.agents import ApproveWorkflowRequest, RunWorkflowRequest
+from models.api.responses.error import InternalServerErrorResponse
 from models.config import Action
 from utils.endpoints import check_configuration_loaded
+from workflow.audit import (
+    AuditReason,
+    json_pointer,
+    record_authorized,
+    record_denied,
+    record_start_failed,
+)
 from workflow.catalog import (
     LEGACY_DEPRECATION,
     LEGACY_SUNSET,
@@ -29,14 +40,27 @@ from workflow.catalog import (
     normalize_definition,
     resolve_run_provider,
 )
+from workflow.effective import (
+    REASON_SERVICE_ACCOUNT_CONFLICT,
+    EffectivePlan,
+    EffectivePlanError,
+    build_effective_plan,
+)
+from workflow.policy import Principal, authorize_workflow_submission
 from workflow.spawner_factory import build_spawner
 from workflow.submission_guard import (
-    enforce_submission_hardening,
+    SubmissionRejected,
+    reject_forbidden_caller_fields,
+    reject_over_count_caps,
     reject_oversized_definition,
 )
 
 logger = get_logger(__name__)
 router = APIRouter(tags=["workflows"])
+
+# Request id header; only plain tokens are trusted for the audit record.
+_REQUEST_ID_HEADER: Final[str] = "x-request-id"
+_SAFE_REQUEST_ID: Final[re.Pattern[str]] = re.compile(r"[A-Za-z0-9._:-]{1,128}")
 
 _executor = None
 
@@ -69,105 +93,364 @@ def _get_executor() -> Any:
     return _executor
 
 
-def _validate_workflow_submission(
-    definition: dict[str, Any], provider: dict[str, Any]
-) -> None:
-    """Reject invalid workflow input with 422 before the run is persisted.
+def _pointer_loc(pointer: str) -> list[int | str]:
+    """Turn a JSON pointer into a ``loc`` list (digit segments become ints).
 
-    Mirrors cloud-agents' own local/api.py submission gate: the definition
-    must pass cloud-agents validation and model validation, and the
-    run-level provider must be an approved executor-known provider whose
-    credentials_secret (when present) is a reference, never a value.
+    Parameters:
+        pointer: JSON pointer built from indices and fixed keys.
+
+    Returns:
+        The pointer's segments.
+    """
+    return [int(s) if s.isdigit() else s for s in pointer.split("/")[1:]]
+
+
+def _check_definition_shape(definition: dict[str, Any]) -> None:
+    """Typed-parse a throwaway deep copy of the definition (422 on failure).
+
+    The copy is discarded: neither it nor anything the parse fills in reaches
+    the executor. Errors are reported as ``[{loc, type}]`` only, because the
+    pydantic message and ``input`` echo caller values.
 
     Parameters:
         definition: Raw workflow definition from the request body.
-        provider: Merged run-level provider (request value or inference
-            defaults, with credentials_secret injected).
 
     Raises:
-        HTTPException: 422 with a ``validation_errors`` detail list when
-            any check fails.
+        SubmissionRejected: 422 ``shape_invalid``.
+    """
+    errors: list[dict[str, Any]] = []
+    try:
+        WorkflowDefinition.model_validate(copy.deepcopy(definition))
+    except ValidationError as exc:
+        errors = [
+            {"loc": ["definition", *err["loc"]], "type": err["type"]}
+            for err in exc.errors(
+                include_url=False, include_input=False, include_context=False
+            )
+        ]
+    # Raised outside the except block so the pydantic text is not chained.
+    if errors:
+        raise SubmissionRejected(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"validation_errors": errors},
+            reasons=(AuditReason.SHAPE_INVALID,),
+            paths=[json_pointer(*e["loc"]) for e in errors],
+        )
+
+
+def _build_plan(
+    definition: dict[str, Any],
+    resolved: ResolvedProvider,
+    *,
+    run_sandbox_image: Optional[str],
+    default_sandbox_image: str,
+) -> EffectivePlan:
+    """Build the effective plan, turning executor-rejected values into 422.
+
+    A service-account conflict is reported as ``service_account_conflict``
+    with both pointers; the executor's message (which contains both values)
+    is never produced or echoed, and this is not logged as drift.
+
+    Parameters:
+        definition: Normalized definition.
+        resolved: Resolved run-level provider.
+        run_sandbox_image: ``sandbox_image`` from the request body.
+        default_sandbox_image: The spawner's default image.
+
+    Returns:
+        The effective plan.
+
+    Raises:
+        SubmissionRejected: 422 ``service_account_conflict`` or
+            ``executor_validation_failed``.
+    """
+    error: Optional[EffectivePlanError] = None
+    try:
+        return build_effective_plan(
+            definition,
+            resolved,
+            run_sandbox_image=run_sandbox_image,
+            spawner_default_image=default_sandbox_image,
+        )
+    except EffectivePlanError as exc:
+        error = exc
+    conflict = error.reason == REASON_SERVICE_ACCOUNT_CONFLICT
+    paths = [error.path]
+    if error.conflicting_path is not None:
+        paths.append(error.conflicting_path)
+    raise SubmissionRejected(
+        status.HTTP_422_UNPROCESSABLE_CONTENT,
+        {
+            "validation_errors": [
+                {"loc": _pointer_loc(error.path), "type": error.reason}
+            ]
+        },
+        reasons=[
+            (
+                AuditReason.SERVICE_ACCOUNT_CONFLICT
+                if conflict
+                else AuditReason.EXECUTOR_VALIDATION_FAILED
+            )
+        ],
+        paths=paths,
+    )
+
+
+def _authorize_plan(
+    plan: EffectivePlan,
+    definition: dict[str, Any],
+    *,
+    principal: Principal,
+    default_sandbox_image: str,
+    spawner_configured: bool,
+) -> None:
+    """Apply the run-level policy (or the Phase 0a rules without one).
+
+    Parameters:
+        plan: Effective plan.
+        definition: Normalized definition (typed-parse checked).
+        principal: The caller.
+        default_sandbox_image: The spawner's default image (implicit grant).
+        spawner_configured: Whether a spawner_configuration exists.
+
+    Raises:
+        SubmissionRejected: 403 with every denial message for the caller;
+            only reason codes and pointers are audited.
+    """
+    skills = definition.get("skills")
+    skills_image = skills.get("image") if isinstance(skills, dict) else None
+    decision = authorize_workflow_submission(
+        plan,
+        principal,
+        configuration.workflow_engine_configuration.policy,  # pylint: disable=no-member
+        spawner_configured=spawner_configured,
+        default_sandbox_image=default_sandbox_image,
+        advisory=bool(definition.get("advisory")),
+        definition_skills_image=skills_image if isinstance(skills_image, str) else None,
+    )
+    if not decision.allowed:
+        raise SubmissionRejected(
+            status.HTTP_403_FORBIDDEN,
+            {"denied": [d.message for d in decision.denials]},
+            reasons=decision.reasons,
+            paths=decision.paths,
+        )
+
+
+def _executor_errors(
+    definition: dict[str, Any], provider: dict[str, Any]
+) -> tuple[list[Any], list[str]]:
+    """Run the executor's own submission checks on what will be started.
+
+    Parameters:
+        definition: Normalized definition.
+        provider: Run-level provider dict built by the stack.
+
+    Returns:
+        Caller-facing errors and their pointers; both empty when valid.
+        ``validate_definition`` messages are returned as-is (they name the
+        caller's own steps); provider errors are ``{loc, type}`` only.
     """
     definition_errors = validate_definition(definition)
     if definition_errors:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"validation_errors": definition_errors},
-        )
-    try:
-        WorkflowDefinition.model_validate(definition)
-    except ValidationError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"validation_errors": [str(exc)]},
-        ) from exc
+        return list(definition_errors), ["/definition"]
+    provider_error: Optional[str] = None
     try:
         inference_spec_from_provider_config(provider)
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"validation_errors": [f"provider: {exc}"]},
-        ) from exc
-    run_credentials_secret = provider.get("credentials_secret")
-    if run_credentials_secret is not None:
-        try:
-            validate_credential_reference(run_credentials_secret)
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail={"validation_errors": [f"provider: {exc}"]},
-            ) from exc
+        if provider.get("credentials_secret") is not None:
+            validate_credential_reference(provider["credentials_secret"])
+    except ValueError:
+        provider_error = "invalid_provider"
+    if provider_error is not None:
+        return [{"loc": ["provider"], "type": provider_error}], ["/provider"]
+    return [], []
+
+
+def _validate_with_executor(
+    definition: dict[str, Any], provider: dict[str, Any]
+) -> None:
+    """Reject input the executor would still refuse after the stack's checks.
+
+    LocalWorkflowRunner.start persists the raw definition and provider before
+    normalization runs (issue #55), so this must answer 422 before start.
+    Reaching it means the stack's own checks missed something, so it is
+    logged as drift, with the reason code and pointers only.
+
+    Parameters:
+        definition: Normalized definition.
+        provider: Run-level provider dict built by the stack.
+
+    Raises:
+        SubmissionRejected: 422 ``executor_validation_failed``.
+    """
+    errors, paths = _executor_errors(definition, provider)
+    if errors:
+        logger.warning(
+            "Workflow submission drift: executor validation rejected input "
+            "that passed the stack's checks (reason=%s, paths=%s)",
+            AuditReason.EXECUTOR_VALIDATION_FAILED.value,
+            paths,
+        )
+        raise SubmissionRejected(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"validation_errors": errors},
+            reasons=(AuditReason.EXECUTOR_VALIDATION_FAILED,),
+            paths=paths,
+        )
 
 
 def _prepare_submission(
     body: RunWorkflowRequest,
     *,
-    caller_is_admin: bool,
+    principal: Principal,
     default_sandbox_image: str,
     spawner_configured: bool,
-) -> tuple[ResolvedProvider, dict[str, Any]]:
-    """Run the submission gate and return what the workflow will run with.
+) -> tuple[ResolvedProvider, dict[str, Any], Optional[str]]:
+    """Run the submission pipeline and return what the workflow will run with.
+
+    Order (issue #51 Phase 2): 1. 413 byte cap; 2. 400 forbidden caller
+    fields on the raw dict; 3. 422 count caps; 4. 422 typed parse of a
+    throwaway copy; 5. 400 catalog resolution and normalization; 5b. 422
+    effective plan (service-account conflict, executor-rejected values);
+    6. 403 policy, every denial at once; 7. 422 executor validation, logged
+    as drift. Nothing has been persisted when this raises.
 
     Parameters:
         body: Request body as sent by the caller.
-        caller_is_admin: Whether the caller holds the ADMIN action.
+        principal: The caller.
         default_sandbox_image: The spawner's configured sandbox image.
         spawner_configured: Whether a spawner_configuration exists.
 
     Returns:
-        The resolved run-level provider and the normalized definition.
+        The resolved run-level provider, the normalized definition (exactly
+        what ``executor.start`` receives) and the provider name that is safe
+        to audit: the catalog name when governed, else None.
 
     Raises:
-        HTTPException: 413, 400, 422 or 403 per the status-code rule; nothing
-            has been persisted when this raises.
+        SubmissionRejected: 413, 400, 422 or 403 with audit reasons and
+            pointers; ``provider`` is set once it is safe to audit.
     """
-    reject_oversized_definition(body.definition)
     engine = configuration.workflow_engine_configuration
+    reject_oversized_definition(body.definition)
+    reject_forbidden_caller_fields(
+        body.definition,
+        body.provider,
+        logical_credentials=(
+            frozenset(p.credential.name for p in engine.providers if p.credential)
+            if engine.governed
+            else None
+        ),
+    )
+    reject_over_count_caps(body.definition)
+    _check_definition_shape(body.definition)
     resolved = resolve_run_provider(engine, configuration.inference, body.provider)
     definition = normalize_definition(engine, body.definition, resolved)
 
-    # Submission-time gate (issue #55): LocalWorkflowRunner.start persists
-    # the raw definition and provider BEFORE build_graph/normalization
-    # runs, so secret-bearing, malformed, or unapproved-provider input
-    # must be rejected here -- otherwise it returns 202 and lands in
-    # workflow state first. It sees the normalized definition and the dict the
-    # stack built; the hardening check sees what the caller sent (minus the
-    # deprecated field when it was accepted as a logical name).
-    _validate_workflow_submission(definition, resolved.provider)
-    caller_provider = {
-        k: v
-        for k, v in (body.provider or {}).items()
-        if not (k == "credentials_secret" and resolved.legacy_credentials_secret)
-    }
-    enforce_submission_hardening(
-        body.definition,
-        caller_provider,
-        body.sandbox_image,
-        is_admin=caller_is_admin,
-        default_sandbox_image=default_sandbox_image,
-        spawner_configured=spawner_configured,
+    # In legacy mode the provider name is caller-chosen until the executor
+    # has accepted it, so it is only audited once a catalog resolved it.
+    audit_provider = resolved.catalog_name if engine.governed else None
+    try:
+        plan = _build_plan(
+            definition,
+            resolved,
+            run_sandbox_image=body.sandbox_image,
+            default_sandbox_image=default_sandbox_image,
+        )
+        _authorize_plan(
+            plan,
+            definition,
+            principal=principal,
+            default_sandbox_image=default_sandbox_image,
+            spawner_configured=spawner_configured,
+        )
+        _validate_with_executor(definition, resolved.provider)
+    except SubmissionRejected as exc:
+        raise SubmissionRejected(
+            exc.status_code,
+            exc.detail,
+            reasons=exc.reasons,
+            paths=exc.paths,
+            provider=audit_provider,
+        ) from None
+    return resolved, definition, audit_provider
+
+
+def _request_id(request: Request) -> str:
+    """Return the caller's request id when it is a plain token, else a new one.
+
+    Parameters:
+        request: The incoming request.
+
+    Returns:
+        A request id that is safe to audit.
+    """
+    value = request.headers.get(_REQUEST_ID_HEADER)
+    if isinstance(value, str) and _SAFE_REQUEST_ID.fullmatch(value):
+        return value
+    return uuid.uuid4().hex
+
+
+def _user_roles(request: Request) -> frozenset[str]:
+    """Return the roles ``@authorize`` stored on the request.
+
+    Parameters:
+        request: Request that passed through ``@authorize``.
+
+    Returns:
+        The caller's roles; empty when none were resolved.
+    """
+    roles = getattr(request.state, "user_roles", None)
+    if not isinstance(roles, (set, frozenset, list, tuple)):
+        return frozenset()
+    return frozenset(r for r in roles if isinstance(r, str))
+
+
+async def _start_audited(
+    executor: Any,
+    workflow_input: dict[str, Any],
+    *,
+    user_id: str,
+    request_id: str,
+    provider: Optional[str],
+) -> str:
+    """Start the workflow and write its single audit record.
+
+    ``workflow_authorized`` is recorded only after ``start`` returned. When
+    ``start`` raises, ``workflow_start_failed`` is recorded and a generic 500
+    is raised; the exception text may echo the definition, so it is neither
+    logged, chained nor returned.
+
+    Parameters:
+        executor: The workflow executor.
+        workflow_input: Input handed to ``executor.start``.
+        user_id: Identifier from the auth layer.
+        request_id: Audit-safe request identifier.
+        provider: Audit-safe provider name (catalog name when governed, else None).
+
+    Returns:
+        The workflow identifier.
+
+    Raises:
+        HTTPException: Generic 500 when ``executor.start`` raises.
+    """
+    try:
+        workflow_id = str(await executor.start(workflow_input))
+    except Exception:  # pylint: disable=broad-exception-caught
+        record_start_failed(user_id=user_id, request_id=request_id, provider=provider)
+        logger.error(
+            "Workflow start failed: user=%s, request_id=%s", user_id, request_id
+        )
+        raise HTTPException(
+            **InternalServerErrorResponse.generic().model_dump()
+        ) from None
+    record_authorized(
+        user_id=user_id,
+        request_id=request_id,
+        status=status.HTTP_202_ACCEPTED,
+        workflow_id=workflow_id,
+        provider=provider,
     )
-    return resolved, definition
+    return workflow_id
 
 
 @router.post(
@@ -205,21 +488,33 @@ async def start_workflow_handler(
         else "lightspeed-agentic-sandbox:latest"
     )
 
-    # Pipeline order (issue #51): byte cap (413), catalog resolution (400),
-    # shape (422), then the stack's own rules -- forbidden caller fields (400),
-    # count caps (422) and privileged options (403) -- all before anything is
-    # persisted.
-    resolved, definition = _prepare_submission(
-        body,
-        caller_is_admin=is_admin(request),
-        default_sandbox_image=default_sandbox_image,
-        spawner_configured=spawner_config is not None,
-    )
-    provider = resolved.provider
+    # Exactly one audit record per request from here on (issue #51 Phase 2):
+    # workflow_denied for any pipeline rejection, workflow_start_failed when
+    # start raises, workflow_authorized only after start returned.
+    request_id = _request_id(request)
+    try:
+        resolved, definition, audit_provider = _prepare_submission(
+            body,
+            principal=Principal(
+                user_id=user_id, is_admin=is_admin(request), roles=_user_roles(request)
+            ),
+            default_sandbox_image=default_sandbox_image,
+            spawner_configured=spawner_config is not None,
+        )
+    except SubmissionRejected as exc:
+        record_denied(
+            user_id=user_id,
+            request_id=request_id,
+            status=exc.status_code,
+            reasons=exc.reasons,
+            paths=exc.paths,
+            provider=exc.provider,
+        )
+        raise
 
     workflow_input = {
         "definition": definition,
-        "provider": provider,
+        "provider": resolved.provider,
         "sandbox_image": body.sandbox_image or default_sandbox_image,
         "approval_policy": body.approval_policy,
         "session_id": body.session_id,
@@ -231,8 +526,13 @@ async def start_workflow_handler(
             "credential_ref": resolved.credential_ref,
         },
     }
-
-    workflow_id = await executor.start(workflow_input)
+    workflow_id = await _start_audited(
+        executor,
+        workflow_input,
+        user_id=user_id,
+        request_id=request_id,
+        provider=audit_provider,
+    )
 
     logger.info(
         "Workflow started: id=%s, user=%s",
@@ -240,17 +540,13 @@ async def start_workflow_handler(
         username,
     )
 
-    result = {
-        "workflow_id": workflow_id,
-        "status": "running",
-    }
     if resolved.legacy_credentials_secret:
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
-            content=result,
+            content={"workflow_id": workflow_id, "status": "running"},
             headers={"Deprecation": LEGACY_DEPRECATION, "Sunset": LEGACY_SUNSET},
         )
-    return result
+    return {"workflow_id": workflow_id, "status": "running"}
 
 
 @router.get("/workflows/{workflow_id}")

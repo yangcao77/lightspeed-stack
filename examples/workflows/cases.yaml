@@ -2,8 +2,9 @@
 # cases.yaml — the behavioural contract for stack#51 (feature-level TDD).
 #
 # Each case is a request (or a config) and the status the gate must return.
-# verify.py runs them against reference_gate.py today; as phases land they
-# should run against the real endpoint and the reference code is deleted.
+# Phases 0-2 run against the real endpoint and config (the unit test and
+# verify.py share contract_util.run_real_case); cases for later phases run
+# against reference_gate.py until their phase lands and that code is deleted.
 #
 #   workflow:  base definition file; `set` patches it (dotted path, list items
 #              addressed by index or by their `name`); `body_set` patches the
@@ -11,6 +12,8 @@
 #   as:        roles of the caller (default per workflow below)
 #   expect:    HTTP status, or {pre269: N, post269: N} when the stages differ
 #   reason:    substring that must appear in the returned reasons
+#   denied_contains: substring that must appear in a caller-facing denial
+#              message of the real endpoint (real-phase cases only)
 #   spawner:   false = stack has no spawner_configuration
 # phase:    stack#51 phase that makes the case real; tests/unit/cloud_agents/
 #           test_workflow_contract.py runs cases up to the implemented phase
@@ -33,6 +36,10 @@ workflow_cases:
   - {phase: 1, name: triage as agent-user, workflow: triage-github-issue, expect: 202}
   - {phase: 1, name: kb answer as agent-support, workflow: kb-answer-with-approval, expect: 202}
   - {phase: 3, name: admin inline MCP with registry ref, workflow: admin-inline-mcp, expect: 202}
+  # Named MCP is denied in policy mode until Phase 3, so the cases tagged below
+  # Phase 3 run with the workflow-level MCP names removed (contract_util).
+  - {phase: 3, name: triage with the granted named MCP server, workflow: triage-github-issue, expect: 202}
+  - {phase: 3, name: kb answer with the granted named MCP server, workflow: kb-answer-with-approval, expect: 202}
   - name: credential_ref equal to the entry's credential is accepted
     phase: 1
     workflow: triage-github-issue
@@ -181,12 +188,34 @@ workflow_cases:
     set: {spec.steps.triage.allowed_skills: [kb-search]}
     expect: 403
     reason: skill
-  - name: tool not granted
+  # Ephemeral steps need an explicit tools: ["*"] grant (the sandbox does not
+  # enforce finite tool lists). agent-restricted has the triage grants with
+  # tools: [github.read]; the wildcard roles pass whatever allowed_tools says.
+  - name: finite tools grant is rejected for ephemeral steps
     phase: 2
     workflow: triage-github-issue
-    set: {spec.steps.triage.tools: [github.write]}
+    as: [agent-restricted]
     expect: 403
-    reason: tool
+    reason: tools_not_enforceable
+    denied_contains: wildcard
+  - name: finite tools grant is rejected even when the requested tool is granted
+    phase: 2
+    workflow: triage-github-issue
+    as: [agent-restricted]
+    set: {spec.steps.triage.tools: [github.read], spec.steps.triage.permissions.allowed_tools: [github.read]}
+    expect: 403
+    reason: tools_not_enforceable
+    denied_contains: wildcard
+  - name: wildcard tools grant passes with a finite allowed_tools request
+    phase: 2
+    workflow: triage-github-issue
+    set: {spec.steps.triage.permissions.allowed_tools: [github.read]}
+    expect: 202
+  - name: wildcard tools grant passes with allowed_tools null
+    phase: 2
+    workflow: triage-github-issue
+    set: {spec.steps.triage.permissions.allowed_tools: null}
+    expect: 202
   - name: service account not granted
     phase: 2
     workflow: triage-github-issue
@@ -217,11 +246,16 @@ workflow_cases:
     set: {spec.steps.triage.max_retries: 9}
     expect: 403
     reason: max_retries
-  - name: workflow timeout over the role limit
+  # Plan rev 5c/5d: the executor has no workflow deadline and spec.timeout_seconds
+  # is only an inherited per-step default (both triage steps set their own), so
+  # the workflow budget is the sum of step_timeout x (max_retries + 1). Here
+  # 600 x 3 + 900 x 3 = 4500 against a 3600 limit; each step is within its own.
+  - name: workflow total over the role limit (sum of step budgets)
     phase: 2
     workflow: triage-github-issue
-    set: {spec.timeout_seconds: 7200}
+    set: {spec.steps.report.timeout_seconds: 900, spec.steps.report.max_retries: 2}
     expect: 403
+    reason: workflow
 
   # ---- spawn modes, images, advisory -----------------------------------------
   - name: spawn none as agent-user

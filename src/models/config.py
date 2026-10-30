@@ -4,6 +4,7 @@
 
 import os
 import re
+from collections.abc import Iterable
 from enum import Enum
 from functools import cached_property
 from pathlib import Path
@@ -34,6 +35,7 @@ from models.common.secrets import SECRET_NAME_PATTERN, SecretRef
 from utils import checks
 from utils.mcp_auth_headers import resolve_authorization_headers
 from utils.types import CompiledPatterns
+from workflow import limits as workflow_limits
 
 logger = get_logger(__name__)
 
@@ -3329,6 +3331,329 @@ class WorkflowInferenceProvider(ConfigurationBase):
         return value
 
 
+_POLICY_LIST_GRANTS: Final[tuple[str, ...]] = (
+    "providers",
+    "skills",
+    "tools",
+    "images",
+    "service_accounts",
+    "namespaces",
+    "spawn_modes",
+)
+
+_POLICY_RESERVED_FIELDS: Final[tuple[str, ...]] = (
+    "mcp",
+    "inline_mcp",
+    "inline_mcp_hosts",
+    "mcp_secrets",
+    "ssrf",
+)
+
+POLICY_WILDCARD: Final[str] = "*"
+
+
+class PolicyLimits(ConfigurationBase):
+    """Numeric ceilings a policy rule grants.
+
+    An absent limit grants nothing (0). Each value is bounded by a hard cap
+    from `workflow.limits`; there is no unbounded value.
+
+    Attributes:
+        max_step_timeout_seconds: Per-step timeout ceiling.
+        max_workflow_seconds: Declared total-duration ceiling.
+        max_retries: Per-step retry ceiling.
+        max_tokens: Declared token budget ceiling.
+    """
+
+    max_step_timeout_seconds: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=workflow_limits.MAX_POLICY_STEP_TIMEOUT_SECONDS,
+        title="Max step timeout",
+        description="Ceiling for a step's timeout in seconds "
+        f"(hard cap {workflow_limits.MAX_POLICY_STEP_TIMEOUT_SECONDS}).",
+    )
+    max_workflow_seconds: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=workflow_limits.MAX_POLICY_WORKFLOW_SECONDS,
+        title="Max workflow seconds",
+        description="Ceiling for the declared workflow duration in seconds "
+        f"(hard cap {workflow_limits.MAX_POLICY_WORKFLOW_SECONDS}).",
+    )
+    max_retries: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=workflow_limits.MAX_POLICY_RETRIES,
+        title="Max retries",
+        description=f"Ceiling for step retries (hard cap {workflow_limits.MAX_POLICY_RETRIES}).",
+    )
+    max_tokens: Optional[int] = Field(
+        default=None,
+        ge=0,
+        le=workflow_limits.MAX_POLICY_TOKENS,
+        title="Max tokens",
+        description="Ceiling for a step's declared token budget "
+        f"(hard cap {workflow_limits.MAX_POLICY_TOKENS}); 'unbounded' is rejected.",
+    )
+
+    @field_validator("*", mode="before")
+    @classmethod
+    def require_integer(cls, value: Any) -> Any:
+        """Reject anything but an integer (strings, floats and booleans).
+
+        Parameters:
+            value: The raw configured value.
+
+        Returns:
+            The value unchanged when it is None or an integer.
+
+        Raises:
+            ValueError: If the value is not an integer.
+        """
+        if value is None or (isinstance(value, int) and not isinstance(value, bool)):
+            return value
+        hint = " (there is no unbounded value)" if value == "unbounded" else ""
+        raise ValueError(f"limit must be an integer{hint}")
+
+    def any_set(self) -> bool:
+        """Whether any limit is configured.
+
+        Returns:
+            True when at least one limit is not None.
+        """
+        return any(v is not None for v in self.model_dump().values())
+
+
+class PolicyRule(ConfigurationBase):
+    """One policy rule: what a role may use and how far it may go.
+
+    List grants treat missing, null and empty as no grant; ``["*"]`` means any
+    value and must not be mixed with other entries.
+
+    Attributes:
+        role: Role the rule applies to ("*" matches every caller).
+        inherit: Other roles whose rules also apply.
+        providers: Granted catalog provider names.
+        skills: Granted skills.
+        tools: Granted tools; governs step ``tools`` and
+            ``permissions.allowed_tools``. Ephemeral steps need an explicit
+            ``["*"]``; a finite list is rejected as ``tools_not_enforceable``.
+        images: Granted sandbox images.
+        service_accounts: Granted service accounts.
+        namespaces: Granted namespaces.
+        spawn_modes: Granted spawn modes.
+        advisory: Whether advisory steps are allowed.
+        limits: Numeric ceilings.
+        mcp: Reserved (Phase 3).
+        inline_mcp: Reserved (Phase 3).
+        inline_mcp_hosts: Reserved (Phase 3).
+        mcp_secrets: Reserved (Phase 3).
+        ssrf: Reserved (Phase 3).
+    """
+
+    role: str = Field(..., min_length=1, title="Role", description="Role name or '*'.")
+    inherit: list[str] = Field(
+        default_factory=list,
+        title="Inherited roles",
+        description="Roles whose rules also apply (transitive).",
+    )
+    providers: Optional[list[str]] = Field(default=None, title="Providers")
+    skills: Optional[list[str]] = Field(default=None, title="Skills")
+    tools: Optional[list[str]] = Field(
+        default=None,
+        title="Tools",
+        description=(
+            "Granted tools; governs step 'tools' and "
+            "'permissions.allowed_tools'. Ephemeral steps require an "
+            "explicit wildcard ('*'): the sandbox does not enforce finite "
+            "tool lists, so a finite or missing grant is rejected with "
+            "'tools_not_enforceable'. The wildcard authorizes the sandbox's "
+            "default, unrestricted tool access; it does not promise that a "
+            "caller-supplied allowed_tools list is enforced."
+        ),
+    )
+    images: Optional[list[str]] = Field(default=None, title="Images")
+    service_accounts: Optional[list[str]] = Field(
+        default=None, title="Service accounts"
+    )
+    namespaces: Optional[list[str]] = Field(default=None, title="Namespaces")
+    spawn_modes: Optional[list[str]] = Field(default=None, title="Spawn modes")
+    advisory: bool = Field(
+        default=False,
+        title="Advisory",
+        description="Whether advisory steps are allowed.",
+    )
+    limits: PolicyLimits = Field(
+        default_factory=PolicyLimits,
+        title="Limits",
+        description="Numeric ceilings; absent values grant nothing.",
+    )
+    mcp: Optional[list[str]] = Field(
+        default=None,
+        title="MCP catalog",
+        description="Reserved: not supported until Phase 3.",
+    )
+    inline_mcp: bool = Field(
+        default=False,
+        title="Inline MCP",
+        description="Reserved: not supported until Phase 3.",
+    )
+    inline_mcp_hosts: Optional[list[str]] = Field(
+        default=None,
+        title="Inline MCP hosts",
+        description="Reserved: not supported until Phase 3.",
+    )
+    mcp_secrets: Optional[list[str]] = Field(
+        default=None,
+        title="MCP secrets",
+        description="Reserved: not supported until Phase 3.",
+    )
+    ssrf: bool = Field(
+        default=False,
+        title="SSRF checks",
+        description="Reserved: not supported until Phase 3.",
+    )
+
+    @model_validator(mode="after")
+    def check_rule(self) -> Self:
+        """Reject reserved fields and malformed list grants.
+
+        Returns:
+            The validated rule.
+
+        Raises:
+            ValueError: If a reserved field is set to a non-default value, or
+                "*" is mixed with other entries in a list grant.
+        """
+        errors: list[str] = []
+        for name in _POLICY_RESERVED_FIELDS:
+            if getattr(self, name):
+                errors.append(f"{name} is not supported until Phase 3")
+        for name in _POLICY_LIST_GRANTS:
+            values: list[str] = getattr(self, name) or []
+            if len(values) > 1 and POLICY_WILDCARD in values:
+                errors.append(
+                    f"role '{self.role}': {name} mixes '*' with other entries"
+                )
+        if errors:
+            raise ValueError("; ".join(errors))
+        return self
+
+    def grants_anything(self) -> bool:
+        """Whether the rule grants any access, advisory use or limit.
+
+        Returns:
+            True when a list grant is non-empty, advisory is set, or a limit
+            is configured.
+        """
+        return (
+            any(getattr(self, name) for name in _POLICY_LIST_GRANTS)
+            or self.advisory
+            or self.limits.any_set()  # pylint: disable=no-member
+        )
+
+
+class WorkflowPolicy(ConfigurationBase):
+    """Run-level workflow policy: a list of role rules.
+
+    Attributes:
+        rules: Policy rules; several rules may share a role.
+    """
+
+    rules: list[PolicyRule] = Field(
+        default_factory=list,
+        title="Policy rules",
+        description="Role rules; a caller's grant is the union of the rules "
+        "for its roles and everything they inherit.",
+    )
+
+    _closure: dict[str, tuple[PolicyRule, ...]] = PrivateAttr(default_factory=dict)
+
+    @model_validator(mode="after")
+    def check_inheritance(self) -> Self:
+        """Check inherit targets and cycles, then compute the closure.
+
+        Returns:
+            The validated policy.
+
+        Raises:
+            ValueError: If an inherit names an unknown role or roles inherit
+                each other in a cycle.
+        """
+        roles = {rule.role for rule in self.rules}
+        errors = [
+            f"role '{rule.role}' inherits unknown role '{target}'"
+            for rule in self.rules
+            for target in rule.inherit
+            if target not in roles
+        ]
+        if errors:
+            raise ValueError("; ".join(errors))
+
+        edges: dict[str, set[str]] = {role: set() for role in roles}
+        for rule in self.rules:
+            edges[rule.role].update(rule.inherit)
+
+        done: set[str] = set()
+
+        def visit(role: str, path: tuple[str, ...]) -> None:
+            """Depth-first walk that raises on a back edge."""
+            if role in path:
+                cycle = " -> ".join((*path[path.index(role) :], role))
+                raise ValueError(f"policy inherit cycle: {cycle}")
+            if role in done:
+                return
+            for target in sorted(edges[role]):
+                visit(target, (*path, role))
+            done.add(role)
+
+        for role in sorted(roles):
+            visit(role, ())
+
+        self._closure = {}
+        for role in roles:
+            reachable: set[str] = set()
+            stack = [role]
+            while stack:
+                current = stack.pop()
+                if current not in reachable:
+                    reachable.add(current)
+                    stack.extend(edges[current])
+            self._closure[role] = tuple(r for r in self.rules if r.role in reachable)
+        return self
+
+    def rules_for(self, roles: Iterable[str]) -> list[PolicyRule]:
+        """Return the rules that apply to a set of roles.
+
+        Parameters:
+            roles: The caller's roles (callers always include "*"); roles
+                with no rule contribute nothing.
+
+        Returns:
+            The union of rules for those roles and everything they inherit,
+            in configuration order, without duplicates.
+        """
+        selected: set[int] = set()
+        for role in roles:
+            for rule in self._closure.get(role, ()):
+                selected.add(id(rule))
+        return [rule for rule in self.rules if id(rule) in selected]
+
+    def grants_to_non_wildcard_roles(self) -> bool:
+        """Whether any role other than "*" can reach a granting rule.
+
+        Returns:
+            True when the closure of some non-wildcard role grants anything.
+        """
+        return any(
+            rule.grants_anything()
+            for role, rules in self._closure.items()
+            if role != POLICY_WILDCARD
+            for rule in rules
+        )
+
+
 class WorkflowEngineConfiguration(ConfigurationBase):
     """Workflow engine configuration.
 
@@ -3341,6 +3666,7 @@ class WorkflowEngineConfiguration(ConfigurationBase):
         secrets: Registry mapping logical secret names to backend bindings.
         default_provider: Default catalog entry on workflow paths (governed mode).
         default_model: Default model on workflow paths (governed mode).
+        policy: Optional run-level policy; requires governed mode.
     """
 
     enabled: bool = Field(
@@ -3386,6 +3712,13 @@ class WorkflowEngineConfiguration(ConfigurationBase):
         default=None,
         title="Default model",
         description="Model used when a request names none (governed mode).",
+    )
+
+    policy: Optional[WorkflowPolicy] = Field(
+        default=None,
+        title="Workflow policy",
+        description="Run-level policy rules. Requires governed mode "
+        "(a non-empty providers catalog).",
     )
 
     @property
@@ -3480,6 +3813,35 @@ class WorkflowEngineConfiguration(ConfigurationBase):
                     f"default_model '{self.default_model}' is not allowed by "
                     f"provider '{default.name}'"
                 )
+        if errors:
+            raise ValueError("; ".join(errors))
+        return self
+
+    @model_validator(mode="after")
+    def check_policy(self) -> Self:
+        """Apply the load-time checks that tie the policy to the catalog.
+
+        Returns:
+            The validated configuration.
+
+        Raises:
+            ValueError: If a policy is set without governed mode, or a rule
+                grants a provider that is not in the catalog.
+        """
+        if self.policy is None:
+            return self
+        if not self.governed:
+            raise ValueError(
+                "policy requires governed mode: configure a non-empty providers "
+                "catalog"
+            )
+        known = {p.name for p in self.providers}
+        errors = [
+            f"policy role '{rule.role}': unknown provider '{name}'"
+            for rule in self.policy.rules  # pylint: disable=no-member
+            for name in rule.providers or []
+            if name != POLICY_WILDCARD and name not in known
+        ]
         if errors:
             raise ValueError("; ".join(errors))
         return self
@@ -3900,6 +4262,43 @@ class Configuration(ConfigurationBase):
             raise ValueError(
                 "workflow_engine.enabled=true requires a PostgreSQL database. "
                 "Workflow state storage uses JSONB and is not supported with SQLite."
+            )
+        return self
+
+    @model_validator(mode="after")
+    def validate_policy_auth_module(self) -> Self:
+        """Reject role grants that the configured auth module cannot deliver.
+
+        Only jwk-token with role_rules and access_rules yields roles other
+        than "*"; every other module gives callers only "*".
+
+        Returns:
+            Self: The model instance after validation.
+
+        Raises:
+            ValueError: If a non-wildcard role is granted something but the
+                authentication module cannot supply that role.
+        """
+        policy = self.workflow_engine.policy  # pylint: disable=no-member
+        if policy is None or not policy.grants_to_non_wildcard_roles():
+            return self
+        # pylint: disable=no-member
+        auth = self.authentication
+        authorization = self.authorization
+        access_rules = authorization.access_rules if authorization else []
+        jwk = auth.jwk_config
+        role_rules = jwk.jwt_configuration.role_rules if jwk else []
+        if auth.module != constants.AUTH_MOD_JWK_TOKEN:
+            raise ValueError(
+                "workflow_engine.policy grants to non-wildcard roles, which "
+                f"requires the jwk-token authentication module (got '{auth.module}'); "
+                "other modules only provide the '*' role"
+            )
+        if not role_rules or not access_rules:
+            raise ValueError(
+                "workflow_engine.policy grants to non-wildcard roles, which "
+                "requires jwt role_rules and authorization access_rules to be "
+                "non-empty with jwk-token"
             )
         return self
 

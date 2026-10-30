@@ -18251,6 +18251,262 @@
                 "title": "PgvectorVectorStoreProviderConfig",
                 "description": "Storage config for a pgvector dynamic vector-store provider."
             },
+            "PolicyLimits": {
+                "properties": {
+                    "max_step_timeout_seconds": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 3600.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max step timeout",
+                        "description": "Ceiling for a step's timeout in seconds (hard cap 3600)."
+                    },
+                    "max_workflow_seconds": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 86400.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max workflow seconds",
+                        "description": "Ceiling for the declared workflow duration in seconds (hard cap 86400)."
+                    },
+                    "max_retries": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 5.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max retries",
+                        "description": "Ceiling for step retries (hard cap 5)."
+                    },
+                    "max_tokens": {
+                        "anyOf": [
+                            {
+                                "type": "integer",
+                                "maximum": 1000000.0,
+                                "minimum": 0.0
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Max tokens",
+                        "description": "Ceiling for a step's declared token budget (hard cap 1000000); 'unbounded' is rejected."
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "PolicyLimits",
+                "description": "Numeric ceilings a policy rule grants.\n\nAn absent limit grants nothing (0). Each value is bounded by a hard cap\nfrom `workflow.limits`; there is no unbounded value.\n\nAttributes:\n    max_step_timeout_seconds: Per-step timeout ceiling.\n    max_workflow_seconds: Declared total-duration ceiling.\n    max_retries: Per-step retry ceiling.\n    max_tokens: Declared token budget ceiling."
+            },
+            "PolicyRule": {
+                "properties": {
+                    "role": {
+                        "type": "string",
+                        "minLength": 1,
+                        "title": "Role",
+                        "description": "Role name or '*'."
+                    },
+                    "inherit": {
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array",
+                        "title": "Inherited roles",
+                        "description": "Roles whose rules also apply (transitive)."
+                    },
+                    "providers": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Providers"
+                    },
+                    "skills": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Skills"
+                    },
+                    "tools": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Tools",
+                        "description": "Granted tools; governs step 'tools' and 'permissions.allowed_tools'. Ephemeral steps require an explicit wildcard ('*'): the sandbox does not enforce finite tool lists, so a finite or missing grant is rejected with 'tools_not_enforceable'. The wildcard authorizes the sandbox's default, unrestricted tool access; it does not promise that a caller-supplied allowed_tools list is enforced."
+                    },
+                    "images": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Images"
+                    },
+                    "service_accounts": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Service accounts"
+                    },
+                    "namespaces": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Namespaces"
+                    },
+                    "spawn_modes": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Spawn modes"
+                    },
+                    "advisory": {
+                        "type": "boolean",
+                        "title": "Advisory",
+                        "description": "Whether advisory steps are allowed.",
+                        "default": false
+                    },
+                    "limits": {
+                        "$ref": "#/components/schemas/PolicyLimits",
+                        "title": "Limits",
+                        "description": "Numeric ceilings; absent values grant nothing."
+                    },
+                    "mcp": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "MCP catalog",
+                        "description": "Reserved: not supported until Phase 3."
+                    },
+                    "inline_mcp": {
+                        "type": "boolean",
+                        "title": "Inline MCP",
+                        "description": "Reserved: not supported until Phase 3.",
+                        "default": false
+                    },
+                    "inline_mcp_hosts": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Inline MCP hosts",
+                        "description": "Reserved: not supported until Phase 3."
+                    },
+                    "mcp_secrets": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "type": "string"
+                                },
+                                "type": "array"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "MCP secrets",
+                        "description": "Reserved: not supported until Phase 3."
+                    },
+                    "ssrf": {
+                        "type": "boolean",
+                        "title": "SSRF checks",
+                        "description": "Reserved: not supported until Phase 3.",
+                        "default": false
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                    "role"
+                ],
+                "title": "PolicyRule",
+                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs step ``tools`` and\n        ``permissions.allowed_tools``. Ephemeral steps need an explicit\n        ``[\"*\"]``; a finite list is rejected as ``tools_not_enforceable``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Reserved (Phase 3).\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
+            },
             "PostgreSQLDatabaseConfiguration": {
                 "properties": {
                     "host": {
@@ -23833,12 +24089,24 @@
                         ],
                         "title": "Default model",
                         "description": "Model used when a request names none (governed mode)."
+                    },
+                    "policy": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WorkflowPolicy"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ],
+                        "title": "Workflow policy",
+                        "description": "Run-level policy rules. Requires governed mode (a non-empty providers catalog)."
                     }
                 },
                 "additionalProperties": false,
                 "type": "object",
                 "title": "WorkflowEngineConfiguration",
-                "description": "Workflow engine configuration.\n\nAttributes:\n    enabled: Whether the workflow engine is active.\n    max_concurrent_workflows: Maximum simultaneous workflow executions.\n    transcript_retention_days: Days to retain step transcripts.\n    providers: Provider catalog. Empty means legacy mode; non-empty means\n        governed mode, where unknown names deny.\n    secrets: Registry mapping logical secret names to backend bindings.\n    default_provider: Default catalog entry on workflow paths (governed mode).\n    default_model: Default model on workflow paths (governed mode)."
+                "description": "Workflow engine configuration.\n\nAttributes:\n    enabled: Whether the workflow engine is active.\n    max_concurrent_workflows: Maximum simultaneous workflow executions.\n    transcript_retention_days: Days to retain step transcripts.\n    providers: Provider catalog. Empty means legacy mode; non-empty means\n        governed mode, where unknown names deny.\n    secrets: Registry mapping logical secret names to backend bindings.\n    default_provider: Default catalog entry on workflow paths (governed mode).\n    default_model: Default model on workflow paths (governed mode).\n    policy: Optional run-level policy; requires governed mode."
             },
             "WorkflowInferenceProvider": {
                 "properties": {
@@ -23909,6 +24177,22 @@
                 ],
                 "title": "WorkflowInferenceProvider",
                 "description": "One entry in the workflow provider catalog.\n\nAttributes:\n    name: Logical name callers send.\n    executor_type: cloud-agents provider type this entry runs as.\n    credential: The single credential of this entry (a logical ref).\n    allowed_models: Models callers may use; None means any model.\n    base_url: Reserved for an operator-set endpoint (Azure and self-hosted).\n        Rejected when set: the executor has no endpoint field yet, so the\n        value would be silently dropped (cloud-agents#269)."
+            },
+            "WorkflowPolicy": {
+                "properties": {
+                    "rules": {
+                        "items": {
+                            "$ref": "#/components/schemas/PolicyRule"
+                        },
+                        "type": "array",
+                        "title": "Policy rules",
+                        "description": "Role rules; a caller's grant is the union of the rules for its roles and everything they inherit."
+                    }
+                },
+                "additionalProperties": false,
+                "type": "object",
+                "title": "WorkflowPolicy",
+                "description": "Run-level workflow policy: a list of role rules.\n\nAttributes:\n    rules: Policy rules; several rules may share a role."
             }
         }
     },

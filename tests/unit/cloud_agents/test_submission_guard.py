@@ -1,4 +1,9 @@
-"""Unit tests for the workflow submission hardening guard (issue #51, Phase 0a)."""
+"""Unit tests for the workflow submission guard (issue #51, Phases 0a and 2).
+
+The guard keeps the pre-parse checks: the byte cap (413), forbidden caller
+fields (400) and count caps (422). The privileged-option rules (403) moved to
+``workflow.policy`` in Phase 2 and are tested there and at the endpoint.
+"""
 
 # pylint: disable=too-few-public-methods
 
@@ -8,8 +13,8 @@ import copy
 from typing import Any, Optional
 
 import pytest
-from fastapi import HTTPException
 
+from workflow.audit import AuditReason, json_pointer
 from workflow.limits import (
     MAX_DEFINITION_BYTES,
     MAX_MCP_SERVERS_PER_STEP,
@@ -17,11 +22,13 @@ from workflow.limits import (
     MAX_WORKFLOW_STEPS,
 )
 from workflow.submission_guard import (
-    enforce_submission_hardening,
+    SubmissionRejected,
+    reject_forbidden_caller_fields,
+    reject_over_count_caps,
     reject_oversized_definition,
 )
 
-DEFAULT_IMAGE = "spawner-default:v1"
+CANARY = "sk-CANARY-guard-5e1d"
 
 
 def _step(name: str = "agent", **extra: Any) -> dict[str, Any]:
@@ -47,32 +54,36 @@ def _definition(steps: Optional[list[dict[str, Any]]] = None, **top: Any) -> dic
     }
 
 
-def _check(
+def _rejection(call: Any) -> Optional[SubmissionRejected]:
+    """Return the SubmissionRejected a call raises, or None."""
+    try:
+        call()
+    except SubmissionRejected as exc:
+        return exc
+    return None
+
+
+LOGICAL = frozenset({"inference/anthropic-prod"})
+
+
+def _forbidden(
     definition: dict[str, Any],
-    *,
     provider: Optional[dict[str, Any]] = None,
-    sandbox_image: Optional[str] = None,
-    is_admin: bool = False,
-    spawner_configured: bool = True,
-) -> None:
-    """Call the guard with test defaults."""
-    enforce_submission_hardening(
-        definition,
-        provider or {"name": "openai", "model": "gpt-4o"},
-        sandbox_image,
-        is_admin=is_admin,
-        default_sandbox_image=DEFAULT_IMAGE,
-        spawner_configured=spawner_configured,
+    governed: bool = False,
+) -> Optional[SubmissionRejected]:
+    """Run the forbidden-field check (governed uses the LOGICAL catalog names)."""
+    return _rejection(
+        lambda: reject_forbidden_caller_fields(
+            definition,
+            provider or {"name": "openai"},
+            logical_credentials=LOGICAL if governed else None,
+        )
     )
 
 
-def _status(definition: dict[str, Any], **kwargs: Any) -> Optional[int]:
-    """Return the rejection status code, or None when accepted."""
-    try:
-        _check(definition, **kwargs)
-    except HTTPException as exc:
-        return exc.status_code
-    return None
+def _counts(definition: dict[str, Any]) -> Optional[SubmissionRejected]:
+    """Run the count-cap check."""
+    return _rejection(lambda: reject_over_count_caps(definition))
 
 
 class TestCredentialRoutes:
@@ -80,101 +91,62 @@ class TestCredentialRoutes:
 
     @pytest.mark.parametrize("value", ["DATABASE_URL", None, ""])
     def test_run_provider_credentials_secret_rejected(self, value: Any) -> None:
-        """Run-level credentials_secret is 400 whatever its value, even for admins."""
+        """Run-level credentials_secret is 400 whatever its value (legacy mode)."""
         provider = {"name": "openai", "model": "m", "credentials_secret": value}
-        assert _status(_definition(), provider=provider) == 400
-        assert _status(_definition(), provider=provider, is_admin=True) == 400
+        exc = _forbidden(_definition(), provider)
+        assert exc is not None and exc.status_code == 400
+        assert exc.reasons == (AuditReason.FORBIDDEN_FIELD,)
+        assert exc.paths == ("/provider/credentials_secret",)
 
-    def test_definition_provider_credentials_secret_rejected(self) -> None:
-        """definition.provider.credentials_secret is 400."""
+    def test_run_provider_logical_name_left_to_catalog_when_governed(
+        self,
+    ) -> None:
+        """Governed mode: a logical credential name is left to the catalog."""
+        provider = {"name": "claude-prod", "credentials_secret": next(iter(LOGICAL))}
+        assert _forbidden(_definition(), provider, governed=True) is None
+
+    @pytest.mark.parametrize("value", ["ANTHROPIC_API_KEY", None, {"x": 1}])
+    def test_run_provider_physical_name_rejected_when_governed(
+        self, value: Any
+    ) -> None:
+        """Governed mode: anything but a logical credential name is 400 up front."""
+        provider = {"name": "claude-prod", "credentials_secret": value}
+        exc = _forbidden(_definition(), provider, governed=True)
+        assert exc is not None and exc.status_code == 400
+        assert exc.paths == ("/provider/credentials_secret",)
+
+    @pytest.mark.parametrize("governed", [True, False])
+    def test_definition_provider_credentials_secret_rejected(
+        self, governed: bool
+    ) -> None:
+        """definition.provider.credentials_secret is 400 in every mode."""
         definition = _definition(
             provider={"name": "bedrock", "model": "m", "credentials_secret": "X_KEY"}
         )
-        assert _status(definition) == 400
-        assert _status(definition, is_admin=True) == 400
+        exc = _forbidden(definition, governed=governed)
+        assert exc is not None and exc.status_code == 400
+        assert exc.paths == ("/definition/provider/credentials_secret",)
 
     def test_definition_provider_without_credentials_accepted(self) -> None:
         """A definition provider with no credentials_secret passes."""
         definition = _definition(provider={"name": "openai", "model": "m"})
-        assert _status(definition) is None
+        assert _forbidden(definition) is None
 
+    def test_scanned_on_raw_dict_even_with_unknown_keys(self) -> None:
+        """The scan works on raw input, so unknown keys do not hide it."""
+        definition = _definition(
+            provider={"name": "x", "credentials_secret": "Y", CANARY: 1}
+        )
+        definition[CANARY] = True
+        exc = _forbidden(definition)
+        assert exc is not None and exc.status_code == 400
 
-class TestSandboxImage:
-    """G10: callers cannot choose the sandbox image."""
-
-    def test_default_image_accepted(self) -> None:
-        """Naming the spawner default image is fine."""
-        assert _status(_definition(), sandbox_image=DEFAULT_IMAGE) is None
-
-    @pytest.mark.parametrize(
-        "mutate",
-        [
-            lambda d: d["spec"].update(spawn_config={"sandbox_image": "evil:1"}),
-            lambda d: d["spec"]["steps"][0].update(
-                spawn_config={"sandbox_image": "evil:1"}
-            ),
-            lambda d: d.update(skills={"image": "evil:1"}),
-        ],
-        ids=["workflow-spawn-config", "step-spawn-config", "skills-image"],
-    )
-    def test_custom_image_in_definition_forbidden(self, mutate: Any) -> None:
-        """Non-default images in the definition are 403 for non-admins."""
-        definition = _definition()
-        mutate(definition)
-        assert _status(definition) == 403
-        assert _status(definition, is_admin=True) is None
-
-    def test_request_sandbox_image_forbidden(self) -> None:
-        """A non-default request-level sandbox_image is 403 without ADMIN."""
-        assert _status(_definition(), sandbox_image="evil:1") == 403
-        assert _status(_definition(), sandbox_image="evil:1", is_admin=True) is None
-
-
-class TestAdvisory:
-    """G11: advisory mode needs ADMIN."""
-
-    def test_advisory_forbidden_without_admin(self) -> None:
-        """advisory: true is 403 for non-admins, allowed for admins."""
-        definition = _definition(advisory=True)
-        assert _status(definition) == 403
-        assert _status(definition, is_admin=True) is None
-
-
-class TestSpawnMode:
-    """Workflow spawn none/local needs ADMIN; ephemeral needs a spawner."""
-
-    @pytest.mark.parametrize("mode", ["none", "local"])
-    def test_step_spawn_forbidden_without_admin(self, mode: str) -> None:
-        """Step-level none/local is 403 for non-admins."""
-        definition = _definition([_step(spawn=mode)])
-        assert _status(definition) == 403
-        assert _status(definition, is_admin=True) is None
-
-    def test_workflow_spawn_forbidden_without_admin(self) -> None:
-        """Workflow-level none applies to steps that do not override it."""
-        definition = _definition([_step()], spec={"spawn": "none"})
-        assert _status(definition) == 403
-
-    def test_step_override_of_workflow_spawn_uses_effective_mode(self) -> None:
-        """A step overriding workflow spawn:none with ephemeral passes."""
-        definition = _definition([_step(spawn="ephemeral")], spec={"spawn": "none"})
-        assert _status(definition) is None
-
-    def test_default_spawn_is_ephemeral_and_needs_spawner(self) -> None:
-        """No spawn anywhere defaults to ephemeral, 403 without a spawner."""
-        definition = _definition([_step()])
-        assert _status(definition, spawner_configured=False) == 403
-        assert _status(definition, spawner_configured=True) is None
-
-    def test_ephemeral_without_spawner_forbidden_even_for_admin(self) -> None:
-        """Admins cannot spawn ephemeral steps without a spawner."""
-        definition = _definition([_step(spawn="ephemeral")])
-        assert _status(definition, is_admin=True, spawner_configured=False) == 403
-
-    def test_none_without_spawner_fine_for_admin(self) -> None:
-        """spawn none never needs a spawner."""
-        definition = _definition([_step(spawn="none")])
-        assert _status(definition, is_admin=True, spawner_configured=False) is None
+    def test_message_does_not_echo_the_value(self) -> None:
+        """The response never repeats the caller's credential value."""
+        provider = {"name": "openai", "credentials_secret": CANARY}
+        exc = _forbidden(_definition(), provider)
+        assert exc is not None
+        assert CANARY not in str(exc.detail)
 
 
 class TestLimits:
@@ -183,9 +155,10 @@ class TestLimits:
     def test_oversized_definition_413(self) -> None:
         """A definition over MAX_DEFINITION_BYTES is 413."""
         big = _definition([_step(prompt="x" * (MAX_DEFINITION_BYTES + 1))])
-        with pytest.raises(HTTPException) as exc_info:
-            reject_oversized_definition(big)
-        assert exc_info.value.status_code == 413
+        exc = _rejection(lambda: reject_oversized_definition(big))
+        assert exc is not None and exc.status_code == 413
+        assert exc.reasons == (AuditReason.PAYLOAD_TOO_LARGE,)
+        assert exc.paths == ("/definition",)
 
     def test_small_definition_passes_size_check(self) -> None:
         """A normal definition passes the size check."""
@@ -196,24 +169,31 @@ class TestLimits:
         steps = [
             _step(f"s{i}", spawn="ephemeral") for i in range(MAX_WORKFLOW_STEPS + 1)
         ]
-        assert _status(_definition(steps)) == 422
+        exc = _counts(_definition(steps))
+        assert exc is not None and exc.status_code == 422
+        assert exc.reasons == (AuditReason.COUNT_CAP,)
+        assert exc.paths == ("/definition/spec/steps",)
 
     def test_max_steps_accepted(self) -> None:
         """Exactly MAX_WORKFLOW_STEPS steps passes."""
         steps = [_step(f"s{i}", spawn="ephemeral") for i in range(MAX_WORKFLOW_STEPS)]
-        assert _status(_definition(steps)) is None
+        assert _counts(_definition(steps)) is None
 
     def test_too_many_mcp_servers_on_step_422(self) -> None:
         """More than MAX_MCP_SERVERS_PER_STEP servers on a step is 422."""
         names = [f"srv{i}" for i in range(MAX_MCP_SERVERS_PER_STEP + 1)]
         definition = _definition([_step(spawn="ephemeral", mcp_servers=names)])
-        assert _status(definition) == 422
+        exc = _counts(definition)
+        assert exc is not None and exc.status_code == 422
+        assert exc.paths == ("/definition/spec/steps/0/mcp_servers",)
 
     def test_too_many_workflow_level_mcp_servers_422(self) -> None:
         """Workflow-level defaults are counted too."""
         names = [f"srv{i}" for i in range(MAX_MCP_SERVERS_PER_STEP + 1)]
         definition = _definition(spec={"mcp_servers": names})
-        assert _status(definition) == 422
+        exc = _counts(definition)
+        assert exc is not None and exc.status_code == 422
+        assert exc.paths == ("/definition/spec/mcp_servers",)
 
     def test_too_many_secret_headers_422(self) -> None:
         """An inline MCP entry with too many secret_headers is 422."""
@@ -227,26 +207,54 @@ class TestLimits:
             "secret_headers": headers,
         }
         definition = _definition([_step(spawn="ephemeral", mcp_servers=[server])])
-        assert _status(definition) == 422
+        exc = _counts(definition)
+        assert exc is not None and exc.status_code == 422
+        assert exc.paths == ("/definition/spec/steps/0/mcp_servers/0/secret_headers",)
+
+    def test_count_errors_never_name_steps(self) -> None:
+        """Count-cap details use pointers, never caller step names."""
+        names = [f"srv{i}" for i in range(MAX_MCP_SERVERS_PER_STEP + 1)]
+        definition = _definition([_step(CANARY, mcp_servers=names)])
+        exc = _counts(definition)
+        assert exc is not None
+        assert CANARY not in str(exc.detail)
+
+    @pytest.mark.parametrize(
+        "definition",
+        [
+            {"spec": None},
+            {"spec": []},
+            {"spec": {"steps": "nope"}},
+            {"spec": {"steps": [1, None]}},
+        ],
+    )
+    def test_malformed_shapes_are_left_for_the_typed_parse(
+        self, definition: dict[str, Any]
+    ) -> None:
+        """Count caps never crash on malformed containers."""
+        assert _counts(definition) is None
+
+
+def test_rejection_paths_survive_json_pointer() -> None:
+    """Every pointer the guard emits is made of fixed keys and indices."""
+    names = [f"srv{i}" for i in range(MAX_MCP_SERVERS_PER_STEP + 1)]
+    for exc in (
+        _counts(_definition([_step(mcp_servers=names)])),
+        _counts(_definition(spec={"mcp_servers": names})),
+        _forbidden(_definition(provider={"name": "x", "credentials_secret": "y"})),
+        _forbidden(_definition(), {"credentials_secret": "y"}),
+    ):
+        assert exc is not None
+        for path in exc.paths:
+            parts = [int(p) if p.isdigit() else p for p in path.split("/")[1:]]
+            assert json_pointer(*parts) == path
 
 
 def test_guard_does_not_mutate_inputs() -> None:
     """The guard is a pure check."""
     definition = _definition(advisory=False)
     before = copy.deepcopy(definition)
-    _check(definition)
+    reject_oversized_definition(definition)
+    reject_forbidden_caller_fields(definition, {}, logical_credentials=None)
+    reject_over_count_caps(definition)
     assert definition == before
-
-
-def test_approval_step_does_not_need_spawner() -> None:
-    """A human-approval step has no spawn mode, so it never needs a spawner."""
-    definition = _definition(
-        [_step(spawn="none"), {"name": "gate", "type": "human-approval"}]
-    )
-    assert _status(definition, is_admin=True, spawner_configured=False) is None
-
-
-def test_non_admin_none_spawn_forbidden_without_spawner() -> None:
-    """Admin is the only bypass for spawn none; a missing spawner is not."""
-    definition = _definition([_step(spawn="none")])
-    assert _status(definition, spawner_configured=False) == 403
