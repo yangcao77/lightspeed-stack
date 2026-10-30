@@ -1081,6 +1081,53 @@ class TestStartWorkflowGoverned:
         mock_executor.start.assert_not_called()
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "ref",
+        [
+            {"name": "inference/anthropic-prod", "key": "other"},
+            {"name": "inference/anthropic-prod", "version": "v1"},
+            {"name": "inference/anthropic-prod", "key": {"token": "canary"}},
+        ],
+    )
+    async def test_credential_ref_selectors_400_nothing_started(
+        self, mocker: MockerFixture, mock_executor: Any, ref: Any
+    ) -> None:
+        """An unsupported key/version selector is refused before anything starts."""
+        from fastapi import HTTPException
+
+        mocker.patch("app.endpoints.workflows.check_configuration_loaded")
+        body = RunWorkflowRequest(
+            definition=self._definition(),
+            provider={"name": "claude-prod", "credential_ref": ref},
+        )
+        with pytest.raises(HTTPException) as exc_info:
+            await start_workflow_handler.__wrapped__(
+                _request(mocker), body, ("u", "n", False, "t")
+            )
+        assert exc_info.value.status_code == 400
+        mock_executor.start.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_name_only_credential_ref_still_starts(
+        self, mocker: MockerFixture, mock_executor: Any
+    ) -> None:
+        """A name-only credential_ref for the entry's credential keeps working."""
+        mocker.patch("app.endpoints.workflows.check_configuration_loaded")
+        mock_executor.start.return_value = "wf-1"
+        body = RunWorkflowRequest(
+            definition=self._definition(),
+            provider={
+                "name": "claude-prod",
+                "credential_ref": {"name": "inference/anthropic-prod"},
+            },
+        )
+        await start_workflow_handler.__wrapped__(
+            _request(mocker), body, ("u", "n", False, "t")
+        )
+        started = mock_executor.start.call_args[0][0]
+        assert started["provider"]["credentials_secret"] == "ANTHROPIC_API_KEY"
+
+    @pytest.mark.asyncio
     async def test_unknown_provider_400_nothing_started(
         self, mocker: MockerFixture, mock_executor: Any
     ) -> None:

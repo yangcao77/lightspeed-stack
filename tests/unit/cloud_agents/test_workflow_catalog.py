@@ -153,6 +153,30 @@ class TestResolveGoverned:
         bad = {**ok, "credential_ref": {"name": "inference/openai-team-b"}}
         assert _status(lambda: resolve_run_provider(_governed(), INFERENCE, bad)) == 400
 
+    @pytest.mark.parametrize(
+        "ref",
+        [
+            {"name": "inference/anthropic-prod", "key": "other"},
+            {"name": "inference/anthropic-prod", "version": "v1"},
+            {"name": "inference/anthropic-prod", "key": {"token": "canary"}},
+            {"name": "inference/anthropic-prod", "version": ["invalid"]},
+            {"name": "inference/anthropic-prod", "extra": "x"},
+            {"name": ["inference/anthropic-prod"]},
+            {},
+            "inference/anthropic-prod",
+        ],
+    )
+    def test_credential_ref_selectors_and_malformed_values_400(self, ref: Any) -> None:
+        """key/version have no backend semantics yet; only a name-only ref is valid."""
+        body = {
+            "name": "claude-prod",
+            "model": "claude-haiku-4-5",
+            "credential_ref": ref,
+        }
+        assert (
+            _status(lambda: resolve_run_provider(_governed(), INFERENCE, body)) == 400
+        )
+
     def test_credential_ref_on_keyless_entry_400(self) -> None:
         """An entry with no credential cannot be given one by the caller."""
         body = {

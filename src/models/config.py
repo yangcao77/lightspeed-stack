@@ -3444,6 +3444,11 @@ class WorkflowEngineConfiguration(ConfigurationBase):
                 )
             if entry.credential is None:
                 continue
+            if entry.credential.key is not None or entry.credential.version is not None:
+                errors.append(
+                    f"provider '{entry.name}': credential key and version are "
+                    "not supported (env bindings have neither)"
+                )
             binding = self.binding(entry.credential.name)
             if binding is None:
                 errors.append(

@@ -265,6 +265,8 @@ def submit(
     # step 4: catalog (400)
     name = run.get("name") or we["default_provider"]
     entry, model = _resolve(stack, name, run.get("model"))
+    if set(run.get("credential_ref") or {}) - {"name"}:
+        raise Denied(400, "credential_ref key and version are not supported")
     cref = (run.get("credential_ref") or {}).get("name")
     if cref is not None and cref != entry["credential"]["name"]:
         raise Denied(400, "credential_ref does not match the provider's credential")

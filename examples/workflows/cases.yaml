@@ -90,6 +90,12 @@ workflow_cases:
     body_set: {provider.credential_ref: {name: inference/openai-team-b}}
     expect: 400
     reason: credential_ref
+  - name: credential_ref key and version are rejected until a backend supports them
+    phase: 1
+    workflow: triage-github-issue
+    body_set: {provider.credential_ref: {name: inference/anthropic-prod, version: v1}}
+    expect: 400
+    reason: credential_ref
   - name: unknown keys in the provider are rejected
     phase: 1
     workflow: triage-github-issue

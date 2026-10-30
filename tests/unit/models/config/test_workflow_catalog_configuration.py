@@ -198,6 +198,18 @@ class TestWorkflowEngineLoadChecks:
         config["providers"][0]["credential"] = {"name": "inference/missing"}
         assert "no secrets binding" in _error(config)
 
+    @pytest.mark.parametrize("selector", [{"key": "k"}, {"version": "v2"}])
+    def test_credential_selectors_rejected_until_backend_supports_them(
+        self, selector: dict[str, str]
+    ) -> None:
+        """An env binding has no key or version, so a pin would be ignored."""
+        config = _engine()
+        config["providers"][0]["credential"] = {
+            "name": "inference/anthropic-prod",
+            **selector,
+        }
+        assert "not supported" in _error(config)
+
     def test_pre_269_credential_must_be_env_backed(self) -> None:
         """Before cloud-agents#269 inference credentials must be env-backed."""
         config = _engine()

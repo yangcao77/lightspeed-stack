@@ -17,7 +17,9 @@ from dataclasses import dataclass
 from typing import Any, Final, Optional
 
 from fastapi import HTTPException, status
+from pydantic import ValidationError
 
+from models.common.secrets import SecretRef
 from models.config import WorkflowEngineConfiguration, WorkflowInferenceProvider
 from workflow.provider_credentials import credentials_secret_for
 
@@ -62,6 +64,9 @@ def _bad_request(detail: str) -> HTTPException:
 def _credential_ref_name(value: Any) -> Optional[str]:
     """Extract the logical name from a ``credential_ref`` value.
 
+    ``key`` and ``version`` are refused: the env backend has no key or version,
+    so a selector would be accepted and then ignored.
+
     Parameters:
         value: ``{"name": ...}`` as sent by the caller, or None.
 
@@ -69,16 +74,19 @@ def _credential_ref_name(value: Any) -> Optional[str]:
         The name, or None when no ref was sent.
 
     Raises:
-        HTTPException: 400 if the value is not an object with a string name.
+        HTTPException: 400 if the value is not a valid name-only ref.
     """
     if value is None:
         return None
-    if not isinstance(value, dict) or set(value) - {"name", "key", "version"}:
-        raise _bad_request("credential_ref must be {name: <logical secret name>}")
-    name = value.get("name")
-    if not isinstance(name, str):
-        raise _bad_request("credential_ref.name must be a string")
-    return name
+    try:
+        ref = SecretRef.model_validate(value)
+    except ValidationError as exc:
+        raise _bad_request(
+            "credential_ref must be {name: <logical secret name>}"
+        ) from exc
+    if ref.key is not None or ref.version is not None:
+        raise _bad_request("credential_ref key and version are not supported.")
+    return ref.name
 
 
 def _lookup(
