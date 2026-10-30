@@ -311,7 +311,39 @@ async def test_authorized_event_only_after_start_with_workflow_id(env: Env) -> N
     assert record["workflow_id"] == "wf-1"
     assert record["user_id"] == "user-1"
     assert record["request_id"] == "req-123"
-    assert record["provider"] == "openai"
+    assert record["provider"] is None
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("fails", [False, True], ids=["202", "start-failed"])
+async def test_legacy_mode_caller_provider_name_never_audited(
+    env: Env, fails: bool
+) -> None:
+    """Legacy mode audits no provider: the name is caller-chosen input.
+
+    The executor only accepts real provider types, so the caller picks a
+    valid one that differs from the configured default.
+    """
+    if fails:
+        env.executor.start.side_effect = RuntimeError("boom")
+    outcome = await env.run(
+        _body(provider={"name": "anthropic", "model": "m"}), roles=(ADMIN_ROLE,)
+    )
+    assert outcome.status == (500 if fails else 202)
+    record = _one(outcome)
+    assert record["provider"] is None
+    assert "anthropic" not in json.dumps(record)
+
+
+@pytest.mark.asyncio
+async def test_governed_start_failed_records_catalog_name(policy_env: Env) -> None:
+    """Governed mode keeps the resolved catalog name on start failure."""
+    policy_env.executor.start.side_effect = RuntimeError("boom")
+    outcome = await policy_env.run(_body(_definition(_policy_step())))
+    assert outcome.status == 500
+    record = _one(outcome)
+    assert record["event"] == "workflow_start_failed"
+    assert record["provider"] == "claude-prod"
 
 
 # --------------------------------------------------------------------------

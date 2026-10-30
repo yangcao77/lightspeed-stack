@@ -305,7 +305,7 @@ def _prepare_submission(
     principal: Principal,
     default_sandbox_image: str,
     spawner_configured: bool,
-) -> tuple[ResolvedProvider, dict[str, Any]]:
+) -> tuple[ResolvedProvider, dict[str, Any], Optional[str]]:
     """Run the submission pipeline and return what the workflow will run with.
 
     Order (issue #51 Phase 2): 1. 413 byte cap; 2. 400 forbidden caller
@@ -322,8 +322,9 @@ def _prepare_submission(
         spawner_configured: Whether a spawner_configuration exists.
 
     Returns:
-        The resolved run-level provider and the normalized definition, which
-        is exactly what ``executor.start`` receives.
+        The resolved run-level provider, the normalized definition (exactly
+        what ``executor.start`` receives) and the provider name that is safe
+        to audit: the catalog name when governed, else None.
 
     Raises:
         SubmissionRejected: 413, 400, 422 or 403 with audit reasons and
@@ -371,7 +372,7 @@ def _prepare_submission(
             paths=exc.paths,
             provider=audit_provider,
         ) from None
-    return resolved, definition
+    return resolved, definition, audit_provider
 
 
 def _request_id(request: Request) -> str:
@@ -410,7 +411,7 @@ async def _start_audited(
     *,
     user_id: str,
     request_id: str,
-    provider: str,
+    provider: Optional[str],
 ) -> str:
     """Start the workflow and write its single audit record.
 
@@ -424,7 +425,7 @@ async def _start_audited(
         workflow_input: Input handed to ``executor.start``.
         user_id: Identifier from the auth layer.
         request_id: Audit-safe request identifier.
-        provider: Resolved provider name (validated by the executor).
+        provider: Audit-safe provider name (catalog name when governed, else None).
 
     Returns:
         The workflow identifier.
@@ -492,7 +493,7 @@ async def start_workflow_handler(
     # start raises, workflow_authorized only after start returned.
     request_id = _request_id(request)
     try:
-        resolved, definition = _prepare_submission(
+        resolved, definition, audit_provider = _prepare_submission(
             body,
             principal=Principal(
                 user_id=user_id, is_admin=is_admin(request), roles=_user_roles(request)
@@ -530,7 +531,7 @@ async def start_workflow_handler(
         workflow_input,
         user_id=user_id,
         request_id=request_id,
-        provider=resolved.catalog_name,
+        provider=audit_provider,
     )
 
     logger.info(
@@ -539,17 +540,13 @@ async def start_workflow_handler(
         username,
     )
 
-    result = {
-        "workflow_id": workflow_id,
-        "status": "running",
-    }
     if resolved.legacy_credentials_secret:
         return JSONResponse(
             status_code=status.HTTP_202_ACCEPTED,
-            content=result,
+            content={"workflow_id": workflow_id, "status": "running"},
             headers={"Deprecation": LEGACY_DEPRECATION, "Sunset": LEGACY_SUNSET},
         )
-    return result
+    return {"workflow_id": workflow_id, "status": "running"}
 
 
 @router.get("/workflows/{workflow_id}")
