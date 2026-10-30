@@ -298,8 +298,10 @@ def test_readme_states_ephemeral_mcp_provider_caveat() -> None:
     """The README says where catalog MCP is verified and where it is not."""
     text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
     for needle in (
-        "verified end to end only for `spawn: none` and `spawn: local`",
+        "live evidence only for `spawn: none`",
         "real subprocess MCP server",
+        "has not been executed, and has no live LLM evidence",
+        "(`step_runner.py:265`)",
         "providers/openai.py:206-224",
         "providers/claude.py:90-100",
         "providers/gemini.py:92",
@@ -312,6 +314,8 @@ def test_readme_states_ephemeral_mcp_provider_caveat() -> None:
     ):
         assert needle in text, needle
     assert "spawn mode does not affect named servers" not in text
+    # `spawn: local` has no live evidence, so the README must not claim it.
+    assert "`spawn: none` and `spawn: local`: a real subprocess" not in text
 
 
 def test_workflow_enabled_description_has_no_general_ephemeral_claim() -> None:

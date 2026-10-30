@@ -117,11 +117,15 @@ the sandbox provider; see the next section.
 
 ### Where catalog MCP is verified (and where it is not)
 
-Catalog MCP is verified end to end only for `spawn: none` and `spawn: local`:
-a real subprocess MCP server and a real-LLM e2e run. `spawn: ephemeral` is not
-covered the same way, because it depends on which sandbox provider runs the
-step. As observed in `lightspeed-agentic-sandbox` at commit `619fb0c`
-(`src/lightspeed_agentic/`):
+Catalog MCP has live evidence only for `spawn: none`: a real subprocess MCP
+server reached through the executor's own MCP client, and a real-LLM e2e run of
+an admin `spawn: none` workflow (the e2e is skipped under the mock LLM, so CI
+does not repeat it). For `spawn: local` the contract cases only show that
+submission accepts a named server; it has not been executed, and has no live
+LLM evidence.
+`spawn: ephemeral` is not covered the same way, because it depends on which
+sandbox provider runs the step. As observed in `lightspeed-agentic-sandbox` at
+commit `619fb0c` (`src/lightspeed_agentic/`):
 
 - `openai`: wires MCP servers (`providers/openai.py:206-224`).
 - `claude`: never passes `mcp_servers` to the SDK options
@@ -137,8 +141,9 @@ future work; see the cross-repo plan comment
 https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-6521645859.
 
 Related, for future secrets and not the secretless catalog: the openai
-provider's header resolver expects a `file:` string prefix (`mcp.py:26`), while
-the stack writes `{"file": path}` dicts. Resolve that before secret delivery.
+provider's header resolver expects a `file:` string prefix (`mcp.py:26` in the
+sandbox), while the cloud-agents producer writes `{"file": path}` dicts
+(`step_runner.py:265`). Resolve that before secret delivery.
 
 Trust and logging:
 
