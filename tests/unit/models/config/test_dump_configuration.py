@@ -50,6 +50,7 @@ _DEFAULT_SAVED_PROMPTS_DUMP: dict[str, int] = {
 
 _MCP_SERVER_DUMP_DEFAULTS: dict[str, Any] = {
     "authorization_headers": {},
+    "workflow_enabled": False,
     "headers": [],
     "require_approval": "never",
     "timeout": None,

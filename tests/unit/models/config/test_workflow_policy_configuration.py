@@ -169,7 +169,9 @@ class TestPolicyLoad:
         value = ["claude-prod", "*"] if field == "providers" else ["x", "*"]
         assert "'*'" in _error(_policy_engine([{"role": "dev", field: value}]))
 
-    @pytest.mark.parametrize("field", ["skills", "tools", "images", "spawn_modes"])
+    @pytest.mark.parametrize(
+        "field", ["skills", "tools", "images", "spawn_modes", "mcp"]
+    )
     def test_wildcard_alone_ok(self, field: str) -> None:
         """'*' alone is accepted."""
         WorkflowEngineConfiguration.model_validate(
@@ -187,7 +189,6 @@ class TestReservedFields:
     @pytest.mark.parametrize(
         "field,value",
         [
-            ("mcp", ["srv"]),
             ("inline_mcp", True),
             ("inline_mcp_hosts", ["example.com"]),
             ("mcp_secrets", ["s"]),
@@ -203,8 +204,6 @@ class TestReservedFields:
     @pytest.mark.parametrize(
         "field,value",
         [
-            ("mcp", None),
-            ("mcp", []),
             ("inline_mcp", False),
             ("inline_mcp_hosts", None),
             ("inline_mcp_hosts", []),

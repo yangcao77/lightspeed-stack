@@ -16025,6 +16025,12 @@
                         "title": "Authorization headers",
                         "description": "Headers to send to the MCP server. The map contains the header name and the path to a file containing the header value (secret). There are 3 special cases: 1. Usage of the kubernetes token in the header. To specify this use a string 'kubernetes' instead of the file path. 2. Usage of the client-provided token in the header. To specify this use a string 'client' instead of the file path. 3. Usage of the oauth token in the header. To specify this use a string 'oauth' instead of the file path. "
                     },
+                    "workflow_enabled": {
+                        "type": "boolean",
+                        "title": "Workflow enabled",
+                        "description": "Offer this server to workflow steps by name (operator catalog). Such an entry must be secretless: empty authorization_headers, empty propagated headers, require_approval 'never', an http or https URL without userinfo, and a name of lowercase letters, digits and hyphens (it becomes a mount path) that is unique in the whole mcp_servers list. The URL is trusted operator input and is not SSRF-confined; do not put credentials in the URL or query string. A policy 'mcp' grant gives every tool on the server.",
+                        "default": false
+                    },
                     "headers": {
                         "items": {
                             "type": "string"
@@ -16071,7 +16077,7 @@
                     "url"
                 ],
                 "title": "ModelContextProtocolServer",
-                "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and capabilities to the\nAI agents. These are configured by this structure. Only MCP servers\ndefined in the lightspeed-stack.yaml configuration are available to the\nagents. Tools configured in the llama-stack run.yaml are not accessible to\nlightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)"
+                "description": "Model context protocol server configuration.\n\nMCP (Model Context Protocol) servers provide tools and capabilities to the\nAI agents. These are configured by this structure. Only MCP servers\ndefined in the lightspeed-stack.yaml configuration are available to the\nagents. Tools configured in the llama-stack run.yaml are not accessible to\nlightspeed-core agents.\n\nUseful resources:\n\n- [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)\n- [MCP FAQs](https://modelcontextprotocol.io/faqs)\n- [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)\n\nEntries with ``workflow_enabled: true`` also form the operator catalog\nthat workflow steps may reference by name. Catalog URLs are trusted\noperator input: they are not confined by SSRF checks (MCP clients follow\nredirects), so a catalog URL also grants its redirect destinations. Do not\nembed credentials in the URL or its query string. Catalog entries must be\nsecretless; see ``workflow_enabled``."
             },
             "ModelsResponse": {
                 "properties": {
@@ -18454,7 +18460,7 @@
                             }
                         ],
                         "title": "MCP catalog",
-                        "description": "Reserved: not supported until Phase 3."
+                        "description": "Granted workflow_enabled mcp_servers names, or '*' for all of them. Missing, null or empty grants nothing. A grant covers every tool on the server."
                     },
                     "inline_mcp": {
                         "type": "boolean",
@@ -18505,7 +18511,7 @@
                     "role"
                 ],
                 "title": "PolicyRule",
-                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs step ``tools`` and\n        ``permissions.allowed_tools``. Ephemeral steps need an explicit\n        ``[\"*\"]``; a finite list is rejected as ``tools_not_enforceable``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Reserved (Phase 3).\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
+                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs step ``tools`` and\n        ``permissions.allowed_tools``. Ephemeral steps need an explicit\n        ``[\"*\"]``; a finite list is rejected as ``tools_not_enforceable``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Granted catalog MCP servers (``workflow_enabled`` entries of\n        ``mcp_servers``) or ``[\"*\"]``; a grant covers every tool on the\n        server. Checked against the catalog at configuration load.\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
             },
             "PostgreSQLDatabaseConfiguration": {
                 "properties": {

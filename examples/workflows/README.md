@@ -176,7 +176,19 @@ Each `mcp_servers[*]` entry carries the operator-owned URL plus two
 This example: `github-readonly` (`Authorization` → `mcp/github-readonly`)
 and `kb-search` (`X-API-Key` → `mcp/kb-search`).
 
-Refused at load for `workflow_enabled` entries: request-bound
+Catalog URLs are trusted operator input. They are not SSRF-confined (MCP
+clients follow redirects, so a catalog URL also grants its redirect
+destinations), and they are not private-network protection. Do not embed
+credentials in a URL or its query string; entries with `user:pass@` are
+refused at load. A policy `mcp` grant (a list of catalog names, or `["*"]`)
+gives every tool on that server, and an unknown name and a non-enabled name
+are indistinguishable from a 400 but a known enabled server without a grant
+is a 403.
+
+Refused at load for `workflow_enabled` entries (in addition to the above:
+`require_approval` other than `never`, non-http(s) or hostless URLs, names not
+matching `^[a-z0-9][a-z0-9-]{0,62}$`, and a name shared with any other
+`mcp_servers` entry): request-bound
 `authorization_headers` (`client`/`oauth`/`kubernetes`) and non-empty
 propagated `headers` (e.g. `x-rh-identity`) — a detached run has no incoming
 request, and silently dropping an identity header would run the server without
