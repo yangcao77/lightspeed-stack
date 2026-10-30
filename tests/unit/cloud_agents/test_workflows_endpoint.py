@@ -1053,6 +1053,34 @@ class TestStartWorkflowGoverned:
         )
 
     @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "mutate",
+        [
+            lambda d: d.update(spec=None),
+            lambda d: d.update(spec=[]),
+            lambda d: d["spec"].update(steps=None),
+        ],
+    )
+    async def test_malformed_definition_shape_is_422_not_500(
+        self, mocker: MockerFixture, mock_executor: Any, mutate: Any
+    ) -> None:
+        """Governed mode must let the shape validator answer 422, not crash."""
+        from fastapi import HTTPException
+
+        mocker.patch("app.endpoints.workflows.check_configuration_loaded")
+        definition = self._definition()
+        mutate(definition)
+        with pytest.raises(HTTPException) as exc_info:
+            await start_workflow_handler.__wrapped__(
+                _request(mocker),
+                RunWorkflowRequest(definition=definition),
+                ("u", "n", False, "t"),
+            )
+        assert exc_info.value.status_code == 422
+        assert exc_info.value.detail["validation_errors"]
+        mock_executor.start.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_unknown_provider_400_nothing_started(
         self, mocker: MockerFixture, mock_executor: Any
     ) -> None:

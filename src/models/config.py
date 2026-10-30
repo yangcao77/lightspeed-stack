@@ -8,7 +8,7 @@ from enum import Enum
 from functools import cached_property
 from pathlib import Path
 from re import Pattern
-from typing import Annotated, Any, Literal, Optional, Self
+from typing import Annotated, Any, Final, Literal, Optional, Self
 
 import jsonpath_ng
 import yaml
@@ -3160,6 +3160,11 @@ def approved_inference_providers() -> frozenset[str]:
     return frozenset(APPROVED_INFERENCE_PROVIDERS)
 
 
+# Fixed points of the executor's credential-key normalization (upper-case,
+# ``-`` to ``_``), so the configured name is exactly the one it looks up.
+_CANONICAL_ENV_NAME: Final[Pattern[str]] = re.compile(r"[A-Z][A-Z0-9_]*")
+
+
 class SecretBinding(ConfigurationBase):
     """Operator-only mapping of a logical secret name to a backend location.
 
@@ -3205,12 +3210,16 @@ class SecretBinding(ConfigurationBase):
     def check_backend_fields(self) -> Self:
         """Require exactly the fields of the selected backend.
 
+        An ``env`` name must be canonical (``[A-Z][A-Z0-9_]*``): the executor
+        upper-cases a credential reference and maps ``-`` to ``_`` before
+        looking it up, so any other spelling would resolve a different variable.
+
         Returns:
             The validated binding.
 
         Raises:
-            ValueError: If a required field is missing or a field of another
-                backend is set.
+            ValueError: If a required field is missing, a field of another
+                backend is set, or ``env`` is not a canonical name.
         """
         required = {
             "env": {"env"},
@@ -3227,6 +3236,11 @@ class SecretBinding(ConfigurationBase):
                 f"backend '{self.backend}' needs exactly {sorted(required)}, "
                 f"got {sorted(present)}"
             )
+        if self.env is not None and not _CANONICAL_ENV_NAME.fullmatch(self.env):
+            raise ValueError(
+                f"env {self.env!r} must be an upper-case variable name "
+                "([A-Z][A-Z0-9_]*); the executor normalizes names to that form"
+            )
         return self
 
 
@@ -3238,8 +3252,9 @@ class WorkflowInferenceProvider(ConfigurationBase):
         executor_type: cloud-agents provider type this entry runs as.
         credential: The single credential of this entry (a logical ref).
         allowed_models: Models callers may use; None means any model.
-        base_url: Operator-set endpoint (Azure and self-hosted); never
-            settable by a caller.
+        base_url: Reserved for an operator-set endpoint (Azure and self-hosted).
+            Rejected when set: the executor has no endpoint field yet, so the
+            value would be silently dropped (cloud-agents#269).
     """
 
     name: str = Field(
@@ -3267,8 +3282,30 @@ class WorkflowInferenceProvider(ConfigurationBase):
     base_url: Optional[str] = Field(
         default=None,
         title="Base URL",
-        description="Operator-set endpoint for Azure and self-hosted models.",
+        description="Reserved: not supported until the executor accepts an "
+        "endpoint, so a non-null value is rejected.",
     )
+
+    @field_validator("base_url")
+    @classmethod
+    def reject_base_url(cls, value: Optional[str]) -> Optional[str]:
+        """Reject a base_url the executor would silently ignore.
+
+        Parameters:
+            value: The configured endpoint, or None when omitted.
+
+        Returns:
+            None (the only accepted value).
+
+        Raises:
+            ValueError: If a URL is set.
+        """
+        if value is not None:
+            raise ValueError(
+                "base_url is not supported yet: the executor has no endpoint "
+                "field, so it would be ignored"
+            )
+        return value
 
     @field_validator("allowed_models")
     @classmethod

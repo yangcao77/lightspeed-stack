@@ -235,8 +235,12 @@ def normalize_definition(
         return definition
     normalized = copy.deepcopy(definition)
     scopes = [(normalized, "provider")]
-    steps = normalized.get("spec", {}).get("steps", [])
-    scopes += [(s, "inference_provider") for s in steps if isinstance(s, dict)]
+    # A malformed spec or steps container is left for the shape validator,
+    # which answers 422; walking it here would raise and become a 500.
+    spec = normalized.get("spec")
+    steps = spec.get("steps") if isinstance(spec, dict) else None
+    if isinstance(steps, list):
+        scopes += [(s, "inference_provider") for s in steps if isinstance(s, dict)]
     for scope, key in scopes:
         override = scope.get(key)
         if override is None:

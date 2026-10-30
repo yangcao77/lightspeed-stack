@@ -126,11 +126,12 @@ workflow_engine:
       executor_type: openai
       credential: {name: inference/openai-team-b}
       # allowed_models omitted (null) = any model
-    - name: azure-eu                 # admin-only; shows operator-set base_url
+    - name: azure-eu                 # admin-only
       executor_type: azure
       credential: {name: inference/azure-eu}
       allowed_models: [gpt-4o]
-      base_url: https://lightspeed-eu.openai.azure.com   # never caller-settable
+      # base_url is rejected until the executor accepts an endpoint
+      # (cloud-agents#269); the Azure endpoint comes from the sandbox env.
 
   # PLAN(stack#51): defaults for cloud-agents workflow runs.
   default_provider: claude-prod

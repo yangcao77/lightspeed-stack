@@ -367,6 +367,25 @@ class TestNormalizeDefinition:
         normalize_definition(_governed(), definition, _resolved())
         assert definition == before
 
+    @pytest.mark.parametrize(
+        "mutate",
+        [
+            lambda d: d.update(spec=None),
+            lambda d: d.update(spec=[]),
+            lambda d: d.update(spec="steps"),
+            lambda d: d["spec"].update(steps=None),
+            lambda d: d["spec"].update(steps="agent"),
+            lambda d: d["spec"].update(steps={"name": "agent"}),
+            lambda d: d.pop("spec"),
+        ],
+    )
+    def test_malformed_shape_is_left_for_the_shape_validator(self, mutate: Any) -> None:
+        """A bad spec/steps container must not raise (that would be a 500)."""
+        definition = _definition(provider={"name": "claude-prod"})
+        mutate(definition)
+        out = normalize_definition(_governed(), definition, _resolved())
+        assert isinstance(out, dict)
+
     def test_legacy_mode_is_a_no_op(self) -> None:
         """Without a catalog the definition is returned unchanged."""
         resolved = resolve_run_provider(LEGACY, INFERENCE, None)

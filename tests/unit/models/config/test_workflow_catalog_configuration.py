@@ -5,6 +5,7 @@
 from typing import Any, Optional
 
 import pytest
+from cloud_agents.workflow.executor.step.provider import resolve_credential_env_key
 from pydantic import ValidationError
 
 from models.common.secrets import SecretRef
@@ -111,6 +112,20 @@ class TestSecretBinding:
         with pytest.raises(ValidationError):
             SecretBinding(name="a/b", backend="env", env="K", path="/x")
 
+    @pytest.mark.parametrize(
+        "env", ["team_key", "Team_Key", "TEAM-KEY", "1KEY", "KEY NAME", "KEY.NAME", ""]
+    )
+    def test_non_canonical_env_name_rejected(self, env: str) -> None:
+        """The executor upper-cases and maps '-' to '_', so only fixed points load."""
+        with pytest.raises(ValidationError, match="env"):
+            SecretBinding(name="a/b", backend="env", env=env)
+
+    @pytest.mark.parametrize("env", ["ANTHROPIC_API_KEY", "OPENAI_TEAM_B_KEY", "K1"])
+    def test_canonical_env_name_is_what_the_executor_looks_up(self, env: str) -> None:
+        """An accepted name is exactly the key the real executor resolves."""
+        binding = SecretBinding(name="a/b", backend="env", env=env)
+        assert resolve_credential_env_key({"credentials_secret": binding.env}) == env
+
     def test_env_binding_requires_env(self) -> None:
         """An env binding without ``env`` is rejected."""
         with pytest.raises(ValidationError):
@@ -126,6 +141,13 @@ class TestWorkflowInferenceProvider:
         assert entry.credential is None
         assert entry.allowed_models is None
         assert entry.base_url is None
+
+    def test_base_url_rejected_until_executor_supports_it(self) -> None:
+        """The executor has no endpoint field, so a URL would be silently dropped."""
+        with pytest.raises(ValidationError, match="base_url"):
+            WorkflowInferenceProvider(
+                name="p", executor_type="azure", base_url="https://team.example/v1"
+            )
 
     def test_empty_allowed_models_rejected(self) -> None:
         """allowed_models [] is rejected (G4): remove the provider instead."""

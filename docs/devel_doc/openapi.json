@@ -23898,7 +23898,7 @@
                             }
                         ],
                         "title": "Base URL",
-                        "description": "Operator-set endpoint for Azure and self-hosted models."
+                        "description": "Reserved: not supported until the executor accepts an endpoint, so a non-null value is rejected."
                     }
                 },
                 "additionalProperties": false,
@@ -23908,7 +23908,7 @@
                     "executor_type"
                 ],
                 "title": "WorkflowInferenceProvider",
-                "description": "One entry in the workflow provider catalog.\n\nAttributes:\n    name: Logical name callers send.\n    executor_type: cloud-agents provider type this entry runs as.\n    credential: The single credential of this entry (a logical ref).\n    allowed_models: Models callers may use; None means any model.\n    base_url: Operator-set endpoint (Azure and self-hosted); never\n        settable by a caller."
+                "description": "One entry in the workflow provider catalog.\n\nAttributes:\n    name: Logical name callers send.\n    executor_type: cloud-agents provider type this entry runs as.\n    credential: The single credential of this entry (a logical ref).\n    allowed_models: Models callers may use; None means any model.\n    base_url: Reserved for an operator-set endpoint (Azure and self-hosted).\n        Rejected when set: the executor has no endpoint field yet, so the\n        value would be silently dropped (cloud-agents#269)."
             }
         }
     },
