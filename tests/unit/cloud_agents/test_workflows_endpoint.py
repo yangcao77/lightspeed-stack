@@ -1,6 +1,6 @@
 """Unit tests for the /v1/workflows/* endpoints."""
 
-# pylint: disable=protected-access,too-few-public-methods,unused-argument,import-outside-toplevel,too-many-public-methods
+# pylint: disable=protected-access,too-few-public-methods,unused-argument,import-outside-toplevel,too-many-public-methods,too-many-lines
 
 from __future__ import annotations
 
@@ -1143,7 +1143,7 @@ class TestStartWorkflowGoverned:
             provider={
                 "name": "claude-prod",
                 "model": "claude-haiku-4-5",
-                "credentials_secret": "inference/anthropic-prod",  # gitleaks:allow (logical name, not a secret)
+                "credentials_secret": "inference/anthropic-prod",  # gitleaks:allow
             },
         )
 

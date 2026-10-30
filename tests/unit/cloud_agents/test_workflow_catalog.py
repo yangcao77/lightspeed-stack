@@ -181,7 +181,7 @@ class TestResolveGoverned:
         body = {
             "name": "claude-prod",
             "model": "claude-haiku-4-5",
-            "credentials_secret": "inference/anthropic-prod",  # gitleaks:allow (logical name, not a secret)
+            "credentials_secret": "inference/anthropic-prod",  # gitleaks:allow
         }
         resolved = resolve_run_provider(_governed(), INFERENCE, body)
         assert resolved.legacy_credentials_secret is True
