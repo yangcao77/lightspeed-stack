@@ -16028,7 +16028,7 @@
                     "workflow_enabled": {
                         "type": "boolean",
                         "title": "Workflow enabled",
-                        "description": "Offer this server to workflow steps by name (operator catalog). Such an entry must be secretless: empty authorization_headers, empty propagated headers, require_approval 'never', an http or https URL without userinfo, and a name of lowercase letters, digits and hyphens (it becomes a mount path) that is unique in the whole mcp_servers list. The URL is trusted operator input and is not SSRF-confined; do not put credentials in the URL or query string. A policy 'mcp' grant gives every tool on the server.",
+                        "description": "Offer this server to workflow steps by name (operator catalog). Such an entry must be secretless: empty authorization_headers, empty propagated headers, require_approval 'never', an http or https URL without userinfo, and a name of lowercase letters, digits and hyphens (it becomes a mount path) that is unique in the whole mcp_servers list. The URL is trusted operator input and is not SSRF-confined; do not put credentials in the URL or query string. A policy 'mcp' grant gives every tool on the server. On spawn 'ephemeral' the step only gets the server if the sandbox provider wires MCP (see examples/workflows/README.md).",
                         "default": false
                     },
                     "headers": {

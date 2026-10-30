@@ -294,6 +294,35 @@ def test_readme_states_phase_3_scope_and_trust() -> None:
         assert needle in text, needle
 
 
+def test_readme_states_ephemeral_mcp_provider_caveat() -> None:
+    """The README says where catalog MCP is verified and where it is not."""
+    text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
+    for needle in (
+        "verified end to end only for `spawn: none` and `spawn: local`",
+        "real subprocess MCP server",
+        "providers/openai.py:206-224",
+        "providers/claude.py:90-100",
+        "providers/gemini.py:92",
+        "619fb0c",
+        "deployed sandbox image build was not verified",
+        "silently runs without the granted MCP servers",
+        "do not assume granted MCP servers are available on ephemeral claude or gemini",
+        "mcp.py:26",
+        "issues/51#issuecomment-6521645859",
+    ):
+        assert needle in text, needle
+    assert "spawn mode does not affect named servers" not in text
+
+
+def test_workflow_enabled_description_has_no_general_ephemeral_claim() -> None:
+    """The config field description points at the ephemeral caveat."""
+    from models.config import ModelContextProtocolServer
+
+    schema = ModelContextProtocolServer.model_json_schema()
+    description = schema["properties"]["workflow_enabled"]["description"]
+    assert "ephemeral" in description
+
+
 def test_readme_lists_the_deferred_secret_work() -> None:
     """Each deferred item is named with its reason, so none reads as done."""
     text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())

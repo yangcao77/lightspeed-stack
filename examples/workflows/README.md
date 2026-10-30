@@ -110,8 +110,35 @@ server without a grant is a 403, so the 400 does not hide which names exist.
 
 An `mcp` grant means every tool on that server. The executor enforces only
 which servers a step gets; finite `allowed_tools` are not enforced for MCP
-tools, on any spawn mode. Because catalog servers are secretless, spawn mode
-does not affect named servers (`none` and `local` still need their own grants).
+tools, on any spawn mode. Because catalog servers are secretless, they need no
+secret delivery on any spawn mode (`none` and `local` still need their own
+grants). Whether a step can actually use them on `spawn: ephemeral` depends on
+the sandbox provider; see the next section.
+
+### Where catalog MCP is verified (and where it is not)
+
+Catalog MCP is verified end to end only for `spawn: none` and `spawn: local`:
+a real subprocess MCP server and a real-LLM e2e run. `spawn: ephemeral` is not
+covered the same way, because it depends on which sandbox provider runs the
+step. As observed in `lightspeed-agentic-sandbox` at commit `619fb0c`
+(`src/lightspeed_agentic/`):
+
+- `openai`: wires MCP servers (`providers/openai.py:206-224`).
+- `claude`: never passes `mcp_servers` to the SDK options
+  (`providers/claude.py:90-100`).
+- `gemini`: not wired; there is a TODO (`providers/gemini.py:92`).
+
+So an ephemeral step on claude or gemini silently runs without the granted MCP
+servers. It fails closed (no server is reachable) but gives no error. The
+deployed sandbox image build was not verified, only that source commit, so do
+not assume granted MCP servers are available on ephemeral claude or gemini
+steps. A stack-side rejection or a sandbox capability check for this case is
+future work; see the cross-repo plan comment
+https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-6521645859.
+
+Related, for future secrets and not the secretless catalog: the openai
+provider's header resolver expects a `file:` string prefix (`mcp.py:26`), while
+the stack writes `{"file": path}` dicts. Resolve that before secret delivery.
 
 Trust and logging:
 
