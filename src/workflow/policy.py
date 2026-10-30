@@ -1,4 +1,4 @@
-"""Run-level authorization of workflow submissions (issue #51, Phase 2).
+"""Run-level authorization of workflow submissions (issue #51, Phases 2 and 3).
 
 ``authorize_workflow_submission`` decides whether a principal may run an
 ``EffectivePlan`` and returns every denial reason at once. It implements the
@@ -10,14 +10,23 @@ mode matrix of the Phase 2 plan:
   admins may use spawn ``none``/``local``, custom images and advisory mode;
   non-admins may not. The one deliberate tightening is that non-admins are
   denied inline MCP server entries; admin inline MCP passes through to the
-  executor's own gates. Named MCP, provider, skills, tools, service accounts,
+  executor's own gates. Named catalog MCP servers (an operator opt-in through
+  ``workflow_enabled``), provider, skills, tools, service accounts,
   namespaces and limits are not checked.
 * **Policy present:** deny by default, admins included. Spawn ``none``/
   ``local`` additionally requires admin, and granting it to a non-admin never
   overrides that. Custom images need an ``images`` grant (the legacy admin
   image override is intentionally gone); the spawner's default image and
-  default service account are the only implicit grants. Named and inline MCP
-  are denied for everyone until Phase 3.
+  default service account are the only implicit grants. A named catalog MCP
+  server needs an ``mcp`` grant (``["*"]`` covers every ``workflow_enabled``
+  entry), denied as ``mcp_not_granted``; catalog servers are secretless, so
+  they are allowed on any spawn mode. Inline MCP entries stay denied for
+  everyone (``mcp_not_allowed``).
+* **MCP references** are taken from each step's effective list (step, else
+  spec; ``[]`` is explicitly empty) via ``workflow.mcp.step_mcp_servers``.
+  They must already have passed ``workflow.mcp.validate_mcp_references``
+  (400 ``mcp_unknown``), so a wildcard grant only ever covers enabled
+  entries.
 * **Tools on ephemeral steps:** the sandbox does not enforce finite tool
   lists (it has no ``allowedTools``/``deniedTools`` request fields, always
   passes its default tools and runs with permissions bypassed), so a finite
@@ -68,6 +77,7 @@ from workflow.limits import (
     MAX_POLICY_TOKENS,
     MAX_POLICY_WORKFLOW_SECONDS,
 )
+from workflow.mcp import step_mcp_servers
 
 # JSON pointers of request fields that are not part of a step plan.
 PROVIDER_POINTER: Final[str] = "/provider"
@@ -199,6 +209,7 @@ class _Grants:  # pylint: disable=too-many-instance-attributes
         service_accounts: Granted service accounts.
         namespaces: Granted namespaces.
         spawn_modes: Granted spawn modes.
+        mcp: Granted catalog MCP server names.
         advisory: Whether advisory mode is granted.
         max_step_timeout_seconds: Effective step timeout limit.
         max_workflow_seconds: Effective declared workflow budget limit.
@@ -213,6 +224,7 @@ class _Grants:  # pylint: disable=too-many-instance-attributes
     service_accounts: _ListGrant
     namespaces: _ListGrant
     spawn_modes: _ListGrant
+    mcp: _ListGrant
     advisory: bool
     max_step_timeout_seconds: int
     max_workflow_seconds: int
@@ -273,6 +285,7 @@ def _grants_for(policy: WorkflowPolicy, roles: Iterable[str]) -> _Grants:
         service_accounts=_list_grant(rules, "service_accounts"),
         namespaces=_list_grant(rules, "namespaces"),
         spawn_modes=_list_grant(rules, "spawn_modes"),
+        mcp=_list_grant(rules, "mcp"),
         advisory=any(rule.advisory for rule in rules),
         max_step_timeout_seconds=_limit(
             rules, "max_step_timeout_seconds", MAX_POLICY_STEP_TIMEOUT_SECONDS
@@ -365,24 +378,6 @@ def _is_default_image(
     return image in {default_sandbox_image, plan.spawner_default_image} - {None}
 
 
-def _mcp_entries(step: StepPlan) -> list[tuple[bool, str, Any]]:
-    """List a step's MCP server entries.
-
-    Parameters:
-        step: The step plan.
-
-    Returns:
-        ``(is_inline, pointer, entry)`` triples; a string entry is a named
-        catalog reference, anything else is treated as inline.
-    """
-    servers = step.mcp_servers.value or ()
-    base = _path(step.mcp_servers, step.path)
-    return [
-        (not isinstance(entry, str), f"{base}/{index}", entry)
-        for index, entry in enumerate(servers)
-    ]
-
-
 def _legacy_denials(
     plan: EffectivePlan,
     *,
@@ -429,15 +424,12 @@ def _legacy_denials(
                 )
             )
     for step in plan.steps:
-        for is_inline, path, _ in _mcp_entries(step):
-            if is_inline:
-                denials.append(
-                    PolicyDenial(
-                        AuditReason.MCP_NOT_ALLOWED,
-                        path,
-                        "inline MCP servers require admin",
-                    )
-                )
+        denials += [
+            PolicyDenial(
+                AuditReason.MCP_NOT_ALLOWED, path, "inline MCP servers require admin"
+            )
+            for path in step_mcp_servers(step).inline_paths
+        ]
     return denials
 
 
@@ -612,6 +604,42 @@ def _step_service_account_denials(
     )
 
 
+def _step_mcp_denials(step: StepPlan, grants: _Grants) -> list[PolicyDenial]:
+    """Check a step's effective MCP servers under a policy.
+
+    A named catalog server needs an ``mcp`` grant; the message names only
+    the requested server. Inline entries are always denied in policy mode,
+    with a fixed message. Named servers need no spawn-mode check: catalog
+    entries are secretless.
+
+    Parameters:
+        step: The step plan.
+        grants: The principal's grants.
+
+    Returns:
+        One denial per ungranted named server and per inline entry.
+    """
+    servers = step_mcp_servers(step)
+    denials = [
+        PolicyDenial(
+            AuditReason.MCP_NOT_GRANTED,
+            ref.path,
+            f"MCP server '{ref.name}' is not granted",
+        )
+        for ref in servers.named
+        if not grants.mcp.allows(ref.name)
+    ]
+    denials += [
+        PolicyDenial(
+            AuditReason.MCP_NOT_ALLOWED,
+            path,
+            "inline MCP servers are not allowed under the workflow policy",
+        )
+        for path in servers.inline_paths
+    ]
+    return denials
+
+
 def _step_limit_denials(step: StepPlan, grants: _Grants) -> list[PolicyDenial]:
     """Check a step's timeouts, retries and token budget under a policy.
 
@@ -725,14 +753,7 @@ def _policy_denials(  # pylint: disable=too-many-arguments
         denials += _step_service_account_denials(step, grants, default_service_account)
         denials += _step_name_denials(step, grants)
         denials += _step_tools_enforceable_denials(step, grants)
-        denials += [
-            PolicyDenial(
-                AuditReason.MCP_NOT_ALLOWED,
-                path,
-                "MCP servers are not allowed under the workflow policy",
-            )
-            for _, path, _ in _mcp_entries(step)
-        ]
+        denials += _step_mcp_denials(step, grants)
         denials += _step_limit_denials(step, grants)
     denials += _limit_denial(
         plan.declared_workflow_budget_seconds,

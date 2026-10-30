@@ -636,19 +636,26 @@ async def test_policy_admin_is_deny_by_default(policy_env: Env) -> None:
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "servers",
-    [["catalog-entry"], [{"name": "x", "url": "https://mcp.example.com"}]],
+    ("servers", "reason"),
+    [
+        (["catalog-entry"], "mcp_not_granted"),
+        ([{"name": "x", "url": "https://mcp.example.com"}], "mcp_not_allowed"),
+    ],
     ids=["named", "inline"],
 )
 async def test_policy_mcp_denied_for_everyone(
-    policy_env: Env, servers: list[Any]
+    policy_env: Env, servers: list[Any], reason: str
 ) -> None:
-    """Named and inline MCP are 403 under a policy, admins included."""
+    """Without an mcp grant, named and inline MCP are 403, admins included.
+
+    A named server is denied as not granted (the policy has no ``mcp``
+    grant); inline entries stay denied in policy mode.
+    """
     definition = _definition(_policy_step(mcp_servers=servers))
     for roles in ((), (ADMIN_ROLE,)):
         outcome = await policy_env.run(_body(definition), roles=roles)
         assert outcome.status == 403
-        assert _reasons(outcome) == ["mcp_not_allowed"]
+        assert _reasons(outcome) == [reason]
         assert _one(outcome)["paths"] == ["/definition/spec/steps/0/mcp_servers/0"]
     policy_env.executor.start.assert_not_called()
 

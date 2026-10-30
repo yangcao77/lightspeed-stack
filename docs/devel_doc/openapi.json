@@ -18465,7 +18465,7 @@
                     "inline_mcp": {
                         "type": "boolean",
                         "title": "Inline MCP",
-                        "description": "Reserved: not supported until Phase 3.",
+                        "description": "Reserved: not supported yet; it needs redirect-safe secret handling and verified egress enforcement (see #51).",
                         "default": false
                     },
                     "inline_mcp_hosts": {
@@ -18481,7 +18481,7 @@
                             }
                         ],
                         "title": "Inline MCP hosts",
-                        "description": "Reserved: not supported until Phase 3."
+                        "description": "Reserved: not supported yet; it needs redirect-safe secret handling and verified egress enforcement (see #51)."
                     },
                     "mcp_secrets": {
                         "anyOf": [
@@ -18496,12 +18496,12 @@
                             }
                         ],
                         "title": "MCP secrets",
-                        "description": "Reserved: not supported until Phase 3."
+                        "description": "Reserved: not supported yet; it needs redirect-safe secret handling and verified egress enforcement (see #51)."
                     },
                     "ssrf": {
                         "type": "boolean",
                         "title": "SSRF checks",
-                        "description": "Reserved: not supported until Phase 3.",
+                        "description": "Reserved: not supported yet; it needs redirect-safe secret handling and verified egress enforcement (see #51).",
                         "default": false
                     }
                 },
@@ -18511,7 +18511,7 @@
                     "role"
                 ],
                 "title": "PolicyRule",
-                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs step ``tools`` and\n        ``permissions.allowed_tools``. Ephemeral steps need an explicit\n        ``[\"*\"]``; a finite list is rejected as ``tools_not_enforceable``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Granted catalog MCP servers (``workflow_enabled`` entries of\n        ``mcp_servers``) or ``[\"*\"]``; a grant covers every tool on the\n        server. Checked against the catalog at configuration load.\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
+                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs step ``tools`` and\n        ``permissions.allowed_tools``. Ephemeral steps need an explicit\n        ``[\"*\"]``; a finite list is rejected as ``tools_not_enforceable``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Granted catalog MCP servers (``workflow_enabled`` entries of\n        ``mcp_servers``) or ``[\"*\"]``; a grant covers every tool on the\n        server. Checked against the catalog at configuration load.\n    inline_mcp: Reserved; not supported yet (see #51).\n    inline_mcp_hosts: Reserved; not supported yet (see #51).\n    mcp_secrets: Reserved; not supported yet (see #51).\n    ssrf: Reserved; not supported yet (see #51)."
             },
             "PostgreSQLDatabaseConfiguration": {
                 "properties": {

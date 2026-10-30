@@ -184,7 +184,7 @@ class TestPolicyLoad:
 
 
 class TestReservedFields:
-    """Phase 3 fields load only at their default."""
+    """Reserved MCP fields load only at their default."""
 
     @pytest.mark.parametrize(
         "field,value",
@@ -196,9 +196,13 @@ class TestReservedFields:
         ],
     )
     def test_non_default_rejected(self, field: str, value: Any) -> None:
-        """Each reserved field fails with the Phase 3 message."""
+        """Each reserved field fails with a message that is true today."""
         error = _error(_policy_engine([{"role": "dev", field: value}]))
-        assert "not supported until phase 3" in error
+        assert "not supported yet" in error
+        assert "redirect-safe secret handling" in error
+        assert "egress enforcement" in error
+        assert "#51" in error
+        assert "phase 3" not in error
         assert field in error
 
     @pytest.mark.parametrize(

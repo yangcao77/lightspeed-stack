@@ -3418,6 +3418,16 @@ _POLICY_RESERVED_FIELDS: Final[tuple[str, ...]] = (
     "ssrf",
 )
 
+# Why the reserved fields still fail config load (true until the work lands).
+_POLICY_RESERVED_REASON: Final[str] = (
+    "is not supported yet: it needs redirect-safe secret handling and "
+    "verified egress enforcement (see #51)"
+)
+_POLICY_RESERVED_DESCRIPTION: Final[str] = (
+    "Reserved: not supported yet; it needs redirect-safe secret handling and "
+    "verified egress enforcement (see #51)."
+)
+
 POLICY_WILDCARD: Final[str] = "*"
 
 
@@ -3517,10 +3527,10 @@ class PolicyRule(ConfigurationBase):
         mcp: Granted catalog MCP servers (``workflow_enabled`` entries of
             ``mcp_servers``) or ``["*"]``; a grant covers every tool on the
             server. Checked against the catalog at configuration load.
-        inline_mcp: Reserved (Phase 3).
-        inline_mcp_hosts: Reserved (Phase 3).
-        mcp_secrets: Reserved (Phase 3).
-        ssrf: Reserved (Phase 3).
+        inline_mcp: Reserved; not supported yet (see #51).
+        inline_mcp_hosts: Reserved; not supported yet (see #51).
+        mcp_secrets: Reserved; not supported yet (see #51).
+        ssrf: Reserved; not supported yet (see #51).
     """
 
     role: str = Field(..., min_length=1, title="Role", description="Role name or '*'.")
@@ -3572,22 +3582,22 @@ class PolicyRule(ConfigurationBase):
     inline_mcp: bool = Field(
         default=False,
         title="Inline MCP",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     inline_mcp_hosts: Optional[list[str]] = Field(
         default=None,
         title="Inline MCP hosts",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     mcp_secrets: Optional[list[str]] = Field(
         default=None,
         title="MCP secrets",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     ssrf: bool = Field(
         default=False,
         title="SSRF checks",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
 
     @model_validator(mode="after")
@@ -3604,7 +3614,7 @@ class PolicyRule(ConfigurationBase):
         errors: list[str] = []
         for name in _POLICY_RESERVED_FIELDS:
             if getattr(self, name):
-                errors.append(f"{name} is not supported until Phase 3")
+                errors.append(f"{name} {_POLICY_RESERVED_REASON}")
         for name in _POLICY_LIST_GRANTS:
             values: list[str] = getattr(self, name) or []
             if len(values) > 1 and POLICY_WILDCARD in values:
