@@ -444,3 +444,101 @@ class TestCatalogUrlWhitespace:
         """Non-enabled entries keep current behaviour."""
         server = ModelContextProtocolServer(name="a", url=" http://h/mcp")
         assert server.url == " http://h/mcp"
+
+
+BAD_NAME_CHARS = ["\n", "\r", "\t", "\x00", "\x1b"]
+
+
+def _first_message(exc: ValidationError) -> str:
+    """The validator's own message (excludes pydantic's input echo)."""
+    return str(exc.errors()[0]["msg"])
+
+
+class TestEntryNameSanitizing:
+    """Malformed entry names never reach load errors raw."""
+
+    @pytest.mark.parametrize(
+        "bad", ["x\nINJECTED", "x\rINJECTED", "x\tINJECTED", "x\x00INJECTED"]
+    )
+    def test_control_characters_not_echoed(self, bad: str) -> None:
+        """Control characters in a name are not in the error text."""
+        with pytest.raises(ValidationError) as exc_info:
+            Configuration.model_validate(_config([_server(bad)]))
+        message = _first_message(exc_info.value)
+        for char in BAD_NAME_CHARS:
+            assert char not in message
+        assert "mcp_servers entry 'x?INJECTED'" in message
+
+    def test_ansi_escape_not_echoed(self) -> None:
+        """An ANSI escape sequence in a name is neutralised."""
+        with pytest.raises(ValidationError) as exc_info:
+            Configuration.model_validate(_config([_server("x\x1b[31mred")]))
+        message = _first_message(exc_info.value)
+        assert "\x1b" not in message
+        assert "x?[31mred" in message
+
+    def test_long_name_truncated(self) -> None:
+        """A very long name is truncated in the message."""
+        with pytest.raises(ValidationError) as exc_info:
+            Configuration.model_validate(_config([_server("A" * 5000)]))
+        message = _first_message(exc_info.value)
+        assert "A" * 200 not in message
+        assert "AAAA" in message
+
+    def test_duplicate_valid_names_unchanged(self) -> None:
+        """Valid names appear verbatim in messages."""
+        message = _load_error([_server("kb"), _server("kb")])
+        assert "mcp_servers entry 'kb'" in message
+
+    def test_policy_grant_name_sanitized(self) -> None:
+        """A policy mcp grant naming a bad string is sanitised too."""
+        with pytest.raises(ValidationError) as exc_info:
+            Configuration.model_validate(
+                _config([_server("kb")], [{"role": "*", "mcp": ["a\nINJ"]}])
+            )
+        assert "\n" not in _first_message(exc_info.value)
+
+
+class TestQueryStringWarning:
+    """Load-time warning for catalog URLs with a query string or fragment."""
+
+    CANARY = "tok_SECRETCANARY123"
+
+    def _warnings(self, caplog: pytest.LogCaptureFixture) -> list[str]:
+        """Warning messages about query strings."""
+        return [
+            r.getMessage()
+            for r in caplog.records
+            if r.levelname == "WARNING" and "query string" in r.getMessage()
+        ]
+
+    @pytest.mark.parametrize(
+        "suffix", [f"?token={CANARY}", f"#frag{CANARY}", f"?a=1#{CANARY}"]
+    )
+    def test_warns_once_without_leaking(
+        self, caplog: pytest.LogCaptureFixture, suffix: str
+    ) -> None:
+        """One warning names the entry and omits the URL tail."""
+        caplog.set_level("WARNING")
+        Configuration.model_validate(
+            _config([_server("kb", url=f"https://h/mcp{suffix}")])
+        )
+        warnings = self._warnings(caplog)
+        assert len(warnings) == 1
+        assert "'kb'" in warnings[0]
+        assert "credentials" in warnings[0]
+        assert self.CANARY not in caplog.text
+
+    def test_plain_url_no_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        """A plain URL does not warn."""
+        caplog.set_level("WARNING")
+        Configuration.model_validate(_config([_server("kb")]))
+        assert not self._warnings(caplog)
+
+    def test_disabled_entry_no_warning(self, caplog: pytest.LogCaptureFixture) -> None:
+        """A disabled entry does not warn."""
+        caplog.set_level("WARNING")
+        Configuration.model_validate(
+            _config([_server("kb", url="https://h/mcp?t=1", workflow_enabled=False)])
+        )
+        assert not self._warnings(caplog)

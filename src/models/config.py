@@ -687,6 +687,21 @@ class ModelContextProtocolServer(ConfigurationBase):
 _MCP_CATALOG_NAME: Final[re.Pattern[str]] = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
 
 
+def _safe_entry_name(name: str, limit: int = 64) -> str:
+    """Render an operator-supplied entry name safely for messages and logs.
+
+    Parameters:
+        name: The raw name.
+        limit: Maximum characters kept before truncation.
+
+    Returns:
+        The name with anything outside letters, digits and ``._[]-``
+        replaced by ``?``, truncated with ``...`` beyond ``limit``.
+    """
+    safe = re.sub(r"[^A-Za-z0-9._\[\]-]", "?", name[: limit + 1])
+    return safe[:limit] + "..." if len(safe) > limit else safe
+
+
 def _workflow_catalog_problems(
     server: ModelContextProtocolServer, name_count: int
 ) -> list[str]:
@@ -4380,7 +4395,7 @@ class Configuration(ConfigurationBase):
         for server in self.mcp_servers:
             if server.workflow_enabled:
                 errors.extend(
-                    f"mcp_servers entry '{server.name}': {problem}"
+                    f"mcp_servers entry '{_safe_entry_name(server.name)}': {problem}"
                     for problem in _workflow_catalog_problems(
                         server, names.count(server.name)
                     )
@@ -4391,11 +4406,23 @@ class Configuration(ConfigurationBase):
             for name in rule.mcp or []:
                 if name != POLICY_WILDCARD and name not in enabled:
                     errors.append(
-                        f"policy role '{rule.role}': mcp names '{name}', which "
+                        f"policy role '{_safe_entry_name(rule.role)}': mcp names "
+                        f"'{_safe_entry_name(name)}', which "
                         "is not a workflow_enabled mcp_servers entry"
                     )
         if errors:
             raise ValueError("; ".join(errors))
+        for server in self.mcp_servers:
+            if server.workflow_enabled:
+                parts = urlsplit(server.url)
+                if parts.query or parts.fragment:
+                    logger.warning(
+                        "mcp_servers entry '%s': the URL has a query string or "
+                        "fragment; query strings may carry credentials and are "
+                        "persisted with the run context and passed to sandboxes. "
+                        "Do not put credentials in catalog URLs.",
+                        _safe_entry_name(server.name),
+                    )
         return self
 
     @model_validator(mode="after")

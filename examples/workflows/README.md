@@ -248,8 +248,9 @@ There is no `secret_headers` field in this phase (the load rejects it).
 Catalog URLs are trusted operator input. They are not SSRF-confined (MCP
 clients follow redirects, so a catalog URL also grants its redirect
 destinations), and they are not private-network protection. Do not embed
-credentials in a URL or its query string; entries with `user:pass@` are
-refused at load. A policy `mcp` grant (a list of catalog names, or `["*"]`)
+credentials in a URL or its query string (an enabled entry whose URL has a
+query string or fragment triggers a startup warning); entries with
+`user:pass@` are refused at load. A policy `mcp` grant (a list of catalog names, or `["*"]`)
 gives every tool on that server, and an unknown name and a non-enabled name
 are indistinguishable from a 400 but a known enabled server without a grant
 is a 403. See "Phase 3 scope" above for the full list of behaviour changes.
