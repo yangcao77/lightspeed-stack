@@ -310,10 +310,14 @@ def test_readme_states_ephemeral_mcp_provider_caveat() -> None:
         "silently runs without the granted MCP servers",
         "do not assume granted MCP servers are available on ephemeral claude or gemini",
         "mcp.py:26",
-        "issues/51#issuecomment-6521645859",
+        "issues/51#issuecomment-6521787867",
+        "this is not a network-access restriction",
+        "no explicit error is returned",
     ):
         assert needle in text, needle
     assert "spawn mode does not affect named servers" not in text
+    # Missing MCP wiring is not a network restriction: do not call it fail-closed.
+    assert "fails closed (no server is reachable)" not in text
     # `spawn: local` has no live evidence, so the README must not claim it.
     assert "`spawn: none` and `spawn: local`: a real subprocess" not in text
 

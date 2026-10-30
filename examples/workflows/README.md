@@ -132,13 +132,15 @@ commit `619fb0c` (`src/lightspeed_agentic/`):
   (`providers/claude.py:90-100`).
 - `gemini`: not wired; there is a TODO (`providers/gemini.py:92`).
 
-So an ephemeral step on claude or gemini silently runs without the granted MCP
-servers. It fails closed (no server is reachable) but gives no error. The
-deployed sandbox image build was not verified, only that source commit, so do
-not assume granted MCP servers are available on ephemeral claude or gemini
-steps. A stack-side rejection or a sandbox capability check for this case is
-future work; see the cross-repo plan comment
-https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-6521645859.
+So, at that source commit, an ephemeral step on claude or gemini silently runs
+without the granted MCP servers. The granted servers are not wired into the
+provider; this is not a network-access restriction (a model with shell or
+network tools may still reach such a server directly), and no explicit error is
+returned. The deployed sandbox image build was not verified, only that source
+commit, so do not assume granted MCP servers are available on ephemeral claude
+or gemini steps. A stack-side rejection or a sandbox capability check for this
+case is future work; see the cross-repo plan, latest revision linked from
+https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-6521787867.
 
 Related, for future secrets and not the secretless catalog: the openai
 provider's header resolver expects a `file:` string prefix (`mcp.py:26` in the
