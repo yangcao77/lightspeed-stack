@@ -2,9 +2,11 @@
 # cases.yaml — the behavioural contract for stack#51 (feature-level TDD).
 #
 # Each case is a request (or a config) and the status the gate must return.
-# Phases 0-2 run against the real endpoint and config (the unit test and
-# verify.py share contract_util.run_real_case); cases for later phases run
-# against reference_gate.py until their phase lands and that code is deleted.
+# Phases 0-3 run against the real endpoint and config (the unit test and
+# verify.py share contract_util.run_real_case_detail). Phase 3 is the reduced
+# scope: secretless operator-catalog MCP. Cases tagged `phase: 4` run against
+# reference_gate.py until that phase lands and the model is deleted; cases
+# tagged `deferred` run nowhere and stay here with a `deferred_reason`.
 #
 #   workflow:  base definition file; `set` patches it (dotted path, list items
 #              addressed by index or by their `name`); `body_set` patches the
@@ -13,10 +15,15 @@
 #   expect:    HTTP status, or {pre269: N, post269: N} when the stages differ
 #   reason:    substring that must appear in the returned reasons
 #   denied_contains: substring that must appear in a caller-facing denial
-#              message of the real endpoint (real-phase cases only)
+#              or rejection message of the real endpoint (real-phase cases)
 #   spawner:   false = stack has no spawner_configuration
+#   stack_set: patches the example stack config for this case only
+#   full:      (config cases) load the whole Configuration, not just the
+#              workflow_engine block
+#   deferred_reason: why a phase 4 / deferred case is not real yet
 # phase:    stack#51 phase that makes the case real; tests/unit/cloud_agents/
-#           test_workflow_contract.py runs cases up to the implemented phase
+#           test_workflow_contract.py runs cases up to the implemented phase.
+#           `deferred` = needs work that has no scheduled phase (see README).
 # Statuses: 400 unknown to the deployment / forbidden field, 403 exists but not
 # for this caller, 413 too large, 422 shape or count, 202 accepted.
 # =============================================================================
@@ -35,11 +42,44 @@ workflow_cases:
   # ---- accepted -------------------------------------------------------------
   - {phase: 1, name: triage as agent-user, workflow: triage-github-issue, expect: 202}
   - {phase: 1, name: kb answer as agent-support, workflow: kb-answer-with-approval, expect: 202}
-  - {phase: 3, name: admin inline MCP with registry ref, workflow: admin-inline-mcp, expect: 202}
-  # Named MCP is denied in policy mode until Phase 3, so the cases tagged below
-  # Phase 3 run with the workflow-level MCP names removed (contract_util).
+  - name: admin inline MCP with registry ref
+    phase: 4
+    deferred_reason: inline MCP with secret refs needs secret delivery and inline host grants
+    workflow: admin-inline-mcp
+    expect: 202
   - {phase: 3, name: triage with the granted named MCP server, workflow: triage-github-issue, expect: 202}
   - {phase: 3, name: kb answer with the granted named MCP server, workflow: kb-answer-with-approval, expect: 202}
+  - name: mcp wildcard grant covers any enabled catalog server
+    phase: 3
+    workflow: triage-github-issue
+    as: [agent-admin]
+    set: {spec.mcp_servers: [kb-search]}
+    expect: 202
+  # Catalog servers are secretless, so spawn mode does not matter for them.
+  - name: named server on spawn none is allowed (admin)
+    phase: 3
+    workflow: triage-github-issue
+    as: [agent-admin]
+    set: {spec.spawn: none}
+    expect: 202
+  - name: named server on spawn local is allowed (admin)
+    phase: 3
+    workflow: triage-github-issue
+    as: [agent-admin]
+    set: {spec.spawn: local}
+    expect: 202
+  - name: no policy, named server needs no grant (any workflow_start caller)
+    phase: 3
+    workflow: triage-github-issue
+    stack_set: {workflow_engine.policy: null}
+    set: {spec.mcp_servers: [kb-search]}
+    expect: 202
+  - name: no policy, inline MCP without secret_headers is allowed for an admin
+    phase: 3
+    workflow: admin-inline-mcp
+    stack_set: {workflow_engine.policy: null}
+    set: {spec.steps.query.mcp_servers.0.secret_headers: {}}
+    expect: 202
   - name: credential_ref equal to the entry's credential is accepted
     phase: 1
     workflow: triage-github-issue
@@ -55,7 +95,7 @@ workflow_cases:
     workflow: kb-answer-with-approval
     set: {spec.steps.respond.inference_provider: {name: openai-team-b, model: gpt-4o-mini}}
     expect: 202
-  - name: admin may run spawn none (no secret_headers servers)
+  - name: admin may run spawn none
     phase: 0
     workflow: triage-github-issue
     as: [agent-admin]
@@ -136,22 +176,78 @@ workflow_cases:
     as: [agent-admin]
     expect: 400
     reason: same catalog entry
+  # Unknown and disabled names get the same 400 text (the 403 for an enabled
+  # server without a grant still tells them apart; see README).
   - name: unknown MCP server name
     phase: 3
     workflow: triage-github-issue
     set: {spec.mcp_servers: [github-readwrite]}
     expect: 400
     reason: unknown MCP
-  - name: inline MCP with a raw secret_name/key header (no registry ref)
+    denied_contains: not available to workflows
+  - name: catalog entry that is not workflow_enabled gets the same 400
+    phase: 3
+    workflow: triage-github-issue
+    stack_set: {mcp_servers.github-readonly.workflow_enabled: false}
+    expect: 400
+    denied_contains: not available to workflows
+  - name: unknown MCP name is a 400 with no policy too
+    phase: 3
+    workflow: triage-github-issue
+    stack_set: {workflow_engine.policy: null}
+    set: {spec.mcp_servers: [github-readwrite]}
+    expect: 400
+    denied_contains: not available to workflows
+  - name: run-level mcp_servers sent by the caller
+    phase: 3
+    workflow: triage-github-issue
+    body_set: {mcp_servers: [github-readonly]}
+    expect: 400
+    denied_contains: Run-level mcp_servers
+  - name: run-level mcp_servers is rejected for admins too
+    phase: 3
+    workflow: triage-github-issue
+    as: [agent-admin]
+    body_set: {mcp_servers: []}
+    expect: 400
+    denied_contains: Run-level mcp_servers
+  - name: inline MCP with a raw secret_name/key header
     phase: 3
     workflow: admin-inline-mcp
     set:
       spec.steps.query.mcp_servers.0.secret_headers:
         Authorization: {secret_name: lightspeed-postgres, key: password}
     expect: 400
-    reason: registry refs
-  - name: inline MCP with an unknown registry ref
+    denied_contains: cannot name a Secret
+  - name: raw secret_name/key is rejected with no policy too
     phase: 3
+    workflow: admin-inline-mcp
+    stack_set: {workflow_engine.policy: null}
+    set:
+      spec.steps.query.mcp_servers.0.secret_headers:
+        Authorization: {secret_name: lightspeed-postgres, key: password}
+    expect: 400
+    denied_contains: cannot name a Secret
+  # The executor cannot deliver secrets yet, so any other non-empty
+  # secret_headers shape fails the typed parse before start, in every mode.
+  # admin-inline-mcp.yaml as written carries a logical ref.
+  - name: inline MCP with a logical registry ref is rejected before start
+    phase: 3
+    workflow: admin-inline-mcp
+    expect: 422
+  - name: logical registry ref is rejected with no policy too
+    phase: 3
+    workflow: admin-inline-mcp
+    stack_set: {workflow_engine.policy: null}
+    expect: 422
+  - name: inline MCP with a literal secret_headers value is rejected before start
+    phase: 3
+    workflow: admin-inline-mcp
+    set: {spec.steps.query.mcp_servers.0.secret_headers: {Authorization: "Bearer x"}}
+    expect: 422
+  - name: inline MCP with an unknown registry ref
+    phase: 4
+    deferred_reason: registry refs are not resolved until secret delivery lands
     workflow: admin-inline-mcp
     set: {spec.steps.query.mcp_servers.0.secret_headers.Authorization.name: mcp/nope}
     expect: 400
@@ -176,6 +272,25 @@ workflow_cases:
     workflow: triage-github-issue
     as: [agent-support]
     expect: 403
+  - name: named MCP server not granted to the caller
+    phase: 3
+    workflow: triage-github-issue
+    set: {spec.mcp_servers: [kb-search]}
+    expect: 403
+    reason: mcp
+    denied_contains: is not granted
+  - name: step-level named MCP server not granted to the caller
+    phase: 3
+    workflow: triage-github-issue
+    set: {spec.steps.report.mcp_servers: [kb-search]}
+    expect: 403
+    denied_contains: is not granted
+  - name: named MCP with an empty mcp grant
+    phase: 3
+    workflow: triage-github-issue
+    stack_set: {workflow_engine.policy.rules.1.mcp: []}
+    expect: 403
+    denied_contains: is not granted
   - name: caller without workflow_start
     phase: 2
     workflow: triage-github-issue
@@ -304,40 +419,66 @@ workflow_cases:
     set: {advisory: true}
     expect: 202
   - name: secret_headers MCP on spawn none (needs cloud-agents#269)
-    phase: 3
+    phase: deferred
+    deferred_reason: secret delivery and the cloud-agents#269 stage split are not part of the secretless Phase 3
     workflow: triage-github-issue
     as: [agent-admin]
     set: {spec.spawn: none}
     expect: {pre269: 403, post269: 202}
-    reason: secret_headers
 
   # ---- inline MCP -------------------------------------------------------------
+  # Inline MCP stays as in Phase 2: admin-only without a policy, 403 for every
+  # caller in policy mode. The definition's secret_headers are emptied so the
+  # request reaches the policy check (otherwise it is a 422 first).
   - name: inline MCP as agent-user
     phase: 3
     workflow: admin-inline-mcp
     as: [agent-user]
+    set: {spec.steps.query.mcp_servers.0.secret_headers: {}}
     expect: 403
     reason: inline MCP
-  - name: inline MCP host not on the allow-list
+    denied_contains: inline MCP
+  - name: inline MCP is denied to admins in policy mode
     phase: 3
+    workflow: admin-inline-mcp
+    set: {spec.steps.query.mcp_servers.0.secret_headers: {}}
+    expect: 403
+    denied_contains: inline MCP
+  - name: inline MCP with no policy is admin-only
+    phase: 3
+    workflow: admin-inline-mcp
+    as: [agent-user]
+    stack_set: {workflow_engine.policy: null}
+    set: {spec.steps.query.mcp_servers.0.secret_headers: {}}
+    expect: 403
+    denied_contains: inline MCP
+  # The cases below need inline host grants (and SSRF confinement), which stay
+  # reserved in the policy schema until redirects and resolved addresses can be
+  # confined. They run against reference_gate.py.
+  - name: inline MCP host not on the allow-list
+    phase: 4
+    deferred_reason: inline host grants are reserved (no SSRF confinement yet)
     workflow: admin-inline-mcp
     set: {spec.steps.query.mcp_servers.0.url: "https://evil.example.com/mcp"}
     expect: 403
     reason: host
   - name: inline MCP over plain http
-    phase: 3
+    phase: 4
+    deferred_reason: inline host grants are reserved (no SSRF confinement yet)
     workflow: admin-inline-mcp
     set: {spec.steps.query.mcp_servers.0.url: "http://mcp.internal.example.com/incidents"}
     expect: 403
     reason: https
   - name: inline MCP with credentials in the URL
-    phase: 3
+    phase: 4
+    deferred_reason: inline host grants are reserved (no SSRF confinement yet)
     workflow: admin-inline-mcp
     set: {spec.steps.query.mcp_servers.0.url: "https://user:pw@mcp.internal.example.com/incidents"}
     expect: 403
     reason: userinfo
   - name: inline MCP with a literal header value
-    phase: 3
+    phase: 4
+    deferred_reason: inline host grants are reserved (no SSRF confinement yet)
     workflow: admin-inline-mcp
     set: {spec.steps.query.mcp_servers.0.headers: {Authorization: "Bearer ghp_x"}}
     expect: 403
@@ -402,16 +543,48 @@ config_cases:
     phase: 1
     set: {workflow_engine.default_model: claude-opus-4}
     error: default_model
+  # `full: true` cases load the whole Configuration (MCP catalog cross-checks).
   - name: workflow_enabled MCP with request-bound auth
     phase: 3
+    full: true
     set: {mcp_servers.github-readonly.authorization_headers: {Authorization: client}}
-    error: workflow_enabled
+    error: authorization_headers must be empty
   - name: workflow_enabled MCP with propagated headers
     phase: 3
+    full: true
     set: {mcp_servers.kb-search.headers: [x-rh-identity]}
     error: propagated
-  - name: MCP secret ref without a binding
+  - name: workflow_enabled MCP with credentials in the URL
     phase: 3
+    full: true
+    set: {mcp_servers.kb-search.url: "https://user:pw@mcp.internal.example.com/kb"}
+    error: userinfo
+  - name: workflow_enabled MCP with a name that is not a safe path segment
+    phase: 3
+    full: true
+    set: {mcp_servers.kb-search.name: KB_Search}
+    error: name must match
+  - name: catalog entry with secret_headers is rejected (no such field yet)
+    phase: 3
+    full: true
+    set: {mcp_servers.kb-search.secret_headers: {X-API-Key: {name: mcp/kb-search}}}
+    error: secret_headers
+  - name: policy mcp grant naming a server that is not workflow_enabled
+    phase: 3
+    full: true
+    set: {workflow_engine.policy.rules.1.mcp: [no-such-server]}
+    error: not a workflow_enabled
+  - name: policy inline_mcp grant is still reserved
+    phase: 3
+    set: {workflow_engine.policy.rules.1.inline_mcp: true}
+    error: not supported yet
+  - name: policy mcp_secrets grant is still reserved
+    phase: 3
+    set: {workflow_engine.policy.rules.1.mcp_secrets: [mcp/incidents]}
+    error: not supported yet
+  - name: MCP secret ref without a binding
+    phase: deferred
+    deferred_reason: MCP secret refs need the secret delivery design (see README)
     set: {mcp_servers.kb-search.secret_headers.X-API-Key.name: mcp/missing}
     error: no secrets binding
   - name: policy rule naming an undefined provider

@@ -98,13 +98,10 @@ def case_body(case: dict, definitions: dict, defaults: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 # Highest #51 phase implemented in src/ (phase 0 is the Phase 0a hardening).
-# Cases up to this phase run against the real endpoint and config.
-IMPLEMENTED_PHASE = 2
-
-# Named MCP servers are denied for every caller in policy mode until Phase 3,
-# so cases for earlier phases run with the workflow-level names removed.
-# Otherwise every one of them would be a 403 for that reason alone.
-NAMED_MCP_PHASE = 3
+# Cases up to this phase run against the real endpoint and config. Phase 3 is
+# the secretless, catalog-only MCP scope; cases that need secret delivery,
+# inline host grants or SSRF confinement are tagged phase 4 or later.
+IMPLEMENTED_PHASE = 3
 
 
 def engine_config(stack: dict, pending: frozenset[str] | set[str] = frozenset()) -> Any:
@@ -115,14 +112,54 @@ def engine_config(stack: dict, pending: frozenset[str] | set[str] = frozenset())
     return WorkflowEngineConfiguration.model_validate(engine)
 
 
-def without_named_mcp(definitions: dict) -> dict:
-    """Copy of the definitions with workflow-level MCP server names removed."""
-    out = copy.deepcopy(definitions)
-    for definition in out.values():
-        spec = definition["spec"]
-        if "mcp_servers" in spec:
-            spec["mcp_servers"] = []
-    return out
+def is_real(case: dict) -> bool:
+    """Return whether the case runs against the real endpoint and config."""
+    phase = case["phase"]
+    return isinstance(phase, int) and phase <= IMPLEMENTED_PHASE
+
+
+def is_reference(case: dict) -> bool:
+    """Return whether a later-phase case still runs against ``reference_gate.py``.
+
+    Cases tagged ``deferred`` run nowhere; they stay in cases.yaml with a
+    ``reason`` so the missing coverage is visible.
+    """
+    phase = case["phase"]
+    return isinstance(phase, int) and phase > IMPLEMENTED_PHASE
+
+
+def config_load_error(
+    stack: dict,
+    case: dict,
+    files_dir: str,
+    pending: frozenset[str] | set[str] = frozenset(),
+) -> str:
+    """Load the patched example config and return the failure text ("" = loaded).
+
+    Cases with ``full: true`` go through the whole ``Configuration`` (MCP
+    catalog and policy cross-checks); the others only through the workflow
+    engine block.
+    """
+    from pydantic import ValidationError
+
+    patched = patch(stack, case["set"])
+    try:
+        if case.get("full"):
+            from models.config import Configuration
+
+            Configuration.model_validate(current_schema_stack(patched, files_dir))
+        else:
+            engine_config(patched, pending)
+    except ValidationError as exc:
+        return str(exc)
+    return ""
+
+
+def mcp_catalog(stack: dict) -> list[Any]:
+    """Build the real MCP catalog entries from an example stack config."""
+    from models.config import ModelContextProtocolServer
+
+    return [ModelContextProtocolServer(**m) for m in stack.get("mcp_servers", [])]
 
 
 class _StubRolesResolver:
@@ -173,8 +210,7 @@ async def run_real_case_detail(
     from starlette.requests import Request
 
     roles = set(case.get("as", defaults[case["workflow"]]["as"]))
-    if case["phase"] < NAMED_MCP_PHASE:
-        definitions = without_named_mcp(definitions)
+    stack = patch(stack, case.get("stack_set"))
     executor = _FakeExecutor()
     with pytest.MonkeyPatch.context() as mp:
         # The router reads the auth module from the loaded configuration at
@@ -197,9 +233,7 @@ async def run_real_case_detail(
                 if case.get("spawner", True)
                 else None
             ),
-            # Cases below NAMED_MCP_PHASE run without named MCP, so an empty
-            # operator catalog is enough until the Phase 3 cases are wired.
-            mcp_servers=[],
+            mcp_servers=mcp_catalog(stack),
         )
         mp.setattr(wf_mod, "configuration", cfg)
         mp.setattr(wf_mod, "check_configuration_loaded", lambda _cfg: None)
@@ -222,19 +256,18 @@ async def run_real_case_detail(
             status = exc.status_code
             if isinstance(exc.detail, dict):
                 denied = [str(m) for m in exc.detail.get("denied", [])]
+            elif isinstance(exc.detail, str):
+                denied = [exc.detail]
     return status, executor.started, denied
 
 
 def current_schema_stack(stack: dict, files_dir: str) -> dict:
-    """The example config minus the blocks that belong to Phase 3 and later.
+    """Return the example config with dummy files for in-cluster FilePath fields.
 
-    MCP ``secret_headers`` and ``workflow_enabled`` do not load yet. FilePath
-    fields point at Secrets mounted in-cluster, so dummy files stand in.
+    FilePath fields point at Secrets mounted in-cluster, so dummy files stand
+    in. The MCP catalog and policy load as written.
     """
     out = copy.deepcopy(stack)
-    for server in out["mcp_servers"]:
-        server.pop("secret_headers", None)
-        server.pop("workflow_enabled", None)
     tls_keys = ("openshell_tls_ca", "openshell_tls_cert", "openshell_tls_key")
     for section, keys in (
         (out["spawner"], tls_keys),

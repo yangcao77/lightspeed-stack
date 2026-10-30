@@ -5,7 +5,7 @@
 #
 # verify.py cross-checks this file against the stack config:
 #   - every `backend: env` secret is injected as that env var, from a Secret
-#   - MCP_ALLOWED_SECRETS equals the value the stack would generate
+#   - no MCP Secrets are bound (catalog MCP is secretless in this phase)
 #   - the Role grants `get` on exactly the K8s Secrets the registry binds
 #   - pod hardening (non-root, read-only rootfs, no privilege escalation)
 # =============================================================================
@@ -16,24 +16,12 @@ metadata:
   namespace: lightspeed
 automountServiceAccountToken: true   # k8s auth + Secret reads
 ---
-# Pre-cloud-agents#269: only the MCP secrets are read via the API. Inference
-# keys arrive as env (backend: env), so they need no RBAC.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: lightspeed-stack-secret-reader
-  namespace: lightspeed
-rules:
-  - apiGroups: [""]
-    resources: [secrets]
-    verbs: [get]
-    resourceNames:
-      - mcp-github-readonly-token
-      - mcp-kb-search-token
-      - mcp-incidents-token
+# Pre-cloud-agents#269 needs no Role: inference keys arrive as env
+# (backend: env) and MCP catalog servers are secretless, so the stack reads no
+# Secret through the API.
 ---
-# Post-cloud-agents#269 variant (bind this one instead of the Role above): the
-# lease provider also reads the inference Secret through the API.
+# Post-cloud-agents#269 only: the lease provider reads the inference Secret
+# through the API.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -47,21 +35,20 @@ rules:
     verbs: [get]
     resourceNames:
       - lightspeed-inference-creds
-      - mcp-github-readonly-token
-      - mcp-kb-search-token
-      - mcp-incidents-token
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: lightspeed-stack-secret-reader
+  name: lightspeed-stack-secret-reader-post-269
   namespace: lightspeed
+  annotations:
+    example.lightspeed/stage: post-269
 subjects:
   - {kind: ServiceAccount, name: lightspeed-stack, namespace: lightspeed}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: lightspeed-stack-secret-reader
+  name: lightspeed-stack-secret-reader-post-269
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -108,10 +95,6 @@ spec:
               valueFrom: {secretKeyRef: {name: lightspeed-inference-creds, key: AZURE_OPENAI_API_KEY}}
             - name: POSTGRES_PASSWORD
               valueFrom: {secretKeyRef: {name: lightspeed-postgres, key: password}}
-            # Runtime guardrail only; the stack generates this value at startup
-            # and refuses to start if the env disagrees (so keep them equal).
-            - name: MCP_ALLOWED_SECRETS
-              value: "mcp-github-readonly-token,mcp-incidents-token,mcp-kb-search-token"
           readinessProbe:
             httpGet: {path: /readiness, port: http}
             periodSeconds: 10

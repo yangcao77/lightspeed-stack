@@ -11,15 +11,17 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 > (the provider catalog, secret registry and defaults load, and
 > `/v1/workflows/run` resolves providers through them: the stack builds the
 > credential reference, the same-entry rule holds, overrides are rewritten to
-> executor types) and Phase 2 (`workflow_engine.policy`: per-role grants and
+> executor types), Phase 2 (`workflow_engine.policy`: per-role grants and
 > limits checked on every submission, with a structured audit event per
-> request). MCP `secret_headers` / `workflow_enabled` (Phase 3) do not load
-> yet, and until then named and inline MCP servers are denied for every
-> caller once a policy is configured.
-> `tests/unit/cloud_agents/test_workflow_contract.py` runs the Phase 0-2 cases
+> request) and a **reduced Phase 3**: secretless, catalog-only MCP (see
+> "Phase 3 scope" below). The original Phase 3 and security acceptance
+> criteria are not complete: secret delivery, inline host grants, `mcp_secrets`
+> and SSRF confinement are deferred and stay visible in `cases.yaml`.
+> `tests/unit/cloud_agents/test_workflow_contract.py` runs the Phase 0-3 cases
 > of `cases.yaml` against the real handler (through `@authorize`) and config,
-> and skips the rest. `verify.py` runs the same cases for real and the later
-> ones against the reference model in `reference_gate.py`.
+> and skips the rest. `verify.py` runs the same cases for real, the `phase: 4`
+> ones against the reference model in `reference_gate.py`, and checks that
+> `deferred` ones carry a reason.
 
 > **Auth prerequisite.** Role-based policy and the admin gates need an auth
 > module that resolves roles: `jwk-token` with `role_rules` (used here) or
@@ -34,15 +36,15 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 |---|---|---|
 | `README.md` (this file) | — | Detailed steps: operator setup + authoring + triggering |
 | `lightspeed-stack.yaml` | Operator | Provider catalog, secret registry, MCP catalog, policy, spawner |
-| `k8s-secrets.yaml` | Operator | Secret values — the only place they exist |
+| `k8s-secrets.yaml` | Operator | Inference and infrastructure Secret values (no MCP Secrets: catalog MCP is secretless) |
 | `triage-github-issue.yaml` | Caller | 2-step triage flow (role `agent-user`) |
 | `kb-answer-with-approval.yaml` | Caller | Research → human approval → answer (role `agent-support`) |
-| `admin-inline-mcp.yaml` | Caller (admin) | Inline MCP server with a registry secret ref (role `agent-admin`) |
+| `admin-inline-mcp.yaml` | Caller (admin) | Inline MCP server with a registry secret ref (role `agent-admin`); rejected before start until secret delivery lands (Phase 4 target) |
 | `post-269-overrides.yaml` | Operator | What changes after cloud-agents#269 (K8s-bound inference credentials, leases) |
 | `k8s-deployment.yaml` | Operator | Hardened Deployment, least-privilege RBAC, NetworkPolicy |
 | `external-secrets.yaml` | Operator | Production source of the Secrets (External Secrets Operator + Vault) |
-| `cases.yaml` | Contract | 66 request/config cases with the expected status, per stage |
-| `reference_gate.py` | Contract | Reference model of the MCP checks (Phase 3+) only; deleted when those land |
+| `cases.yaml` | Contract | 93 request/config cases with the expected status; `phase: 4` and `deferred` cases stay visible with a reason |
+| `reference_gate.py` | Contract | Reference model of the inline-MCP checks (Phase 4) and the post-#269 credential check only; deleted when those land |
 | `contract_util.py` | Contract | Case patching and the real-endpoint driver shared by `verify.py` and the unit test |
 | `verify.py` | Contract | Runs everything above plus deployment cross-checks |
 
@@ -61,15 +63,89 @@ Each criterion maps to something in this folder that `verify.py` checks, so
 | Reject caller-chosen env var / physical ids | `credentials_secret` on run provider and `definition.provider`, unknown provider keys | `cases.yaml` § credentials (400) |
 | AuthZ: provider, model, credential, MCP, skills, tools, spawn, images, service accounts, namespaces, limits | `workflow_engine.policy.rules` | `cases.yaml` § policy / spawn / limits (403) |
 | In-process handoff contract | Part 3, "After cloud-agents#269" | `post-269-overrides.yaml` run through the same cases |
-| Process-boundary handoff contract | same section (lease redeemed over mTLS; Temporal workers get `MCP_ALLOWED_SECRETS` from config) | design only; Phase 6 |
+| Process-boundary handoff contract | same section (lease redeemed over mTLS) | design only; Phase 6 |
 | No secret values in payloads, state, logs | requests carry logical names only; `k8s-secrets.yaml` has placeholders only | `verify.py` secrets checks; Phase 4 canary suite later |
-| Inline MCP URLs / literal headers | `admin-inline-mcp.yaml`, `inline_mcp_hosts` | `cases.yaml` § inline MCP |
+| Named MCP (secretless catalog) | `mcp_servers[*].workflow_enabled`, policy `mcp` | `cases.yaml` § MCP (real, Phase 3) |
+| Inline MCP URLs / literal headers / host grants | `admin-inline-mcp.yaml`, `inline_mcp_hosts` | `phase: 4` cases against the reference model; inline MCP is admin-only or denied today |
 | OpenShell provider injection for ephemeral | `spawner` block, README Step 6 | config schema check |
 | `none` / `local` restrictions | admin-only on workflows | `cases.yaml` § spawn |
 | Rotation and revocation | Step 8 (pre-#269 rules, Reloader) and Part 3 (post-#269) | documented; lease tests in Phase 6 |
 | Cleanup, redaction, cross-principal tests | not examples; Phase 4 / 6 test suites | cross-principal: `agent-support` vs triage, `agent-user` vs KB |
 | Deployment docs: K8s secrets, external managers, OpenShell | `k8s-secrets.yaml` (dev), `external-secrets.yaml`, `k8s-deployment.yaml` | `verify.py` deployment cross-checks |
 | Limits (`MAX_*`) | byte, step, MCP and secret-header caps | `cases.yaml` § limits (413 / 422) |
+
+## Phase 3 scope: secretless, catalog-only MCP
+
+Only what can be verified today is built. A `workflow_enabled` catalog server
+is offered to steps by name and carries no credential: no `secret_headers`
+field, no `authorization_headers`, no propagated `headers`, no credentials in
+the URL or query string. A server that needs a credential cannot be used from a
+workflow yet. That is intended; it fails closed.
+
+Behaviour changes to know about:
+
+- A named reference that matches no `workflow_enabled` entry is a 400 in every
+  mode, with the same text for an unknown and a disabled name. The executor
+  used to drop such names silently.
+- Without a policy, named servers need no grant: every `WORKFLOW_START` caller
+  can use every `workflow_enabled` server. Enabling a server is the opt-in, so
+  do not enable one whose URL points at a metadata or control-plane endpoint,
+  or one that carries credentials in the URL or query.
+- Legacy admins (no policy) lose raw inline `secret_headers`
+  (`{secret_name, key}` is a 400 for everyone). Any other non-empty inline
+  `secret_headers` value, including the logical `{name: ...}` ref, fails the
+  typed parse (422) before the run starts, because nothing can deliver it.
+- A caller-sent run-level `mcp_servers` is a 400; the stack builds that list
+  from the catalog entries the definition references.
+
+Status precedence on `POST /v1/workflows/run`: 413 size; 400 forbidden fields
+(run-level `mcp_servers`, raw `{secret_name, key}`, `credentials_secret`); 422
+count caps; 422 shape (typed parse, including unsupported `secret_headers`); 400
+catalog resolution (unknown provider, `mcp_unknown`, `mcp_name_conflict`); 403
+policy (all denials at once, including a missing `mcp` grant); 422 executor
+validation. Nothing is persisted or started on any of them. A known, enabled
+server without a grant is a 403, so the 400 does not hide which names exist.
+
+An `mcp` grant means every tool on that server. The executor enforces only
+which servers a step gets; finite `allowed_tools` are not enforced for MCP
+tools, on any spawn mode. Because catalog servers are secretless, spawn mode
+does not affect named servers (`none` and `local` still need their own grants).
+
+Trust and logging:
+
+- Catalog URLs are operator-trusted and not SSRF-confined. MCP clients follow
+  redirects, so a catalog URL also grants its redirect destinations. Loopback
+  and IP literals load (local development uses them); this is not
+  private-network protection.
+- The canary/log guarantee (no caller-supplied token-shaped text in logs,
+  audit, 4xx bodies beyond caller-facing denial messages) covers
+  stack-controlled surfaces: submission, audit and our post-call
+  `workflow_authorized` / `start_failed` records. It does not cover
+  executor-internal logs, which log step names after `start`.
+
+Deferred (stay in `cases.yaml` as `phase: 4` or `deferred`, each needs its own
+reviewed plan before any work):
+
+- **Secret delivery.** The OpenShell spawner reads the secret value from an
+  env var named by `secret_name` and uses `key` only as a file name, so it does
+  not fetch a K8s Secret key. A missing value logs a warning and continues, so
+  the server would run unauthenticated; delivery needs fail-closed behaviour and
+  runtime-only acquisition. The ephemeral bearer round-trip test must pass first.
+- **Redirect leak.** `httpx` strips only `Authorization` on a cross-origin
+  redirect, so headers such as `X-API-Key` would follow it. Any future secret
+  support must enforce no redirects (or a redirect-safe transport) for
+  secret-bearing servers.
+- **Mount paths.** Validate `SecretBinding.key` for path safety, and reject two
+  refs on one server that target the same file name
+  (`/var/secrets/mcp/{server}/{key}`).
+- **Inline host grants and SSRF confinement.** `inline_mcp`, `inline_mcp_hosts`,
+  `mcp_secrets` and `ssrf` stay reserved (config load fails). Confinement needs
+  redirect and resolved-address enforcement or an egress boundary.
+- **`MCP_ALLOWED_SECRETS`.** Not generated or written now, since no secrets are
+  injected. When it returns it must treat unset and explicitly empty
+  differently and compare parsed sets, not raw strings.
+
+---
 
 ## The two documents (read this first)
 
@@ -105,11 +181,6 @@ keys). The Secrets:
 - `lightspeed-inference-creds`: `ANTHROPIC_API_KEY`, `OPENAI_TEAM_B_KEY`
   (inference keys; pre-cloud-agents#269 bindings must be `backend: env`
   because cloud-agents reads `os.environ` by key).
-- `mcp-github-readonly-token`: `token` (the full `Authorization` header
-  value, including the `Bearer ` prefix; open question whether cloud-agents
-  adds it, see cloud-agents#269).
-- `mcp-kb-search-token`: `api-key` (KB service key).
-- `mcp-incidents-token`: `token` (only reachable through admin inline MCP).
 - `openshell-gateway-tls`: mTLS client identity for stack → gateway.
 - `lightspeed-postgres`: `password` for the workflow-state database.
 - `lightspeed-postgres-tls`: CA for `ssl_mode: verify-full`.
@@ -141,9 +212,10 @@ volumes:
     secret: {secretName: openshell-gateway-tls}
 ```
 
-The stack's ServiceAccount also needs `get` on the MCP secrets (least
-privilege: `resourceNames` listing exactly the K8s-bound Secrets; `verify.py`
-checks the list matches the registry, and post-#269 adds the inference Secret).
+Pre-#269 the stack's ServiceAccount needs no `get` on any Secret (inference
+keys arrive as env and catalog MCP is secretless). Post-#269 it needs `get` on
+the inference Secret only (`resourceNames`, least privilege; `verify.py` checks
+the list matches the registry).
 
 ### Step 2. Define the provider catalog, secret registry, and defaults
 
@@ -164,17 +236,12 @@ This example ships two entries: `claude-prod` (anthropic,
 Config load fails fast instead of misbehaving at runtime: unknown
 `executor_type`, dangling ref, `allowed_models: []`, or bad defaults.
 
-### Step 3. Register MCP servers with credentials as references
+### Step 3. Register secretless MCP servers
 
-Each `mcp_servers[*]` entry carries the operator-owned URL plus two
-`PLAN(stack#51)` fields:
-
-- `workflow_enabled: true` — required before workflow runs can use it.
-- `secret_headers: {Header: {name: <registry ref>}}` — header name to a
-  registry ref, never a value.
-
-This example: `github-readonly` (`Authorization` → `mcp/github-readonly`)
-and `kb-search` (`X-API-Key` → `mcp/kb-search`).
+Each `mcp_servers[*]` entry carries the operator-owned URL. Add
+`workflow_enabled: true` to offer it to workflow steps by name (default
+`false`). This example has `github-readonly` and `kb-search`, both secretless.
+There is no `secret_headers` field in this phase (the load rejects it).
 
 Catalog URLs are trusted operator input. They are not SSRF-confined (MCP
 clients follow redirects, so a catalog URL also grants its redirect
@@ -183,17 +250,16 @@ credentials in a URL or its query string; entries with `user:pass@` are
 refused at load. A policy `mcp` grant (a list of catalog names, or `["*"]`)
 gives every tool on that server, and an unknown name and a non-enabled name
 are indistinguishable from a 400 but a known enabled server without a grant
-is a 403.
+is a 403. See "Phase 3 scope" above for the full list of behaviour changes.
 
-Refused at load for `workflow_enabled` entries (in addition to the above:
-`require_approval` other than `never`, non-http(s) or hostless URLs, names not
-matching `^[a-z0-9][a-z0-9-]{0,62}$`, and a name shared with any other
-`mcp_servers` entry): request-bound
-`authorization_headers` (`client`/`oauth`/`kubernetes`) and non-empty
-propagated `headers` (e.g. `x-rh-identity`) — a detached run has no incoming
-request, and silently dropping an identity header would run the server without
-the caller's identity. The stack generates `MCP_ALLOWED_SECRETS` at startup
-from the registry and refuses to start if the process env disagrees.
+Refused at load for `workflow_enabled` entries: any `authorization_headers`
+(including request-bound `client`/`oauth`/`kubernetes`), non-empty propagated
+`headers` (e.g. `x-rh-identity`; a detached run has no incoming request, and
+silently dropping an identity header would run the server without the caller's
+identity), `require_approval` other than `never`, non-http(s) or hostless URLs,
+userinfo in the URL, names not matching `^[a-z0-9][a-z0-9-]{0,62}$`, and a name
+shared with any other `mcp_servers` entry. A policy `mcp` entry naming a server
+that is not `workflow_enabled` also fails the load.
 
 ### Step 4. Provide skills via the sandbox image, govern with policy
 
@@ -306,9 +372,13 @@ This example's roles:
   legacy admin image override is gone in policy mode: admins need an `images`
   grant like everyone else.
 
-The MCP grants (`mcp`, `mcp_secrets`, `inline_mcp`, `inline_mcp_hosts`) and
-`ssrf` are reserved: they fail config load until Phase 3, so the example does
-not carry them.
+`mcp` grants catalog servers by name (`["*"]` = every `workflow_enabled`
+entry; missing, null or `[]` = none; union across roles). The example gives
+`agent-user` `github-readonly`, `agent-support` `kb-search` and `agent-admin`
+`["*"]`. A grant means every tool on that server. `inline_mcp`,
+`inline_mcp_hosts`, `mcp_secrets` and `ssrf` are reserved: they fail config
+load, so the example does not carry them. Inline MCP is admin-only without a
+policy and denied for every caller with one.
 
 #### What the limits mean at runtime
 
@@ -357,10 +427,10 @@ kubectl -n lightspeed create configmap lightspeed-config \
   --from-file=lightspeed-stack.yaml=./lightspeed-stack.yaml
 kubectl apply -f k8s-deployment.yaml
 kubectl -n lightspeed rollout status deploy/lightspeed-stack
-kubectl -n lightspeed logs deploy/lightspeed-stack | grep -i "config\|provider\|MCP_ALLOWED"
+kubectl -n lightspeed logs deploy/lightspeed-stack | grep -i "config\|provider\|mcp"
 ```
 
-Expected: clean start, generated `MCP_ALLOWED_SECRETS` (names only). Then
+Expected: clean start. Then
 prove the denials from Part 2: caller-sent `credentials_secret` → 400,
 unknown provider/MCP name → 400, valid-but-ungranted item → 403 with reasons,
 `spawn: none` as `agent-user` on workflows → 403.
@@ -481,12 +551,16 @@ a different catalog entry than the run provider → 400 (same-entry rule);
 
 ### Admin inline MCP
 
-`admin-inline-mcp.yaml` is the exception path: `https` only, no userinfo,
-host in `inline_mcp_hosts`, no literal headers, and `secret_headers` as
-registry refs (`{name: mcp/incidents}`) that the stack rewrites to
-cloud-agents' form. The ref must also be granted via `mcp_secrets`. Prefer a
-catalog entry; follow-up: named workflow templates so trusted pipelines do
-not need `inline_mcp`.
+`admin-inline-mcp.yaml` is the Phase 4 target for the exception path: `https`
+only, no userinfo, host in `inline_mcp_hosts`, no literal headers, and
+`secret_headers` as registry refs (`{name: mcp/incidents}`) that the stack
+rewrites to cloud-agents' form and that must also be granted via
+`mcp_secrets`. None of that is built. Today the file is rejected with a 422
+before the run starts (the executor cannot deliver the ref), a raw
+`{secret_name, key}` is a 400, and inline MCP without `secret_headers` is
+admin-only without a policy and a 403 for everyone with one. `cases.yaml`
+keeps the Phase 4 expectations. Prefer a catalog entry; follow-up: named
+workflow templates so trusted pipelines do not need inline MCP.
 
 ### Audit events
 
@@ -522,10 +596,9 @@ changes:
 | Handoff | names (`env` key, K8s Secret name) | short-lived lease per step, redeemed then released; cross-process via mTLS |
 | Revocation | new submissions only | next step fails closed (`credential_revoked`) |
 | Rotation | restart | next lease, no restart |
-| `secret_headers` MCP on `none`/`local` | 403 | allowed |
 | Same-entry rule | enforced | can relax (each step has its own lease) |
 | `spawn: none` / `local` | admin-only (process-wide env) | admin-only lifted once cloud-agents isolates them |
-| Stack RBAC | `get` on MCP Secrets | `get` on MCP Secrets + the inference Secret |
+| Stack RBAC | none (no Secrets read via the API) | `get` on the inference Secret |
 
 ## Gaps in the plan found while building these examples
 
@@ -533,19 +606,20 @@ Folded into the plan in revision 3 (phase in brackets):
 
 1. **Inline MCP refs vs the typed parse.** cloud-agents' `MCPServerConfig`
    accepts `secret_headers` only as `{secret_name, key}` (`extra=forbid`), so a
-   registry ref `{name: ...}` fails pipeline step 3 with 422 [Phase 3]. The stack must
-   rewrite inline registry refs to the executor form for the shape check
-   (modelled in `reference_gate._shape_copy`).
-2. **`MCP_ALLOWED_SECRETS` must cover inline-granted secrets.** The plan
-   generates it from `workflow_enabled` catalog servers only; a Secret reachable
-   only through `rules[].mcp_secrets` (admin inline MCP) would be blocked by the
-   runtime guardrail [Phase 3]. The generator here unions both.
+   registry ref `{name: ...}` fails the typed parse with 422. Phase 3 keeps
+   that as the answer (no rewrite hook). A rewrite for the shape check is
+   modelled in `reference_gate._shape_copy` for Phase 4.
+2. **`MCP_ALLOWED_SECRETS` and inline-granted secrets.** Deferred with secret
+   delivery: nothing generates it now. The generator must cover secrets that
+   are reachable only through `mcp_secrets`, and treat unset and empty
+   differently.
 3. **`ADMIN` is never in `authorized_actions`.** Admin gates use the access
    resolver with roles stored on `request.state.user_roles` (PR #57), and no-op
    auth modules (`k8s`, `noop`, `api-key`) make every caller admin [0a done;
    load check in Phase 2, decision D8].
-4. **`Authorization` header values.** The K8s Secret holds the full header
-   value (including `Bearer `); confirm cloud-agents does not add a prefix [Phase 3 round-trip test].
+4. **`Authorization` header values.** The K8s Secret would hold the full header
+   value (including `Bearer `); confirm cloud-agents does not add a prefix
+   (part of the deferred secret delivery round-trip test).
 
 ---
 
@@ -558,40 +632,38 @@ project venv:
 uv run python examples/workflows/verify.py
 ```
 
-What it checks (~124 assertions):
+What it checks (~137 assertions):
 
 - Every file parses; all three definitions pass the real cloud-agents
   `WorkflowDefinition` shape check.
 - `lightspeed-stack.yaml` loads through the real `WorkflowEngineConfiguration`
-  (catalog, defaults, policy) and passes the remaining load-time checks in
-  both stages (request-bound/propagated MCP headers, MCP secret bindings), and
-  each load failure is also pinned as a negative case.
+  catalog, defaults, policy) and passes the remaining load-time check in
+  both stages (post-#269 credential bindings), and each load failure is also
+  pinned as a negative case.
 - `cases.yaml`: cases up to `IMPLEMENTED_PHASE` (credentials, catalog, policy,
-  spawn, images, advisory, limits) run against the real handler and config.
-  Later cases (named and inline MCP) run in `pre269` and `post269` against the
-  reference model.
-- The example minus the Phase 3 MCP blocks, policy included, validates against
+  spawn, images, advisory, limits, named MCP) run against the real handler and
+  config. `phase: 4` cases (inline MCP with host grants) run in `pre269` and
+  `post269` against the reference model; `deferred` cases run nowhere and must
+  carry a `deferred_reason`.
+- The example, MCP catalog and policy `mcp` grants included, validates against
   the current `Configuration` schema.
 - The real `JwtRolesResolver` / `GenericAccessResolver` give the roles and
   admin semantics the policy assumes.
-- Deployment cross-checks: env injection and `MCP_ALLOWED_SECRETS` match the
-  registry, RBAC `resourceNames` match the K8s-bound Secrets, pod hardening,
+- Deployment cross-checks: env injection matches the registry, no MCP
+  Secrets or `MCP_ALLOWED_SECRETS`, RBAC `resourceNames` match the K8s-bound
+  Secrets, pod hardening,
   digest-pinned images, and the dev and External Secrets sources agree.
 
 Each case in `cases.yaml` carries a `phase`. The unit test
 `tests/unit/cloud_agents/test_workflow_contract.py` runs the cases up to
-`IMPLEMENTED_PHASE` (in `contract_util.py`, currently 2) against the real
+`IMPLEMENTED_PHASE` (in `contract_util.py`, currently 3) against the real
 handler, including `@authorize` with the example's access rules and the case's
-`as` roles, and `WorkflowEngineConfiguration`. It compares status only and
-skips later cases. `reference_gate.py` is a model of the design for Phase 3
-(MCP), not the implementation. Finishing a phase means raising
-`IMPLEMENTED_PHASE`, dropping the matching `PENDING_ENGINE_KEYS`, and deleting
-that part of the reference.
-
-Cases for phases before 3 run with the workflow-level named MCP servers
-removed from the definitions, because named MCP is denied in policy mode until
-Phase 3 and every case would otherwise be a 403 for that reason alone. The
-Phase 3 cases keep the definitions as written.
+`as` roles (`stack_set` patches the stack config for one case, for example to
+drop the policy), and the real configuration. It compares status plus
+`denied_contains` when a case sets it, and skips later cases.
+`reference_gate.py` is a model of the design for Phase 4 (inline MCP), not the
+implementation. Finishing a phase means raising `IMPLEMENTED_PHASE`, dropping
+the matching `PENDING_ENGINE_KEYS`, and deleting that part of the reference.
 
 ## Production checklist
 

@@ -6,14 +6,14 @@ Run from anywhere with the project venv:
 
 1. Every file parses; the three workflow definitions pass the real
    cloud-agents ``WorkflowDefinition`` shape check.
-2. ``lightspeed-stack.yaml`` passes the real config load (Phases 0-2) and the
+2. ``lightspeed-stack.yaml`` passes the real config load (Phases 0-3) and the
    remaining load-time checks in ``reference_gate.py``, before and after
    cloud-agents#269 (``post-269-overrides.yaml`` merged on top).
 3. ``cases.yaml``: cases up to ``IMPLEMENTED_PHASE`` run against the real
-   endpoint and config (pre-269, the stage the code implements); later cases
-   run in each stage via ``reference_gate.py``.
-4. The example, minus the Phase 3 MCP blocks, validates against the CURRENT
-   ``Configuration`` (policy included).
+   endpoint and config (pre-269, the stage the code implements); phase 4
+   cases run via ``reference_gate.py``; ``deferred`` cases run nowhere.
+4. The example validates against the CURRENT ``Configuration`` (MCP catalog
+   and policy ``mcp`` grants included).
 5. Auth: real role and access resolvers behave as the policy assumes.
 6. Deployment: Deployment, RBAC and Secrets agree with the stack config.
 """
@@ -26,19 +26,19 @@ import sys
 import tempfile
 from pathlib import Path
 
-from pydantic import ValidationError
-
 WF_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(WF_DIR.parent.parent / "src"))
 sys.path.insert(0, str(WF_DIR))
 
 import reference_gate as gate
 from contract_util import (
-    IMPLEMENTED_PHASE,
     case_body,
+    config_load_error,
     current_schema_stack,
     deep_merge,
     engine_config,
+    is_real,
+    is_reference,
     load,
     load_all,
     patch,
@@ -84,10 +84,15 @@ for name, raw in definitions.items():
 # The real engine configuration is the pre-269 implementation (env-bound
 # inference credentials), so it loads the pre269 stack only.
 engine = engine_config(stack)
-check(engine.governed and engine.policy is not None, "real WorkflowEngineConfiguration loads the example (policy included)")
+check(
+    engine.governed and engine.policy is not None,
+    "real WorkflowEngineConfiguration loads the example (policy included)",
+)
 for stage, cfg in stacks.items():
     errors = gate.load_errors(cfg, stage)
-    check(errors == [], f"{stage}: config passes the remaining load-time checks {errors}")
+    check(
+        errors == [], f"{stage}: config passes the remaining load-time checks {errors}"
+    )
 
 
 # ------------------------------------------------------------------ 3. cases
@@ -113,7 +118,13 @@ def assert_case(label, stage, got, reasons, case):
 
 for case in cases["workflow_cases"]:
     dflt = cases["defaults"][case["workflow"]]
-    if case["phase"] <= IMPLEMENTED_PHASE:
+    if not is_real(case) and not is_reference(case):
+        check(
+            bool(case.get("deferred_reason")),
+            f"[deferred] {case['name']} has a deferred_reason",
+        )
+        continue
+    if is_real(case):
         want = case["expect"]
         want = want["pre269"] if isinstance(want, dict) else want
         status, started, denied = asyncio.run(
@@ -122,24 +133,29 @@ for case in cases["workflow_cases"]:
         ok = status == want and started == (status == 202)
         if ok and "denied_contains" in case:
             ok = any(case["denied_contains"] in message for message in denied)
-        check(ok, f"[real] {case['name']} -> {want}" + ("" if ok else f" (got {status})"))
+        check(
+            ok, f"[real] {case['name']} -> {want}" + ("" if ok else f" (got {status})")
+        )
         continue
     for stage, cfg in stacks.items():
         body = case_body(case, definitions, cases["defaults"])
-        status, reasons = run(gate.submit, cfg, body, set(case.get("as", dflt["as"])), stage)
+        status, reasons = run(gate.submit, body, set(case.get("as", dflt["as"])))
         assert_case(case["name"], stage, status, reasons, case)
 
 for case in cases["config_cases"]:
-    if case["phase"] <= IMPLEMENTED_PHASE:
+    if is_real(case):
         if case.get("stage", "pre269") != "pre269":
             continue
-        try:
-            engine_config(patch(stack, case["set"]))
-            msg = ""
-        except ValidationError as exc:
-            msg = str(exc)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            msg = config_load_error(stack, case, tmp_dir)
         ok = case["error"].lower() in msg.lower()
         check(ok, f"[real] config: {case['name']} -> load fails")
+        continue
+    if not is_reference(case):
+        check(
+            bool(case.get("deferred_reason")),
+            f"[deferred] config: {case['name']} has a deferred_reason",
+        )
         continue
     for stage, cfg in stacks.items():
         if case.get("stage", stage) != stage:
@@ -155,7 +171,10 @@ from models.config import AccessRule, Action, Configuration, JwtRoleRule
 
 with tempfile.TemporaryDirectory() as tmp:
     Configuration.model_validate(current_schema_stack(stack, tmp))
-check(True, "example minus Phase 3 MCP blocks validates against CURRENT Configuration schema")
+check(
+    True,
+    "example validates against CURRENT Configuration schema (MCP catalog and policy included)",
+)
 
 # --------------------------------------------------------------- 5. auth
 from authorization.resolvers import (
@@ -177,7 +196,9 @@ def b64(data):
 
 def roles_for(token_roles):
     """Resolve roles for an unsigned token carrying the given realm roles."""
-    token = ".".join([b64({"alg": "none"}), b64({"realm_access": {"roles": token_roles}}), "sig"])
+    token = ".".join(
+        [b64({"alg": "none"}), b64({"realm_access": {"roles": token_roles}}), "sig"]
+    )
     return asyncio.run(roles_resolver.resolve_roles(("uid", "user", False, token)))
 
 
@@ -189,10 +210,15 @@ check(
     "token roles map to agent-user/support/admin",
 )
 check(access.check_access(Action.WORKFLOW_START, user), "agent-user may start")
-check(not access.check_access(Action.WORKFLOW_APPROVE, user), "agent-user may not approve")
-check(access.check_access(Action.WORKFLOW_APPROVE, support), "agent-support may approve")
 check(
-    not access.check_access(Action.ADMIN, support) and not access.check_access(Action.ADMIN, user),
+    not access.check_access(Action.WORKFLOW_APPROVE, user), "agent-user may not approve"
+)
+check(
+    access.check_access(Action.WORKFLOW_APPROVE, support), "agent-support may approve"
+)
+check(
+    not access.check_access(Action.ADMIN, support)
+    and not access.check_access(Action.ADMIN, user),
     "only agent-admin is admin",
 )
 check(access.check_access(Action.ADMIN, admin), "agent-admin is admin")
@@ -210,14 +236,19 @@ post = stacks["post269"]["workflow_engine"]["secrets"]
 env_refs = {}
 for binding in (b for b in pre if b["backend"] == "env"):
     ref = env.get(binding["env"], {}).get("valueFrom", {}).get("secretKeyRef")
-    check(ref is not None, f"Deployment injects {binding['env']} from a Secret ({binding['name']})")
+    check(
+        ref is not None,
+        f"Deployment injects {binding['env']} from a Secret ({binding['name']})",
+    )
     if ref:
         env_refs[binding["env"]] = (ref["name"], ref["key"])
-generated = gate.generated_mcp_allowed_secrets(stacks["pre269"])
-check(env["MCP_ALLOWED_SECRETS"]["value"] == generated, "MCP_ALLOWED_SECRETS equals the generated value")
 check(
-    generated == gate.generated_mcp_allowed_secrets(stacks["post269"]),
-    "MCP allow-list is the same in both stages",
+    not any(e["name"] == "MCP_ALLOWED_SECRETS" for e in ctr["env"]),
+    "no MCP_ALLOWED_SECRETS: catalog MCP is secretless, nothing is generated",
+)
+check(
+    not any(b["name"].startswith("mcp/") for b in pre + post),
+    "no MCP secret bindings in either stage",
 )
 
 roles_by_name = {r["metadata"]["name"]: r for r in by_kind["Role"]}
@@ -234,46 +265,77 @@ def k8s_names(secrets):
 
 
 check(
-    granted("lightspeed-stack-secret-reader") == k8s_names(pre),
-    "pre-269 Role grants get on exactly the k8s-bound Secrets",
+    k8s_names(pre) == set() and "lightspeed-stack-secret-reader" not in roles_by_name,
+    "pre-269 binds no k8s Secrets and defines no Secret reader Role",
 )
 check(
     granted("lightspeed-stack-secret-reader-post-269") == k8s_names(post),
     "post-269 Role grants get on exactly the k8s-bound Secrets",
 )
 for role in roles_by_name.values():
-    check(role["rules"][0]["verbs"] == ["get"], f"{role['metadata']['name']}: get only, by resourceName")
+    check(
+        role["rules"][0]["verbs"] == ["get"],
+        f"{role['metadata']['name']}: get only, by resourceName",
+    )
 
 check(pod["securityContext"]["runAsNonRoot"] is True, "pod runs as non-root")
 sc = ctr["securityContext"]
 check(
-    sc["readOnlyRootFilesystem"] and not sc["allowPrivilegeEscalation"] and sc["capabilities"]["drop"] == ["ALL"],
+    sc["readOnlyRootFilesystem"]
+    and not sc["allowPrivilegeEscalation"]
+    and sc["capabilities"]["drop"] == ["ALL"],
     "container hardened",
 )
 mounts = {m["name"]: m["mountPath"] for m in ctr["volumeMounts"]}
 spawner = stack["spawner"]
-check(spawner["openshell_tls_ca"].startswith(mounts["gw-tls"]), "gateway TLS paths match the mount")
-check(stack["database"]["postgres"]["ca_cert_path"].startswith(mounts["pg-tls"]), "Postgres CA path matches the mount")
-check(stack["database"]["postgres"]["ssl_mode"] == "verify-full", "Postgres uses verify-full TLS")
-check(all("@sha256:" in i for i in (ctr["image"], spawner["sandbox_image"])), "stack and sandbox images pinned by digest")
-policy_images = {i for r in stack["workflow_engine"]["policy"]["rules"] for i in r.get("images", [])}
+check(
+    spawner["openshell_tls_ca"].startswith(mounts["gw-tls"]),
+    "gateway TLS paths match the mount",
+)
+check(
+    stack["database"]["postgres"]["ca_cert_path"].startswith(mounts["pg-tls"]),
+    "Postgres CA path matches the mount",
+)
+check(
+    stack["database"]["postgres"]["ssl_mode"] == "verify-full",
+    "Postgres uses verify-full TLS",
+)
+check(
+    all("@sha256:" in i for i in (ctr["image"], spawner["sandbox_image"])),
+    "stack and sandbox images pinned by digest",
+)
+policy_images = {
+    i for r in stack["workflow_engine"]["policy"]["rules"] for i in r.get("images", [])
+}
 check(all("@sha256:" in i for i in policy_images), "policy images pinned by digest")
 
 # Secrets: dev manifest and External Secrets define the same names and keys,
 # and cover every Secret/key the stack references in either stage.
 dev_docs = load_all("k8s-secrets.yaml")
-dev = {d["metadata"]["name"]: set((d.get("stringData") or d.get("data")).keys()) for d in dev_docs}
+dev = {
+    d["metadata"]["name"]: set((d.get("stringData") or d.get("data")).keys())
+    for d in dev_docs
+}
 ext = {
     d["spec"]["target"]["name"]: {x["secretKey"] for x in d["spec"]["data"]}
     for d in load_all("external-secrets.yaml")
 }
-check(dev == ext, f"k8s-secrets.yaml and external-secrets.yaml match {sorted(set(dev) ^ set(ext))}")
+check(
+    dev == ext,
+    f"k8s-secrets.yaml and external-secrets.yaml match {sorted(set(dev) ^ set(ext))}",
+)
 needed = {(s["secret_name"], s["key"]) for s in post if s["backend"] == "k8s"}
 needed |= set(env_refs.values())
-check(all(k in ext.get(n, set()) for n, k in needed), "every referenced Secret/key exists in the secret source")
+check(
+    all(k in ext.get(n, set()) for n, k in needed),
+    "every referenced Secret/key exists in the secret source",
+)
 for d in dev_docs:
     values = (d.get("stringData") or d.get("data")).values()
-    check(all("CHANGEME" in str(v) for v in values), f"{d['metadata']['name']}: placeholders only")
+    check(
+        all("CHANGEME" in str(v) for v in values),
+        f"{d['metadata']['name']}: placeholders only",
+    )
 
 print()
 if failures:
