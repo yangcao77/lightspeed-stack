@@ -6,7 +6,9 @@
 # verify.py cross-checks this file against the stack config:
 #   - every `backend: env` secret is injected as that env var, from a Secret
 #   - no MCP Secrets are bound (catalog MCP is secretless in this phase)
-#   - the Role grants `get` on exactly the K8s Secrets the registry binds
+#   - the stack ServiceAccount can read no Secret here (permission graph over
+#     this file); post-269-rbac.yaml adds `get` on exactly the K8s Secrets
+#     the post-269 registry binds
 #   - pod hardening (non-root, read-only rootfs, no privilege escalation)
 # =============================================================================
 apiVersion: v1
@@ -14,41 +16,12 @@ kind: ServiceAccount
 metadata:
   name: lightspeed-stack
   namespace: lightspeed
-automountServiceAccountToken: true   # k8s auth + Secret reads
+automountServiceAccountToken: true   # k8s auth (no Secret reads by default)
 ---
-# Pre-cloud-agents#269 needs no Role: inference keys arrive as env
+# No Role or RoleBinding here: pre-cloud-agents#269 inference keys arrive as env
 # (backend: env) and MCP catalog servers are secretless, so the stack reads no
-# Secret through the API.
----
-# Post-cloud-agents#269 only: the lease provider reads the inference Secret
-# through the API.
-apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
-metadata:
-  name: lightspeed-stack-secret-reader-post-269
-  namespace: lightspeed
-  annotations:
-    example.lightspeed/stage: post-269
-rules:
-  - apiGroups: [""]
-    resources: [secrets]
-    verbs: [get]
-    resourceNames:
-      - lightspeed-inference-creds
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  name: lightspeed-stack-secret-reader-post-269
-  namespace: lightspeed
-  annotations:
-    example.lightspeed/stage: post-269
-subjects:
-  - {kind: ServiceAccount, name: lightspeed-stack, namespace: lightspeed}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: Role
-  name: lightspeed-stack-secret-reader-post-269
+# Secret through the API. The post-#269 Secret reader lives in
+# post-269-rbac.yaml and is applied only deliberately.
 ---
 apiVersion: apps/v1
 kind: Deployment

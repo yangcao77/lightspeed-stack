@@ -278,3 +278,47 @@ def current_schema_stack(stack: dict, files_dir: str) -> dict:
             path.write_text("placeholder", encoding="utf-8")
             section[key] = str(path)
     return out
+
+
+_READ_VERBS = ("get", "list", "watch")
+
+
+def secret_read_grants(
+    docs: list[dict], namespace: str, sa_name: str
+) -> set[tuple[str, str]]:
+    """Secret read grants the ServiceAccount gets from the manifests.
+
+    Resolves RoleBinding/ClusterRoleBinding subjects to Role/ClusterRole rules
+    and returns ``(verb, resourceName)`` pairs for get/list/watch on secrets;
+    the name is ``*`` when the rule is not limited by resourceNames. A ``*``
+    verb or resource counts. Only documents passed in are considered.
+    """
+    roles = {
+        (d["kind"], d["metadata"]["name"], d["metadata"].get("namespace")): d
+        for d in docs
+        if d.get("kind") in ("Role", "ClusterRole")
+    }
+    grants: set[tuple[str, str]] = set()
+    for binding in docs:
+        if binding.get("kind") not in ("RoleBinding", "ClusterRoleBinding"):
+            continue
+        if not any(
+            s.get("kind") == "ServiceAccount"
+            and s.get("name") == sa_name
+            and s.get("namespace", binding["metadata"].get("namespace")) == namespace
+            for s in binding.get("subjects") or []
+        ):
+            continue
+        ref = binding["roleRef"]
+        role = roles.get(
+            (ref["kind"], ref["name"], binding["metadata"].get("namespace"))
+        ) or roles.get((ref["kind"], ref["name"], None))
+        for rule in (role or {}).get("rules", []):
+            if not {"secrets", "*"} & set(rule.get("resources", [])):
+                continue
+            verbs = rule.get("verbs", [])
+            for verb in _READ_VERBS:
+                if verb in verbs or "*" in verbs:
+                    names = rule.get("resourceNames") or ["*"]
+                    grants |= {(verb, n) for n in names}
+    return grants

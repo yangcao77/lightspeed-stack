@@ -24,9 +24,10 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 > `deferred` ones carry a reason.
 
 > **Auth prerequisite.** Role-based policy and the admin gates need an auth
-> module that resolves roles: `jwk-token` with `role_rules` (used here) or
-> `rh-identity` with `access_rules`. With `k8s`, `noop`, `noop-with-token`
-> or `api-key` the resolvers are no-ops: callers only have the `*` role,
+> module that resolves roles: `jwk-token` with populated `role_rules` and
+> `access_rules` (used here). `rh-identity` and `trusted-proxy` only resolve
+> the `*` role, so only wildcard policy is usable with them. With `k8s`,
+> `noop`, `noop-with-token` or `api-key` the resolvers are no-ops: callers only have the `*` role,
 > `access_rules` are ignored and every caller counts as admin, so the
 > admin-only denials below do not apply.
 
@@ -41,7 +42,8 @@ lightspeed-stack as the sole policy/secret boundary in front of cloud-agents.
 | `kb-answer-with-approval.yaml` | Caller | Research → human approval → answer (role `agent-support`) |
 | `admin-inline-mcp.yaml` | Caller (admin) | Inline MCP server with a registry secret ref (role `agent-admin`); rejected before start until secret delivery lands (Phase 4 target) |
 | `post-269-overrides.yaml` | Operator | What changes after cloud-agents#269 (K8s-bound inference credentials, leases) |
-| `k8s-deployment.yaml` | Operator | Hardened Deployment, least-privilege RBAC, NetworkPolicy |
+| `k8s-deployment.yaml` | Operator | Hardened Deployment, NetworkPolicy; no Secret read RBAC (default, pre-269) |
+| `post-269-rbac.yaml` | Operator | Opt-in Role + RoleBinding: stack `get` on the inference Secret, post-269 only |
 | `external-secrets.yaml` | Operator | Production source of the Secrets (External Secrets Operator + Vault) |
 | `cases.yaml` | Contract | 93 request/config cases with the expected status; `phase: 4` and `deferred` cases stay visible with a reason |
 | `reference_gate.py` | Contract | Reference model of the inline-MCP checks (Phase 4) and the post-#269 credential check only; deleted when those land |
@@ -193,7 +195,7 @@ kubectl apply -n lightspeed -f external-secrets.yaml  # production
 
 `k8s-deployment.yaml` wires them into the stack Deployment (non-root,
 read-only rootfs, no capabilities, digest-pinned image, default-deny egress
-NetworkPolicy, RBAC limited to `get` on named Secrets). Excerpt — inference
+NetworkPolicy, no Secret-read RBAC before #269). Excerpt — inference
 keys and DB password as env, TLS as mounted files:
 
 ```yaml
@@ -587,6 +589,14 @@ state record, transcript or API response (Phase 4 canary suite).
 
 ### After cloud-agents#269 (`post-269-overrides.yaml`)
 
+The default `k8s-deployment.yaml` gives the stack ServiceAccount no Secret
+reads. Once #269 lands, apply the overlay deliberately (it is not in the
+default apply set):
+
+```bash
+kubectl apply -f post-269-rbac.yaml   # get on lightspeed-inference-creds only
+```
+
 `verify.py` runs every case against both stages, so you can see exactly what
 changes:
 
@@ -669,7 +679,8 @@ the matching `PENDING_ENGINE_KEYS`, and deleting that part of the reference.
 
 - Images pinned by digest (stack, sandbox, policy `images`).
 - Values only in the secret manager; K8s Secrets synced, never committed.
-- Role-resolving auth (`jwk-token` or `rh-identity`), not `k8s`/`noop`.
+- Role-resolving auth (`jwk-token` with `role_rules` and `access_rules`), not
+  `k8s`/`noop`; `rh-identity` and `trusted-proxy` only resolve the `*` role.
 - `ssl_mode: verify-full` to Postgres; mTLS to the OpenShell gateway.
 - Least-privilege RBAC by `resourceNames`; default-deny egress NetworkPolicy.
 - Audit logger routed to a separate sink; alerts on `workflow_denied` spikes.

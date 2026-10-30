@@ -1,0 +1,31 @@
+# =============================================================================
+# post-269-rbac.yaml — apply ONLY after cloud-agents#269 lands, together with
+# post-269-overrides.yaml. The lease provider reads the inference Secret
+# through the API, so the stack ServiceAccount needs `get` on it. Not part of
+# the default apply set: k8s-deployment.yaml grants the stack no Secret reads.
+#
+#   kubectl apply -f post-269-rbac.yaml
+# =============================================================================
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: lightspeed-stack-secret-reader-post-269
+  namespace: lightspeed
+rules:
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get]
+    resourceNames:
+      - lightspeed-inference-creds
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: lightspeed-stack-secret-reader-post-269
+  namespace: lightspeed
+subjects:
+  - {kind: ServiceAccount, name: lightspeed-stack, namespace: lightspeed}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: lightspeed-stack-secret-reader-post-269

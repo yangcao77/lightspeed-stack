@@ -15,7 +15,9 @@ Run from anywhere with the project venv:
 4. The example validates against the CURRENT ``Configuration`` (MCP catalog
    and policy ``mcp`` grants included).
 5. Auth: real role and access resolvers behave as the policy assumes.
-6. Deployment: Deployment, RBAC and Secrets agree with the stack config.
+6. Deployment: Deployment, RBAC (permission graph: default set grants the
+   stack no Secret reads; post-269-rbac.yaml adds exactly the bound Secret)
+   and Secrets agree with the stack config.
 """
 
 import asyncio
@@ -43,6 +45,7 @@ from contract_util import (
     load_all,
     patch,
     run_real_case_detail,
+    secret_read_grants,
 )
 
 failures: list[str] = []
@@ -251,32 +254,29 @@ check(
     "no MCP secret bindings in either stage",
 )
 
-roles_by_name = {r["metadata"]["name"]: r for r in by_kind["Role"]}
-
-
-def granted(role_name):
-    """resourceNames the Role grants get on."""
-    return set(roles_by_name[role_name]["rules"][0]["resourceNames"])
-
 
 def k8s_names(secrets):
     """K8s Secret names bound with backend: k8s."""
     return {s["secret_name"] for s in secrets if s["backend"] == "k8s"}
 
 
+# Permission graph: subjects -> roles -> rules, per apply set.
+stack_sa = ("lightspeed", pod["serviceAccountName"])
+default_docs = load_all("k8s-deployment.yaml")
+default_grants = secret_read_grants(default_docs, *stack_sa)
 check(
-    k8s_names(pre) == set() and "lightspeed-stack-secret-reader" not in roles_by_name,
-    "pre-269 binds no k8s Secrets and defines no Secret reader Role",
+    k8s_names(pre) == set() and default_grants == set(),
+    "permission graph: default (pre-269) apply set grants the stack SA no "
+    f"get/list/watch on secrets {sorted(default_grants)}",
+)
+overlay_grants = secret_read_grants(
+    default_docs + load_all("post-269-rbac.yaml"), *stack_sa
 )
 check(
-    granted("lightspeed-stack-secret-reader-post-269") == k8s_names(post),
-    "post-269 Role grants get on exactly the k8s-bound Secrets",
+    overlay_grants == {("get", n) for n in k8s_names(post)},
+    "permission graph: post-269 overlay grants get on exactly the k8s-bound "
+    f"Secrets {sorted(overlay_grants)}",
 )
-for role in roles_by_name.values():
-    check(
-        role["rules"][0]["verbs"] == ["get"],
-        f"{role['metadata']['name']}: get only, by resourceName",
-    )
 
 check(pod["securityContext"]["runAsNonRoot"] is True, "pod runs as non-root")
 sc = ctr["securityContext"]

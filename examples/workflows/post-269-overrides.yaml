@@ -9,8 +9,8 @@
 #     hands cloud-agents a short-lived lease per step (redeemed, then released)
 #   - rotation applies at the next lease with no restart; revoking a ref fails
 #     the next step closed (`credential_revoked`)
-#   - the stack ServiceAccount needs `get` on the inference Secret as well
-#     (see k8s-deployment.yaml, the "post-269" Role)
+#   - the stack ServiceAccount needs `get` on the inference Secret as well:
+#     apply post-269-rbac.yaml deliberately (not in the default apply set)
 # Everything else (catalog, policy, request shapes) is identical by design.
 # =============================================================================
 workflow_engine:

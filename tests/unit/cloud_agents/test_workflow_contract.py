@@ -37,8 +37,10 @@ from contract_util import (  # IMPLEMENTED_PHASE = 3: phases 0-3 run for real
     engine_config,
     is_real,
     load,
+    load_all,
     patch,
     run_real_case_detail,
+    secret_read_grants,
 )
 
 from models.config import Configuration
@@ -309,3 +311,98 @@ def test_readme_lists_the_deferred_secret_work() -> None:
         assert needle in text, needle
     assert "until Phase 3" not in text
     assert "`secret_headers: {Header:" not in text
+
+
+SA = ("lightspeed", "lightspeed-stack")
+
+
+def _rbac(*files: str) -> list[dict]:
+    """All documents of the given example manifests."""
+    return [d for f in files for d in load_all(f)]
+
+
+def _binding(role_kind: str, role: str, kind: str = "RoleBinding") -> dict:
+    """A binding of the stack ServiceAccount to a role."""
+    return {
+        "kind": kind,
+        "metadata": {"name": "b", "namespace": "lightspeed"},
+        "subjects": [{"kind": "ServiceAccount", "name": SA[1], "namespace": SA[0]}],
+        "roleRef": {"kind": role_kind, "name": role},
+    }
+
+
+def _role(rules: list[dict], kind: str = "Role") -> dict:
+    """A role named r."""
+    return {
+        "kind": kind,
+        "metadata": {"name": "r", "namespace": "lightspeed"},
+        "rules": rules,
+    }
+
+
+def test_default_manifests_grant_the_stack_no_secret_reads() -> None:
+    """Pre-269 default apply set: the stack SA has no get/list/watch on secrets."""
+    docs = _rbac("k8s-deployment.yaml")
+    assert secret_read_grants(docs, *SA) == set()
+
+
+def test_post_269_overlay_grants_exactly_the_inference_secret() -> None:
+    """Overlay on top: get on the one inference Secret and nothing broader."""
+    docs = _rbac("k8s-deployment.yaml", "post-269-rbac.yaml")
+    assert secret_read_grants(docs, *SA) == {("get", "lightspeed-inference-creds")}
+    names = {
+        b["secret_name"]
+        for b in load("post-269-overrides.yaml")["workflow_engine"]["secrets"]
+    }
+    assert names == {"lightspeed-inference-creds"}
+
+
+def test_graph_detects_reintroduced_default_binding() -> None:
+    """Negative: a reader binding in the default set is reported."""
+    rule = {
+        "apiGroups": [""],
+        "resources": ["secrets"],
+        "verbs": ["get"],
+        "resourceNames": ["x"],
+    }
+    docs = [_role([rule]), _binding("Role", "r")]
+    assert secret_read_grants(docs, *SA) == {("get", "x")}
+
+
+@pytest.mark.parametrize(
+    "rule,expected",
+    [
+        ({"resources": ["secrets"], "verbs": ["list"]}, {("list", "*")}),
+        (
+            {"resources": ["*"], "verbs": ["*"]},
+            {("get", "*"), ("list", "*"), ("watch", "*")},
+        ),
+        ({"resources": ["pods"], "verbs": ["get"]}, set()),
+        ({"resources": ["secrets"], "verbs": ["create"]}, set()),
+    ],
+)
+def test_graph_wildcards_and_cluster_roles(rule: dict, expected: set) -> None:
+    """Wildcards count; ClusterRole via ClusterRoleBinding resolves too."""
+    docs = [
+        _role([rule], "ClusterRole"),
+        _binding("ClusterRole", "r", "ClusterRoleBinding"),
+    ]
+    assert secret_read_grants(docs, *SA) == expected
+
+
+def test_graph_ignores_other_subjects() -> None:
+    """A binding for a different ServiceAccount is not the stack's grant."""
+    b = _binding("Role", "r")
+    b["subjects"][0]["name"] = "someone-else"
+    docs = [_role([{"resources": ["secrets"], "verbs": ["get"]}]), b]
+    assert secret_read_grants(docs, *SA) == set()
+
+
+def test_readme_auth_wording_and_post_269_apply() -> None:
+    """Only jwk-token resolves roles; the post-269 RBAC is applied deliberately."""
+    text = " ".join((EXAMPLES / "README.md").read_text(encoding="utf-8").split())
+    assert "Role-resolving auth (`jwk-token`" in text
+    assert "`rh-identity` with `access_rules`" not in text
+    assert "or `rh-identity`), not" not in text
+    assert "only resolve the `*` role" in text
+    assert "kubectl apply -f post-269-rbac.yaml" in text
