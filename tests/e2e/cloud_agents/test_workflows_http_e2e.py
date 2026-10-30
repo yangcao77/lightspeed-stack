@@ -34,6 +34,7 @@ Usage:
 
 from __future__ import annotations
 
+import json
 import os
 
 import pytest
@@ -156,6 +157,93 @@ class TestWorkflowHttpE2E:
         transcripts = transcripts_response.json()["transcripts"]
         assert "triage_result" in transcripts
         assert "remediate_result" in transcripts
+
+    @pytest.mark.skipif(
+        bool(os.environ.get("LIGHTSPEED_E2E_USE_MOCK_LLM")),
+        reason="mock LLM returns canned text with no tool calls; "
+        "this test needs a real tool-calling model",
+    )
+    def test_workflow_none_spawn_calls_catalog_mcp_tool(
+        self,
+        http_client: TestClient,
+        demo_mcp_url: str,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A spawn:none step calls a tool on a workflow-enabled catalog server.
+
+        Seam test for issue #51 Phase 3: operator catalog entry (secretless,
+        ``workflow_enabled``) -> name in the step's ``mcp_servers`` ->
+        ``workflow_input["mcp_servers"]`` -> executor ``MCPToolset``.
+        The harness config has no workflow policy, so this runs as a legacy
+        admin; named servers need no grant there.
+
+        Proof of real invocation: get_pod_status reports a 347Mi memory limit,
+        a value a model does not emit on its own. Requires a real tool-calling
+        LLM, so it is skipped under LIGHTSPEED_E2E_USE_MOCK_LLM.
+        """
+        from configuration import (  # pylint: disable=import-outside-toplevel
+            configuration,
+        )
+        from models.config import (  # pylint: disable=import-outside-toplevel
+            ModelContextProtocolServer,
+        )
+
+        entry = ModelContextProtocolServer(
+            name="pod-status", url=demo_mcp_url, workflow_enabled=True
+        )
+        monkeypatch.setattr(
+            configuration._configuration,  # pylint: disable=protected-access
+            "mcp_servers",
+            [*configuration.mcp_servers, entry],
+        )
+
+        start_response = http_client.post(
+            "/v1/workflows/run",
+            json={
+                "definition": {
+                    "apiVersion": "v1",
+                    "kind": "AgentWorkflow",
+                    "metadata": {"name": "none-catalog-mcp-http-e2e"},
+                    "spec": {
+                        "steps": [
+                            {
+                                "name": "check",
+                                "type": "agent",
+                                "spawn": "none",
+                                "output_key": "check_result",
+                                "prompt": (
+                                    "Use the get_pod_status tool to look up the "
+                                    "pod named checkout-7f9. Report its exact "
+                                    "memory limit and restart count verbatim."
+                                ),
+                                "mcp_servers": ["pod-status"],
+                                "timeout_seconds": 120,
+                            },
+                        ]
+                    },
+                },
+                "provider": {"name": "openai", "model": "gpt-4o-mini"},
+            },
+        )
+
+        assert start_response.status_code == 202, start_response.text
+        workflow_id = start_response.json()["workflow_id"]
+
+        completed = wait_for_status(
+            http_client,
+            workflow_id,
+            lambda body: bool(body["is_terminal"]),
+            timeout_s=150,
+        )
+        assert completed["status"] == "completed", completed
+        transcripts_response = http_client.get(
+            f"/v1/workflows/{workflow_id}/transcripts"
+        )
+        assert transcripts_response.status_code == 200
+        haystack = json.dumps(completed["steps"]) + json.dumps(
+            transcripts_response.json()
+        )
+        assert "347Mi" in haystack, haystack
 
     def test_workflow_with_local_spawn_step(self, http_client: TestClient) -> None:
         """A workflow step with spawn:local completes over real HTTP.

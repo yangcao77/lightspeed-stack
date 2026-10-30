@@ -1,13 +1,17 @@
 # =============================================================================
 # admin-inline-mcp.yaml — trusted-admin workflow using an inline MCP server.
 #
-# Inline MCP is the exception path (role agent-admin, rules[].inline_mcp):
+# Phase 4 target; not accepted yet. Inline MCP is the exception path (role
+# agent-admin, rules[].inline_mcp):
 #   - https only, no userinfo in the URL, host must be in inline_mcp_hosts
 #   - secret_headers carry REGISTRY refs ({name: ...}); the stack validates the
 #     ref and rewrites it to cloud-agents' {secret_name, key} form. A raw
 #     {secret_name, key} from a caller is rejected (400).
 #   - the (principal, server, ref) triple must be granted via mcp_secrets
-# Prefer named catalog entries; use this only for one-off trusted pipelines.
+# Today the executor cannot deliver the ref, so this file is rejected with a
+# 422 before the run starts; without the secret_headers block an admin may use
+# inline MCP when no policy is configured (denied for everyone with a policy).
+# cases.yaml keeps the Phase 4 expectations. Prefer a named catalog entry.
 # =============================================================================
 apiVersion: cloudagents/v1
 kind: AgentWorkflow

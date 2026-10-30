@@ -6,9 +6,9 @@
 #   - triage-github-issue.yaml     (roles: agent-user)
 #   - kb-answer-with-approval.yaml (roles: agent-support)
 #
-# Blocks marked PLAN(stack#51) are proposed by
+# Blocks marked PLAN(stack#51) follow the plan in
 # https://github.com/jameswnl/lightspeed-stack/issues/51#issuecomment-5911977694
-# and do not load on the current schema yet. Everything else is valid today.
+# Everything in this file loads on the current schema.
 # Secret VALUES live only in k8s-secrets.yaml / the Deployment env — this file
 # holds backend bindings (env var names, K8s Secret names), never values.
 # =============================================================================
@@ -97,22 +97,21 @@ authorization:
       actions: [admin]
 
 # ---------------------------------------------------------------------------
-# MCP catalog. The stack owns URL/transport/TLS/headers/secrets/egress here;
-# callers only send the logical `name`.
+# MCP catalog. The stack owns URL and transport here; callers only send the
+# catalog `name`. workflow_enabled entries must be secretless for now: no
+# secret_headers, headers or authorization_headers, and no credentials in the
+# URL or query string. Every tool on a granted server is available to the step
+# (see README.md). URLs are operator-trusted, not SSRF-confined.
 # ---------------------------------------------------------------------------
 mcp_servers:
   - name: github-readonly
     provider_id: model-context-protocol
     url: https://mcp.internal.example.com/github
-    workflow_enabled: true            # PLAN(stack#51): opt in to workflow use
-    secret_headers:                   # PLAN(stack#51): header -> registry ref
-      Authorization: {name: mcp/github-readonly}
+    workflow_enabled: true            # opt in to workflow use
   - name: kb-search
     provider_id: model-context-protocol
     url: https://mcp.internal.example.com/kb
-    workflow_enabled: true            # PLAN(stack#51)
-    secret_headers:                   # PLAN(stack#51)
-      X-API-Key: {name: mcp/kb-search}
+    workflow_enabled: true
 
 # ---------------------------------------------------------------------------
 # Workflow engine + PLAN(stack#51) catalogs and policy.
@@ -143,7 +142,8 @@ workflow_engine:
   default_provider: claude-prod
   default_model: claude-sonnet-4-5
 
-  # PLAN(stack#51): logical ref -> backend binding. Operator-only.
+  # PLAN(stack#51): logical ref -> backend binding. Operator-only. Inference
+  # credentials only; catalog MCP servers are secretless.
   secrets:
     - name: inference/anthropic-prod
       backend: env                   # must be env pre-cloud-agents#269
@@ -154,26 +154,15 @@ workflow_engine:
     - name: inference/azure-eu
       backend: env
       env: AZURE_OPENAI_API_KEY
-    - name: mcp/github-readonly
-      backend: k8s
-      secret_name: mcp-github-readonly-token
-      key: token
-    - name: mcp/kb-search
-      backend: k8s
-      secret_name: mcp-kb-search-token
-      key: api-key
-    - name: mcp/incidents             # only reachable via admin inline MCP
-      backend: k8s
-      secret_name: mcp-incidents-token
-      key: token
 
   # Per-role grants (workflow_engine.policy). A caller gets the union of the
   # rules for its roles and everything they inherit; no rule means no access.
   # Limits are capped by the stack (step timeout 3600s, workflow 86400s,
   # retries 5, tokens 1,000,000). Agent steps must declare
   # permissions.max_tokens, because an omitted value counts as unlimited.
-  # Named and inline MCP are denied for every caller until Phase 3, so the
-  # example MCP servers above are not granted here yet.
+  # `mcp` grants catalog servers by name ("*" = every workflow_enabled entry;
+  # missing or [] = none). Inline MCP is not granted to anyone here: it is
+  # admin-only without a policy and denied for every caller with one.
   # Timeouts, max_tokens and the workflow total are declared budgets checked
   # at submission, not runtime limits (see README.md).
   # Ephemeral steps need an explicit tools: ["*"] grant. The sandbox does not
@@ -190,6 +179,7 @@ workflow_engine:
       - role: agent-user
         providers: [claude-prod]
         skills: [triage]
+        mcp: [github-readonly]
         tools: ["*"]
         service_accounts: [workflow-runner]
         namespaces: [sandbox-workloads]
@@ -202,6 +192,7 @@ workflow_engine:
       - role: agent-support
         providers: [openai-team-b]
         skills: [kb-search]
+        mcp: [kb-search]
         tools: ["*"]
         service_accounts: [kb-runner]
         namespaces: [sandbox-workloads]
@@ -216,6 +207,7 @@ workflow_engine:
       - role: agent-restricted
         providers: [claude-prod]
         skills: [triage]
+        mcp: [github-readonly]
         tools: [github.read]
         service_accounts: [workflow-runner]
         namespaces: [sandbox-workloads]
@@ -229,6 +221,7 @@ workflow_engine:
       - role: agent-admin
         inherit: [agent-user, agent-support]
         providers: [azure-eu]
+        mcp: ["*"]
         spawn_modes: [local, none]
         advisory: true
 

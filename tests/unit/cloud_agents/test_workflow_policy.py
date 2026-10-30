@@ -426,21 +426,170 @@ def test_policy_advisory_needs_grant(principal: Principal) -> None:
 
 
 @pytest.mark.parametrize("principal", [ADMIN, USER])
-def test_policy_all_mcp_denied(principal: Principal) -> None:
-    """Named and inline MCP fail closed in policy mode for everyone."""
+def test_policy_named_mcp_needs_grant_inline_denied(principal: Principal) -> None:
+    """Phase 3: a named server needs an mcp grant; inline stays denied."""
     plan = _plan(
         [_step(mcp_servers=["named-srv", {"name": "srv", "url": "https://x"}])]
     )
     decision = _authorize(plan, principal, _policy())
     assert _pairs(decision) == {
-        (AuditReason.MCP_NOT_ALLOWED, f"{STEPS}/0/mcp_servers/0"),
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/0/mcp_servers/0"),
         (AuditReason.MCP_NOT_ALLOWED, f"{STEPS}/0/mcp_servers/1"),
+    }
+    granted = _authorize(plan, principal, _policy(_rule(mcp=["*"])))
+    assert _pairs(granted) == {
+        (AuditReason.MCP_NOT_ALLOWED, f"{STEPS}/0/mcp_servers/1")
     }
 
 
 def test_policy_empty_mcp_list_is_fine() -> None:
     """An explicit empty MCP list asks for nothing."""
     assert _allowed(_authorize(_plan([_step(mcp_servers=[])]), USER, _policy()))
+
+
+# --------------------------------------------------------------------------
+# Policy mode: the mcp grant for named catalog servers (Phase 3)
+# --------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("principal", [ADMIN, USER])
+@pytest.mark.parametrize("grant", [["kb"], ["kb", "pods"], ["*"]])
+def test_policy_mcp_granted(principal: Principal, grant: list[str]) -> None:
+    """A listed name or the wildcard grants the server."""
+    plan = _plan([_step(mcp_servers=["kb"])])
+    assert _allowed(_authorize(plan, principal, _policy(_rule(mcp=grant))))
+
+
+@pytest.mark.parametrize("principal", [ADMIN, USER])
+@pytest.mark.parametrize("grant", ["missing", None, []])
+def test_policy_mcp_missing_null_empty_grant_nothing(
+    principal: Principal, grant: Any
+) -> None:
+    """Missing, null and [] grant no server, admins included."""
+    rule = _rule() if grant == "missing" else _rule(mcp=grant)
+    decision = _authorize(_plan([_step(mcp_servers=["kb"])]), principal, _policy(rule))
+    assert _pairs(decision) == {
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/0/mcp_servers/0")
+    }
+
+
+def test_policy_mcp_finite_grant_not_covering() -> None:
+    """A finite grant covers only the names it lists."""
+    plan = _plan([_step(mcp_servers=["kb", "pods"])])
+    decision = _authorize(plan, USER, _policy(_rule(mcp=["kb"])))
+    assert _pairs(decision) == {
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/0/mcp_servers/1")
+    }
+
+
+def test_policy_mcp_message_names_only_requested_server() -> None:
+    """The message names the requested server and nothing the operator granted."""
+    plan = _plan([_step(mcp_servers=["pods"])])
+    decision = _authorize(plan, USER, _policy(_rule(mcp=["secret-kb"])))
+    (denial,) = decision.denials
+    assert denial.message == "MCP server 'pods' is not granted"
+    assert "secret-kb" not in denial.message
+
+
+def test_policy_mcp_union_across_roles_and_inherit() -> None:
+    """mcp grants union across the principal's rules and the inherit closure."""
+    policy = _policy(
+        _rule(),
+        PolicyRule(role="dev", mcp=["kb"]),
+        PolicyRule(role="ops", inherit=["base"]),
+        PolicyRule(role="base", mcp=["pods"]),
+    )
+    plan = _plan([_step(mcp_servers=["kb", "pods"])])
+    both = Principal(user_id="u", is_admin=False, roles=frozenset({"dev", "ops"}))
+    assert _allowed(_authorize(plan, both, policy))
+    dev = Principal(user_id="u", is_admin=False, roles=frozenset({"dev"}))
+    assert _pairs(_authorize(plan, dev, policy)) == {
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/0/mcp_servers/1")
+    }
+    ops = Principal(user_id="u", is_admin=False, roles=frozenset({"ops"}))
+    assert _pairs(_authorize(plan, ops, policy)) == {
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/0/mcp_servers/0")
+    }
+
+
+def test_policy_mcp_per_step_pointers_all_together() -> None:
+    """Every ungranted reference is reported at its own pointer in one decision."""
+    plan = _plan(
+        [
+            _step(0),
+            _step(1, mcp_servers=["pods", "kb"]),
+            _step(2, mcp_servers=[]),
+            _step(3, mcp_servers=["other"]),
+        ],
+        mcp_servers=["pods"],
+    )
+    decision = _authorize(plan, USER, _policy(_rule(mcp=["kb"])))
+    assert [(d.reason, d.path) for d in decision.denials] == [
+        (AuditReason.MCP_NOT_GRANTED, "/definition/spec/mcp_servers/0"),
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/1/mcp_servers/0"),
+        (AuditReason.MCP_NOT_GRANTED, f"{STEPS}/3/mcp_servers/0"),
+    ]
+
+
+def test_policy_mcp_spec_inherited_reported_once() -> None:
+    """A spec name inherited by several steps is one denial at the spec pointer."""
+    plan = _plan([_step(0), _step(1)], mcp_servers=["kb"])
+    decision = _authorize(plan, USER, _policy())
+    assert [(d.reason, d.path) for d in decision.denials] == [
+        (AuditReason.MCP_NOT_GRANTED, "/definition/spec/mcp_servers/0")
+    ]
+
+
+def test_policy_mcp_spec_overridden_by_empty_needs_no_grant() -> None:
+    """A spec name every step overrides with [] is never authorized or denied."""
+    plan = _plan([_step(mcp_servers=[])], mcp_servers=["kb"])
+    assert _allowed(_authorize(plan, USER, _policy()))
+
+
+@pytest.mark.parametrize("spawn", ["none", "local"])
+def test_policy_mcp_named_on_privileged_step_allowed(spawn: str) -> None:
+    """Catalog servers are secretless, so none/local steps may use them."""
+    plan = _plan([_step(spawn=spawn, mcp_servers=["kb"])])
+    policy = _policy(_rule(spawn_modes=[spawn], mcp=["kb"]))
+    assert _allowed(_authorize(plan, ADMIN, policy))
+
+
+@pytest.mark.parametrize("principal", [ADMIN, USER])
+def test_policy_inline_denied_even_with_mcp_wildcard(principal: Principal) -> None:
+    """The mcp grant never opens inline entries in policy mode."""
+    plan = _plan(
+        [_step(mcp_servers=[{"name": "inl", "url": "https://x"}])],
+        mcp_servers=[{"name": "inl2", "url": "https://y"}],
+    )
+    decision = _authorize(plan, principal, _policy(_rule(mcp=["*"])))
+    assert _pairs(decision) == {
+        (AuditReason.MCP_NOT_ALLOWED, f"{STEPS}/0/mcp_servers/0")
+    }
+
+
+@pytest.mark.parametrize("principal", [ADMIN, USER])
+def test_no_policy_named_mcp_never_checked(principal: Principal) -> None:
+    """Without a policy named servers get no grant check, in any spawn mode."""
+    spawn = "none" if principal.is_admin else "ephemeral"
+    plan = _plan([_step(spawn=spawn, mcp_servers=["kb", "pods"])], mcp_servers=["x"])
+    assert _allowed(_authorize(plan, principal, None))
+
+
+def test_policy_mcp_denial_audit_fields_carry_no_inline_values() -> None:
+    """Reasons and paths of MCP denials never carry inline names or URLs."""
+    inline = {
+        "name": CANARY,
+        "url": f"https://{CANARY}/mcp",
+        "headers": {CANARY: "v"},
+    }
+    plan = _plan([_step(mcp_servers=[inline, "kb"])])
+    decision = _authorize(plan, USER, _policy())
+    assert set(decision.reasons) == {
+        AuditReason.MCP_NOT_ALLOWED,
+        AuditReason.MCP_NOT_GRANTED,
+    }
+    assert CANARY not in repr((decision.reasons, decision.paths))
+    assert all(CANARY not in d.message for d in decision.denials)
 
 
 def test_policy_provider_needs_grant() -> None:
@@ -1068,6 +1217,7 @@ def test_policy_returns_all_reasons_together() -> None:
         AuditReason.POLICY_DENIED,
         AuditReason.SPAWN_MODE_NOT_ALLOWED,
         AuditReason.IMAGE_NOT_ALLOWED,
+        AuditReason.MCP_NOT_GRANTED,
         AuditReason.MCP_NOT_ALLOWED,
         AuditReason.LIMIT_EXCEEDED,
     }

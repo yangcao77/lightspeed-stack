@@ -1,19 +1,23 @@
-"""Reference model of the MCP part of the #51 submission gate (Phases 3-5).
+"""Reference model of the inline-MCP part of the #51 submission gate (Phase 4+).
 
-This is an executable spec, not the implementation. Phases 0-2 (caller
-credentials, provider catalog, run-level policy, spawn/image/advisory gates,
-limits, audit) are real code now and ``cases.yaml`` runs them against the real
-endpoint. What is left here is what the stack does not implement yet: named and
-inline MCP servers, MCP secret refs, ``MCP_ALLOWED_SECRETS`` generation and the
-post-cloud-agents#269 stage. When Phase 3 lands, run those cases against the
-real endpoint too and delete this file.
+This is an executable spec, not the implementation. Phases 0-3 are real code
+and ``cases.yaml`` runs them against the real endpoint: caller credentials,
+provider catalog, run-level policy, spawn/image/advisory gates, limits, audit,
+and secretless operator-catalog MCP (named servers and the policy ``mcp``
+grant).
 
-The MCP grants the policy will carry in Phase 3 (``mcp``, ``mcp_secrets``,
-``inline_mcp``, ``inline_mcp_hosts``) are reserved in the real schema and fail
-config load, so they live in ``PHASE3_GRANTS`` instead of the example config.
+What is left here is what the stack does not implement yet and that stays
+tagged ``phase: 4`` in ``cases.yaml``: inline MCP servers with host grants and
+registry secret refs (``inline_mcp``, ``inline_mcp_hosts``, ``mcp_secrets``).
+Those policy fields are reserved in the real schema and fail config load, so
+they live in ``PHASE4_GRANTS`` instead of the example config. Secret delivery,
+SSRF confinement and ``MCP_ALLOWED_SECRETS`` generation are deferred further
+and have no model here; see README.md. The post-cloud-agents#269 credential
+check is also modelled here. When Phase 4 lands, run its cases against the
+real endpoint and delete this file.
 
-Stages: ``pre269`` (names only, env-bound inference credentials) and
-``post269`` (credential leases, any backend).
+Stages: ``pre269`` (env-bound inference credentials) and ``post269``
+(credential leases, any backend).
 """
 
 # pylint: disable=too-many-locals,too-many-branches,import-error
@@ -25,27 +29,18 @@ from urllib.parse import urlsplit
 from cloud_agents.workflow.core.definition import WorkflowDefinition
 from pydantic import ValidationError
 
-from workflow.limits import MAX_SECRET_HEADERS_PER_SERVER
-
-REQUEST_BOUND = {"client", "oauth", "kubernetes"}
-
-# Phase 3 policy grants per role (reserved fields of the real policy schema).
-PHASE3_GRANTS: dict[str, dict[str, Any]] = {
-    "agent-user": {
-        "mcp_servers": ["github-readonly"],
-        "mcp_secrets": ["mcp/github-readonly"],
-    },
-    "agent-support": {
-        "mcp_servers": ["kb-search"],
-        "mcp_secrets": ["mcp/kb-search"],
-    },
+# Phase 4 policy grants per role (reserved fields of the real policy schema).
+PHASE4_GRANTS: dict[str, dict[str, Any]] = {
     "agent-admin": {
-        "inherit": ["agent-user", "agent-support"],
         "inline_mcp": True,
         "mcp_secrets": ["mcp/incidents"],
         "inline_mcp_hosts": ["mcp.internal.example.com"],
     },
 }
+
+# Registry refs the inline cases use. The example config no longer binds MCP
+# secrets (catalog MCP is secretless), so the model carries its own.
+PHASE4_SECRET_REFS = {"mcp/incidents"}
 
 
 class Denied(Exception):
@@ -58,41 +53,11 @@ class Denied(Exception):
 
 
 # ----------------------------------------------------------------- load time
-def _phase3_refs(roles: list[str] | None = None) -> set[str]:
-    """MCP secret refs the Phase 3 policy grants (all roles by default)."""
-    return {
-        ref
-        for role, rule in PHASE3_GRANTS.items()
-        if roles is None or role in roles
-        for ref in rule.get("mcp_secrets", [])
-    }
-
-
-def generated_mcp_allowed_secrets(stack: dict) -> str:
-    """Value the stack writes to MCP_ALLOWED_SECRETS at startup."""
-    secrets = {s["name"]: s for s in stack["workflow_engine"]["secrets"]}
-    refs = {
-        ref["name"]
-        for server in stack["mcp_servers"]
-        if server.get("workflow_enabled")
-        for ref in (server.get("secret_headers") or {}).values()
-    }
-    # Inline MCP refs granted by policy are mounted too, so the runtime
-    # guardrail must allow them as well.
-    refs |= _phase3_refs()
-    names = {
-        secrets[ref]["secret_name"]
-        for ref in refs
-        if secrets.get(ref, {}).get("backend") == "k8s"
-    }
-    return ",".join(sorted(names))
-
-
 def load_errors(stack: dict, stage: str = "pre269") -> list[str]:
-    """Return the Phase 3 and post-#269 config-load failures the plan requires.
+    """Return the post-#269 config-load failures the plan requires.
 
-    Earlier checks (catalog, defaults, policy) are the real
-    ``WorkflowEngineConfiguration``'s job and are covered by the unit test.
+    Earlier checks (catalog, defaults, policy, MCP catalog) are the real
+    configuration's job and are covered by the unit test.
     """
     we = stack["workflow_engine"]
     secrets = {s["name"]: s for s in we.get("secrets", [])}
@@ -103,41 +68,19 @@ def load_errors(stack: dict, stage: str = "pre269") -> list[str]:
             ref = (p.get("credential") or {}).get("name")
             if ref is not None and ref not in secrets:
                 errors.append(f"{p['name']}: credential {ref} has no secrets binding")
-    for server in stack.get("mcp_servers", []):
-        name = server["name"]
-        for ref in (server.get("secret_headers") or {}).values():
-            if ref["name"] not in secrets:
-                errors.append(f"mcp {name}: ref {ref['name']} has no secrets binding")
-        if server.get("workflow_enabled"):
-            bad = REQUEST_BOUND & set((server.get("authorization_headers") or {}).values())
-            if bad:
-                errors.append(f"mcp {name}: workflow_enabled with {sorted(bad)}")
-            if server.get("headers"):
-                errors.append(f"mcp {name}: workflow_enabled with propagated headers")
-    for ref in sorted(_phase3_refs() - set(secrets)):
-        errors.append(f"policy: unknown mcp_secret {ref}")
     return errors
 
 
 # -------------------------------------------------------------------- grants
 def grants(roles: set[str]) -> dict[str, Any]:
-    """Union of the Phase 3 grants of the roles (inherit resolved)."""
+    """Union of the Phase 4 grants of the roles."""
     out: dict[str, Any] = {}
-
-    def add(role: str) -> None:
-        rule = PHASE3_GRANTS.get(role, {})
-        for parent in rule.get("inherit", []):
-            add(parent)
-        for key, value in rule.items():
-            if key == "inherit":
-                continue
+    for role in roles:
+        for key, value in PHASE4_GRANTS.get(role, {}).items():
             if isinstance(value, list):
                 out[key] = sorted(set(out.get(key, [])) | set(value))
             else:
                 out[key] = out.get(key, False) or value
-
-    for role in roles:
-        add(role)
     return out
 
 
@@ -150,9 +93,9 @@ def _shape_copy(definition: dict) -> dict:
     """Copy for the cloud-agents shape check with inline registry refs rewritten.
 
     cloud-agents' MCPServerConfig only accepts ``{secret_name, key}``, so a
-    registry ref ``{name: ...}`` would fail the typed parse. The stack
-    validates registry refs itself, then rewrites them to the executor form;
-    this models that rewrite for the shape check.
+    registry ref ``{name: ...}`` would fail the typed parse (the real endpoint
+    answers 422 for it today). Phase 4 would validate registry refs itself and
+    rewrite them to the executor form; this models that rewrite.
     """
     shaped = json.loads(json.dumps(definition))
     spec = shaped.get("spec", {})
@@ -162,7 +105,10 @@ def _shape_copy(definition: dict) -> dict:
                 continue
             for header, ref in list((srv.get("secret_headers") or {}).items()):
                 if isinstance(ref, dict) and set(ref) == {"name"}:
-                    srv["secret_headers"][header] = {"secret_name": ref["name"], "key": "value"}
+                    srv["secret_headers"][header] = {
+                        "secret_name": ref["name"],
+                        "key": "value",
+                    }
     return shaped
 
 
@@ -173,7 +119,9 @@ def executor_form(stack: dict, definition: dict) -> dict:
     executor's ``{secret_name, key}`` form.
     """
     out = _shape_copy(definition)
-    catalog = {p["name"]: p["executor_type"] for p in stack["workflow_engine"]["providers"]}
+    catalog = {
+        p["name"]: p["executor_type"] for p in stack["workflow_engine"]["providers"]
+    }
     scopes = [out] + [s for s in out["spec"]["steps"] if s.get("inference_provider")]
     for scope in scopes:
         key = "provider" if scope is out else "inference_provider"
@@ -182,16 +130,12 @@ def executor_form(stack: dict, definition: dict) -> dict:
     return out
 
 
-def submit(
-    stack: dict,
-    body: dict,
-    roles: set[str],
-    stage: str = "pre269",
-) -> None:
-    """Model the MCP checks of POST /v1/workflows/run; return when it would be 202.
+def submit(body: dict, roles: set[str]) -> None:
+    """Model the inline-MCP checks of POST /v1/workflows/run (Phase 4).
 
-    Raises Denied(status, reasons) otherwise. Everything that is not about MCP
-    is the real endpoint's job and is not modelled.
+    Returns when it would be 202; raises Denied(status, reasons) otherwise.
+    Named catalog servers and everything that is not inline MCP are the real
+    endpoint's job and are not modelled.
     """
     definition = body["definition"]
     spec = definition["spec"]
@@ -199,24 +143,17 @@ def submit(
         WorkflowDefinition.model_validate(_shape_copy(definition))
     except ValidationError as exc:
         raise Denied(422, f"shape: {exc.error_count()} errors") from exc
-    for scope in [spec, *_agent_steps(definition)]:
-        for srv in scope.get("mcp_servers") or []:
-            if isinstance(srv, dict) and (
-                len(srv.get("secret_headers") or {}) > MAX_SECRET_HEADERS_PER_SERVER
-            ):
-                raise Denied(422, "too many secret_headers")
 
     # 400: unknown to the deployment.
-    mcp = {m["name"]: m for m in stack["mcp_servers"]}
-    refs = {s["name"] for s in stack["workflow_engine"]["secrets"]}
     for scope in [spec, *_agent_steps(definition)]:
         for srv in scope.get("mcp_servers") or []:
-            if isinstance(srv, str):
-                if srv not in mcp or not mcp[srv].get("workflow_enabled"):
-                    raise Denied(400, f"unknown MCP server '{srv}'")
+            if not isinstance(srv, dict):
                 continue
             for ref in (srv.get("secret_headers") or {}).values():
-                if not isinstance(ref, dict) or ref.get("name") not in refs:
+                if (
+                    not isinstance(ref, dict)
+                    or ref.get("name") not in PHASE4_SECRET_REFS
+                ):
                     raise Denied(400, "inline secret_headers must be registry refs")
 
     # 403: exists, not for this caller.
@@ -224,22 +161,13 @@ def submit(
     why: list[str] = []
     for step in _agent_steps(definition):
         s = step["name"]
-        spawn = step.get("spawn") or spec.get("spawn") or "ephemeral"
         servers = (
             step["mcp_servers"]
             if step.get("mcp_servers") is not None
             else spec.get("mcp_servers") or []
         )
         for srv in servers:
-            if isinstance(srv, str):
-                if srv not in g.get("mcp_servers", []):
-                    why.append(f"{s}: MCP '{srv}' not granted")
-                secret_headers = mcp[srv].get("secret_headers") or {}
-                for ref in secret_headers.values():
-                    if ref["name"] not in g.get("mcp_secrets", []):
-                        why.append(f"{s}: MCP secret '{ref['name']}' not granted for '{srv}'")
-                if secret_headers and spawn != "ephemeral" and stage == "pre269":
-                    why.append(f"{s}: secret_headers need ephemeral before cloud-agents#269")
+            if not isinstance(srv, dict):
                 continue
             if not g.get("inline_mcp"):
                 why.append(f"{s}: inline MCP not granted")

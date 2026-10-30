@@ -10,6 +10,7 @@ from functools import cached_property
 from pathlib import Path
 from re import Pattern
 from typing import Annotated, Any, Final, Literal, Optional, Self
+from urllib.parse import urlsplit
 
 import jsonpath_ng
 import yaml
@@ -545,7 +546,17 @@ class ModelContextProtocolServer(ConfigurationBase):
     - [Model Context Protocol](https://modelcontextprotocol.io/docs/getting-started/intro)
     - [MCP FAQs](https://modelcontextprotocol.io/faqs)
     - [Wikipedia article](https://en.wikipedia.org/wiki/Model_Context_Protocol)
+
+    Entries with ``workflow_enabled: true`` also form the operator catalog
+    that workflow steps may reference by name. Catalog URLs are trusted
+    operator input: they are not confined by SSRF checks (MCP clients follow
+    redirects), so a catalog URL also grants its redirect destinations. Do not
+    embed credentials in the URL or its query string. Catalog entries must be
+    secretless; see ``workflow_enabled``.
     """
+
+    # Entries may carry credentials in URL/header values; never echo them.
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
 
     name: str = Field(
         ...,
@@ -579,6 +590,21 @@ class ModelContextProtocolServer(ConfigurationBase):
             "To specify this use a string 'client' instead of the file path. "
             "3. Usage of the oauth token in the header. "
             "To specify this use a string 'oauth' instead of the file path. "
+        ),
+    )
+
+    workflow_enabled: bool = Field(
+        default=False,
+        title="Workflow enabled",
+        description=(
+            "Offer this server to workflow steps by name (operator catalog). "
+            "Such an entry must be secretless: empty authorization_headers, "
+            "empty propagated headers, require_approval 'never', an http or "
+            "https URL without userinfo, and a name of lowercase letters, "
+            "digits and hyphens (it becomes a mount path) that is unique in "
+            "the whole mcp_servers list. The URL is trusted operator input "
+            "and is not SSRF-confined; do not put credentials in the URL or "
+            "query string. A policy 'mcp' grant gives every tool on the server."
         ),
     )
 
@@ -656,6 +682,71 @@ class ModelContextProtocolServer(ConfigurationBase):
                 self.authorization_headers
             )
         return self
+
+
+_MCP_CATALOG_NAME: Final[re.Pattern[str]] = re.compile(r"[a-z0-9][a-z0-9-]{0,62}")
+
+
+def _safe_entry_name(name: str, limit: int = 64) -> str:
+    """Render an operator-supplied entry name safely for messages and logs.
+
+    Parameters:
+        name: The raw name.
+        limit: Maximum characters kept before truncation.
+
+    Returns:
+        The name with anything outside letters, digits and ``._[]-``
+        replaced by ``?``, truncated with ``...`` beyond ``limit``.
+    """
+    safe = re.sub(r"[^A-Za-z0-9._\[\]-]", "?", name[: limit + 1])
+    return safe[:limit] + "..." if len(safe) > limit else safe
+
+
+def _workflow_catalog_problems(
+    server: ModelContextProtocolServer, name_count: int
+) -> list[str]:
+    """Return the rules a workflow-enabled MCP entry breaks.
+
+    Messages name the rule only; they never include the URL or any header
+    configuration.
+
+    Parameters:
+        server: The workflow-enabled catalog entry.
+        name_count: How many entries in the whole catalog share its name.
+
+    Returns:
+        Human-readable rule violations; empty when the entry is acceptable.
+    """
+    problems: list[str] = []
+    if server.url != server.url.strip() or any(
+        ord(ch) <= 0x20 or ord(ch) == 0x7F for ch in server.url
+    ):
+        problems.append("url must not contain whitespace or control characters")
+    if not _MCP_CATALOG_NAME.fullmatch(server.name):
+        problems.append("name must match ^[a-z0-9][a-z0-9-]{0,62}$")
+    if name_count > 1:
+        problems.append("name must be unique across the whole mcp_servers list")
+    if server.authorization_headers:
+        problems.append(
+            "authorization_headers must be empty (workflow servers are secretless)"
+        )
+    if server.headers:
+        problems.append("propagated headers must be empty (workflow runs are detached)")
+    if server.require_approval != "never":
+        problems.append("require_approval must be 'never'")
+    try:
+        parsed = urlsplit(server.url)
+        _ = parsed.port  # raises ValueError on an invalid port
+        scheme, host = parsed.scheme, parsed.hostname
+        has_userinfo = "@" in parsed.netloc
+    except ValueError:
+        problems.append("url is not a valid URL")
+    else:
+        if scheme not in ("http", "https") or not host:
+            problems.append("url must be a valid http or https URL with a host")
+        if has_userinfo:
+            problems.append("url must not contain userinfo (user:pass@)")
+    return problems
 
 
 class UnifiedInferenceProvider(ConfigurationBase):
@@ -3339,14 +3430,24 @@ _POLICY_LIST_GRANTS: Final[tuple[str, ...]] = (
     "service_accounts",
     "namespaces",
     "spawn_modes",
+    "mcp",
 )
 
 _POLICY_RESERVED_FIELDS: Final[tuple[str, ...]] = (
-    "mcp",
     "inline_mcp",
     "inline_mcp_hosts",
     "mcp_secrets",
     "ssrf",
+)
+
+# Why the reserved fields still fail config load (true until the work lands).
+_POLICY_RESERVED_REASON: Final[str] = (
+    "is not supported yet: it needs redirect-safe secret handling and "
+    "verified egress enforcement (see #51)"
+)
+_POLICY_RESERVED_DESCRIPTION: Final[str] = (
+    "Reserved: not supported yet; it needs redirect-safe secret handling and "
+    "verified egress enforcement (see #51)."
 )
 
 POLICY_WILDCARD: Final[str] = "*"
@@ -3445,11 +3546,13 @@ class PolicyRule(ConfigurationBase):
         spawn_modes: Granted spawn modes.
         advisory: Whether advisory steps are allowed.
         limits: Numeric ceilings.
-        mcp: Reserved (Phase 3).
-        inline_mcp: Reserved (Phase 3).
-        inline_mcp_hosts: Reserved (Phase 3).
-        mcp_secrets: Reserved (Phase 3).
-        ssrf: Reserved (Phase 3).
+        mcp: Granted catalog MCP servers (``workflow_enabled`` entries of
+            ``mcp_servers``) or ``["*"]``; a grant covers every tool on the
+            server. Checked against the catalog at configuration load.
+        inline_mcp: Reserved; not supported yet (see #51).
+        inline_mcp_hosts: Reserved; not supported yet (see #51).
+        mcp_secrets: Reserved; not supported yet (see #51).
+        ssrf: Reserved; not supported yet (see #51).
     """
 
     role: str = Field(..., min_length=1, title="Role", description="Role name or '*'.")
@@ -3492,27 +3595,31 @@ class PolicyRule(ConfigurationBase):
     mcp: Optional[list[str]] = Field(
         default=None,
         title="MCP catalog",
-        description="Reserved: not supported until Phase 3.",
+        description=(
+            "Granted workflow_enabled mcp_servers names, or '*' for all of "
+            "them. Missing, null or empty grants nothing. A grant covers "
+            "every tool on the server."
+        ),
     )
     inline_mcp: bool = Field(
         default=False,
         title="Inline MCP",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     inline_mcp_hosts: Optional[list[str]] = Field(
         default=None,
         title="Inline MCP hosts",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     mcp_secrets: Optional[list[str]] = Field(
         default=None,
         title="MCP secrets",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
     ssrf: bool = Field(
         default=False,
         title="SSRF checks",
-        description="Reserved: not supported until Phase 3.",
+        description=_POLICY_RESERVED_DESCRIPTION,
     )
 
     @model_validator(mode="after")
@@ -3529,7 +3636,7 @@ class PolicyRule(ConfigurationBase):
         errors: list[str] = []
         for name in _POLICY_RESERVED_FIELDS:
             if getattr(self, name):
-                errors.append(f"{name} is not supported until Phase 3")
+                errors.append(f"{name} {_POLICY_RESERVED_REASON}")
         for name in _POLICY_LIST_GRANTS:
             values: list[str] = getattr(self, name) or []
             if len(values) > 1 and POLICY_WILDCARD in values:
@@ -4023,6 +4130,9 @@ class SpawnerConfiguration(ConfigurationBase):
 class Configuration(ConfigurationBase):
     """Global service configuration."""
 
+    # Catalog URL credentials must not leak via pydantic's input echo.
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
     name: str = Field(
         ...,
         title="Service name",
@@ -4263,6 +4373,56 @@ class Configuration(ConfigurationBase):
                 "workflow_engine.enabled=true requires a PostgreSQL database. "
                 "Workflow state storage uses JSONB and is not supported with SQLite."
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_workflow_mcp_catalog(self) -> Self:
+        """Validate workflow-enabled MCP catalog entries and policy mcp grants.
+
+        Declared before ``validate_mcp_auth_headers`` so that an enabled entry
+        with a credential configuration fails the load instead of being
+        silently removed.
+
+        Returns:
+            Self: The model instance after validation.
+
+        Raises:
+            ValueError: If an enabled entry is not secretless or malformed,
+                or a policy mcp grant names a server that is not enabled.
+        """
+        errors: list[str] = []
+        names = [server.name for server in self.mcp_servers]
+        for server in self.mcp_servers:
+            if server.workflow_enabled:
+                errors.extend(
+                    f"mcp_servers entry '{_safe_entry_name(server.name)}': {problem}"
+                    for problem in _workflow_catalog_problems(
+                        server, names.count(server.name)
+                    )
+                )
+        enabled = {s.name for s in self.mcp_servers if s.workflow_enabled}
+        policy = self.workflow_engine.policy  # pylint: disable=no-member
+        for rule in policy.rules if policy else []:
+            for name in rule.mcp or []:
+                if name != POLICY_WILDCARD and name not in enabled:
+                    errors.append(
+                        f"policy role '{_safe_entry_name(rule.role)}': mcp names "
+                        f"'{_safe_entry_name(name)}', which "
+                        "is not a workflow_enabled mcp_servers entry"
+                    )
+        if errors:
+            raise ValueError("; ".join(errors))
+        for server in self.mcp_servers:
+            if server.workflow_enabled:
+                parts = urlsplit(server.url)
+                if parts.query or parts.fragment:
+                    logger.warning(
+                        "mcp_servers entry '%s': the URL has a query string or "
+                        "fragment; query strings may carry credentials and are "
+                        "persisted with the run context and passed to sandboxes. "
+                        "Do not put credentials in catalog URLs.",
+                        _safe_entry_name(server.name),
+                    )
         return self
 
     @model_validator(mode="after")

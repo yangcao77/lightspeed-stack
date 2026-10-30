@@ -169,7 +169,9 @@ class TestPolicyLoad:
         value = ["claude-prod", "*"] if field == "providers" else ["x", "*"]
         assert "'*'" in _error(_policy_engine([{"role": "dev", field: value}]))
 
-    @pytest.mark.parametrize("field", ["skills", "tools", "images", "spawn_modes"])
+    @pytest.mark.parametrize(
+        "field", ["skills", "tools", "images", "spawn_modes", "mcp"]
+    )
     def test_wildcard_alone_ok(self, field: str) -> None:
         """'*' alone is accepted."""
         WorkflowEngineConfiguration.model_validate(
@@ -182,12 +184,11 @@ class TestPolicyLoad:
 
 
 class TestReservedFields:
-    """Phase 3 fields load only at their default."""
+    """Reserved MCP fields load only at their default."""
 
     @pytest.mark.parametrize(
         "field,value",
         [
-            ("mcp", ["srv"]),
             ("inline_mcp", True),
             ("inline_mcp_hosts", ["example.com"]),
             ("mcp_secrets", ["s"]),
@@ -195,16 +196,18 @@ class TestReservedFields:
         ],
     )
     def test_non_default_rejected(self, field: str, value: Any) -> None:
-        """Each reserved field fails with the Phase 3 message."""
+        """Each reserved field fails with a message that is true today."""
         error = _error(_policy_engine([{"role": "dev", field: value}]))
-        assert "not supported until phase 3" in error
+        assert "not supported yet" in error
+        assert "redirect-safe secret handling" in error
+        assert "egress enforcement" in error
+        assert "#51" in error
+        assert "phase 3" not in error
         assert field in error
 
     @pytest.mark.parametrize(
         "field,value",
         [
-            ("mcp", None),
-            ("mcp", []),
             ("inline_mcp", False),
             ("inline_mcp_hosts", None),
             ("inline_mcp_hosts", []),

@@ -9,10 +9,8 @@
 #     hands cloud-agents a short-lived lease per step (redeemed, then released)
 #   - rotation applies at the next lease with no restart; revoking a ref fails
 #     the next step closed (`credential_revoked`)
-#   - secret_headers MCP servers become usable with spawn none/local
-#     (cloud-agents resolves refs at the last step)
-#   - the stack ServiceAccount needs `get` on the inference Secret as well
-#     (see k8s-deployment.yaml, the "post-269" Role)
+#   - the stack ServiceAccount needs `get` on the inference Secret as well:
+#     apply post-269-rbac.yaml deliberately (not in the default apply set)
 # Everything else (catalog, policy, request shapes) is identical by design.
 # =============================================================================
 workflow_engine:
@@ -29,15 +27,3 @@ workflow_engine:
       backend: k8s
       secret_name: lightspeed-inference-creds
       key: AZURE_OPENAI_API_KEY
-    - name: mcp/github-readonly
-      backend: k8s
-      secret_name: mcp-github-readonly-token
-      key: token
-    - name: mcp/kb-search
-      backend: k8s
-      secret_name: mcp-kb-search-token
-      key: api-key
-    - name: mcp/incidents
-      backend: k8s
-      secret_name: mcp-incidents-token
-      key: token

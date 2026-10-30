@@ -18,8 +18,12 @@ test-e2e-agents-workflows-mock Makefile target for the supported scope).
 
 from __future__ import annotations
 
+import contextlib
 import os
 import socket
+import subprocess
+import sys
+import time
 from collections.abc import Callable, Generator
 from pathlib import Path
 from typing import Any
@@ -36,6 +40,12 @@ from .mock_llm_env import mock_llm_env_context
 _HARNESS_CONFIG = (
     Path(__file__).resolve().parent.parent.parent.parent
     / "lightspeed-stack-harness.yaml"
+)
+
+_DEMO_MCP_SERVER = (
+    Path(__file__).resolve().parent.parent.parent.parent
+    / "docs"
+    / "cloud-agents-demo-mcp.py"
 )
 
 _OPENSHELL_GATEWAY_URL = os.environ.get("OPENSHELL_GATEWAY_URL", "localhost:17670")
@@ -94,8 +104,6 @@ def wait_for_status(  # pylint: disable=inconsistent-return-statements
     timeout_s: int = 30,
 ) -> dict[str, Any]:
     """Poll GET /v1/workflows/{id} until predicate(body) holds or timeout_s elapses."""
-    import time  # pylint: disable=import-outside-toplevel
-
     for _ in range(timeout_s):
         status_response = http_client.get(f"/v1/workflows/{workflow_id}")
         assert status_response.status_code == 200
@@ -144,3 +152,54 @@ def http_client_fixture() -> Generator[TestClient, None, None]:
             os.environ["LIGHTSPEED_STACK_CONFIG_PATH"] = original
         else:
             os.environ.pop("LIGHTSPEED_STACK_CONFIG_PATH", None)
+
+
+def _free_tcp_port() -> int:
+    """Return an available localhost TCP port.
+
+    Binds port 0, reads the assigned port and releases it. There is a small
+    race before the subprocess re-binds it, acceptable for a test fixture.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+
+
+@pytest.fixture(name="demo_mcp_url")
+def demo_mcp_url_fixture() -> Generator[str, None, None]:
+    """Run docs/cloud-agents-demo-mcp.py and yield its streamable-http URL.
+
+    A real, out-of-process, secretless MCP server exposing get_pod_status,
+    the same server the demo script's *-none-tools scenarios use.
+    """
+    assert _DEMO_MCP_SERVER.exists(), f"demo MCP server not found: {_DEMO_MCP_SERVER}"
+    port = _free_tcp_port()
+    env = {**os.environ, "DEMO_MCP_HOST": "127.0.0.1", "DEMO_MCP_PORT": str(port)}
+    # Not a `with` block: the server is long-running and is terminated in finally.
+    proc = subprocess.Popen(  # pylint: disable=consider-using-with
+        [sys.executable, str(_DEMO_MCP_SERVER)],
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            if proc.poll() is not None:
+                pytest.fail("demo MCP server exited before becoming ready")
+            with (
+                contextlib.suppress(OSError),
+                socket.create_connection(("127.0.0.1", port), timeout=0.5),
+            ):
+                break
+            time.sleep(0.2)
+        else:
+            pytest.fail(f"demo MCP server did not open port {port} within 15s")
+        yield f"http://127.0.0.1:{port}/mcp"
+    finally:
+        proc.terminate()
+        with contextlib.suppress(subprocess.TimeoutExpired):
+            proc.wait(timeout=5)
+        if proc.poll() is None:
+            proc.kill()
+            proc.wait()

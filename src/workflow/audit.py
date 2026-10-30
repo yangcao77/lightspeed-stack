@@ -5,6 +5,8 @@ arguments: enums for events and reasons, integers for status, JSON pointers
 built from indices and fixed keys, and identifiers supplied by the auth layer
 or the operator catalog. There is no free-text or exception parameter, so step
 names, header values, prompts, models and URLs cannot be logged through it.
+MCP use is recorded as enabled catalog names plus an integer count of inline
+entries (issue #51 Phase 3); inline names, URLs and header names never are.
 """
 
 import json
@@ -92,6 +94,9 @@ class AuditReason(str, Enum):
     MODEL_NOT_ALLOWED = "model_not_allowed"
     CREDENTIAL_NOT_ALLOWED = "credential_not_allowed"
     MCP_NOT_ALLOWED = "mcp_not_allowed"
+    MCP_UNKNOWN = "mcp_unknown"
+    MCP_NAME_CONFLICT = "mcp_name_conflict"
+    MCP_NOT_GRANTED = "mcp_not_granted"
     IMAGE_NOT_ALLOWED = "image_not_allowed"
     SPAWN_MODE_NOT_ALLOWED = "spawn_mode_not_allowed"
     LIMIT_EXCEEDED = "limit_exceeded"
@@ -196,6 +201,40 @@ def _reasons(values: object) -> list[str]:
     return [v.value for v in values]
 
 
+def _mcp_fields(mcp_servers: object, mcp_inline_count: object) -> dict[str, Any]:
+    """Validate the MCP audit facts: catalog names plus an inline count.
+
+    Both are given together once the effective plan exists, or neither.
+    Names come from the operator catalog (``workflow.mcp.mcp_audit_summary``
+    only reports enabled entries); inline entries are only ever counted, so
+    no inline name, URL or header name can be audited.
+
+    Parameters:
+        mcp_servers: Sequence of catalog names, or None.
+        mcp_inline_count: Non-negative int, or None.
+
+    Returns:
+        The fields to add to the record; empty when both are None.
+
+    Raises:
+        TypeError: If only one is given or either has the wrong type.
+    """
+    if mcp_servers is None and mcp_inline_count is None:
+        return {}
+    if not isinstance(mcp_servers, (list, tuple)):
+        raise TypeError("mcp_servers must be a sequence of str")
+    if (
+        not isinstance(mcp_inline_count, int)
+        or isinstance(mcp_inline_count, bool)
+        or mcp_inline_count < 0
+    ):
+        raise TypeError("mcp_inline_count must be a non-negative int")
+    return {
+        "mcp_servers": [_identifier(name, "mcp_servers") for name in mcp_servers],
+        "mcp_inline_count": mcp_inline_count,
+    }
+
+
 def _emit(  # pylint: disable=too-many-arguments
     event: AuditEvent,
     *,
@@ -206,6 +245,7 @@ def _emit(  # pylint: disable=too-many-arguments
     request_id: str,
     provider: Optional[str],
     workflow_id: Optional[str] = None,
+    mcp: Optional[dict[str, Any]] = None,
 ) -> None:
     """Emit one audit record as a JSON message, mirrored in ``extra``.
 
@@ -218,6 +258,7 @@ def _emit(  # pylint: disable=too-many-arguments
         request_id: Request identifier.
         provider: Resolved catalog provider name, if any.
         workflow_id: Workflow identifier, authorized events only.
+        mcp: Validated MCP fields from ``_mcp_fields``, if any.
     """
     body: dict[str, Any] = {
         "event": event.value,
@@ -230,6 +271,7 @@ def _emit(  # pylint: disable=too-many-arguments
     }
     if workflow_id is not None:
         body["workflow_id"] = workflow_id
+    body.update(mcp or {})
     logger.info("%s", json.dumps(body, sort_keys=False), extra={"audit": body})
 
 
@@ -254,6 +296,8 @@ def record_denied(  # pylint: disable=too-many-arguments
     reasons: Sequence[AuditReason],
     paths: Sequence[str] = (),
     provider: Optional[str] = None,
+    mcp_servers: Optional[Sequence[str]] = None,
+    mcp_inline_count: Optional[int] = None,
 ) -> None:
     """Record a denied submission (413, 400, 422, 403).
 
@@ -264,6 +308,8 @@ def record_denied(  # pylint: disable=too-many-arguments
         reasons: Reason codes.
         paths: Pointers from json_pointer.
         provider: Resolved catalog provider name, if resolved.
+        mcp_servers: Catalog MCP names in use, once the plan exists.
+        mcp_inline_count: Inline MCP entry count, once the plan exists.
 
     Raises:
         TypeError: If any argument has the wrong type; nothing is logged.
@@ -276,6 +322,7 @@ def record_denied(  # pylint: disable=too-many-arguments
         user_id=_identifier(user_id, "user_id"),
         request_id=_identifier(request_id, "request_id"),
         provider=_optional_identifier(provider, "provider"),
+        mcp=_mcp_fields(mcp_servers, mcp_inline_count),
     )
 
 
@@ -286,6 +333,8 @@ def record_authorized(  # pylint: disable=too-many-arguments
     status: int,
     workflow_id: str,
     provider: Optional[str] = None,
+    mcp_servers: Optional[Sequence[str]] = None,
+    mcp_inline_count: Optional[int] = None,
 ) -> None:
     """Record an accepted submission; call only after ``start`` returned.
 
@@ -295,6 +344,8 @@ def record_authorized(  # pylint: disable=too-many-arguments
         status: HTTP status returned.
         workflow_id: Identifier returned by the executor.
         provider: Resolved catalog provider name, if any.
+        mcp_servers: Catalog MCP names in use.
+        mcp_inline_count: Inline MCP entry count.
 
     Raises:
         TypeError: If any argument has the wrong type; nothing is logged.
@@ -308,6 +359,7 @@ def record_authorized(  # pylint: disable=too-many-arguments
         request_id=_identifier(request_id, "request_id"),
         provider=_optional_identifier(provider, "provider"),
         workflow_id=_identifier(workflow_id, "workflow_id"),
+        mcp=_mcp_fields(mcp_servers, mcp_inline_count),
     )
 
 
@@ -316,6 +368,8 @@ def record_start_failed(
     user_id: str,
     request_id: str,
     provider: Optional[str] = None,
+    mcp_servers: Optional[Sequence[str]] = None,
+    mcp_inline_count: Optional[int] = None,
 ) -> None:
     """Record that ``executor.start`` raised; the exception is never logged.
 
@@ -323,6 +377,8 @@ def record_start_failed(
         user_id: Identifier from the auth layer.
         request_id: Request identifier.
         provider: Resolved catalog provider name, if any.
+        mcp_servers: Catalog MCP names in use.
+        mcp_inline_count: Inline MCP entry count.
 
     Raises:
         TypeError: If any argument has the wrong type; nothing is logged.
@@ -335,4 +391,5 @@ def record_start_failed(
         user_id=_identifier(user_id, "user_id"),
         request_id=_identifier(request_id, "request_id"),
         provider=_optional_identifier(provider, "provider"),
+        mcp=_mcp_fields(mcp_servers, mcp_inline_count),
     )

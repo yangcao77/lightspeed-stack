@@ -393,3 +393,91 @@ def test_plan_and_policy_pointers_survive_json_pointer() -> None:
     for pointer in sorted(pointers):
         assert CANARY not in pointer
         assert json_pointer(*_segments(pointer)) == pointer, pointer
+
+
+# --------------------------------------------------------------------------
+# MCP fields (issue #51 Phase 3): catalog names plus an inline count only
+# --------------------------------------------------------------------------
+
+
+def _record_with_mcp(index: int, **kwargs: Any) -> None:
+    """Call one recorder (denied, authorized, start_failed) with MCP kwargs."""
+    if index == 0:
+        record_denied(user_id="u", request_id="r", status=403, reasons=[], **kwargs)
+    elif index == 1:
+        record_authorized(
+            user_id="u", request_id="r", status=202, workflow_id="w", **kwargs
+        )
+    else:
+        record_start_failed(user_id="u", request_id="r", **kwargs)
+
+
+RECORDERS = pytest.mark.parametrize(
+    "index", [0, 1, 2], ids=["denied", "authorized", "start-failed"]
+)
+
+
+@RECORDERS
+def test_mcp_fields_recorded_when_given(
+    caplog: pytest.LogCaptureFixture, index: int
+) -> None:
+    """Every recorder carries catalog names and the inline count."""
+    _record_with_mcp(index, mcp_servers=("kb", "pods"), mcp_inline_count=2)
+    body = _payload(_records(caplog)[0])
+    assert body["mcp_servers"] == ["kb", "pods"]
+    assert body["mcp_inline_count"] == 2
+
+
+@RECORDERS
+def test_mcp_fields_absent_when_unknown(
+    caplog: pytest.LogCaptureFixture, index: int
+) -> None:
+    """Records emitted before the effective plan exists carry no MCP fields."""
+    _record_with_mcp(index)
+    body = _payload(_records(caplog)[0])
+    assert "mcp_servers" not in body
+    assert "mcp_inline_count" not in body
+
+
+@pytest.mark.parametrize(
+    "kwargs",
+    [
+        {"mcp_servers": CANARY, "mcp_inline_count": 0},
+        {"mcp_servers": [ValueError(CANARY)], "mcp_inline_count": 0},
+        {"mcp_servers": [1], "mcp_inline_count": 0},
+        {"mcp_servers": ["kb"], "mcp_inline_count": CANARY},
+        {"mcp_servers": ["kb"], "mcp_inline_count": True},
+        {"mcp_servers": ["kb"], "mcp_inline_count": -1},
+        {"mcp_servers": ["kb"], "mcp_inline_count": 1.0},
+        {"mcp_servers": ["kb"]},
+        {"mcp_inline_count": 0},
+    ],
+    ids=[
+        "names-str",
+        "names-exc",
+        "names-int",
+        "count-str",
+        "count-bool",
+        "count-negative",
+        "count-float",
+        "names-without-count",
+        "count-without-names",
+    ],
+)
+@RECORDERS
+def test_mcp_fields_typed(
+    caplog: pytest.LogCaptureFixture, index: int, kwargs: dict[str, Any]
+) -> None:
+    """Names must be a sequence of str and the count a non-negative int, together."""
+    with pytest.raises(TypeError):
+        _record_with_mcp(index, **kwargs)
+    assert not _records(caplog)
+    assert CANARY not in caplog.text
+
+
+def test_mcp_names_are_bounded(caplog: pytest.LogCaptureFixture) -> None:
+    """Each name is bounded like other identifiers."""
+    record_start_failed(
+        user_id="u", request_id="r", mcp_servers=["n" * 5000], mcp_inline_count=0
+    )
+    assert len(_payload(_records(caplog)[0])["mcp_servers"][0]) <= 128
