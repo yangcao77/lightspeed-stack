@@ -555,6 +555,9 @@ class ModelContextProtocolServer(ConfigurationBase):
     secretless; see ``workflow_enabled``.
     """
 
+    # Entries may carry credentials in URL/header values; never echo them.
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
+
     name: str = Field(
         ...,
         title="MCP name",
@@ -700,6 +703,10 @@ def _workflow_catalog_problems(
         Human-readable rule violations; empty when the entry is acceptable.
     """
     problems: list[str] = []
+    if server.url != server.url.strip() or any(
+        ord(ch) <= 0x20 or ord(ch) == 0x7F for ch in server.url
+    ):
+        problems.append("url must not contain whitespace or control characters")
     if not _MCP_CATALOG_NAME.fullmatch(server.name):
         problems.append("name must match ^[a-z0-9][a-z0-9-]{0,62}$")
     if name_count > 1:
@@ -4107,6 +4114,9 @@ class SpawnerConfiguration(ConfigurationBase):
 
 class Configuration(ConfigurationBase):
     """Global service configuration."""
+
+    # Catalog URL credentials must not leak via pydantic's input echo.
+    model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
 
     name: str = Field(
         ...,

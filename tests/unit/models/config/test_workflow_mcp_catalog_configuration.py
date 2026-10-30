@@ -361,3 +361,86 @@ class TestStillReserved:
         error = _load_error([_server()], [{"role": "*", "mcp": ["*"], field: value}])
         assert "not supported" in error
         assert field in error
+
+
+CANARY = "CANARYtok3n9X"
+
+
+def _leak_surfaces(exc: ValidationError) -> list[str]:
+    """Renderings that reach logs and tracebacks.
+
+    ``errors()``/``json()`` include ``input`` unless callers pass
+    ``include_input=False``; pydantic offers no config switch for that, so only
+    str/repr (what a startup traceback prints) are guarded by config.
+    """
+    return [str(exc), repr(exc), repr(exc.errors(include_input=False))]
+
+
+class TestNoInputEchoOnLoadErrors:
+    """Credentialed catalog values never appear in config load errors."""
+
+    @pytest.mark.parametrize(
+        "bad",
+        [
+            {"url": f"https://user:{CANARY}@h"},
+            {"url": f"http://h/mcp?token={CANARY}"},
+            {"authorization_headers": {"Authorization": CANARY}},
+            {"headers": [CANARY]},
+            {"require_approval": CANARY},
+        ],
+    )
+    def test_canary_not_echoed(self, bad: dict[str, Any]) -> None:
+        """The canary is absent from str, repr, errors() and json()."""
+        entry: dict[str, Any] = {
+            "name": "Bad_Name",
+            "workflow_enabled": True,
+            "url": "http://h/mcp",
+        }
+        entry.update(bad)
+        with pytest.raises(ValidationError) as exc_info:
+            Configuration.model_validate(_config([entry]))
+        for text in _leak_surfaces(exc_info.value):
+            assert CANARY not in text
+
+    def test_other_failures_keep_loc_and_msg(self) -> None:
+        """Hiding input keeps loc and msg useful."""
+        with pytest.raises(ValidationError) as exc_info:
+            ModelContextProtocolServer.model_validate(
+                {"name": "a", "url": "http://h", "bogus": 1}
+            )
+        err = exc_info.value.errors()[0]
+        assert err["loc"] == ("bogus",)
+        assert "Extra inputs" in err["msg"]
+        assert "input_value" not in str(exc_info.value)
+
+
+class TestCatalogUrlWhitespace:
+    """Whitespace and control characters in enabled-entry URLs are rejected."""
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            " http://host/mcp",
+            "http://host/mcp ",
+            "http://host:8080\n/x",
+            "http://host/\tmcp",
+            "http://host/m\rcp",
+            "http://host/m\x00cp",
+            "http://host/m cp",
+            "http://host/m\x7fcp",
+        ],
+    )
+    def test_rejected_without_echo(self, url: str) -> None:
+        """Enabled entries reject the URL with fixed text."""
+        err = _load_error([_server(url=url)])
+        assert "whitespace or control" in err
+
+    @pytest.mark.parametrize("url", ["http://kb:8080/mcp", "https://h.example/a?b=c"])
+    def test_valid_still_passes(self, url: str) -> None:
+        """Clean URLs load."""
+        Configuration.model_validate(_config([_server(url=url)]))
+
+    def test_non_enabled_unchanged(self) -> None:
+        """Non-enabled entries keep current behaviour."""
+        server = ModelContextProtocolServer(name="a", url=" http://h/mcp")
+        assert server.url == " http://h/mcp"
