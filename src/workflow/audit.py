@@ -48,6 +48,23 @@ FIXED_POINTER_KEYS: Final[frozenset[str]] = frozenset(
         "depends_on",
         "defaults",
         "spec",
+        # Request body and workflow definition keys used by the submission
+        # pipeline (submission_guard, catalog, effective plan, policy).
+        "definition",
+        "metadata",
+        "type",
+        "output_key",
+        "advisory",
+        "sandbox_image",
+        "spawn",
+        "timeout_seconds",
+        "max_retries",
+        "tools",
+        "allowed_skills",
+        "target_namespaces",
+        "inference_provider",
+        "credentials_secret",
+        "credential_ref",
     }
 )
 

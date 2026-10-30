@@ -16,12 +16,14 @@ import copy
 from dataclasses import dataclass
 from typing import Any, Final, Optional
 
-from fastapi import HTTPException, status
+from fastapi import status
 from pydantic import ValidationError
 
 from models.common.secrets import SecretRef
 from models.config import WorkflowEngineConfiguration, WorkflowInferenceProvider
+from workflow.audit import AuditReason
 from workflow.provider_credentials import credentials_secret_for
+from workflow.submission_guard import SubmissionRejected
 
 # RFC 9745 Deprecation (a date, not "true") and RFC 8594 Sunset for the legacy
 # ``credentials_secret`` field. Deprecated 2026-10-01 (stack#51 Phase 1);
@@ -31,6 +33,16 @@ LEGACY_SUNSET: Final[str] = "Thu, 01 Apr 2027 00:00:00 GMT"
 
 _ALLOWED_KEYS: Final[frozenset[str]] = frozenset(
     {"name", "model", "credential_ref", "credentials_secret"}
+)
+
+# JSON pointers of run-provider fields, used in audit-safe rejections.
+_PROVIDER_POINTER: Final[str] = "/provider"
+_CREDENTIAL_REF_POINTER: Final[str] = "/provider/credential_ref"
+_CREDENTIALS_SECRET_POINTER: Final[str] = "/provider/credentials_secret"
+
+# Caller-facing message for a malformed credential_ref.
+_CREDENTIAL_REF_SHAPE: Final[str] = (
+    "credential_ref must be {name: <logical secret name>}"
 )
 
 
@@ -56,9 +68,21 @@ class ResolvedProvider:
     legacy_credentials_secret: bool = False
 
 
-def _bad_request(detail: str) -> HTTPException:
-    """Build a 400 for a name the deployment does not have or a forbidden field."""
-    return HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail)
+def _bad_request(detail: str, reason: AuditReason, path: str) -> SubmissionRejected:
+    """Build a 400 for a name the deployment does not have or a forbidden field.
+
+    Parameters:
+        detail: Caller-facing message; it may name the rejected value, so it
+            is never logged or audited.
+        reason: Audit reason code.
+        path: JSON pointer of the rejected field (fixed keys only).
+
+    Returns:
+        The rejection to raise.
+    """
+    return SubmissionRejected(
+        status.HTTP_400_BAD_REQUEST, detail, reasons=(reason,), paths=(path,)
+    )
 
 
 def _credential_ref_name(value: Any) -> Optional[str]:
@@ -74,23 +98,37 @@ def _credential_ref_name(value: Any) -> Optional[str]:
         The name, or None when no ref was sent.
 
     Raises:
-        HTTPException: 400 if the value is not a valid name-only ref.
+        SubmissionRejected: 400 if the value is not a valid name-only ref.
     """
     if value is None:
         return None
+    ref: Optional[SecretRef] = None
     try:
         ref = SecretRef.model_validate(value)
-    except ValidationError as exc:
+    except ValidationError:
+        pass
+    if ref is None:
+        # Raised outside the except block so the pydantic text (which
+        # echoes the input) is not chained onto the rejection.
         raise _bad_request(
-            "credential_ref must be {name: <logical secret name>}"
-        ) from exc
+            _CREDENTIAL_REF_SHAPE,
+            AuditReason.CREDENTIAL_NOT_ALLOWED,
+            _CREDENTIAL_REF_POINTER,
+        )
     if ref.key is not None or ref.version is not None:
-        raise _bad_request("credential_ref key and version are not supported.")
+        raise _bad_request(
+            "credential_ref key and version are not supported.",
+            AuditReason.CREDENTIAL_NOT_ALLOWED,
+            _CREDENTIAL_REF_POINTER,
+        )
     return ref.name
 
 
 def _lookup(
-    engine: WorkflowEngineConfiguration, name: str, model: Optional[str]
+    engine: WorkflowEngineConfiguration,
+    name: str,
+    model: Optional[str],
+    path: str,
 ) -> tuple[WorkflowInferenceProvider, str]:
     """Resolve a catalog name and model, enforcing allowed_models.
 
@@ -98,27 +136,44 @@ def _lookup(
         engine: Workflow engine configuration (governed mode).
         name: Logical provider name.
         model: Requested model, or None to use ``default_model``.
+        path: JSON pointer of the provider object being resolved.
 
     Returns:
         The catalog entry and the model to use.
 
     Raises:
-        HTTPException: 400 for an unknown name, a missing model, or a model
-            outside the entry's allowed_models.
+        SubmissionRejected: 400 for an unknown name, a missing model, or a
+            model outside the entry's allowed_models.
     """
     if model is not None and (not isinstance(model, str) or not model.strip()):
-        raise _bad_request("model must be a non-empty string.")
+        raise _bad_request(
+            "model must be a non-empty string.", AuditReason.MODEL_NOT_ALLOWED, path
+        )
     entry = engine.provider(name)
     if entry is None:
-        raise _bad_request(f"Unknown provider '{name}'.")
+        raise _bad_request(
+            f"Unknown provider '{name}'.", AuditReason.PROVIDER_UNKNOWN, path
+        )
     if model is None:
         if name != engine.default_provider:
-            raise _bad_request(f"A model is required for provider '{name}'.")
+            raise _bad_request(
+                f"A model is required for provider '{name}'.",
+                AuditReason.MODEL_NOT_ALLOWED,
+                path,
+            )
         model = engine.default_model
     if model is None:
-        raise _bad_request("No model given and no default_model configured.")
+        raise _bad_request(
+            "No model given and no default_model configured.",
+            AuditReason.MODEL_NOT_ALLOWED,
+            path,
+        )
     if entry.allowed_models is not None and model not in entry.allowed_models:
-        raise _bad_request(f"Model '{model}' is not allowed for provider '{name}'.")
+        raise _bad_request(
+            f"Model '{model}' is not allowed for provider '{name}'.",
+            AuditReason.MODEL_NOT_ALLOWED,
+            path,
+        )
     return entry, model
 
 
@@ -151,13 +206,17 @@ def resolve_run_provider(
         The resolved provider, with a dict built by the stack.
 
     Raises:
-        HTTPException: 400 for unknown names or models, a credential the caller
-            may not choose, or unknown keys.
+        SubmissionRejected: 400 for unknown names or models, a credential the
+            caller may not choose, or unknown keys.
     """
     requested = requested or {}
     unknown = sorted(set(requested) - _ALLOWED_KEYS)
     if unknown:
-        raise _bad_request(f"Unknown provider keys: {unknown}.")
+        raise _bad_request(
+            f"Unknown provider keys: {unknown}.",
+            AuditReason.FORBIDDEN_FIELD,
+            _PROVIDER_POINTER,
+        )
     ref = _credential_ref_name(requested.get("credential_ref"))
 
     if not engine.governed:
@@ -165,11 +224,19 @@ def resolve_run_provider(
 
     name = requested.get("name") or engine.default_provider
     if not name:
-        raise _bad_request("No provider given and no default_provider configured.")
-    entry, model = _lookup(engine, name, requested.get("model"))
+        raise _bad_request(
+            "No provider given and no default_provider configured.",
+            AuditReason.PROVIDER_UNKNOWN,
+            _PROVIDER_POINTER,
+        )
+    entry, model = _lookup(engine, name, requested.get("model"), _PROVIDER_POINTER)
     own_ref = entry.credential.name if entry.credential else None
     if ref is not None and ref != own_ref:
-        raise _bad_request("credential_ref does not match the provider's credential.")
+        raise _bad_request(
+            "credential_ref does not match the provider's credential.",
+            AuditReason.CREDENTIAL_NOT_ALLOWED,
+            _CREDENTIAL_REF_POINTER,
+        )
 
     legacy = False
     if "credentials_secret" in requested:
@@ -177,7 +244,9 @@ def resolve_run_provider(
         if own_ref is None or requested["credentials_secret"] != own_ref:
             raise _bad_request(
                 "credentials_secret cannot be set by callers; use credential_ref "
-                "with the provider's logical credential name."
+                "with the provider's logical credential name.",
+                AuditReason.CREDENTIAL_NOT_ALLOWED,
+                _CREDENTIALS_SECRET_POINTER,
             )
         legacy = True
     return ResolvedProvider(
@@ -197,7 +266,13 @@ def _resolve_legacy(
     if ref is not None or "credentials_secret" in requested:
         raise _bad_request(
             "credential_ref and credentials_secret are not accepted: no provider "
-            "catalog is configured, so the stack chooses the credential."
+            "catalog is configured, so the stack chooses the credential.",
+            AuditReason.CREDENTIAL_NOT_ALLOWED,
+            (
+                _CREDENTIAL_REF_POINTER
+                if ref is not None
+                else _CREDENTIALS_SECRET_POINTER
+            ),
         )
     name = requested.get("name") or inference.default_provider or ""
     model = requested.get("model") or inference.default_model or ""
@@ -236,20 +311,27 @@ def normalize_definition(
         A normalized copy; the definition unchanged in legacy mode.
 
     Raises:
-        HTTPException: 400 for an unknown override provider, a model outside
-            allowed_models, or an override on a different catalog entry.
+        SubmissionRejected: 400 for an unknown override provider, a model
+            outside allowed_models, or an override on a different catalog
+            entry.
     """
     if not engine.governed:
         return definition
     normalized = copy.deepcopy(definition)
-    scopes = [(normalized, "provider")]
+    scopes: list[tuple[dict[str, Any], str, str]] = [
+        (normalized, "provider", "/definition/provider")
+    ]
     # A malformed spec or steps container is left for the shape validator,
     # which answers 422; walking it here would raise and become a 500.
     spec = normalized.get("spec")
     steps = spec.get("steps") if isinstance(spec, dict) else None
     if isinstance(steps, list):
-        scopes += [(s, "inference_provider") for s in steps if isinstance(s, dict)]
-    for scope, key in scopes:
+        scopes += [
+            (s, "inference_provider", f"/definition/spec/steps/{i}/inference_provider")
+            for i, s in enumerate(steps)
+            if isinstance(s, dict)
+        ]
+    for scope, key, path in scopes:
         override = scope.get(key)
         if override is None:
             continue
@@ -257,12 +339,18 @@ def normalize_definition(
             # A model-only or string override would be merged onto the run
             # provider by the executor and dodge allowed_models, so it must
             # name a catalog entry.
-            raise _bad_request(f"{key} must name a catalog provider.")
-        entry, model = _lookup(engine, override["name"], override.get("model"))
+            raise _bad_request(
+                f"{key} must name a catalog provider.",
+                AuditReason.PROVIDER_UNKNOWN,
+                path,
+            )
+        entry, model = _lookup(engine, override["name"], override.get("model"), path)
         if entry.name != resolved.catalog_name:
             raise _bad_request(
                 f"Provider override '{entry.name}' must use the same catalog entry "
-                f"as the run provider '{resolved.catalog_name}'."
+                f"as the run provider '{resolved.catalog_name}'.",
+                AuditReason.CREDENTIAL_NOT_ALLOWED,
+                path,
             )
         override["name"] = entry.executor_type
         override["model"] = model

@@ -1,16 +1,23 @@
-"""Submission-time hardening for POST /v1/workflows/run (issue #51, Phase 0a).
+"""Pre-parse checks for POST /v1/workflows/run (issue #51, Phases 0a and 2).
 
-Closes the holes where a caller could pick the credential env var, the
-sandbox image, advisory mode or a non-sandboxed spawn mode, and bounds the
-size of a definition. Pure checks: nothing here mutates its inputs.
+These run on the raw request before any typed parse: the byte cap (413),
+caller fields that would choose a credential (400) and count caps (422).
+The privileged-option rules (403) live in ``workflow.policy``.
+
+Every rejection is a ``SubmissionRejected`` carrying audit reason codes and
+JSON pointers built from indices and fixed keys, so the handler can write
+the structured audit record (``workflow.audit``) without caller values.
+Details never echo caller strings such as step names or credential values.
+Pure checks: nothing here mutates its inputs or logs.
 """
 
 import json
+from collections.abc import Collection, Sequence
 from typing import Any, Optional
 
 from fastapi import HTTPException, status
 
-from log import get_logger
+from workflow.audit import AuditReason
 from workflow.limits import (
     MAX_DEFINITION_BYTES,
     MAX_MCP_SERVERS_PER_STEP,
@@ -18,10 +25,40 @@ from workflow.limits import (
     MAX_WORKFLOW_STEPS,
 )
 
-logger = get_logger(__name__)
 
-_PRIVILEGED_SPAWN_MODES = frozenset({"none", "local"})
-_DEFAULT_SPAWN = "ephemeral"
+class SubmissionRejected(HTTPException):
+    """A submission rejection that carries audit-safe reasons and pointers.
+
+    Attributes:
+        reasons: Audit reason codes.
+        paths: JSON pointers into the request body (indices and fixed keys).
+        provider: Operator catalog name to audit, or None when it is not
+            known or not safe to record.
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        status_code: int,
+        detail: Any,
+        *,
+        reasons: Sequence[AuditReason],
+        paths: Sequence[str] = (),
+        provider: Optional[str] = None,
+    ) -> None:
+        """Initialize the rejection.
+
+        Parameters:
+            status_code: HTTP status returned to the caller.
+            detail: Caller-facing detail; may name denied values but must
+                never be logged.
+            reasons: Audit reason codes.
+            paths: JSON pointers of the offending fields.
+            provider: Catalog provider name to audit, if any.
+        """
+        super().__init__(status_code=status_code, detail=detail)
+        self.reasons: tuple[AuditReason, ...] = tuple(reasons)
+        self.paths: tuple[str, ...] = tuple(paths)
+        self.provider = provider
 
 
 def reject_oversized_definition(definition: dict[str, Any]) -> None:
@@ -31,13 +68,16 @@ def reject_oversized_definition(definition: dict[str, Any]) -> None:
         definition: Raw workflow definition from the request body.
 
     Raises:
-        HTTPException: 413 when the definition is over MAX_DEFINITION_BYTES.
+        SubmissionRejected: 413 when the definition is over
+            MAX_DEFINITION_BYTES.
     """
     size = len(json.dumps(definition).encode("utf-8"))
     if size > MAX_DEFINITION_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-            detail=f"Workflow definition exceeds {MAX_DEFINITION_BYTES} bytes.",
+        raise SubmissionRejected(
+            status.HTTP_413_CONTENT_TOO_LARGE,
+            f"Workflow definition exceeds {MAX_DEFINITION_BYTES} bytes.",
+            reasons=(AuditReason.PAYLOAD_TOO_LARGE,),
+            paths=("/definition",),
         )
 
 
@@ -46,131 +86,114 @@ def _as_dict(value: Any) -> dict[str, Any]:
     return value if isinstance(value, dict) else {}
 
 
-def _image_of(spawn_config: Any) -> Optional[str]:
-    """Return the sandbox_image of a raw spawn_config, if any."""
-    image = _as_dict(spawn_config).get("sandbox_image")
-    return image if isinstance(image, str) else None
+def reject_forbidden_caller_fields(
+    definition: dict[str, Any],
+    provider: Optional[dict[str, Any]],
+    *,
+    logical_credentials: Optional[Collection[str]],
+) -> None:
+    """Reject caller fields that would choose a credential (G1/G2).
+
+    Runs on the raw request before the typed parse, so a forbidden field is
+    answered 400 even when the definition also has keys the parse would
+    reject with 422. In governed mode the run provider's deprecated
+    ``credentials_secret`` may name a logical credential of the catalog; the
+    catalog then checks it is the selected entry's own credential.
+
+    Parameters:
+        definition: Raw workflow definition from the request body.
+        provider: Run-level provider as sent by the caller, or None.
+        logical_credentials: Logical credential names of the catalog, or
+            None in legacy mode (no catalog, so the field is always
+            forbidden).
+
+    Raises:
+        SubmissionRejected: 400 naming the forbidden field by pointer.
+    """
+    paths: list[str] = []
+    run_provider = _as_dict(provider)
+    run_secret = run_provider.get("credentials_secret")
+    if "credentials_secret" in run_provider and (
+        logical_credentials is None
+        or not isinstance(run_secret, str)
+        or run_secret not in logical_credentials
+    ):
+        paths.append("/provider/credentials_secret")
+    if "credentials_secret" in _as_dict(definition.get("provider")):
+        paths.append("/definition/provider/credentials_secret")
+    if paths:
+        raise SubmissionRejected(
+            status.HTTP_400_BAD_REQUEST,
+            "credentials_secret cannot be set by callers; the stack "
+            "chooses the credential for the provider.",
+            reasons=(AuditReason.FORBIDDEN_FIELD,),
+            paths=paths,
+        )
 
 
-def _count_errors(steps: list[Any], spec: dict[str, Any]) -> list[str]:
-    """Return count-cap violations for steps, MCP lists and secret headers."""
-    errors: list[str] = []
+def _count_errors(spec: dict[str, Any]) -> list[tuple[str, str]]:
+    """Return count-cap violations as ``(pointer, message)`` pairs.
+
+    Malformed containers are skipped; the typed parse answers those.
+
+    Parameters:
+        spec: Raw spec mapping.
+
+    Returns:
+        The violations; messages name pointers, never caller strings.
+    """
+    raw_steps = spec.get("steps")
+    steps: list[Any] = raw_steps if isinstance(raw_steps, list) else []
+    errors: list[tuple[str, str]] = []
     if len(steps) > MAX_WORKFLOW_STEPS:
-        errors.append(f"spec.steps has {len(steps)} steps (max {MAX_WORKFLOW_STEPS})")
-    scopes = [("spec", spec)] + [
-        (f"step '{_as_dict(s).get('name', i)}'", _as_dict(s))
-        for i, s in enumerate(steps)
+        pointer = "/definition/spec/steps"
+        errors.append(
+            (pointer, f"{pointer} has {len(steps)} steps (max {MAX_WORKFLOW_STEPS})")
+        )
+    scopes = [("/definition/spec", spec)] + [
+        (f"/definition/spec/steps/{i}", _as_dict(s)) for i, s in enumerate(steps)
     ]
-    for label, scope in scopes:
+    for base, scope in scopes:
         servers = scope.get("mcp_servers") or []
         if not isinstance(servers, list):
             continue
+        pointer = f"{base}/mcp_servers"
         if len(servers) > MAX_MCP_SERVERS_PER_STEP:
             errors.append(
-                f"{label}: {len(servers)} mcp_servers (max {MAX_MCP_SERVERS_PER_STEP})"
+                (
+                    pointer,
+                    f"{pointer} has {len(servers)} entries "
+                    f"(max {MAX_MCP_SERVERS_PER_STEP})",
+                )
             )
-        for server in servers:
+        for index, server in enumerate(servers):
             headers = _as_dict(_as_dict(server).get("secret_headers"))
             if len(headers) > MAX_SECRET_HEADERS_PER_SERVER:
+                header_pointer = f"{pointer}/{index}/secret_headers"
                 errors.append(
-                    f"{label}: mcp server has {len(headers)} secret_headers "
-                    f"(max {MAX_SECRET_HEADERS_PER_SERVER})"
+                    (
+                        header_pointer,
+                        f"{header_pointer} has {len(headers)} entries "
+                        f"(max {MAX_SECRET_HEADERS_PER_SERVER})",
+                    )
                 )
     return errors
 
 
-def _effective_spawn_modes(steps: list[Any], spec: dict[str, Any]) -> set[str]:
-    """Return the effective spawn mode of each agent step (step, spec, default).
-
-    Approval steps never spawn anything, so they are skipped.
-    """
-    workflow_spawn = spec.get("spawn")
-    return {
-        _as_dict(step).get("spawn") or workflow_spawn or _DEFAULT_SPAWN
-        for step in steps
-        if _as_dict(step).get("type", "agent") == "agent"
-    }
-
-
-def enforce_submission_hardening(  # pylint: disable=too-many-arguments
-    definition: dict[str, Any],
-    provider: dict[str, Any],
-    sandbox_image: Optional[str],
-    *,
-    is_admin: bool,
-    default_sandbox_image: str,
-    spawner_configured: bool,
-) -> None:
-    """Apply the Phase 0a rules to a submission.
+def reject_over_count_caps(definition: dict[str, Any]) -> None:
+    """Reject definitions over the step, MCP server or secret header caps.
 
     Parameters:
         definition: Raw workflow definition from the request body.
-        provider: Run-level provider as sent by the caller (before the
-            stack injects its own credentials_secret).
-        sandbox_image: Request-level sandbox image override, if any.
-        is_admin: Whether the caller holds the ADMIN action.
-        default_sandbox_image: The spawner's configured sandbox image.
-        spawner_configured: Whether a spawner_configuration exists.
-
-    Shape errors (422 from cloud-agents validation) take precedence over
-    these policy errors because the handler validates first. Denials raise
-    HTTPException directly and are logged; structured audit events land in
-    Phase 4 of the #51 plan.
 
     Raises:
-        HTTPException: 400 when the caller names a credential, 422 when a
-            count cap is exceeded, 403 for privileged options used without
-            ADMIN or for ephemeral steps without a spawner.
+        SubmissionRejected: 422 listing every exceeded cap by pointer.
     """
-    if "credentials_secret" in provider or "credentials_secret" in _as_dict(
-        definition.get("provider")
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="credentials_secret cannot be set by callers; the stack "
-            "chooses the credential for the provider.",
-        )
-
-    spec = _as_dict(definition.get("spec"))
-    raw_steps = spec.get("steps")
-    steps: list[Any] = raw_steps if isinstance(raw_steps, list) else []
-
-    count_errors = _count_errors(steps, spec)
-    if count_errors:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail={"validation_errors": count_errors},
-        )
-
-    spawn_modes = _effective_spawn_modes(steps, spec)
-    if "ephemeral" in spawn_modes and not spawner_configured:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Ephemeral steps require spawner_configuration.",
-        )
-
-    if is_admin:
-        return
-
-    denied: list[str] = []
-    privileged = sorted(spawn_modes & _PRIVILEGED_SPAWN_MODES)
-    if privileged:
-        denied.append(f"spawn mode(s) {privileged} require admin")
-    if definition.get("advisory"):
-        denied.append("advisory mode requires admin")
-
-    images = {
-        sandbox_image,
-        _image_of(spec.get("spawn_config")),
-        _as_dict(definition.get("skills")).get("image"),
-        *(_image_of(_as_dict(s).get("spawn_config")) for s in steps),
-    }
-    if any(i and i != default_sandbox_image for i in images):
-        denied.append("a custom sandbox image requires admin")
-
-    if denied:
-        logger.info("Workflow submission denied: %s", denied)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"denied": denied},
+    errors = _count_errors(_as_dict(definition.get("spec")))
+    if errors:
+        raise SubmissionRejected(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            {"validation_errors": [message for _, message in errors]},
+            reasons=(AuditReason.COUNT_CAP,),
+            paths=[pointer for pointer, _ in errors],
         )

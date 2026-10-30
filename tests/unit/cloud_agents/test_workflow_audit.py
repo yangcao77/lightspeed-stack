@@ -9,7 +9,9 @@ from typing import Any
 
 import pytest
 
+from models.config import PolicyRule, WorkflowPolicy
 from workflow.audit import (
+    FIXED_POINTER_KEYS,
     AuditEvent,
     AuditReason,
     json_pointer,
@@ -17,6 +19,9 @@ from workflow.audit import (
     record_denied,
     record_start_failed,
 )
+from workflow.catalog import ResolvedProvider
+from workflow.effective import EffectivePlanError, build_effective_plan
+from workflow.policy import Principal, authorize_workflow_submission
 
 CANARY = "sk-canary-9f3a"
 
@@ -237,3 +242,154 @@ def test_oversized_identifier_is_truncated(caplog: pytest.LogCaptureFixture) -> 
     """Identifiers are bounded in length."""
     record_start_failed(user_id="u" * 5000, request_id="r")
     assert len(_payload(_records(caplog)[0])["user_id"]) <= 128
+
+
+def test_fixed_pointer_keys_cover_plan_and_request_keys() -> None:
+    """The keys the effective plan, policy and guard use are all fixed keys."""
+    assert {
+        "definition",
+        "timeout_seconds",
+        "max_retries",
+        "spawn",
+        "tools",
+        "allowed_skills",
+        "target_namespaces",
+        "sandbox_image",
+        "advisory",
+        "credentials_secret",
+        "credential_ref",
+        "inference_provider",
+        "type",
+        "output_key",
+    } <= FIXED_POINTER_KEYS
+
+
+def _segments(pointer: str) -> list[int | str]:
+    """Split a pointer into json_pointer parts (digits become ints)."""
+    return [int(p) if p.isdigit() else p for p in pointer.split("/")[1:]]
+
+
+def _rich_definition() -> dict[str, Any]:
+    """A definition that sets every field the effective plan reads."""
+    full_step = {
+        "name": CANARY,
+        "type": "agent",
+        "prompt": CANARY,
+        "output_key": "o0",
+        "spawn": "local",
+        "spawn_config": {"sandbox_image": CANARY},
+        "service_account": "sa-step",
+        "permissions": {
+            "service_account": "sa-step",
+            "timeout_seconds": 9000,
+            "max_tokens": 9_000_000,
+        },
+        "timeout_seconds": 9000,
+        "max_retries": 9,
+        "allowed_skills": [CANARY],
+        "tools": [CANARY],
+        "target_namespaces": [CANARY],
+        "mcp_servers": [CANARY, {"name": CANARY, "url": "https://x.example"}],
+    }
+    return {
+        "apiVersion": "v1",
+        "kind": "AgentWorkflow",
+        "metadata": {"name": CANARY},
+        "advisory": True,
+        "skills": {"image": CANARY},
+        "spec": {
+            "spawn": "none",
+            "spawn_config": {"sandbox_image": CANARY},
+            "service_account": "sa-spec",
+            "permissions": {"service_account": "sa-spec", "timeout_seconds": 9000},
+            "timeout_seconds": 9000,
+            "allowed_skills": [CANARY],
+            "mcp_servers": [{"name": CANARY, "url": "https://y.example"}],
+            "steps": [
+                full_step,
+                {"name": "s1", "type": "agent", "prompt": "p", "output_key": "o1"},
+                {"name": "gate", "type": "human-approval"},
+                {
+                    "name": "s3",
+                    "type": "agent",
+                    "prompt": "p",
+                    "output_key": "o3",
+                    "spawn": "ephemeral",
+                    "spawn_config": {"cpu": "1"},
+                },
+            ],
+        },
+    }
+
+
+def _plan_pointers(plan: Any) -> set[str]:
+    """Collect every pointer a plan carries."""
+    pointers: set[str] = set()
+    for step in plan.steps:
+        pointers.add(step.path)
+        if step.permissions_path:
+            pointers.add(step.permissions_path)
+        for value in vars(step).values():
+            path = getattr(value, "path", None)
+            if isinstance(path, str):
+                pointers.add(path)
+    return pointers
+
+
+RESOLVED = ResolvedProvider(
+    catalog_name="p",
+    executor_type="openai",
+    model="m",
+    credential_ref=None,
+    provider={"name": "openai", "model": "m"},
+)
+
+
+def _policy_pointers(plan: Any) -> set[str]:
+    """Collect every denial pointer across modes, admin and non-admin."""
+    pointers: set[str] = set()
+    policies = [
+        None,
+        WorkflowPolicy(rules=[]),
+        WorkflowPolicy(rules=[PolicyRule(role="*", spawn_modes=["none"])]),
+    ]
+    for policy in policies:
+        for admin in (True, False):
+            decision = authorize_workflow_submission(
+                plan,
+                Principal(user_id="u", is_admin=admin),
+                policy,
+                spawner_configured=False,
+                default_sandbox_image="default:v1",
+                advisory=True,
+                definition_skills_image=CANARY,
+            )
+            pointers.update(decision.paths)
+    return pointers
+
+
+def _conflict_pointers() -> set[str]:
+    """Collect the pointers of a service-account conflict."""
+    conflict = _rich_definition()
+    conflict["spec"]["steps"][1]["service_account"] = "sa-other"
+    with pytest.raises(EffectivePlanError) as exc_info:
+        build_effective_plan(
+            conflict, RESOLVED, run_sandbox_image=None, spawner_default_image=None
+        )
+    return {exc_info.value.path, str(exc_info.value.conflicting_path)}
+
+
+def test_plan_and_policy_pointers_survive_json_pointer() -> None:
+    """No pointer from the plan or the policy loses a segment to the placeholder."""
+    plan = build_effective_plan(
+        _rich_definition(),
+        RESOLVED,
+        run_sandbox_image=CANARY,
+        spawner_default_image="default:v1",
+    )
+    pointers = _plan_pointers(plan) | _policy_pointers(plan) | _conflict_pointers()
+
+    assert len(pointers) > 30
+    for pointer in sorted(pointers):
+        assert CANARY not in pointer
+        assert json_pointer(*_segments(pointer)) == pointer, pointer

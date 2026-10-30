@@ -284,6 +284,9 @@ class TestStartWorkflow:
         definition before build_graph/normalization runs, so without this
         route-level gate the request would return 202 and store the
         secret-bearing URL in workflow state first.
+
+        Phase 2: the step runs on spawn none, because with no spawner an
+        ephemeral step is now a 403 (policy step) before the executor's 422.
         """
         mocker.patch("app.endpoints.workflows.check_configuration_loaded")
         mock_config.spawner_configuration = None
@@ -300,6 +303,7 @@ class TestStartWorkflow:
                             "type": "agent",
                             "prompt": "Do it",
                             "output_key": "result",
+                            "spawn": "none",
                             "mcp_servers": [
                                 {
                                     "name": "cluster",
