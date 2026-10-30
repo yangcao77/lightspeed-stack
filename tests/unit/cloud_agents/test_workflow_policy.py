@@ -470,6 +470,79 @@ def test_policy_list_grants(step_key: str, grant_key: str, value: str) -> None:
         assert _allowed(_authorize(plan, USER, _policy(_rule(**grants))))
 
 
+def _tool_step(allowed: list[str], **extra: Any) -> dict[str, Any]:
+    """Build a step whose permissions carry allowed_tools."""
+    return _step(permissions={"max_tokens": 100, "allowed_tools": allowed}, **extra)
+
+
+def test_policy_allowed_tools_without_grant_denied() -> None:
+    """Ephemeral steps send permissions.allowed_tools to the sandbox: gated."""
+    plan = _plan([_tool_step(["Bash", "Write"])])
+    for grant in (None, [], ["Bash"]):
+        grants: dict[str, Any] = {"tools": grant}
+        decision = _authorize(plan, USER, _policy(_rule(**grants)))
+        expected = {
+            (AuditReason.POLICY_DENIED, f"{STEPS}/0/permissions/allowed_tools/1")
+        }
+        if grant != ["Bash"]:
+            expected.add(
+                (AuditReason.POLICY_DENIED, f"{STEPS}/0/permissions/allowed_tools/0")
+            )
+        assert _pairs(decision) == expected
+
+
+def test_policy_allowed_tools_granted_and_wildcard_allowed() -> None:
+    """A named or wildcard tools grant allows allowed_tools."""
+    plan = _plan([_tool_step(["Bash", "Write"])])
+    for grant in (["Bash", "Write"], ["*"]):
+        assert _allowed(_authorize(plan, USER, _policy(_rule(tools=grant))))
+
+
+def test_policy_allowed_tools_empty_needs_no_grant() -> None:
+    """Empty or absent allowed_tools needs no grant."""
+    plan = _plan([_tool_step([])])
+    assert _allowed(_authorize(plan, USER, _policy()))
+
+
+def test_policy_step_tools_still_checked_alongside_allowed_tools() -> None:
+    """step.tools and permissions.allowed_tools are both checked."""
+    plan = _plan([_tool_step(["Bash"], tools=["tool-a"])])
+    decision = _authorize(plan, USER, _policy(_rule(tools=["Bash"])))
+    assert _pairs(decision) == {(AuditReason.POLICY_DENIED, f"{STEPS}/0/tools/0")}
+
+
+def test_policy_allowed_tools_whole_object_permissions_replace_spec() -> None:
+    """Step permissions replace spec permissions, including allowed_tools."""
+    plan = _plan(
+        [_step(permissions={"max_tokens": 100}), _step(1, permissions=None)],
+        permissions={"max_tokens": 100, "allowed_tools": ["Bash"]},
+    )
+    decision = _authorize(plan, USER, _policy())
+    assert _pairs(decision) == {
+        (AuditReason.POLICY_DENIED, "/definition/spec/permissions/allowed_tools/0")
+    }
+
+
+def test_policy_denied_tools_is_restrictive_and_needs_no_grant() -> None:
+    """denied_tools only restricts, so it needs no tools grant."""
+    plan = _plan([_step(permissions={"max_tokens": 100, "denied_tools": ["Bash"]})])
+    assert _allowed(_authorize(plan, USER, _policy()))
+
+
+def test_limits_distinct_denials_sharing_a_path_are_all_returned() -> None:
+    """Timeout and max_tokens denials that fall back to one path both show."""
+    policy = _limits_policy(
+        PolicyLimits(
+            max_step_timeout_seconds=300, max_workflow_seconds=10_000, max_tokens=10
+        )
+    )
+    plan = _plan([_step(timeout_seconds=None, permissions=None)])
+    decision = _authorize(plan, USER, policy)
+    messages = [d.message for d in decision.denials if d.path == f"{STEPS}/0"]
+    assert any("timeout_seconds" in m for m in messages)
+    assert any("max_tokens" in m for m in messages)
+
+
 @pytest.mark.parametrize("step_key", ["allowed_skills", "tools", "target_namespaces"])
 def test_policy_list_values_unset_or_empty_need_nothing(step_key: str) -> None:
     """A step that names nothing needs no grant (no implicit grants either)."""

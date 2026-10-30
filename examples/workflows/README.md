@@ -209,11 +209,18 @@ caller) and grants lists (`providers`, `skills`, `tools`, `images`,
 numeric `limits`. A principal's grant is the union of the rules for its roles
 and everything they `inherit`; a missing or empty list grants nothing and
 `["*"]` grants any value. Nothing is granted by default except the spawner's
-default image and default service account. Coarse RBAC (`WORKFLOW_START` etc.
+default image, and unset or empty service accounts (the spawner
+configuration has no default service account today). Coarse RBAC (`WORKFLOW_START` etc.
 in `authorization`) still gates "may submit at all"; policy gates "may use
 this". The policy requires governed mode (a `providers` catalog), and a policy
 that grants anything to a role other than `*` requires `jwk-token` auth with
 `role_rules` and `access_rules`.
+
+`tools` governs both a step's `tools` and `permissions.allowed_tools` (the
+list the executor sends to ephemeral sandboxes); `denied_tools` only
+restricts and needs no grant. The executor gives advisory sandboxes read
+access to all of `/skills` regardless of `allowed_skills`, so granting
+`advisory` effectively grants every skill.
 
 Limits: each is `min(max over the caller's rules, hard cap)`, and an absent
 limit grants 0. Hard caps: step timeout 3600s, workflow 86400s, 5 retries,

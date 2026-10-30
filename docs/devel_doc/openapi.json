@@ -18371,7 +18371,8 @@
                                 "type": "null"
                             }
                         ],
-                        "title": "Tools"
+                        "title": "Tools",
+                        "description": "Granted tools; governs both step 'tools' and 'permissions.allowed_tools'."
                     },
                     "images": {
                         "anyOf": [
@@ -18504,7 +18505,7 @@
                     "role"
                 ],
                 "title": "PolicyRule",
-                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Reserved (Phase 3).\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
+                "description": "One policy rule: what a role may use and how far it may go.\n\nList grants treat missing, null and empty as no grant; ``[\"*\"]`` means any\nvalue and must not be mixed with other entries.\n\nAttributes:\n    role: Role the rule applies to (\"*\" matches every caller).\n    inherit: Other roles whose rules also apply.\n    providers: Granted catalog provider names.\n    skills: Granted skills.\n    tools: Granted tools; governs both step ``tools`` and\n        ``permissions.allowed_tools``.\n    images: Granted sandbox images.\n    service_accounts: Granted service accounts.\n    namespaces: Granted namespaces.\n    spawn_modes: Granted spawn modes.\n    advisory: Whether advisory steps are allowed.\n    limits: Numeric ceilings.\n    mcp: Reserved (Phase 3).\n    inline_mcp: Reserved (Phase 3).\n    inline_mcp_hosts: Reserved (Phase 3).\n    mcp_secrets: Reserved (Phase 3).\n    ssrf: Reserved (Phase 3)."
             },
             "PostgreSQLDatabaseConfiguration": {
                 "properties": {

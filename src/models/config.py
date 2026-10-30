@@ -3436,7 +3436,8 @@ class PolicyRule(ConfigurationBase):
         inherit: Other roles whose rules also apply.
         providers: Granted catalog provider names.
         skills: Granted skills.
-        tools: Granted tools.
+        tools: Granted tools; governs both step ``tools`` and
+            ``permissions.allowed_tools``.
         images: Granted sandbox images.
         service_accounts: Granted service accounts.
         namespaces: Granted namespaces.
@@ -3458,7 +3459,14 @@ class PolicyRule(ConfigurationBase):
     )
     providers: Optional[list[str]] = Field(default=None, title="Providers")
     skills: Optional[list[str]] = Field(default=None, title="Skills")
-    tools: Optional[list[str]] = Field(default=None, title="Tools")
+    tools: Optional[list[str]] = Field(
+        default=None,
+        title="Tools",
+        description=(
+            "Granted tools; governs both step 'tools' and "
+            "'permissions.allowed_tools'."
+        ),
+    )
     images: Optional[list[str]] = Field(default=None, title="Images")
     service_accounts: Optional[list[str]] = Field(
         default=None, title="Service accounts"

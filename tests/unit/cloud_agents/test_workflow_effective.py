@@ -145,6 +145,9 @@ def _assert_matches_executor(
         assert step_plan.max_tokens.value == (scope.max_tokens if scope else None)
         assert step_plan.max_retries.value == normalized.max_retries
         assert step_plan.tools.value == tuple(normalized.tools)
+        assert step_plan.allowed_tools.value == tuple(
+            (scope.allowed_tools or []) if scope else []
+        )
         expected_skills = normalized.allowed_skills
         assert step_plan.allowed_skills.value == (
             None if expected_skills is None else tuple(expected_skills)
@@ -443,6 +446,29 @@ def test_permissions_replaced_whole() -> None:
     )
     assert second.max_tokens.value == 1000
     assert second.permissions_path == "/definition/spec/permissions"
+    _assert_matches_executor(definition, plan, SPAWNER_IMAGE)
+
+
+def test_allowed_tools_whole_object_semantics_and_paths() -> None:
+    """permissions.allowed_tools follows the whole-object permissions rule."""
+    definition = _definition(
+        [
+            _step(permissions={"max_tokens": 50}),
+            _step("b"),
+            _step("c", permissions={"allowed_tools": ["Bash", "Write"]}),
+            _step("d", permissions={"allowed_tools": []}),
+        ],
+        permissions={"allowed_tools": ["Read"], "max_tokens": 1000},
+    )
+    plan = _plan(definition)
+    first, second, third, fourth = plan.steps
+    assert first.allowed_tools.value == ()
+    assert first.allowed_tools.path is None
+    assert second.allowed_tools.value == ("Read",)
+    assert second.allowed_tools.path == "/definition/spec/permissions/allowed_tools"
+    assert third.allowed_tools.value == ("Bash", "Write")
+    assert third.allowed_tools.path == f"{STEPS}/2/permissions/allowed_tools"
+    assert fourth.allowed_tools.value == ()
     _assert_matches_executor(definition, plan, SPAWNER_IMAGE)
 
 

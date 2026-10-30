@@ -516,6 +516,9 @@ def _step_spawn_denials(
 def _step_name_denials(step: StepPlan, grants: _Grants) -> list[PolicyDenial]:
     """Check a step's skills, tools and namespaces under a policy.
 
+    ``permissions.allowed_tools`` is checked against the ``tools`` grant like
+    ``step.tools``. ``denied_tools`` only restricts, so it needs no grant.
+
     Parameters:
         step: The step plan.
         grants: The principal's grants.
@@ -526,6 +529,7 @@ def _step_name_denials(step: StepPlan, grants: _Grants) -> list[PolicyDenial]:
     checks: tuple[tuple[PlanValue[Any], _ListGrant, str], ...] = (
         (step.allowed_skills, grants.skills, "skill"),
         (step.tools, grants.tools, "tool"),
+        (step.allowed_tools, grants.tools, "tool"),
         (step.target_namespaces, grants.namespaces, "namespace"),
     )
     denials: list[PolicyDenial] = []
@@ -695,9 +699,12 @@ def _policy_denials(  # pylint: disable=too-many-arguments
 
 
 def _dedupe(denials: Iterable[PolicyDenial]) -> tuple[PolicyDenial, ...]:
-    """Drop repeated ``(reason, path)`` pairs, keeping the first.
+    """Drop identical denials, keeping the first.
 
-    A spec-level value inherited by several steps produces one denial.
+    Identity is ``(reason, path, message)``: a spec-level value inherited by
+    several steps produces one denial, while distinct violations that share a
+    fallback path (for example a step timeout and a missing max_tokens) are
+    all kept.
 
     Parameters:
         denials: Denials in check order.
@@ -705,10 +712,10 @@ def _dedupe(denials: Iterable[PolicyDenial]) -> tuple[PolicyDenial, ...]:
     Returns:
         The distinct denials, in order.
     """
-    seen: set[tuple[AuditReason, str]] = set()
+    seen: set[tuple[AuditReason, str, str]] = set()
     unique: list[PolicyDenial] = []
     for denial in denials:
-        key = (denial.reason, denial.path)
+        key = (denial.reason, denial.path, denial.message)
         if key not in seen:
             seen.add(key)
             unique.append(denial)
@@ -739,9 +746,10 @@ def authorize_workflow_submission(  # pylint: disable=too-many-arguments
         spawner_configured: Whether a spawner_configuration exists.
         default_sandbox_image: The spawner's configured default image (an
             implicit grant).
-        default_service_account: The spawner's default service account, if
-            it has one (an implicit grant); unset and empty service accounts
-            are always implicit.
+        default_service_account: A service account treated as an implicit
+            grant. Production passes None today (the spawner configuration
+            has no service-account field), so only unset and empty service
+            accounts are implicitly granted.
         advisory: ``definition.advisory``.
         definition_skills_image: ``definition.skills.image``, if any.
 
